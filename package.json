@@ -1,0 +1,9 @@
+{
+    "name": "oak-front-base",
+    "version": "1.0.0",
+    "description": "oak框架中前端与平台无关的逻辑部分",
+    "dependencies": {
+        "@reduxjs/toolkit": "^1.7.2",
+        "lodash": "^4.17.21"
+    }
+}
