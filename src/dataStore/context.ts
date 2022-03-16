@@ -2,8 +2,8 @@ import { OperationResult, EntityDef, DeduceOperation } from "oak-domain/lib/type
 import { TriggerEntityShape } from "oak-domain/lib/types/Trigger";
 import { Context as BaseContext } from 'oak-debug-store';
 
-export class Context<E extends string, ED extends {
-    [K in E]: EntityDef<E, ED, K, SH>;
-}, SH extends TriggerEntityShape = TriggerEntityShape> extends BaseContext<E, ED, SH> {
+export class Context<ED extends {
+    [E: string]: EntityDef;
+}> extends BaseContext<ED> {
 
 };
