@@ -1,6 +1,8 @@
 import { loginMp, loginByPassword } from './token';
 
-export const AspectDict = {
+const AspectDict = {
     loginMp,
     loginByPassword,
 };
+
+export default AspectDict;

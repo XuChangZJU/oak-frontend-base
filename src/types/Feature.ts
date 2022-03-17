@@ -1,8 +1,10 @@
 import { pull } from 'lodash';
-import { EntityDef } from 'oak-domain/lib/types/entity';
-import { FrontContext } from './FrontContext';
+import { Aspect } from 'oak-domain/lib/types/Aspect';
+import { EntityDict } from 'oak-domain/lib/types/entity';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
+import { FrontContext } from '../FrontContext';
 
-export abstract class Feature<ED extends Record<string, EntityDef>> {
+export abstract class Feature<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> {
     private callbackSet: Array<() => void>;
     constructor() {
         this.callbackSet = [];
@@ -21,7 +23,7 @@ export abstract class Feature<ED extends Record<string, EntityDef>> {
         );
     }
 
-    abstract get(params?: any): any;
+    abstract get(context: FrontContext<ED, AD>, params?: any): Promise<any>;
 
-    abstract action(context: FrontContext<ED>, type: string, payload?: any): any;
+    abstract action(context: FrontContext<ED, AD>, type: string, payload?: any): Promise<any>;
 }
