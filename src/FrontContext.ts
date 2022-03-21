@@ -26,7 +26,7 @@ class DebugRunningContext<ED extends EntityDict> extends Context<ED> implements 
     }
 };
 
-export async function createAspectProxy<ED extends EntityDict, AD extends Record<string, Aspect<ED>>>(
+export async function createAspectProxy<ED extends BaseEntityDict & EntityDict, AD extends Record<string, Aspect<ED>>>(
     cacheStore: CacheStore<ED>,
     storageSchema: StorageSchema<ED>,
     triggers: Array<Trigger<ED, keyof ED>>,
@@ -49,7 +49,7 @@ export async function createAspectProxy<ED extends EntityDict, AD extends Record
         );
         const context = new Context(debugStore);
 
-        const { result: [application] } = await (<DebugStore<BaseEntityDict>><unknown>debugStore).select('application', {
+        const { result: [application] } = await debugStore.select('application', {
             data: {
                 id: 1,
                 systemId: 1,
@@ -60,7 +60,7 @@ export async function createAspectProxy<ED extends EntityDict, AD extends Record
             filter: {
                 id: applicationId,
             }
-        }, <Context<BaseEntityDict>><unknown>context);
+        }, context);
         const getApplication = () => application as Application;
         const FullAspectProxy = assign(BaseAspectProxy, aspectDict);
 
@@ -71,7 +71,7 @@ export async function createAspectProxy<ED extends EntityDict, AD extends Record
             const tokenValue = getTokenValue();
             let token: Token | undefined;
             if (tokenValue) {
-                const { result } = await (<DebugStore<BaseEntityDict>><unknown>debugStore).select('token', {
+                const { result } = await debugStore.select('token', {
                     data: {
                         id: 1,
                         userId: 1,
@@ -80,7 +80,7 @@ export async function createAspectProxy<ED extends EntityDict, AD extends Record
                     filter: {
                         id: tokenValue,
                     }
-                }, <Context<BaseEntityDict>><unknown>context2);
+                }, context2);
                 token = result[0] as Token;
                 // todo 判断 token的合法性
             }
@@ -91,7 +91,7 @@ export async function createAspectProxy<ED extends EntityDict, AD extends Record
     }
 }
 
-export class FrontContext<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> extends BaseContext<ED> {
+export class FrontContext<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> extends BaseContext<ED> {
     getAspectProxy: () => Promise<AspectProxy<ED, AD & typeof BaseAspectProxy>>;
 
     constructor(

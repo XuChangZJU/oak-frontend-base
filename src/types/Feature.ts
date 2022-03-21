@@ -4,7 +4,7 @@ import { EntityDict } from 'oak-domain/lib/types/entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { FrontContext } from '../FrontContext';
 
-export abstract class Feature<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> {
+export abstract class Feature<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> {
     private callbackSet: Array<() => void>;
     constructor() {
         this.callbackSet = [];

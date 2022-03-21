@@ -1,6 +1,6 @@
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { Trigger } from "oak-domain/lib/types/Trigger";
-import { EntityDict as BaseEntityDict } from 'oak-domain/src/base-domain/EntityDict';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { Feature } from './types/Feature';
@@ -11,7 +11,7 @@ import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { FrontContext } from './FrontContext';
 
 
-function populateFeatures<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, FD extends Record<string, new <P extends EntityDict, Q extends Record<string, Aspect<P>>>() => Feature<P, Q>>>(featureClazzDict: FD)
+function populateFeatures<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>, FD extends Record<string, new <P extends EntityDict & BaseEntityDict, Q extends Record<string, Aspect<P>>>() => Feature<P, Q>>>(featureClazzDict: FD)
 : {
     [T in keyof FD]: InstanceType<FD[T]>;
 } {
@@ -25,9 +25,9 @@ function populateFeatures<ED extends EntityDict, AD extends Record<string, Aspec
     return result as any;
 }
 
-export async function initialize<ED extends EntityDict,
+export async function initialize<ED extends EntityDict & BaseEntityDict,
     AD extends Record<string, Aspect<ED>>,
-    FD extends Record<string, new <P extends EntityDict, Q extends Record<string, Aspect<P>>>() => Feature<P, Q>>>(
+    FD extends Record<string, new <P extends EntityDict & BaseEntityDict, Q extends Record<string, Aspect<P>>>() => Feature<P, Q>>>(
     storageSchema: StorageSchema<ED>,
     applicationId: string,
     featureClazzDict?: FD,
