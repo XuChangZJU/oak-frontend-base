@@ -27,6 +27,7 @@ class DebugRunningContext<ED extends EntityDict> extends Context<ED> implements 
 };
 
 export async function createAspectProxy<ED extends EntityDict, AD extends Record<string, Aspect<ED>>>(
+    cacheStore: CacheStore<ED>,
     storageSchema: StorageSchema<ED>,
     triggers: Array<Trigger<ED, keyof ED>>,
     applicationId: string,
@@ -40,7 +41,7 @@ export async function createAspectProxy<ED extends EntityDict, AD extends Record
         throw new Error('method not implemented');
     }
     else {
-        // todo initialData
+        // todo initialData        
         const executor = new TriggerExecutor<ED>();
         const debugStore = new DebugStore<ED>(executor, storageSchema);
         triggers.forEach(
@@ -102,9 +103,10 @@ export class FrontContext<ED extends EntityDict, AD extends Record<string, Aspec
         initialData?: {
             [T in keyof ED]?: Array<ED[T]['OpSchema']>;
         }) {
-        super(new CacheStore<ED>(storageSchema));
+        const cacheStore = new CacheStore<ED>(storageSchema); 
+        super(cacheStore);
 
-        const ap = createAspectProxy<ED, AD>(storageSchema, triggers, applicationId, getTokenValue, aspectDict, initialData);
+        const ap = createAspectProxy<ED, AD>(cacheStore, storageSchema, triggers, applicationId, getTokenValue, aspectDict, initialData);
         this.getAspectProxy = () => ap;
     }
 };
