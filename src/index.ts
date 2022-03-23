@@ -1,7 +1,7 @@
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { Trigger } from "oak-domain/lib/types/Trigger";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
-import { aspectDict as basicAspectDict } from 'oak-basic-business';
+import { aspectDict as basicAspectDict } from 'oak-general-business';
 
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { Feature } from './types/Feature';

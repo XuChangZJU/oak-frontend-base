@@ -1,7 +1,7 @@
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { Aspect } from 'oak-domain/lib/types/Aspect';
-import { aspectDict as basicAspectDict} from 'oak-basic-business';
+import { aspectDict as basicAspectDict} from 'oak-general-business';
 import { Feature } from '../types/Feature';
 import { FrontContext } from '../FrontContext';
 import { AspectProxy } from '../types/AspectProxy';
