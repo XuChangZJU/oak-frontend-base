@@ -1,13 +1,20 @@
 import { pull } from 'lodash';
 import { Aspect } from 'oak-domain/lib/types/Aspect';
-import { EntityDict } from 'oak-domain/lib/types/entity';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
+import { aspectDict as basicAspectDict} from 'oak-basic-business';
 import { FrontContext } from '../FrontContext';
+import { AspectProxy } from './AspectProxy';
 
 export abstract class Feature<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> {
     private callbackSet: Array<() => void>;
-    constructor() {
+    protected aspectProxy: AspectProxy<ED, AD & typeof basicAspectDict>;
+    protected context: FrontContext<ED>;
+
+    constructor(context: FrontContext<ED>, aspectProxy: AspectProxy<ED, AD & typeof basicAspectDict>) {
         this.callbackSet = [];
+        this.context = context;
+        this.aspectProxy = aspectProxy;
     }
 
     public subscribe(callback: () => void): () => void {
@@ -23,7 +30,5 @@ export abstract class Feature<ED extends EntityDict & BaseEntityDict, AD extends
         );
     }
 
-    abstract get(context: FrontContext<ED, AD>, params?: any): Promise<any>;
-
-    abstract action(context: FrontContext<ED, AD>, type: string, payload?: any): Promise<any>;
+    abstract get(params?: any): Promise<any>;
 }

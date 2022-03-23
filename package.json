@@ -28,6 +28,7 @@
         "oak-domain": "file:../oak-domain",
         "oak-memory-tree-store": "file:../oak-memory-tree-store",
         "oak-trigger-executor": "file:../oak-trigger-executor",
+        "oak-basic-business": "file:../oak-basic-business",
         "ts-node": "^9.1.1",
         "typescript": "^4.5.2"
     },

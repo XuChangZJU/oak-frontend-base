@@ -1,87 +1,147 @@
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { Trigger } from "oak-domain/lib/types/Trigger";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
+import { aspectDict as basicAspectDict } from 'oak-basic-business';
 
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { Feature } from './types/Feature';
 
-import { Token } from './features/token';
-import { assign } from 'lodash';
+import { Token as FeatureToken } from './features/token';
+import { assign, keys, mapValues } from 'lodash';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { FrontContext } from './FrontContext';
+import { RunningContext } from "oak-domain/lib/types/Context";
+import { DebugStore, Context } from 'oak-debug-store';
+import { Schema as Application } from "oak-domain/lib/base-domain/Application/Schema";
+import { Schema as Token } from 'oak-domain/lib/base-domain/Token/Schema';
+import { TriggerExecutor } from "oak-trigger-executor";
+import { AspectProxy, InferAspect } from './types/AspectProxy';
+import { CacheStore } from './dataStore/CacheStore';
 
 
-function populateFeatures<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>, FD extends Record<string, new <P extends EntityDict & BaseEntityDict, Q extends Record<string, Aspect<P>>>() => Feature<P, Q>>>(featureClazzDict: FD)
-: {
-    [T in keyof FD]: InstanceType<FD[T]>;
-} {
+type NewFeatureClazz<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> = new <P extends EntityDict & BaseEntityDict, Q extends Record<string, Aspect<P>>>(ap: AspectProxy<ED, AD & typeof basicAspectDict>) => Feature<P, Q>
+
+function populateFeatures<
+    ED extends EntityDict & BaseEntityDict,
+    AD extends Record<string, Aspect<ED>>,
+    FD extends Record<string, NewFeatureClazz<ED, AD>>>(featureClazzDict: FD, aspectProxy: AspectProxy<ED, AD & typeof basicAspectDict>)
+    : {
+        [T in keyof FD]: InstanceType<FD[T]>;
+    } {
     const result = {};
     for (const k in featureClazzDict) {
         assign(result, {
-            [k]: new featureClazzDict[k]<ED, AD>(),
+            [k]: new featureClazzDict[k]<ED, AD>(aspectProxy),
         });
     }
 
     return result as any;
 }
 
-export async function initialize<ED extends EntityDict & BaseEntityDict,
-    AD extends Record<string, Aspect<ED>>,
-    FD extends Record<string, new <P extends EntityDict & BaseEntityDict, Q extends Record<string, Aspect<P>>>() => Feature<P, Q>>>(
+class DebugRunningContext<ED extends EntityDict> extends Context<ED> implements RunningContext<ED> {
+    getApplication: () => Application;
+    getToken: () => Token | undefined;
+
+    constructor(store: DebugStore<ED>, ga: () => Application, gt: () => Token | undefined) {
+        super(store);
+        this.getApplication = ga;
+        this.getToken = gt;
+    }
+};
+
+
+async function createAspectProxy<ED extends BaseEntityDict & EntityDict, AD extends Record<string, Aspect<ED>>>(
+    frontContext: FrontContext<ED>,
     storageSchema: StorageSchema<ED>,
+    triggers: Array<Trigger<ED, keyof ED>>,
     applicationId: string,
-    featureClazzDict?: FD,
-    triggers?: Array<Trigger<ED, keyof ED>>,
+    getTokenValue: () => string | undefined,
     aspectDict?: AD,
     initialData?: {
-        [T in keyof ED]? : Array<ED[T]['OpSchema']>;
-    }) {
+        [T in keyof ED]?: Array<ED[T]['OpSchema']>;
+    }): Promise<AspectProxy<ED, AD & typeof basicAspectDict>> {
+    if (process.env.NODE_ENV === 'production') {
+        // todo 发请求到后台获取数据
+        throw new Error('method not implemented');
+    }
+    else {
+        // todo initialData        
+        const executor = new TriggerExecutor<ED>();
+        const debugStore = new DebugStore<ED>(executor, storageSchema);
+        triggers.forEach(
+            (trigger) => debugStore.registerTrigger(trigger)
+        );
+        const context = new Context(debugStore);
 
-    const token = new Token<ED, AD>();
+        const { result: [application] } = await debugStore.select('application', {
+            data: {
+                id: 1,
+                systemId: 1,
+                system: {
+                    id: 1,
+                },
+            },
+            filter: {
+                id: applicationId,
+            }
+        }, context);
+        const getApplication = () => application as Application;
+
+        const connectAspectToDebugStore = async (aspect: Aspect<ED>) => {
+            const context2 = new Context(debugStore);
+
+            const tokenValue = getTokenValue();
+            let token: Token | undefined;
+            if (tokenValue) {
+                const { result } = await debugStore.select('token', {
+                    data: {
+                        id: 1,
+                        userId: 1,
+                        playerId: 1,
+                    },
+                    filter: {
+                        id: tokenValue,
+                    }
+                }, context2);
+                token = result[0] as Token;
+                // todo 判断 token的合法性
+            }
+            const getToken = () => token;
+            const runningContext = new DebugRunningContext(debugStore, getApplication, getToken);
+            const result = (params: Parameters<typeof aspect>[0]) => aspect(params, runningContext);
+
+            frontContext.rowStore.sync(runningContext.opRecords, frontContext);
+            return result;
+        };
+
+        const aspectDict2 = assign({}, basicAspectDict, aspectDict);
+        const aspectProxy = mapValues(aspectDict2, ele => connectAspectToDebugStore(ele));
+
+        return aspectProxy as any;
+    }
+}
+
+export async function initialize<ED extends EntityDict & BaseEntityDict,
+    AD extends Record<string, Aspect<ED>>,
+    FD extends Record<string, NewFeatureClazz<ED, AD>>>(
+        storageSchema: StorageSchema<ED>,
+        applicationId: string,
+        triggers?: Array<Trigger<ED, keyof ED>>,
+        aspectDict?: AD,
+        initialData?: {
+            [T in keyof ED]?: Array<ED[T]['OpSchema']>;
+        }) {
+
+    /**
+     * token这个feature的aspectProxy需要后注入，属于特例
+     */
+    const token = new FeatureToken<ED, AD>({} as any);
     // todo default triggers
-    const frontContext = new FrontContext<ED, AD>(storageSchema, triggers!, applicationId, () => token.getTokenValue(), aspectDict, initialData);    
+    const cacheStore = new CacheStore<ED>(storageSchema);
+    const frontContext = new FrontContext<ED>(cacheStore);
+    const aspectProxy = await createAspectProxy(frontContext, storageSchema, triggers!, applicationId, () => token.getTokenValue(), aspectDict, initialData);
 
     const featureDict = {
-        token: Token,
-    };
-    function ppf() {
-        return populateFeatures<ED, AD, FD>(featureClazzDict!);
-    }
-    if (featureClazzDict) {
-        assign(featureDict, ppf());
-    }
-
-    const featureDict2 = featureDict as typeof featureDict & ReturnType<typeof ppf>;
-
-    const subscribe = <F extends keyof typeof featureDict | keyof FD>(features: F[], callback: () => void) => {
-        const unsubscribes = features.map(
-            (f) => {
-                const feature = featureDict2[f];
-                return feature.subscribe(callback);
-            }
-        );
-        return () => {
-            unsubscribes.forEach(
-                ele => ele()
-            );
-        };
-    };
-
-    const getFeature = <F extends keyof typeof featureDict | keyof FD>(f: F, params?: Parameters<InstanceType<FD[F]>['get']>[1]): ReturnType<InstanceType<FD[F]>['get']> => {
-        // const context = new FrontContext<ED, typeof aspectDict2>(store, aspectProxy) as any; 
-        const feature = featureDict2[f];
-        return feature.get(frontContext as any, params) as any; // 这里有个类型的转换暂时写不出来，因为populateFeatures没法传递generic types在返回值里
-    };
-
-    const actionFeature = <F extends keyof typeof featureDict | keyof FD>(f: F, t: Parameters<InstanceType<FD[F]>['action']>[1], p?: Parameters<InstanceType<FD[F]>['action']>[2]): ReturnType<InstanceType<FD[F]>['action']> => {
-        // const context = new FrontContext<ED, typeof aspectDict2>(store, aspectProxy) as any;        
-        const feature = featureDict2[f];
-        return feature.action(frontContext as any, t, p) as any;
-    };
-
-    return {
-        subscribe,
-        getFeature,
-        actionFeature,
+        token,
     };
 }
