@@ -20,6 +20,7 @@
         "@types/node": "^14.14.25",
         "@types/react": "^17.0.2",
         "@types/uuid": "^8.3.0",
+        "app-domain": "file:test/app-domain",
         "assert": "^2.0.0",
         "cross-env": "^7.0.2",
         "fs-extra": "^10.0.0",
@@ -33,9 +34,8 @@
         "typescript": "^4.5.2"
     },
     "scripts": {
-        "postinstall": "npm link oak-domain oak-memory-tree-store oak-trigger-executor oak-debug-store",
         "build": "tsc",
-        "test": "ts-node ./src/features/token.ts"
+        "make-domain": "ts-node ./test/build-test-domain.ts"        
     },
     "main": "src/index"
 }

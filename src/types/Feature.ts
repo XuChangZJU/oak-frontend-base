@@ -7,28 +7,22 @@ import { FrontContext } from '../FrontContext';
 import { AspectProxy } from './AspectProxy';
 
 export abstract class Feature<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> {
-    private callbackSet: Array<() => void>;
-    protected aspectProxy: AspectProxy<ED, AD & typeof basicAspectDict>;
-    protected context: FrontContext<ED>;
+    private aspectProxy?: AspectProxy<ED, AD & typeof basicAspectDict>;
+    private context?: FrontContext<ED>;
 
-    constructor(context: FrontContext<ED>, aspectProxy: AspectProxy<ED, AD & typeof basicAspectDict>) {
-        this.callbackSet = [];
-        this.context = context;
+    protected getAspectProxy() {
+        return this.aspectProxy!;
+    }
+
+    setAspectProxy(aspectProxy: AspectProxy<ED, AD & typeof basicAspectDict>) {
         this.aspectProxy = aspectProxy;
     }
 
-    public subscribe(callback: () => void): () => void {
-        this.callbackSet.push(callback);
-        return () => {
-            pull(this.callbackSet, callback);
-        };
+    protected getContext() {
+        return this.context!;
     }
 
-    protected notify() {
-        this.callbackSet.forEach(
-            ele => ele()
-        );
+    setFrontContext(context: FrontContext<ED>)  {
+        this.context = context;
     }
-
-    abstract get(params?: any): Promise<any>;
 }
