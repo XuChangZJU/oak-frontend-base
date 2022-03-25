@@ -14,4 +14,5 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, AD ex
 }): Promise<{
     subscribe: (callback: () => void) => () => void;
     action: <F extends keyof FeatureActions<ED, AD> | keyof FAD, M extends keyof (FeatureActions<ED, AD> & FAD)[F]>(name: F, method: M, ...params: Parameters<(FeatureActions<ED, AD> & FAD)[F][M]>) => Promise<ReturnType<(FeatureActions<ED, AD> & FAD)[F][M]>>;
+    features: BasicFeatures<ED, AD> & FD;
 }>;

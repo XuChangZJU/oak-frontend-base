@@ -6,7 +6,7 @@ import { aspectDict as basicAspectDict} from 'oak-general-business';
 import { FrontContext } from '../FrontContext';
 import { AspectProxy } from './AspectProxy';
 
-export abstract class Feature<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> {
+export abstract class Feature<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> {
     private aspectProxy?: AspectProxy<ED, AD & typeof basicAspectDict>;
     private context?: FrontContext<ED>;
 

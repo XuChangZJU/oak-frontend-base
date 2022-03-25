@@ -185,5 +185,6 @@ export async function initialize<
     return {
         subscribe,
         action,
+        features,
     };
 }

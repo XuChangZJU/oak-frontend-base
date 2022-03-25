@@ -2,7 +2,7 @@ import { EntityDict, OpRecord } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { Feature } from '../types/Feature';
-export declare class Cache<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
+export declare class Cache<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
     get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): Promise<Partial<ED[T]["Schema"] & {
         $expr?: any;
         $expr1?: any;
@@ -26,8 +26,8 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, AD extends Re
         $expr19?: any;
         $expr20?: any;
     }>[]>;
-    protected refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): Promise<void>;
-    protected sync(opRecords: OpRecord<ED>[]): Promise<void>;
+    refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): Promise<import("oak-domain/lib/types/Entity").OperationResult>;
+    sync(opRecords: OpRecord<ED>[]): Promise<void>;
 }
 export declare type Action<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> = {
     refresh: Cache<ED, AD>['refresh'];

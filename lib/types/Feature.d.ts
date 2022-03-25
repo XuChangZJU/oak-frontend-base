@@ -1,10 +1,9 @@
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { aspectDict as basicAspectDict } from 'oak-general-business';
 import { FrontContext } from '../FrontContext';
 import { AspectProxy } from './AspectProxy';
-export declare abstract class Feature<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> {
+export declare abstract class Feature<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> {
     private aspectProxy?;
     private context?;
     protected getAspectProxy(): NonNullable<AspectProxy<ED, AD & {
