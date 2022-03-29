@@ -6,7 +6,7 @@ import { aspectDict as basicAspectDict } from 'oak-general-business';
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { Feature } from './types/Feature';
 
-import { initialize as createBasicFeatures, Actions as FeatureActions, BasicFeatures } from './features/index';
+import { initialize as createBasicFeatures, BasicFeatures } from './features/index';
 import { assign, intersection, keys, mapValues, pull } from 'lodash';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { FrontContext } from './FrontContext';
@@ -22,8 +22,8 @@ class DebugRunningContext<ED extends EntityDict> extends Context<ED> implements 
     getApplication: () => Application;
     getToken: () => Token | undefined;
 
-    constructor(store: DebugStore<ED>, ga: () => Application, gt: () => Token | undefined) {
-        super(store);
+    constructor(store: DebugStore<ED>, getRandomNumber: (length: number) => Promise<Uint8Array>, ga: () => Application, gt: () => Token | undefined) {
+        super(store, getRandomNumber);
         this.getApplication = ga;
         this.getToken = gt;
     }
@@ -32,11 +32,12 @@ class DebugRunningContext<ED extends EntityDict> extends Context<ED> implements 
 async function createAspectProxy<ED extends BaseEntityDict & EntityDict,
     AD extends Record<string, Aspect<ED>>,
     FD extends Record<string, Feature<ED, AD>>>(
-        frontContext: FrontContext<ED>,
+        cacheStore: CacheStore<ED>,
         storageSchema: StorageSchema<ED>,
         triggers: Array<Trigger<ED, keyof ED>>,
         applicationId: string,
         features: BasicFeatures<ED, AD> & FD,
+        getRandomNumber: (length: number) => Promise<Uint8Array>,
         aspectDict?: AD,
         initialData?: {
             [T in keyof ED]?: Array<ED[T]['OpSchema']>;
@@ -52,7 +53,7 @@ async function createAspectProxy<ED extends BaseEntityDict & EntityDict,
         triggers.forEach(
             (trigger) => debugStore.registerTrigger(trigger)
         );
-        const context = new Context(debugStore);
+        const context = new Context(debugStore, getRandomNumber);
 
         const { result: [application] } = await debugStore.select('application', {
             data: {
@@ -68,31 +69,34 @@ async function createAspectProxy<ED extends BaseEntityDict & EntityDict,
         }, context);
         const getApplication = () => application as Application;
 
-        const connectAspectToDebugStore = async (aspect: Aspect<ED>) => {
-            const context2 = new Context(debugStore);
+        const connectAspectToDebugStore = (aspect: Aspect<ED>): (p: Parameters<typeof aspect>[0], frontContext: FrontContext<ED>) => ReturnType<typeof aspect>  => {
+            return async (params: Parameters<typeof aspect>[0], frontContext: FrontContext<ED>) => {
+                const context2 = new Context(debugStore, getRandomNumber);
+    
+                const tokenValue = await features.token.get(frontContext as any, 'value') as string;
+                let token: Token | undefined;
+                if (tokenValue) {
+                    const { result } = await debugStore.select('token', {
+                        data: {
+                            id: 1,
+                            userId: 1,
+                            playerId: 1,
+                        },
+                        filter: {
+                            id: tokenValue,
+                        }
+                    }, context2);
+                    token = result[0] as Token;
+                    // todo 判断 token的合法性
+                }
+                const getToken = () => token;
 
-            const tokenValue = features.token.getValue();
-            let token: Token | undefined;
-            if (tokenValue) {                
-                const { result } = await debugStore.select('token', {
-                    data: {
-                        id: 1,
-                        userId: 1,
-                        playerId: 1,
-                    },
-                    filter: {
-                        id: tokenValue,
-                    }
-                }, context2);
-                token = result[0] as Token;
-                // todo 判断 token的合法性
+                const runningContext = new DebugRunningContext(debugStore, getRandomNumber, getApplication, getToken)
+                const result = aspect(params, runningContext);
+
+                cacheStore.sync(runningContext.opRecords, frontContext);
+                return result;
             }
-            const getToken = () => token;
-            const runningContext = new DebugRunningContext(debugStore, getApplication, getToken);
-            const result = (params: Parameters<typeof aspect>[0]) => aspect(params, runningContext);
-
-            frontContext.rowStore.sync(runningContext.opRecords, frontContext);
-            return result;
         };
 
         const aspectDict2 = assign({}, basicAspectDict, aspectDict);
@@ -102,24 +106,16 @@ async function createAspectProxy<ED extends BaseEntityDict & EntityDict,
     }
 }
 
-export async function initialize<
-    ED extends EntityDict & BaseEntityDict,
-    AD extends Record<string, Aspect<ED>>,
-    FD extends Record<string, Feature<ED, AD>>,
-    FAD extends {
-        [F in keyof FD]: {
-            [M: string]: (...params: any) => any;
-        };
-    }>(
-        storageSchema: StorageSchema<ED>,
-        applicationId: string,
-        createFeatures: (basicFeatures: BasicFeatures<ED, AD>) => FD,
-        triggers?: Array<Trigger<ED, keyof ED>>,
-        aspectDict?: AD,
-        initialData?: {
-            [T in keyof ED]?: Array<ED[T]['OpSchema']>;
-        }) {
-
+export async function initialize<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>, FD extends Record<string, Feature<ED, AD>>>(
+    storageSchema: StorageSchema<ED>,
+    applicationId: string,
+    createFeatures: (basicFeatures: BasicFeatures<ED, AD>) => FD,
+    getRandomNumber: (length: number) => Promise<Uint8Array>,
+    triggers?: Array<Trigger<ED, keyof ED>>,
+    aspectDict?: AD,
+    initialData?: {
+        [T in keyof ED]?: Array<ED[T]['OpSchema']>;
+    }) {
     const basicFeatures = createBasicFeatures<ED, AD>();
     const userDefinedfeatures = createFeatures(basicFeatures);
 
@@ -130,15 +126,38 @@ export async function initialize<
     const features = assign(basicFeatures, userDefinedfeatures);
 
     const cacheStore = new CacheStore<ED>(storageSchema);
-    const frontContext = new FrontContext<ED>(cacheStore);
 
     // todo default triggers
-    const aspectProxy = await createAspectProxy<ED, AD, FD>(frontContext, storageSchema, triggers!, applicationId, features, aspectDict, initialData);
+    const aspectProxy = await createAspectProxy<ED, AD, FD>(cacheStore, storageSchema, triggers || [], 
+        applicationId, features, getRandomNumber, aspectDict, initialData);
 
     keys(features).forEach(
         ele => {
             features[ele].setAspectProxy(aspectProxy);
-            features[ele].setFrontContext(frontContext);
+            // 为action注入逻辑，在顶层的action调用返回时，回调subscribe相关函数
+            const originActionFn = features[ele]['action'];
+            features[ele]['action'] = (context, params) => {
+                const topAction = context.topAction;
+                if (context.topAction) {
+                    context.topAction = false;
+                }
+                let result;
+                try {
+                    result = originActionFn(context, params);
+                }
+                catch(e) {
+                    context.topAction = topAction;
+                    throw e;
+                }
+
+                context.topAction = topAction;
+                if (topAction) {
+                    callbacks.forEach(
+                        ele => ele()
+                    );
+                }
+                return result;
+            }
         }
     );
 
@@ -147,44 +166,20 @@ export async function initialize<
     const subscribe = (callback: () => void) => {
         callbacks.push(callback);
         return () => {
-            pull(callbacks, callback);
+            pull(callbacks, callback); 
         };
-    };
-
-    /**
-     * 这里的封装不够优雅，以后再优化
-     * @param name 
-     * @param method 
-     * @param params 
-     * @returns 
-     */
-    const action = async <F extends keyof (FeatureActions<ED, AD> & FAD),
-        M extends keyof ((FeatureActions<ED, AD> & FAD)[F])>(
-            name: F,
-            method: M,
-            ...params: Parameters<(FeatureActions<ED, AD> & FAD)[F][M]>): Promise<ReturnType<(FeatureActions<ED, AD> & FAD)[F][M]>> => {
-        await frontContext.begin();
-        try {
-            const feature = features[name as any] as any;
-            const result = feature[method](...(params as any));
-            frontContext.commit();
-            callbacks.forEach(
-                ele => ele()
-            );            
-            return result;
-        }
-        catch(err) {
-            frontContext.rollback();
-            callbacks.forEach(
-                ele => ele()
-            );
-            throw err;
-        }
     };
 
     return {
         subscribe,
-        action,
         features,
+        createContext: () => new FrontContext<ED>(cacheStore, getRandomNumber),
     };
 }
+
+
+export * from './features/node';
+export * from './FrontContext';
+export * from './types/Feature';
+export * from './features/cache';
+export * from './features';

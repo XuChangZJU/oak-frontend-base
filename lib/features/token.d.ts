@@ -1,13 +1,20 @@
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { aspectDict as basicAspectDict } from 'oak-general-business';
+import { FrontContext } from '../FrontContext';
 import { Feature } from '../types/Feature';
 import { Cache } from './cache';
+declare type LoginByPassword = {
+    type: 'lbp';
+    payload: {
+        mobile: string;
+        password: string;
+    };
+};
 export declare class Token extends Feature<BaseEntityDict, typeof basicAspectDict> {
     tokenValue?: string;
     cache: Cache<BaseEntityDict, typeof basicAspectDict>;
     constructor(cache: Cache<BaseEntityDict, typeof basicAspectDict>);
-    getValue(): string | undefined;
-    get(): Promise<Partial<{
+    get(context: FrontContext<BaseEntityDict>, type: 'value' | 'token'): Promise<string | Partial<{
         id: string;
         $$createAt$$: import("oak-domain/lib/types/DataType").Datetime;
         $$updateAt$$: import("oak-domain/lib/types/DataType").Datetime;
@@ -66,9 +73,7 @@ export declare class Token extends Feature<BaseEntityDict, typeof basicAspectDic
         $expr18?: any;
         $expr19?: any;
         $expr20?: any;
-    }> | null>;
-    protected loginByPassword(mobile: string, password: string): Promise<void>;
+    }> | undefined>;
+    action(context: FrontContext<BaseEntityDict>, action: LoginByPassword): Promise<void>;
 }
-export declare type Action = {
-    loginByPassword: Token['loginByPassword'];
-};
+export {};

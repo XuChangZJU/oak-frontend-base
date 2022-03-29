@@ -1,9 +1,31 @@
 import { EntityDict, OpRecord } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { Feature } from '../types/Feature';
+import { FrontContext } from '../FrontContext';
+declare type RefreshAction<ED extends EntityDict, T extends keyof ED> = {
+    type: 'refresh';
+    payload: {
+        entity: T;
+        selection: ED[T]['Selection'];
+        params?: object;
+    };
+};
+declare type SyncAction<ED extends EntityDict> = {
+    type: 'sync';
+    payload: OpRecord<ED>[];
+};
 export declare class Cache<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
-    get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): Promise<Partial<ED[T]["Schema"] & {
+    action<T extends keyof ED>(context: FrontContext<ED>, action: RefreshAction<ED, T> | SyncAction<ED>): Promise<void> | ReturnType<(AD & {
+        loginByPassword: typeof import("oak-general-business/src/aspects/token").loginByPassword;
+        loginMp: typeof import("oak-general-business/src/aspects/token").loginMp;
+        operate: typeof import("oak-general-business/src/aspects/crud").operate;
+        select: typeof import("oak-general-business/src/aspects/crud").select;
+    })["operate"]>;
+    get<T extends keyof ED>(context: FrontContext<ED>, options: {
+        entity: T;
+        selection: ED[T]['Selection'];
+        params?: object;
+    }): Promise<Partial<ED[T]["Schema"] & {
         $expr?: any;
         $expr1?: any;
         $expr2?: any;
@@ -26,10 +48,5 @@ export declare class Cache<ED extends EntityDict, AD extends Record<string, Aspe
         $expr19?: any;
         $expr20?: any;
     }>[]>;
-    refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): Promise<import("oak-domain/lib/types/Entity").OperationResult>;
-    sync(opRecords: OpRecord<ED>[]): Promise<void>;
 }
-export declare type Action<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> = {
-    refresh: Cache<ED, AD>['refresh'];
-    sync: Cache<ED, AD>['sync'];
-};
+export {};

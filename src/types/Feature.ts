@@ -6,9 +6,17 @@ import { aspectDict as basicAspectDict} from 'oak-general-business';
 import { FrontContext } from '../FrontContext';
 import { AspectProxy } from './AspectProxy';
 
+type Action = {
+    type: string;
+    payload?: object;
+};
+
 export abstract class Feature<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> {
-    private aspectProxy?: AspectProxy<ED, AD & typeof basicAspectDict>;
-    private context?: FrontContext<ED>;
+    private aspectProxy?: AspectProxy<ED, AD & typeof basicAspectDict>;    
+
+    abstract get(context: FrontContext<ED>, params: any): any;
+
+    abstract action(context: FrontContext<ED>, action: Action): any;
 
     protected getAspectProxy() {
         return this.aspectProxy!;
@@ -16,13 +24,5 @@ export abstract class Feature<ED extends EntityDict, AD extends Record<string, A
 
     setAspectProxy(aspectProxy: AspectProxy<ED, AD & typeof basicAspectDict>) {
         this.aspectProxy = aspectProxy;
-    }
-
-    protected getContext() {
-        return this.context!;
-    }
-
-    setFrontContext(context: FrontContext<ED>)  {
-        this.context = context;
     }
 }

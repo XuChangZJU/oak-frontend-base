@@ -3,23 +3,38 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityD
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { Feature } from '../types/Feature';
 import { assign } from 'lodash';
+import { FrontContext } from '../FrontContext';
 
-export class Cache<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
-    async get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object) {
-        const { result } = await this.getContext().rowStore.select(entity, selection, this.getContext(), params);
-        return result;
-    }
+type RefreshAction<ED extends EntityDict, T extends keyof ED> = {
+    type: 'refresh';
+    payload: {
+        entity: T, selection: ED[T]['Selection'];
+        params?: object;
+    };
+};
 
-    async refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object) {
-        return this.getAspectProxy().operate({ entity: entity as any, operation: assign({}, selection, { action: 'select' }) as DeduceSelection<ED[T]['Schema']>, params });
-    }
-
-    async sync(opRecords: OpRecord<ED>[]) {
-        await this.getContext().rowStore.sync(opRecords, this.getContext());
-    }
+type SyncAction<ED extends EntityDict> = {
+    type: 'sync';
+    payload: OpRecord<ED>[];
 }
 
-export type Action<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> = {
-    refresh: Cache<ED, AD>['refresh'],
-    sync: Cache<ED, AD>['sync'],
-};
+export class Cache<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
+    action<T extends keyof ED>(context: FrontContext<ED>, action: RefreshAction<ED, T> | SyncAction<ED>) {
+        const { type, payload } = action;
+        
+        if (type === 'refresh') {
+            const { entity, selection, params } = payload as RefreshAction<ED, T>['payload'];
+            return this.getAspectProxy().operate({
+                entity: entity as any, 
+                operation: assign({}, selection, { action: 'select' }) as DeduceSelection<ED[T]['Schema']>,
+                params,
+            }, context);
+        }
+        return context.rowStore.sync(payload as SyncAction<ED>['payload'], context);
+    }
+    async get<T extends keyof ED>(context: FrontContext<ED>, options: { entity: T, selection: ED[T]['Selection'], params?: object }) {
+        const { entity, selection, params } = options;
+        const { result } = await context.rowStore.select(entity, selection, context, params);
+        return result;
+    }
+}

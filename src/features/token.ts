@@ -1,12 +1,16 @@
-import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
-import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { aspectDict as basicAspectDict } from 'oak-general-business';
-import { Feature } from '../types/Feature';
 import { FrontContext } from '../FrontContext';
-import { AspectProxy } from '../types/AspectProxy';
+import { Feature } from '../types/Feature';
 import { Cache } from './cache';
 
+type LoginByPassword = {
+    type: 'lbp';
+    payload: {
+        mobile: string;
+        password: string;
+    };
+};
 
 export class Token extends Feature<BaseEntityDict, typeof basicAspectDict> {
     tokenValue?: string;
@@ -14,18 +18,19 @@ export class Token extends Feature<BaseEntityDict, typeof basicAspectDict> {
 
     constructor(cache: Cache<BaseEntityDict, typeof basicAspectDict>) {
         super();
-        this.cache = cache;        
+        this.cache = cache;
     }
-
-    getValue() {
-        return this.tokenValue;
-    }
-
-    async get() {
-        if (!this.tokenValue) {
-            return null;
+    
+    async get(context: FrontContext<BaseEntityDict>, type: 'value' | 'token') {
+        if (type === 'value') {
+            return this.tokenValue;
         }
-        const [token] = await this.cache.get('token',{
+        if (!this.tokenValue) {
+            return undefined;
+        }
+        const [token] = await this.cache.get(context, {
+            entity: 'token',
+            selection: {
             data: {
                 id: 1,
                 userId: 1,
@@ -44,16 +49,16 @@ export class Token extends Feature<BaseEntityDict, typeof basicAspectDict> {
             filter: {
                 id: this.tokenValue,
             },
-        });
+        }});
         return token;
     }
 
-    protected async loginByPassword(mobile: string, password: string) {
-        const token = await this.getAspectProxy().loginByPassword({ mobile, password });
-        this.tokenValue = token;
+    async action(context: FrontContext<BaseEntityDict>, action: LoginByPassword) {
+        const { type, payload } = action;
+        if (type === 'lbp') {
+            this.tokenValue = await this.getAspectProxy().loginByPassword(payload, context);
+            return;
+        }
+        throw new Error('method not implemented');
     }
 }
-
-export type Action = {
-    loginByPassword: Token['loginByPassword'];
-};

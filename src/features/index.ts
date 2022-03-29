@@ -2,30 +2,28 @@ import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 
-import * as Cache from './cache';
-import * as Location from './location';
-import * as Token from './token';
+import { Cache } from './cache';
+import { Location } from './location';
+import { Token } from './token';
+import { RunningNode } from './node';
 
 export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> (): BasicFeatures<ED, AD> {
-    const cache = new Cache.Cache<ED, AD>();
-    const location = new Location.Location();
-    const token = new Token.Token(cache as any);
+    const cache = new Cache<ED, AD>();
+    const location = new Location();
+    const token = new Token(cache as any);
+    const runningNode = new RunningNode<ED, AD>(cache);
 
     return {
         cache,
         location,
         token,
+        runningNode,
     };
 }
 
 export type BasicFeatures<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> = {
-    cache: Cache.Cache<ED, AD>;
-    location: Location.Location;
-    token: Token.Token;
-}
-
-export type Actions<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>>  = {
-    cache: Cache.Action<ED, AD>;
-    location: Location.Action;
-    token: Token.Action;
+    cache: Cache<ED, AD>;
+    location: Location;
+    token: Token;
+    runningNode: RunningNode<ED, AD>;
 };
