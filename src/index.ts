@@ -22,8 +22,8 @@ class DebugRunningContext<ED extends EntityDict> extends Context<ED> implements 
     getApplication: () => Application;
     getToken: () => Token | undefined;
 
-    constructor(store: DebugStore<ED>, getRandomNumber: (length: number) => Promise<Uint8Array>, ga: () => Application, gt: () => Token | undefined) {
-        super(store, getRandomNumber);
+    constructor(store: DebugStore<ED>, ga: () => Application, gt: () => Token | undefined) {
+        super(store);
         this.getApplication = ga;
         this.getToken = gt;
     }
@@ -37,7 +37,6 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
         triggers: Array<Trigger<ED, keyof ED>>,
         applicationId: string,
         features: BasicFeatures<ED, AD> & FD,
-        getRandomNumber: (length: number) => Promise<Uint8Array>,
         aspectDict?: AD,
         initialData?: {
             [T in keyof ED]?: Array<ED[T]['OpSchema']>;
@@ -56,7 +55,7 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
 
         const connectAspectToDebugStore = (aspect: Aspect<ED>): (p: Parameters<typeof aspect>[0], frontContext: FrontContext<ED>) => ReturnType<typeof aspect>  => {
             return async (params: Parameters<typeof aspect>[0], frontContext: FrontContext<ED>) => {
-                const context2 = new Context(debugStore, getRandomNumber);
+                const context2 = new Context(debugStore);
     
                 const { result: [application] } = await debugStore.select('application', {
                     data: {
@@ -89,7 +88,7 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
                 }
                 const getToken = () => token;
 
-                const runningContext = new DebugRunningContext(debugStore, getRandomNumber, getApplication, getToken)
+                const runningContext = new DebugRunningContext(debugStore, getApplication, getToken)
                 const result = aspect(params, runningContext);
 
                 cacheStore.sync(runningContext.opRecords, frontContext);
@@ -108,7 +107,6 @@ export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Re
     storageSchema: StorageSchema<ED>,
     applicationId: string,
     createFeatures: (basicFeatures: BasicFeatures<ED, AD>) => FD,
-    getRandomNumber: (length: number) => Promise<Uint8Array>,
     triggers?: Array<Trigger<ED, keyof ED>>,
     aspectDict?: AD,
     initialData?: {
@@ -127,7 +125,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Re
 
     // todo default triggers
     const aspectProxy = createAspectProxy<ED, AD, FD>(cacheStore, storageSchema, triggers || [], 
-        applicationId, features, getRandomNumber, aspectDict, initialData);
+        applicationId, features, aspectDict, initialData);
 
     keys(features).forEach(
         ele => {
@@ -171,7 +169,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Re
     return {
         subscribe,
         features,
-        createContext: () => new FrontContext<ED>(cacheStore, getRandomNumber),
+        createContext: () => new FrontContext<ED>(cacheStore),
     };
 }
 
