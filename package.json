@@ -4,7 +4,8 @@
     "description": "oak框架中前端与平台无关的逻辑部分",
     "dependencies": {
         "@reduxjs/toolkit": "^1.7.2",
-        "lodash": "^4.17.21"
+        "lodash": "^4.17.21",
+        "uuid": "^8.3.2"
     },
     "devDependencies": {
         "@babel/cli": "^7.12.13",
@@ -27,15 +28,15 @@
         "mocha": "^8.2.1",
         "oak-debug-store": "file:../oak-debug-store",
         "oak-domain": "file:../oak-domain",
+        "oak-general-business": "file:../oak-general-business",
         "oak-memory-tree-store": "file:../oak-memory-tree-store",
         "oak-trigger-executor": "file:../oak-trigger-executor",
-        "oak-general-business": "file:../oak-general-business",
         "ts-node": "^9.1.1",
         "typescript": "^4.5.2"
     },
     "scripts": {
         "build": "tsc",
-        "make-domain": "ts-node ./test/build-test-domain.ts"        
+        "make-domain": "ts-node ./test/build-test-domain.ts"
     },
     "main": "src/index"
 }

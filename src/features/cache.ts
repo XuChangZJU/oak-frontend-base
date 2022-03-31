@@ -1,4 +1,4 @@
-import { DeduceSelection, EntityDict, OpRecord } from 'oak-domain/lib/types/Entity';
+import { DeduceSelection, EntityDict, OperateParams, OpRecord } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { Feature } from '../types/Feature';
@@ -18,8 +18,17 @@ type SyncAction<ED extends EntityDict> = {
     payload: OpRecord<ED>[];
 }
 
+type OperateAction<ED extends EntityDict, T extends keyof ED> = {
+    type: 'operate';
+    payload: {
+        entity: T;
+        operation: ED[T]['Operation'];
+        params?: OperateParams;
+    };
+};
+
 export class Cache<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
-    action<T extends keyof ED>(context: FrontContext<ED>, action: RefreshAction<ED, T> | SyncAction<ED>) {
+    action<T extends keyof ED>(context: FrontContext<ED>, action: RefreshAction<ED, T> | SyncAction<ED> | OperateAction<ED, T>) {
         const { type, payload } = action;
         
         if (type === 'refresh') {
@@ -30,7 +39,11 @@ export class Cache<ED extends EntityDict, AD extends Record<string, Aspect<ED>>>
                 params,
             }, context);
         }
-        return context.rowStore.sync(payload as SyncAction<ED>['payload'], context);
+        else if (type === 'sync') {
+            return context.rowStore.sync(payload as SyncAction<ED>['payload'], context);
+        }
+        const { entity, operation, params } = payload as OperateAction<ED, T>['payload'];
+        return context.rowStore.operate(entity, operation, context, params);
     }
     async get<T extends keyof ED>(context: FrontContext<ED>, options: { entity: T, selection: ED[T]['Selection'], params?: object }) {
         const { entity, selection, params } = options;

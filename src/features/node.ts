@@ -1,9 +1,10 @@
-import { DeduceFilter, DeduceUpdateOperation, EntityDict, EntityShape, OperationResult, OpRecord, SelectionResult } from 'oak-domain/lib/types/Entity';
+import { DeduceFilter, DeduceUpdateOperation, EntityDict, EntityShape, FormCreateData, OperationResult, OpRecord, SelectionResult } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { combineFilters } from 'oak-domain/lib/schema/filter';
 import { Feature } from '../types/Feature';
 import { Cache } from './cache';
+import { v4 } from 'uuid';
 import assert from 'assert';
 import { FrontContext } from '../FrontContext';
 import { assign } from 'lodash';
@@ -62,7 +63,7 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
         this.sorter = sorter || [];
     }
 
-    
+
     addChild(path: number, node: Node<ED, AD, T>) {
         const { children } = this;
         children[path] = node;
@@ -76,7 +77,7 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
         this.indexFrom = 0;
         this.hasMore = ids.length === count;
     }
-    
+
     async getData(context: FrontContext<ED>, projection: ED[T]['Selection']['data']) {
         const { entity, ids } = this;
         if (ids) {
@@ -94,7 +95,7 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
             });
         }
     }
-    
+
     async nextPage() {
 
     }
@@ -120,7 +121,7 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
 
     async refresh(context: FrontContext<ED>) {
         const { entity, projection, id } = this;
-        assert (id);
+        assert(id);
         await super.doRefresh(context, { id });
     }
 
@@ -135,7 +136,7 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
         const { entity, id } = this;
         assert(id);
         const filter: Partial<AttrFilter<ED[T]["Schema"]>> = {
-            id,            
+            id,
         } as any;
         return (await this.cache.get(context, {
             entity,
@@ -160,7 +161,15 @@ type InitNodeAction<ED extends EntityDict, AD extends Record<string, Aspect<ED>>
         sorter?: ED[T]['Selection']['sorter'];
         append?: boolean
     },
-}
+};
+
+type SetValueAction<ED extends EntityDict, T extends keyof ED> = {
+    type: 'setValue',
+    payload: {
+        path: string;
+        value: any;
+    };
+};
 
 
 type GetData<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> = {
@@ -196,33 +205,50 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         }
     }
 
-    action<T extends keyof ED>(context: FrontContext<ED>, action: InitNodeAction<ED, AD, T>) {
+    async action<T extends keyof ED>(context: FrontContext<ED>, action: SetValueAction<ED, T>) {
         const { type, payload } = action;
         switch (type) {
-            case 'init': {
-                const { path, parent, entity, isList, id, projection, filters, sorter, append } = payload;
-                const node = isList ? new ListNode<ED, AD, T>(entity, this.cache, projection, parent, filters, sorter, append):
-                    new SingleNode<ED, AD, T>(entity, this.cache, projection, parent, id);
-                if (parent) {
-                    assert(path);
-                    const { addChild } = node;
-                    if (id) {
-                        assert(typeof path === 'string');
-                        (<SingleNode<ED, AD, T>>node).addChild(path, node);
-                    }
-                    else {
-                        assert(typeof path === 'number');
-                        (<ListNode<ED, AD, T>>node).addChild(path ,node);
-                    }
-                }
-                return node;
+            case 'setValue': {
+
             }
             default: {
                 break;
             }
         }
         throw new Error('Method not implemented.');
-    }    
-}
+    }
 
+    async init<T extends keyof ED>(context: FrontContext<ED>, params: InitNodeAction<ED, AD, T>['payload']) {
+        const { path, parent, entity, isList, id, projection, filters, sorter, append } = params;
+        let node: Node<ED, AD, T>;
+        if (isList) {
+            node = new ListNode<ED, AD, T>(entity, this.cache, projection, parent, filters, sorter, append);
+        }
+        else {
+            let id2: string = id || v4({ random: await getRandomValues(16) });
+            if (!id) {
+                // 如果!isList并且没有id，说明是create，在这里先插入cache
+                await context.rowStore.operate(entity, {                    
+                    action: 'create',
+                    data: {
+                        id: id2,
+                    } as FormCreateData<ED[T]['OpSchema']>,
+                }, context);
+            }
+            node = new SingleNode<ED, AD, T>(entity, this.cache, projection, parent, id2);
+        }
+        if (parent) {
+            assert(path);
+            if (typeof path === 'number') {
+                (<ListNode<ED, AD, T>>parent).addChild(path, node);
+            }
+            else {
+                assert(typeof path === 'string');
+                (<SingleNode<ED, AD, T>>parent).addChild(path, node);
+            }
+        }
+
+        return node;
+    }
+}
 

@@ -29,7 +29,7 @@ class DebugRunningContext<ED extends EntityDict> extends Context<ED> implements 
     }
 };
 
-async function createAspectProxy<ED extends BaseEntityDict & EntityDict,
+function createAspectProxy<ED extends BaseEntityDict & EntityDict,
     AD extends Record<string, Aspect<ED>>,
     FD extends Record<string, Feature<ED, AD>>>(
         cacheStore: CacheStore<ED>,
@@ -41,7 +41,7 @@ async function createAspectProxy<ED extends BaseEntityDict & EntityDict,
         aspectDict?: AD,
         initialData?: {
             [T in keyof ED]?: Array<ED[T]['OpSchema']>;
-        }): Promise<AspectProxy<ED, AD & typeof basicAspectDict>> {
+        }): AspectProxy<ED, AD & typeof basicAspectDict> {
     if (process.env.NODE_ENV === 'production') {
         // todo 发请求到后台获取数据
         throw new Error('method not implemented');
@@ -53,26 +53,24 @@ async function createAspectProxy<ED extends BaseEntityDict & EntityDict,
         triggers.forEach(
             (trigger) => debugStore.registerTrigger(trigger)
         );
-        const context = new Context(debugStore, getRandomNumber);
-
-        const { result: [application] } = await debugStore.select('application', {
-            data: {
-                id: 1,
-                systemId: 1,
-                system: {
-                    id: 1,
-                },
-            },
-            filter: {
-                id: applicationId,
-            }
-        }, context);
-        const getApplication = () => application as Application;
 
         const connectAspectToDebugStore = (aspect: Aspect<ED>): (p: Parameters<typeof aspect>[0], frontContext: FrontContext<ED>) => ReturnType<typeof aspect>  => {
             return async (params: Parameters<typeof aspect>[0], frontContext: FrontContext<ED>) => {
                 const context2 = new Context(debugStore, getRandomNumber);
     
+                const { result: [application] } = await debugStore.select('application', {
+                    data: {
+                        id: 1,
+                        systemId: 1,
+                        system: {
+                            id: 1,
+                        },
+                    },
+                    filter: {
+                        id: applicationId,
+                    }
+                }, context2);
+                const getApplication = () => application as Application;
                 const tokenValue = await features.token.get(frontContext as any, 'value') as string;
                 let token: Token | undefined;
                 if (tokenValue) {
@@ -106,7 +104,7 @@ async function createAspectProxy<ED extends BaseEntityDict & EntityDict,
     }
 }
 
-export async function initialize<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>, FD extends Record<string, Feature<ED, AD>>>(
+export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>, FD extends Record<string, Feature<ED, AD>>>(
     storageSchema: StorageSchema<ED>,
     applicationId: string,
     createFeatures: (basicFeatures: BasicFeatures<ED, AD>) => FD,
@@ -128,7 +126,7 @@ export async function initialize<ED extends EntityDict & BaseEntityDict, AD exte
     const cacheStore = new CacheStore<ED>(storageSchema);
 
     // todo default triggers
-    const aspectProxy = await createAspectProxy<ED, AD, FD>(cacheStore, storageSchema, triggers || [], 
+    const aspectProxy = createAspectProxy<ED, AD, FD>(cacheStore, storageSchema, triggers || [], 
         applicationId, features, getRandomNumber, aspectDict, initialData);
 
     keys(features).forEach(
@@ -143,7 +141,7 @@ export async function initialize<ED extends EntityDict & BaseEntityDict, AD exte
                 }
                 let result;
                 try {
-                    result = originActionFn(context, params);
+                    result = originActionFn.call(features[ele], context, params);
                 }
                 catch(e) {
                     context.topAction = topAction;
