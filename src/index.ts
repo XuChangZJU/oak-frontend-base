@@ -4,7 +4,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityD
 import { aspectDict as basicAspectDict } from 'oak-general-business';
 
 import { Aspect } from 'oak-domain/lib/types/Aspect';
-import { Feature } from './types/Feature';
+import { Feature, subscribe } from './types/Feature';
 
 import { initialize as createBasicFeatures, BasicFeatures } from './features/index';
 import { assign, intersection, keys, mapValues, pull } from 'lodash';
@@ -32,7 +32,7 @@ class DebugRunningContext<ED extends EntityDict> extends Context<ED> implements 
 function createAspectProxy<ED extends BaseEntityDict & EntityDict,
     AD extends Record<string, Aspect<ED>>,
     FD extends Record<string, Feature<ED, AD>>>(
-        cacheStore: CacheStore<ED>,
+        context: FrontContext<ED>,
         storageSchema: StorageSchema<ED>,
         triggers: Array<Trigger<ED, keyof ED>>,
         applicationId: string,
@@ -53,10 +53,10 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
             (trigger) => debugStore.registerTrigger(trigger)
         );
 
-        const connectAspectToDebugStore = (aspect: Aspect<ED>): (p: Parameters<typeof aspect>[0], frontContext: FrontContext<ED>) => ReturnType<typeof aspect>  => {
-            return async (params: Parameters<typeof aspect>[0], frontContext: FrontContext<ED>) => {
+        const connectAspectToDebugStore = (aspect: Aspect<ED>): (p: Parameters<typeof aspect>[0]) => ReturnType<typeof aspect> => {
+            return async (params: Parameters<typeof aspect>[0]) => {
                 const context2 = new Context(debugStore);
-    
+
                 const { result: [application] } = await debugStore.select('application', {
                     data: {
                         id: 1,
@@ -70,7 +70,7 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
                     }
                 }, context2);
                 const getApplication = () => application as Application;
-                const tokenValue = await features.token.get(frontContext as any, 'value') as string;
+                const tokenValue = await features.token.getValue();
                 let token: Token | undefined;
                 if (tokenValue) {
                     const { result } = await debugStore.select('token', {
@@ -91,7 +91,7 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
                 const runningContext = new DebugRunningContext(debugStore, getApplication, getToken)
                 const result = aspect(params, runningContext);
 
-                cacheStore.sync(runningContext.opRecords, frontContext);
+                context.rowStore.sync(runningContext.opRecords, context);
                 return result;
             }
         };
@@ -103,6 +103,7 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
     }
 }
 
+
 export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>, FD extends Record<string, Feature<ED, AD>>>(
     storageSchema: StorageSchema<ED>,
     applicationId: string,
@@ -113,6 +114,8 @@ export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Re
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     }) {
     const basicFeatures = createBasicFeatures<ED, AD>();
+    basicFeatures.runningNode.setStorageSchema(storageSchema);
+
     const userDefinedfeatures = createFeatures(basicFeatures);
 
     const intersect = intersection(keys(basicFeatures), keys(userDefinedfeatures));
@@ -122,60 +125,32 @@ export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Re
     const features = assign(basicFeatures, userDefinedfeatures);
 
     const cacheStore = new CacheStore<ED>(storageSchema);
+    const context = new FrontContext(cacheStore);
 
     // todo default triggers
-    const aspectProxy = createAspectProxy<ED, AD, FD>(cacheStore, storageSchema, triggers || [], 
+    const aspectProxy = createAspectProxy<ED, AD, FD>(context, storageSchema, triggers || [],
         applicationId, features, aspectDict, initialData);
 
     keys(features).forEach(
         ele => {
             features[ele].setAspectProxy(aspectProxy);
-            // 为action注入逻辑，在顶层的action调用返回时，回调subscribe相关函数
-            const originActionFn = features[ele]['action'];
-            features[ele]['action'] = (context, params) => {
-                const topAction = context.topAction;
-                if (context.topAction) {
-                    context.topAction = false;
-                }
-                let result;
-                try {
-                    result = originActionFn.call(features[ele], context, params);
-                }
-                catch(e) {
-                    context.topAction = topAction;
-                    throw e;
-                }
-
-                context.topAction = topAction;
-                if (topAction) {
-                    callbacks.forEach(
-                        ele => ele()
-                    );
-                }
-                return result;
-            }
+            features[ele].setContext(context);
         }
     );
 
-    const callbacks: Array<() => void> = [];
-
-    const subscribe = (callback: () => void) => {
-        callbacks.push(callback);
-        return () => {
-            pull(callbacks, callback); 
-        };
-    };
 
     return {
         subscribe,
         features,
-        createContext: () => new FrontContext<ED>(cacheStore),
+        getContext: () => context as FrontContext<ED>,
     };
 }
+
 
 
 export * from './features/node';
 export * from './FrontContext';
 export * from './types/Feature';
+export * from './types/Pagination';
 export * from './features/cache';
 export * from './features';
