@@ -2,7 +2,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { DebugStore } from 'oak-debug-store';
 import { EntityDef, Selection, SelectionResult } from "oak-domain/lib/types/Entity";
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { Trigger, TriggerEntityShape } from "oak-domain/lib/types/Trigger";
 import { TriggerExecutor } from 'oak-trigger-executor';
 
 

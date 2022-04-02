@@ -1,8 +1,9 @@
+import { set } from 'lodash';
 import { DeduceFilter, DeduceUpdateOperation, EntityDict, EntityShape, FormCreateData, OperationResult, OpRecord, SelectionResult } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { combineFilters } from 'oak-domain/lib/schema/filter';
-import { Feature } from '../types/Feature';
+import { Action, Feature } from '../types/Feature';
 import { Cache } from './cache';
 import { v4 } from 'uuid';
 import assert from 'assert';
@@ -15,11 +16,11 @@ import { Pagination } from '../types/Pagination';
 export class Node<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> {
     protected entity: T;
     protected fullPath: string;
-    protected value: Partial<ED[T]['OpSchema']>;
     protected schema: StorageSchema<ED>;
     protected projection?: ED[T]['Selection']['data'];      // 只在Page层有
     protected parent?: Node<ED, AD, keyof ED>;
-    protected updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>;
+    protected action?: ED[T]['Action'];
+    protected updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'];
 
     constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, projection?: ED[T]['Selection']['data'], parent?: Node<ED, AD, keyof ED>) {
         this.entity = entity;
@@ -27,7 +28,6 @@ export class Node<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, 
         this.schema = schema;
         this.projection = projection;
         this.parent = parent;
-        this.value = {};
     }
 
     getSubEntity(path: string): {
@@ -48,12 +48,23 @@ export class Node<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, 
             };
         }
         else {
-            assert (relation instanceof Array);
+            assert(relation instanceof Array);
             return {
                 entity: relation[0],
                 isList: true,
             };
         }
+    }
+
+    getEntity() {
+        return this.entity;
+    }
+
+    setUpdateData(attr: string, value: any) {
+        if (!this.updateData) {
+            this.updateData = {};
+        }
+        set(this.updateData!, attr, value);
     }
 }
 
@@ -67,6 +78,7 @@ const DEFAULT_PAGINATION: Pagination = {
 class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> extends Node<ED, AD, T>{
     private ids: string[];
     protected children: SingleNode<ED, AD, T>[];
+    protected value: Partial<ED[T]['Schema']>[];
 
     private filters: DeduceFilter<ED[T]['Schema']>[];
     private sorter?: ED[T]['Selection']['sorter'];
@@ -76,6 +88,7 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
         parent?: Node<ED, AD, keyof ED>, pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[], sorter?: ED[T]['Selection']['sorter']) {
         super(entity, fullPath, schema, projection, parent);
         this.ids = [];
+        this.value = [];
         this.children = [];
         this.filters = filters || [];
         this.sorter = sorter || [];
@@ -95,13 +108,26 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
         };
     }
 
-    addChild(path: number, node: SingleNode<ED, AD, T>) {
+    addChild(path: string, node: SingleNode<ED, AD, T>) {
         const { children } = this;
-        children[path] = node;
+        const idx = parseInt(path, 10);
+        assert(!children[idx]);
+        children[idx] = node;
     }
 
-    getChild(path: number) {
-        return this.children[path];
+    async getChild(path: string, create?: boolean, cache?: Cache<ED, AD>) {
+        const idx = parseInt(path, 10);
+        let node = this.children[idx];
+        if (create && !node) {
+            node = new SingleNode(this.entity, `${this.fullPath}.${idx}`, this.schema, undefined, this, this.ids[idx]);
+            node.setValue(this.value[idx]);
+            this.addChild(path, node);
+        }
+        return node;
+    }
+
+    getFilter() {
+        return combineFilters(this.filters);
     }
 
     async refresh(cache: Cache<ED, AD>) {
@@ -121,24 +147,43 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
         this.pagination.more = ids.length === step;
     }
 
-    async getData(cache: Cache<ED, AD>) {
+    updateChildrenValue() {
+        this.children.forEach(
+            (ele, idx) => ele.setValue(this.value[idx])
+        );
+    }
+
+    async getValue(cache: Cache<ED, AD>) {
         const { entity, ids, projection } = this;
 
-        if (ids) {
+        if (ids.length) {
             const filter: Partial<AttrFilter<ED[T]['Schema']>> = {
                 id: {
                     $in: ids,
                 },
             } as any;       // 这里也没搞懂，用EntityShape能过，ED[T]['Schema']就不过
-            return cache.get({
+            const rows = await cache.get({
                 entity,
                 selection: {
                     data: projection as any,
                     filter,
                 }
             });
+            this.value = ids.map(
+                id => rows.find(ele => ele.id === id)!
+            );
         }
-        return [];
+        else {
+            this.value = [];
+        }
+
+        this.updateChildrenValue();
+        return this.value;
+    }
+
+    setValue(value: Partial<ED[T]['Schema']>[]) {
+        this.value = value;
+        this.updateChildrenValue();
     }
 
     async nextPage() {
@@ -156,6 +201,7 @@ declare type AttrFilter<SH extends EntityShape> = {
 
 class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> extends Node<ED, AD, T>{
     private id?: string;
+    private value?: Partial<ED[T]['Schema']>;
     private children: {
         [K in keyof ED[T]['Schema']]?: SingleNode<ED, AD, keyof ED> | ListNode<ED, AD, keyof ED>;
     };
@@ -178,28 +224,114 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
 
     addChild(path: string, node: Node<ED, AD, keyof ED>) {
         const { children } = this;
+        assert(!children[path]);
         assign(children, {
             [path]: node,
         });
     }
 
-    getChild(path: keyof ED[T]['Schema']) {
-        return this.children[path]!;
+    async getChild(path: keyof ED[T]['Schema'], create?: boolean, cache?: Cache<ED, AD>) {
+        let node = this.children[path];
+        if (create && !node) {
+            assert(cache);
+            const relation = judgeRelation(this.schema, this.entity, path as any);
+            if (relation === 2) {
+                // 基于entityId的多对一
+                if( this.value!.entityId) {
+                    node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, undefined, this, this.value!.entityId);
+                }
+                else {
+                    // 新建对象并关联
+                    assert(!this.value!.entity);
+                    const id = v4({ random: await getRandomValues(16) });
+                    await cache.operate(this.entity, {
+                        action: 'update',
+                        data: {
+                            entity: path as any,
+                            [path]: {
+                                action: 'create',
+                                data: {
+                                    id,
+                                },
+                            },
+                        },
+                        filter: {
+                            id: this.id!,
+                        }
+                    } as any);
+                    node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, undefined, this, id);
+                }
+            }
+            else if (typeof relation === 'string') {
+                if (this.value![`${path}Id`]) {
+                    node = new SingleNode(relation as any, `${this.fullPath}.${path}`, this.schema, undefined, this, this.value![`${path}Id`]);
+                }
+                else {
+                    // 新建对象并关联
+                    assert(!this.value!.entity);
+                    const id = v4({ random: await getRandomValues(16) });
+                    await cache.operate(this.entity, {
+                        action: 'update',
+                        data: {
+                            [path]: {
+                                action: 'create',
+                                data: {
+                                    id,
+                                },
+                            },
+                        },
+                        filter: {
+                            id: this.id!,
+                        }
+                    } as any);
+                    node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, undefined, this, id);
+                }
+            }
+            else {
+                assert(relation instanceof Array);
+                node = new ListNode(relation[0] as any,  `${this.fullPath}.${path}`, this.schema, undefined, this);
+            }
+            node.setValue(this.value![path] as any);
+            this.addChild(path as string, node);
+        }
+
+        return node;
     }
 
-    async getData(cache: Cache<ED, AD>) {
+    getFilter() {
+        return {
+            id: this.id,
+        } as DeduceFilter<ED[T]['Schema']>;
+    }
+
+    updateChildrenValues() {
+        for (const attr in this.children) {
+            const value = this.value![attr];
+            this.children[attr]?.setValue(value!);
+        }
+    }
+
+    async getValue(cache: Cache<ED, AD>) {
         const { entity, id, projection } = this;
-        assert(id);
+        assert(id && projection);
         const filter: Partial<AttrFilter<ED[T]["Schema"]>> = {
             id,
         } as any;
-        return await cache.get({
+        const value = await cache.get({
             entity,
             selection: {
                 data: projection as any,
                 filter,
             }
         });
+        this.value = value[0];
+        this.updateChildrenValues();
+        return this.value;
+    }
+
+    setValue(value: Partial<ED[T]['Schema']>) {
+        this.value = value;
+        this.updateChildrenValues();
     }
 }
 
@@ -218,7 +350,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
     async createNode<T extends keyof ED, L extends boolean>(path: string, parent?: string, entity?: T, isList?: L, projection?: ED[T]['Selection']['data'],
         id?: string, pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[], sorter?: ED[T]['Selection']['sorter']) {
         let node: ListNode<ED, AD, T> | SingleNode<ED, AD, T>;
-        const parentNode = parent ? this.findNode(parent) : undefined;
+        const parentNode = parent ? await this.findNode(parent) : undefined;
         const fullPath = parent ? `${parent}.${path}` : `${path}`;
         const subEntity = parentNode && parentNode.getSubEntity(path);
         const entity2 = subEntity ? subEntity.entity : entity!;
@@ -242,45 +374,65 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
             node = new SingleNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, id2);
         }
         if (parentNode) {
-            if (parentNode instanceof ListNode) {
-                assert(typeof path === 'number');
-                parentNode.addChild(path, <SingleNode<ED, AD, T>>node);
-            }
-            else {
-                assert(typeof path === 'string');
-                parentNode.addChild(path, node);
-            }
+            parentNode.addChild(path, node as any);
         }
         else {
             this.root[path] = node;
         }
     }
 
+    @Action
     async refresh(path: string) {
-        const node = this.findNode(path);
+        const node = await this.findNode(path);
         await node.refresh(this.cache);
     }
 
     async get(path: string) {
-        const node = this.findNode(path);
-        return await node.getData(this.cache);
+        const node = await this.findNode(path);
+        const value = await node.getValue(this.cache);
+        if (value instanceof Array) {
+            return value;
+        }
+        return [value];
     }
 
-    private findNode(path: string) {
+    private async findNode(path: string) {
         const paths = path.split('.');
         let node = this.root[paths[0]];
         let iter = 1;
         while (iter < paths.length) {
             const childPath = path[iter];
-            if (node instanceof ListNode) {
-                const childPathIdx = parseInt(childPath, 10);
-                node = node.getChild(childPathIdx);
-            }
-            else {
-                node = node.getChild(childPath);
-            }
+            node = (await node.getChild(childPath))!;
         }
         return node;
+    }
+
+    @Action
+    async setUpdateData(path: string, attr: string, value: any) {
+        let node = await this.findNode(path);
+        const attrSplit = attr.split('.');
+        let idx = 0;
+        for (const split of attrSplit) {
+            const entity = node.getEntity();
+            const relation = judgeRelation(this.schema!, entity, split);
+            if (relation === 1) {
+                // todo transform data format
+                const attrName = attrSplit.slice(idx).join('.');
+                node.setUpdateData(split, value);
+                this.cache.operate(entity, {
+                    action: 'update',
+                    data: {
+                        [attrName]: value,
+                    } as any,
+                    filter: node.getFilter(),
+                });
+                return;
+            }
+            else {
+                node = (await node.getChild(split, true, this.cache))!;
+                idx ++;
+            }
+        }
     }
 
     setStorageSchema(schema: StorageSchema<ED>) {
