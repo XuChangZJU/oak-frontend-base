@@ -29,6 +29,32 @@ export class Node<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, 
         this.parent = parent;
         this.value = {};
     }
+
+    getSubEntity(path: string): {
+        entity: keyof ED;
+        isList: boolean;
+    } {
+        const relation = judgeRelation(this.schema, this.entity, path);
+        if (relation === 2) {
+            return {
+                entity: path,
+                isList: false,
+            };
+        }
+        else if (typeof relation === 'string') {
+            return {
+                entity: relation,
+                isList: false,
+            };
+        }
+        else {
+            assert (relation instanceof Array);
+            return {
+                entity: relation[0],
+                isList: true,
+            };
+        }
+    }
 }
 
 const DEFAULT_PAGINATION: Pagination = {
@@ -189,27 +215,31 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         this.root = {};
     }
 
-    async createNode<T extends keyof ED, L extends boolean>(entity: T, isList: L, path: string, parent?: string, projection?: ED[T]['Selection']['data'],
+    async createNode<T extends keyof ED, L extends boolean>(path: string, parent?: string, entity?: T, isList?: L, projection?: ED[T]['Selection']['data'],
         id?: string, pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[], sorter?: ED[T]['Selection']['sorter']) {
         let node: ListNode<ED, AD, T> | SingleNode<ED, AD, T>;
         const parentNode = parent ? this.findNode(parent) : undefined;
         const fullPath = parent ? `${parent}.${path}` : `${path}`;
+        const subEntity = parentNode && parentNode.getSubEntity(path);
+        const entity2 = subEntity ? subEntity.entity : entity!;
+        const isList2 = subEntity ? subEntity.isList : isList!;
+
         const context = this.getContext();
-        if (isList) {
-            node = new ListNode<ED, AD, T>(entity, fullPath, this.schema!, projection, parentNode, pagination, filters, sorter);
+        if (isList2) {
+            node = new ListNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, pagination, filters, sorter);
         }
         else {
             let id2: string = id || v4({ random: await getRandomValues(16) });
             if (!id) {
                 // 如果!isList并且没有id，说明是create，在这里先插入cache
-                await context.rowStore.operate(entity, {
+                await context.rowStore.operate(entity2, {
                     action: 'create',
                     data: {
                         id: id2,
                     } as FormCreateData<ED[T]['OpSchema']>,
                 }, context);
             }
-            node = new SingleNode<ED, AD, T>(entity, fullPath, this.schema!, projection, parentNode, id2);
+            node = new SingleNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, id2);
         }
         if (parentNode) {
             if (parentNode instanceof ListNode) {
