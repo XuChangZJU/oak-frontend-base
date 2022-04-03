@@ -1,5 +1,5 @@
-import { set } from 'lodash';
-import { DeduceFilter, DeduceUpdateOperation, EntityDict, EntityShape, FormCreateData, OperationResult, OpRecord, SelectionResult } from 'oak-domain/lib/types/Entity';
+import { set, cloneDeep, pull } from 'lodash';
+import { DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceUpdateOperation, EntityDict, EntityShape, FormCreateData, OperationResult, OpRecord, SelectionResult } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { combineFilters } from 'oak-domain/lib/schema/filter';
@@ -20,14 +20,17 @@ export class Node<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, 
     protected projection?: ED[T]['Selection']['data'];      // 只在Page层有
     protected parent?: Node<ED, AD, keyof ED>;
     protected action?: ED[T]['Action'];
+    protected dirty?: boolean;
     protected updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'];
 
-    constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, projection?: ED[T]['Selection']['data'], parent?: Node<ED, AD, keyof ED>) {
+    constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, projection?: ED[T]['Selection']['data'],
+        parent?: Node<ED, AD, keyof ED>, action?: ED[T]['Action']) {
         this.entity = entity;
         this.fullPath = fullPath;
         this.schema = schema;
         this.projection = projection;
         this.parent = parent;
+        this.action = action;
     }
 
     getSubEntity(path: string): {
@@ -64,7 +67,18 @@ export class Node<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, 
         if (!this.updateData) {
             this.updateData = {};
         }
+        this.setDirty();
         set(this.updateData!, attr, value);
+    }
+
+    setDirty() {
+        if (!this.dirty) {
+            this.dirty = true;
+        }
+    }
+
+    isDirty() {
+        return this.dirty;
     }
 }
 
@@ -85,8 +99,9 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
     private pagination: Pagination;
 
     constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, projection?: ED[T]['Selection']['data'],
-        parent?: Node<ED, AD, keyof ED>, pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[], sorter?: ED[T]['Selection']['sorter']) {
-        super(entity, fullPath, schema, projection, parent);
+        parent?: Node<ED, AD, keyof ED>, pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[],
+        sorter?: ED[T]['Selection']['sorter'], action?: ED[T]['Action']) {
+        super(entity, fullPath, schema, projection, parent, action);
         this.ids = [];
         this.value = [];
         this.children = [];
@@ -95,17 +110,25 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
         this.pagination = pagination || DEFAULT_PAGINATION;
     }
 
-    getSelectionParams() {
-        assert(this.projection);
-        const filter = this.filters.length ? combineFilters(this.filters) : undefined;
-        return {
-            entity: this.entity,
-            selection: {
-                data: this.projection,
-                filter,
-                sorter: this.sorter,
+    composeAction(): DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined {
+        if (!this.isDirty()) {
+            return;
+        }
+        if (this.action || this.updateData) {
+            return {
+                action: this.action || 'update',
+                data: cloneDeep(this.updateData),
+                filter: combineFilters(this.filters),
+            } as DeduceUpdateOperation<ED[T]['Schema']>;  // todo 这里以后再增加对选中id的过滤
+        }
+        const actions = [];
+        for (const node of this.children) {
+            const subAction = node.composeAction();
+            if (subAction) {
+                actions.push(subAction);
             }
-        };
+        }
+        return actions;
     }
 
     addChild(path: string, node: SingleNode<ED, AD, T>) {
@@ -178,6 +201,7 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
         }
 
         this.updateChildrenValue();
+
         return this.value;
     }
 
@@ -206,8 +230,9 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
         [K in keyof ED[T]['Schema']]?: SingleNode<ED, AD, keyof ED> | ListNode<ED, AD, keyof ED>;
     };
 
-    constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, projection?: ED[T]['Selection']['data'], parent?: Node<ED, AD, keyof ED>, id?: string) {
-        super(entity, fullPath, schema, projection, parent);
+    constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, projection?: ED[T]['Selection']['data'],
+        parent?: Node<ED, AD, keyof ED>, id?: string, action?: ED[T]['Action']) {
+        super(entity, fullPath, schema, projection, parent, action);
         this.id = id;
         this.children = {};
     }
@@ -220,6 +245,31 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
                 id: this.id,
             },
         } as any);
+    }
+
+    composeAction(): DeduceOperation<ED[T]['Schema']> | undefined {
+        if (!this.isDirty()) {
+            return;
+        }
+        const action = this.action === 'create' ? {
+            action: 'create',
+            data: cloneDeep(this.updateData) || {},
+        } as DeduceCreateOperation<ED[T]['Schema']>: {
+            action: this.action || 'update',
+            data: cloneDeep(this.updateData) || {},
+            filter: {
+                id: this.id!,
+            },
+        } as DeduceUpdateOperation<ED[T]['Schema']>;
+        for (const attr in this.children) {
+            const subAction = this.children[attr]!.composeAction();
+            if (subAction) {
+                assign(action.data, {
+                    [attr]: subAction,
+                });
+            }
+        }
+        return action;
     }
 
     addChild(path: string, node: Node<ED, AD, keyof ED>) {
@@ -237,14 +287,14 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
             const relation = judgeRelation(this.schema, this.entity, path as any);
             if (relation === 2) {
                 // 基于entityId的多对一
-                if( this.value!.entityId) {
-                    node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, undefined, this, this.value!.entityId);
+                if (this.value && this.value.entityId) {
+                    node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, undefined, this, this.value.entityId);
                 }
                 else {
                     // 新建对象并关联
-                    assert(!this.value!.entity);
+                    assert(!this.value || this.value.entity);
                     const id = v4({ random: await getRandomValues(16) });
-                    await cache.operate(this.entity, {
+                   /*  await cache.operate(this.entity, {
                         action: 'update',
                         data: {
                             entity: path as any,
@@ -258,19 +308,19 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
                         filter: {
                             id: this.id!,
                         }
-                    } as any);
-                    node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, undefined, this, id);
+                    } as any); */
+                    node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, undefined, this, id, 'create');
                 }
             }
             else if (typeof relation === 'string') {
-                if (this.value![`${path}Id`]) {
+                if (this.value && this.value[`${path}Id`]) {
                     node = new SingleNode(relation as any, `${this.fullPath}.${path}`, this.schema, undefined, this, this.value![`${path}Id`]);
                 }
                 else {
                     // 新建对象并关联
-                    assert(!this.value!.entity);
+                    assert(!this.value || !this.value.entity);
                     const id = v4({ random: await getRandomValues(16) });
-                    await cache.operate(this.entity, {
+                    /* await cache.operate(this.entity, {
                         action: 'update',
                         data: {
                             [path]: {
@@ -283,15 +333,15 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
                         filter: {
                             id: this.id!,
                         }
-                    } as any);
-                    node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, undefined, this, id);
+                    } as any); */
+                    node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, undefined, this, id, 'create');
                 }
             }
             else {
                 assert(relation instanceof Array);
-                node = new ListNode(relation[0] as any,  `${this.fullPath}.${path}`, this.schema, undefined, this);
+                node = new ListNode(relation[0] as any, `${this.fullPath}.${path}`, this.schema, undefined, this);
             }
-            node.setValue(this.value![path] as any);
+            node.setValue(this.value && this.value[path] as any);
             this.addChild(path as string, node);
         }
 
@@ -313,19 +363,21 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
 
     async getValue(cache: Cache<ED, AD>) {
         const { entity, id, projection } = this;
-        assert(id && projection);
-        const filter: Partial<AttrFilter<ED[T]["Schema"]>> = {
-            id,
-        } as any;
-        const value = await cache.get({
-            entity,
-            selection: {
-                data: projection as any,
-                filter,
-            }
-        });
-        this.value = value[0];
-        this.updateChildrenValues();
+        assert(projection);
+        if (id) {
+            const filter: Partial<AttrFilter<ED[T]["Schema"]>> = {
+                id,
+            } as any;
+            const value = await cache.get({
+                entity,
+                selection: {
+                    data: projection as any,
+                    filter,
+                }
+            });
+            this.value = value[0];
+            this.updateChildrenValues();
+        }
         return this.value;
     }
 
@@ -361,7 +413,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
             node = new ListNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, pagination, filters, sorter);
         }
         else {
-            let id2: string = id || v4({ random: await getRandomValues(16) });
+           /*  let id2: string = id || v4({ random: await getRandomValues(16) });
             if (!id) {
                 // 如果!isList并且没有id，说明是create，在这里先插入cache
                 await context.rowStore.operate(entity2, {
@@ -370,8 +422,8 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
                         id: id2,
                     } as FormCreateData<ED[T]['OpSchema']>,
                 }, context);
-            }
-            node = new SingleNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, id2);
+            } */
+            node = new SingleNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, id, !id ? 'create' : undefined);
         }
         if (parentNode) {
             parentNode.addChild(path, node as any);
@@ -387,13 +439,135 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         await node.refresh(this.cache);
     }
 
-    async get(path: string) {
-        const node = await this.findNode(path);
-        const value = await node.getValue(this.cache);
-        if (value instanceof Array) {
+    private async applyAction<T extends keyof ED> (entity: T, value: Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined, 
+        operation: DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[]) : Promise<Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined> {
+        if (operation instanceof Array) {
+            assert(value instanceof Array);
+            for (const action of operation) {
+                switch (action.action) {
+                    case 'create': {
+                        value.push(await this.applyAction(entity, undefined, action) as Partial<ED[T]['Schema']>);
+                    }
+                    case 'remove': {
+                        const { filter } = action;
+                        assert(filter!.id);
+                        const row = value.find(
+                            ele => ele.id === filter!.id
+                        );
+                        pull(value, row);
+                    }
+                    default: {
+                        const { filter } = action;
+                        assert(filter!.id);
+                        const row = value.find(
+                            ele => ele.id === filter!.id
+                        );
+                        await this.applyAction(entity, row!, action);
+                    }                    
+                }
+            }
             return value;
         }
-        return [value];
+        else {
+            if (value instanceof Array) {
+                // todo 这里还有种可能不是对所有的行，只对指定id的行操作
+                return (await Promise.all(value.map(
+                    async (row) => await this.applyAction(entity, row, operation)
+                ))).filter(
+                    ele => !!ele
+                ) as Partial<ED[T]['Schema']> [];
+            }
+            else {
+                const { action, data } = operation;
+                const applyUpsert = async (row: Partial<ED[T]['Schema']>, actionData: DeduceUpdateOperation<ED[T]['Schema']>['data']) => {
+                    for (const attr in actionData) {
+                        const relation = judgeRelation(this.schema!, entity, attr);
+                        if (relation === 1) {
+                            set(row, attr, actionData[attr]);
+                        }
+                        else if (relation === 2) {
+                            // 基于entity/entityId的多对一
+                            set(row, attr, await this.applyAction(attr, row[attr], actionData[attr]!));
+                            if (row[attr]) {
+                                assign(row, {
+                                    entity: attr,
+                                    entityId: row[attr]!['id'],
+                                });
+                            }
+                            else {
+                                assign(row, {
+                                    entity: undefined,
+                                    entityId: undefined,
+                                });
+                            }
+                        }
+                        else if (typeof relation === 'string') {
+                            set(row, attr, await this.applyAction(relation, row[attr], actionData[attr]!));
+                            if (row[attr]) {
+                                assign(row, {
+                                    [`${attr}Id`]: row[attr]!['id'],
+                                });
+                            }
+                            else {
+                                assign(row, {
+                                    [`${attr}Id`]: undefined,
+                                });
+                            }
+                        }
+                        else {
+                            assert(relation instanceof Array);
+                            set(row, attr, await this.applyAction(relation[0], row[attr], actionData[attr]!));
+                            row[attr]!.forEach(
+                                (ele: ED[keyof ED]['Schema']) => {
+                                    if (relation[1]) {
+                                        assign(ele, {
+                                            [relation[1]]: row.id,
+                                        });
+                                    }
+                                    else {
+                                        assign(ele, {
+                                            entity,
+                                            entityId: row.id,
+                                        });
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+                switch (action) {
+                    case 'create': {
+                        assert(!value);
+                        const row = {
+                            id: v4({ random: await getRandomValues(16)}),
+                        } as Partial<ED[T]['Schema']>;
+                        await applyUpsert(row, data as DeduceUpdateOperation<ED[T]['Schema']>['data']);
+                        return row;
+                    }
+                    case 'remove': {
+                        return undefined;
+                    }
+                    default: {
+                        await applyUpsert(value!, data as DeduceUpdateOperation<ED[T]['Schema']>['data']);
+                        return value;
+                    }
+                }
+            }
+        }
+    }
+
+    async get(path: string) {
+        const node = await this.findNode(path);
+        let value = await node.getValue(this.cache);
+        if (node.isDirty()) {
+            const operation = node.composeAction();
+            value = (await this.applyAction(node.getEntity(), value, operation!));
+        }
+
+        if (value instanceof Array) {
+            return value!;
+        }
+        return [value!];
     }
 
     private async findNode(path: string) {
@@ -418,19 +592,20 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
             if (relation === 1) {
                 // todo transform data format
                 const attrName = attrSplit.slice(idx).join('.');
-                node.setUpdateData(split, value);
-                this.cache.operate(entity, {
+                node.setUpdateData(attrName, value);
+                /* this.cache.operate(entity, {
                     action: 'update',
                     data: {
                         [attrName]: value,
                     } as any,
                     filter: node.getFilter(),
-                });
+                }); */
                 return;
             }
             else {
+                node.setDirty();
                 node = (await node.getChild(split, true, this.cache))!;
-                idx ++;
+                idx++;
             }
         }
     }
