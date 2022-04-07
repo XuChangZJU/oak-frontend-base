@@ -170,7 +170,7 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
         const { step } = pagination;
         const { ids } = await cache.refresh(entity, {
             data: projection as any,
-            filter: combineFilters(filters),
+            filter: filters.length > 0 ? combineFilters(filters) : undefined,
             sorter,
             indexFrom: 0,
             count: step,
@@ -250,12 +250,14 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
 
     async refresh(cache: Cache<ED, AD>) {
         assert(this.projection);
-        await cache.refresh(this.entity, {
-            data: this.projection,
-            filter: {
-                id: this.id,
-            },
-        } as any);
+        if (this.action !== 'create') {
+            await cache.refresh(this.entity, {
+                data: this.projection,
+                filter: {
+                    id: this.id,
+                },
+            } as any);
+        }
     }
 
     composeAction(): DeduceOperation<ED[T]['Schema']> | undefined {
@@ -416,8 +418,8 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         this.root = {};
     }
 
-    async createNode<T extends keyof ED, L extends boolean>(path: string, parent?: string,
-        entity?: T, isList?: L, projection?: ED[T]['Selection']['data'],id?: string,
+    async createNode<T extends keyof ED>(path: string, parent?: string,
+        entity?: T, isList?: boolean, isPicker?: boolean, projection?: ED[T]['Selection']['data'],id?: string,
         pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[],
         sorter?: ED[T]['Selection']['sorter']) {
         let node: ListNode<ED, AD, T> | SingleNode<ED, AD, T>;
@@ -428,7 +430,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         const isList2 = subEntity ? subEntity.isList : isList!;
 
         const context = this.getContext();
-        if (isList2) {
+        if (isPicker || isList2) {
             node = new ListNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, pagination, filters, sorter);
         }
         else {
@@ -616,6 +618,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         while (iter < paths.length) {
             const childPath = paths[iter];
             node = (await node.getChild(childPath))!;
+            iter ++;
         }
         return node;
     }

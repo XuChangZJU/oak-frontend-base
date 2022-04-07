@@ -5,16 +5,16 @@ import { aspectDict as basicAspectDict } from 'oak-general-business';
 
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { Feature, subscribe } from './types/Feature';
+import { createDebugStore } from './dataStore/debugStore';
 
 import { initialize as createBasicFeatures, BasicFeatures } from './features/index';
 import { assign, intersection, keys, mapValues, pull } from 'lodash';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict, FormCreateData } from 'oak-domain/lib/types/Entity';
 import { FrontContext } from './FrontContext';
 import { RunningContext } from "oak-domain/lib/types/Context";
 import { DebugStore, Context } from 'oak-debug-store';
 import { Schema as Application } from "oak-domain/lib/base-domain/Application/Schema";
 import { Schema as Token } from 'oak-domain/lib/base-domain/Token/Schema';
-import { TriggerExecutor } from "oak-trigger-executor";
 import { AspectProxy } from './types/AspectProxy';
 import { CacheStore } from './dataStore/CacheStore';
 
@@ -39,19 +39,15 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
         features: BasicFeatures<ED, AD> & FD,
         aspectDict?: AD,
         initialData?: {
-            [T in keyof ED]?: Array<ED[T]['OpSchema']>;
+            [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
         }): AspectProxy<ED, AD & typeof basicAspectDict> {
     if (process.env.NODE_ENV === 'production') {
         // todo 发请求到后台获取数据
         throw new Error('method not implemented');
     }
     else {
-        // todo initialData        
-        const executor = new TriggerExecutor<ED>();
-        const debugStore = new DebugStore<ED>(executor, storageSchema);
-        triggers.forEach(
-            (trigger) => debugStore.registerTrigger(trigger)
-        );
+        // todo initialData
+        const debugStore = createDebugStore(storageSchema, triggers, initialData);
 
         const connectAspectToDebugStore = (aspect: Aspect<ED>): (p: Parameters<typeof aspect>[0]) => ReturnType<typeof aspect> => {
             return async (params: Parameters<typeof aspect>[0]) => {
