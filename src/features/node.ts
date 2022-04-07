@@ -1,4 +1,4 @@
-import { set, cloneDeep, pull } from 'lodash';
+import { set, cloneDeep, pull, unset } from 'lodash';
 import { DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceUpdateOperation, EntityDict, EntityShape, FormCreateData, OperationResult, OpRecord, SelectionResult } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
 import { Aspect } from 'oak-domain/lib/types/Aspect';
@@ -80,6 +80,10 @@ export class Node<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, 
     isDirty() {
         return this.dirty;
     }
+
+    getParent() {
+        return this.parent;
+    }
 }
 
 const DEFAULT_PAGINATION: Pagination = {
@@ -136,6 +140,13 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
         const idx = parseInt(path, 10);
         assert(!children[idx]);
         children[idx] = node;
+    }
+
+    removeChild(path: string) {
+        const { children } = this;
+        const idx = parseInt(path, 10);
+        assert(children[idx]);
+        unset(children, idx);
     }
 
     async getChild(path: string, create?: boolean, cache?: Cache<ED, AD>) {
@@ -279,6 +290,12 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
             [path]: node,
         });
     }
+    
+    removeChild(path: string) {
+        const { children } = this;
+        assert(children[path]);
+        unset(children, path);
+    }
 
     async getChild(path: keyof ED[T]['Schema'], create?: boolean, cache?: Cache<ED, AD>) {
         let node = this.children[path];
@@ -399,8 +416,10 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         this.root = {};
     }
 
-    async createNode<T extends keyof ED, L extends boolean>(path: string, parent?: string, entity?: T, isList?: L, projection?: ED[T]['Selection']['data'],
-        id?: string, pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[], sorter?: ED[T]['Selection']['sorter']) {
+    async createNode<T extends keyof ED, L extends boolean>(path: string, parent?: string,
+        entity?: T, isList?: L, projection?: ED[T]['Selection']['data'],id?: string,
+        pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[],
+        sorter?: ED[T]['Selection']['sorter']) {
         let node: ListNode<ED, AD, T> | SingleNode<ED, AD, T>;
         const parentNode = parent ? await this.findNode(parent) : undefined;
         const fullPath = parent ? `${parent}.${path}` : `${path}`;
@@ -430,6 +449,26 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         }
         else {
             this.root[path] = node;
+        }
+
+        return entity2;
+    }
+
+    async destroyNode(path: string) {
+        const node = await this.findNode(path);
+        if (node) {
+            const childPath = path.slice(path.lastIndexOf('.') + 1);
+            const parent = node.getParent();
+            if (parent instanceof SingleNode) {
+                parent.removeChild(childPath);
+            }
+            else if (parent instanceof ListNode) {
+                parent.removeChild(childPath);
+            }
+            else if (!parent) {
+                assert(childPath === path);
+                unset(this.root, path);
+            }
         }
     }
 
@@ -575,7 +614,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         let node = this.root[paths[0]];
         let iter = 1;
         while (iter < paths.length) {
-            const childPath = path[iter];
+            const childPath = paths[iter];
             node = (await node.getChild(childPath))!;
         }
         return node;

@@ -2,6 +2,7 @@ import { DeduceSelection, EntityDict, OperateParams, OpRecord } from 'oak-domain
 import { Aspect } from 'oak-domain/lib/types/Aspect';
 import { Action, Feature } from '../types/Feature';
 import { assign } from 'lodash';
+import { judgeRelation } from 'oak-domain/lib/schema/relation';
 
 export class Cache<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
     @Action

@@ -36,7 +36,8 @@
     },
     "scripts": {
         "build": "tsc",
-        "make-domain": "ts-node ./test/build-test-domain.ts"
+        "make-domain": "ts-node ./test/build-test-domain.ts",
+        "test": "ts-node ./test/test.ts"
     },
     "main": "src/index"
 }
