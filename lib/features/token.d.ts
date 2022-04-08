@@ -1,34 +1,27 @@
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
+import { EntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 import { aspectDict as basicAspectDict } from 'oak-general-business';
-import { FrontContext } from '../FrontContext';
 import { Feature } from '../types/Feature';
 import { Cache } from './cache';
-declare type LoginByPassword = {
-    type: 'lbp';
-    payload: {
-        mobile: string;
-        password: string;
-    };
-};
 export declare class Token extends Feature<BaseEntityDict, typeof basicAspectDict> {
     tokenValue?: string;
     cache: Cache<BaseEntityDict, typeof basicAspectDict>;
     constructor(cache: Cache<BaseEntityDict, typeof basicAspectDict>);
-    get(context: FrontContext<BaseEntityDict>, type: 'value' | 'token'): Promise<string | Partial<{
+    getValue(): string | undefined;
+    getToken(): Promise<Partial<{
         id: string;
         $$createAt$$: import("oak-domain/lib/types/DataType").Datetime;
         $$updateAt$$: import("oak-domain/lib/types/DataType").Datetime;
-        $$removeAt$$?: import("oak-domain/lib/types/DataType").Datetime | undefined;
+        $$removeAt$$?: import("oak-domain/lib/types/DataType").Datetime | null | undefined;
         applicationId: string;
         entity: string;
         entityId: string;
-        userId?: string | undefined;
-        playerId?: string | undefined;
-        ableState?: import("oak-domain/lib/actions/action").AbleState | undefined;
-        application: import("oak-domain/lib/base-domain/Application/Schema").Schema;
-        user?: import("oak-domain/lib/base-domain/User/Schema").Schema | undefined;
-        player?: import("oak-domain/lib/base-domain/User/Schema").Schema | undefined;
-        mobile?: import("oak-domain/lib/base-domain/Mobile/Schema").Schema | undefined;
+        userId?: string | null | undefined;
+        playerId?: string | null | undefined;
+        ableState?: import("oak-domain/lib/actions/action").AbleState | null | undefined;
+        application: import("oak-general-business/lib/base-ed/Application/Schema").Schema;
+        user?: import("oak-general-business/lib/base-ed/User/Schema").Schema | null | undefined;
+        player?: import("oak-general-business/lib/base-ed/User/Schema").Schema | null | undefined;
+        mobile?: import("oak-general-business/lib/base-ed/Mobile/Schema").Schema | undefined;
     } & {
         $expr?: any;
         $expr1?: any;
@@ -73,7 +66,6 @@ export declare class Token extends Feature<BaseEntityDict, typeof basicAspectDic
         $expr18?: any;
         $expr19?: any;
         $expr20?: any;
-    }> | undefined>;
-    action(context: FrontContext<BaseEntityDict>, action: LoginByPassword): Promise<void>;
+    }>>;
+    loginByPassword(mobile: string, password: string): Promise<void>;
 }
-export {};

@@ -1,27 +1,16 @@
-import { EntityDict, OpRecord } from 'oak-domain/lib/types/Entity';
-import { Aspect } from 'oak-domain/lib/types/Aspect';
+import { EntityDict, OperateParams, OpRecord } from 'oak-domain/lib/types/Entity';
+import { Aspect } from 'oak-general-business/lib/types/Aspect';
 import { Feature } from '../types/Feature';
-import { FrontContext } from '../FrontContext';
-declare type RefreshAction<ED extends EntityDict, T extends keyof ED> = {
-    type: 'refresh';
-    payload: {
-        entity: T;
-        selection: ED[T]['Selection'];
-        params?: object;
-    };
-};
-declare type SyncAction<ED extends EntityDict> = {
-    type: 'sync';
-    payload: OpRecord<ED>[];
-};
 export declare class Cache<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
-    action<T extends keyof ED>(context: FrontContext<ED>, action: RefreshAction<ED, T> | SyncAction<ED>): Promise<void> | ReturnType<(AD & {
+    refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): ReturnType<(AD & {
         loginByPassword: typeof import("oak-general-business/src/aspects/token").loginByPassword;
         loginMp: typeof import("oak-general-business/src/aspects/token").loginMp;
         operate: typeof import("oak-general-business/src/aspects/crud").operate;
         select: typeof import("oak-general-business/src/aspects/crud").select;
     })["operate"]>;
-    get<T extends keyof ED>(context: FrontContext<ED>, options: {
+    sync(records: OpRecord<ED>[]): Promise<void>;
+    operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], params?: OperateParams): Promise<import("oak-domain/lib/types/Entity").OperationResult>;
+    get<T extends keyof ED>(options: {
         entity: T;
         selection: ED[T]['Selection'];
         params?: object;
@@ -49,4 +38,3 @@ export declare class Cache<ED extends EntityDict, AD extends Record<string, Aspe
         $expr20?: any;
     }>[]>;
 }
-export {};

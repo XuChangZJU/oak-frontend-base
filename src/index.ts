@@ -1,24 +1,25 @@
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { Trigger } from "oak-domain/lib/types/Trigger";
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
+import { EntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 import { aspectDict as basicAspectDict } from 'oak-general-business';
 
-import { Aspect } from 'oak-domain/lib/types/Aspect';
+import { Aspect } from 'oak-general-business/lib/types/Aspect';
 import { Feature, subscribe } from './types/Feature';
-import { createDebugStore } from './dataStore/debugStore';
+import { createDebugStore } from './debugStore';
 
 import { initialize as createBasicFeatures, BasicFeatures } from './features/index';
 import { assign, intersection, keys, mapValues, pull } from 'lodash';
 import { EntityDict, FormCreateData } from 'oak-domain/lib/types/Entity';
 import { FrontContext } from './FrontContext';
-import { RunningContext } from "oak-domain/lib/types/Context";
-import { DebugStore, Context } from 'oak-debug-store';
-import { Schema as Application } from "oak-domain/lib/base-domain/Application/Schema";
-import { Schema as Token } from 'oak-domain/lib/base-domain/Token/Schema';
+import { RuntimeContext } from "oak-general-business/lib/RuntimeContext";
+import { DebugStore } from './debugStore/debugStore';
+import { DebugContext } from './debugStore/context';
+import { Schema as Application } from "oak-general-business/lib/base-ed/Application/Schema";
+import { Schema as Token } from 'oak-general-business/lib/base-ed/Token/Schema';
 import { AspectProxy } from './types/AspectProxy';
-import { CacheStore } from './dataStore/CacheStore';
+import { CacheStore } from './cacheStore/CacheStore';
 
-class DebugRunningContext<ED extends EntityDict> extends Context<ED> implements RunningContext<ED> {
+class DebugRuntimeContext<ED extends EntityDict> extends DebugContext<ED> implements RuntimeContext<ED> {
     getApplication: () => Application;
     getToken: () => Token | undefined;
 
@@ -51,7 +52,7 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
 
         const connectAspectToDebugStore = (aspect: Aspect<ED>): (p: Parameters<typeof aspect>[0]) => ReturnType<typeof aspect> => {
             return async (params: Parameters<typeof aspect>[0]) => {
-                const context2 = new Context(debugStore);
+                const context2 = new DebugContext(debugStore);
 
                 const { result: [application] } = await debugStore.select('application', {
                     data: {
@@ -84,7 +85,7 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
                 }
                 const getToken = () => token;
 
-                const runningContext = new DebugRunningContext(debugStore, getApplication, getToken)
+                const runningContext = new DebugRuntimeContext(debugStore, getApplication, getToken)
                 const result = aspect(params, runningContext);
 
                 context.rowStore.sync(runningContext.opRecords, context);

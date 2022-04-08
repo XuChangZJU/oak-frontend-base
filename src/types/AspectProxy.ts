@@ -1,4 +1,4 @@
-import { Aspect } from "oak-domain/lib/types/Aspect";
+import { Aspect } from "oak-general-business/lib/types/Aspect";
 import { EntityDict } from "oak-domain/lib/types/Entity";
 import { FrontContext } from "../FrontContext";
 

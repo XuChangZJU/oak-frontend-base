@@ -1,16 +1,11 @@
-import { Aspect } from 'oak-domain/lib/types/Aspect';
+import { Aspect } from 'oak-general-business/lib/types/Aspect';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { aspectDict as basicAspectDict } from 'oak-general-business';
 import { FrontContext } from '../FrontContext';
 import { AspectProxy } from './AspectProxy';
-declare type Action = {
-    type: string;
-    payload?: object;
-};
 export declare abstract class Feature<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> {
     private aspectProxy?;
-    abstract get(context: FrontContext<ED>, params: any): any;
-    abstract action(context: FrontContext<ED>, action: Action): any;
+    private context?;
     protected getAspectProxy(): NonNullable<AspectProxy<ED, AD & {
         loginByPassword: typeof import("oak-general-business/src/aspects/token").loginByPassword;
         loginMp: typeof import("oak-general-business/src/aspects/token").loginMp;
@@ -18,5 +13,14 @@ export declare abstract class Feature<ED extends EntityDict, AD extends Record<s
         select: typeof import("oak-general-business/src/aspects/crud").select;
     }>>;
     setAspectProxy(aspectProxy: AspectProxy<ED, AD & typeof basicAspectDict>): void;
+    protected getContext(): FrontContext<ED>;
+    setContext(context: FrontContext<ED>): void;
 }
-export {};
+export declare function subscribe(callback: () => void): () => void;
+/**
+ * 方法注解，使函数调用最后一层堆栈时唤起所有登记的回调
+ * @param target
+ * @param propertyName
+ * @param descriptor
+ */
+export declare function Action(target: any, propertyName: string, descriptor: TypedPropertyDescriptor<any>): void;

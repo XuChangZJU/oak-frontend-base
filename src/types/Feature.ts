@@ -1,5 +1,5 @@
 import { pull } from 'lodash';
-import { Aspect } from 'oak-domain/lib/types/Aspect';
+import { Aspect } from 'oak-general-business/lib/types/Aspect';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { aspectDict as basicAspectDict} from 'oak-general-business';
 import { FrontContext } from '../FrontContext';

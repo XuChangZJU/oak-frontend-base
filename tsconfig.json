@@ -62,9 +62,10 @@
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
     /* Advanced Options */
     "experimentalDecorators": true,
-    "forceConsistentCasingInFileNames": true /* Disallow inconsistently-cased references to the same file. */   
+    "forceConsistentCasingInFileNames": true, /* Disallow inconsistently-cased references to the same file. */   
+    "resolveJsonModule": true
   },
-  "include": [   "src/typings/**/*.ts" ],
+  "include": [   "src/**/*.ts" ],
   "exclude": [
     "node_modules",
     "**/*.spec.ts",

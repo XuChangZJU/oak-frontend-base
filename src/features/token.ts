@@ -1,16 +1,7 @@
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
+import { EntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 import { aspectDict as basicAspectDict } from 'oak-general-business';
-import { FrontContext } from '../FrontContext';
 import { Action, Feature } from '../types/Feature';
 import { Cache } from './cache';
-
-type LoginByPassword = {
-    type: 'lbp';
-    payload: {
-        mobile: string;
-        password: string;
-    };
-};
 
 export class Token extends Feature<BaseEntityDict, typeof basicAspectDict> {
     tokenValue?: string;

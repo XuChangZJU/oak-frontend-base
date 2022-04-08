@@ -1,10 +1,11 @@
 import { assign } from 'lodash';
-import { DebugStore, Context } from 'oak-debug-store';
+import { DebugStore } from './debugStore';
+import { DebugContext } from './context';
 import { FormCreateData, Selection, EntityDict } from "oak-domain/lib/types/Entity";
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-domain/EntityDict';
+import { EntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { Trigger } from 'oak-domain/lib/types/Trigger';
-import { TriggerExecutor } from 'oak-trigger-executor';
+import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { data as generalData, triggers as generalTriggers } from 'oak-general-business';
 import { FrontContext } from '../FrontContext';
 
@@ -15,7 +16,7 @@ async function initDataInStore<ED extends EntityDict & BaseEntityDict>(store: De
         // todo 在不同环境下读取相应的store数据并初始化
     }
     else {
-        const context = new Context(store);
+        const context = new DebugContext(store);
         await context.begin();
         if (initialData) {
             for (const entity in initialData) {
@@ -54,4 +55,4 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict>(storage
     return store;
 }
 
-export * from './context';
+export * from '../cacheStore/context';
