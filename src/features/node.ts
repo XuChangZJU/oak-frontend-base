@@ -1,5 +1,5 @@
 import { set, cloneDeep, pull, unset } from 'lodash';
-import { DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceUpdateOperation, EntityDict, EntityShape, FormCreateData, OperationResult, OpRecord, SelectionResult } from 'oak-domain/lib/types/Entity';
+import { DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceSelection, DeduceUpdateOperation, EntityDict, EntityShape, FormCreateData, OperationResult, OpRecord, SelectionResult } from 'oak-domain/lib/types/Entity';
 import { Aspect } from 'oak-general-business/lib/types/Aspect';
 import { combineFilters } from 'oak-domain/lib/store/filter';
 import { Action, Feature } from '../types/Feature';
@@ -82,6 +82,10 @@ export class Node<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, 
     getParent() {
         return this.parent;
     }
+
+    getProjection() {
+        return this.projection!;
+    }
 }
 
 const DEFAULT_PAGINATION: Pagination = {
@@ -160,6 +164,10 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
 
     getFilter() {
         return combineFilters(this.filters);
+    }
+
+    setFilters(filters: DeduceFilter<ED[T]['Schema']>[]) {
+        this.filters = filters;
     }
 
     async refresh(cache: Cache<ED, AD>) {
@@ -265,7 +273,7 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
         const action = this.action === 'create' ? {
             action: 'create',
             data: cloneDeep(this.updateData) || {},
-        } as DeduceCreateOperation<ED[T]['Schema']>: {
+        } as DeduceCreateOperation<ED[T]['Schema']> : {
             action: this.action || 'update',
             data: cloneDeep(this.updateData) || {},
             filter: {
@@ -290,7 +298,7 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
             [path]: node,
         });
     }
-    
+
     removeChild(path: string) {
         const { children } = this;
         assert(children[path]);
@@ -311,21 +319,21 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
                     // 新建对象并关联
                     assert(!this.value || this.value.entity);
                     const id = v4({ random: await getRandomValues(16) });
-                   /*  await cache.operate(this.entity, {
-                        action: 'update',
-                        data: {
-                            entity: path as any,
-                            [path]: {
-                                action: 'create',
-                                data: {
-                                    id,
-                                },
-                            },
-                        },
-                        filter: {
-                            id: this.id!,
-                        }
-                    } as any); */
+                    /*  await cache.operate(this.entity, {
+                         action: 'update',
+                         data: {
+                             entity: path as any,
+                             [path]: {
+                                 action: 'create',
+                                 data: {
+                                     id,
+                                 },
+                             },
+                         },
+                         filter: {
+                             id: this.id!,
+                         }
+                     } as any); */
                     node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, undefined, this, id, 'create');
                 }
             }
@@ -417,7 +425,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
     }
 
     async createNode<T extends keyof ED>(path: string, parent?: string,
-        entity?: T, isList?: boolean, isPicker?: boolean, projection?: ED[T]['Selection']['data'],id?: string,
+        entity?: T, isList?: boolean, isPicker?: boolean, projection?: ED[T]['Selection']['data'], id?: string,
         pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[],
         sorter?: ED[T]['Selection']['sorter']) {
         let node: ListNode<ED, AD, T> | SingleNode<ED, AD, T>;
@@ -432,16 +440,16 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
             node = new ListNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, pagination, filters, sorter);
         }
         else {
-           /*  let id2: string = id || v4({ random: await getRandomValues(16) });
-            if (!id) {
-                // 如果!isList并且没有id，说明是create，在这里先插入cache
-                await context.rowStore.operate(entity2, {
-                    action: 'create',
-                    data: {
-                        id: id2,
-                    } as FormCreateData<ED[T]['OpSchema']>,
-                }, context);
-            } */
+            /*  let id2: string = id || v4({ random: await getRandomValues(16) });
+             if (!id) {
+                 // 如果!isList并且没有id，说明是create，在这里先插入cache
+                 await context.rowStore.operate(entity2, {
+                     action: 'create',
+                     data: {
+                         id: id2,
+                     } as FormCreateData<ED[T]['OpSchema']>,
+                 }, context);
+             } */
             node = new SingleNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, id, !id ? 'create' : undefined);
         }
         if (parentNode) {
@@ -472,20 +480,20 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         }
     }
 
-    @Action
-    async refresh(path: string) {
-        const node = await this.findNode(path);
-        await node.refresh(this.cache);
+    setStorageSchema(schema: StorageSchema<ED>) {
+        this.schema = schema;
     }
 
-    private async applyAction<T extends keyof ED> (entity: T, value: Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined, 
-        operation: DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[]) : Promise<Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined> {
+    private async applyAction<T extends keyof ED>(
+        entity: T, value: Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined,
+        operation: DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[],
+        projection: DeduceSelection<ED[T]['Schema']>['data']): Promise<Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined> {
         if (operation instanceof Array) {
             assert(value instanceof Array);
             for (const action of operation) {
                 switch (action.action) {
                     case 'create': {
-                        value.push(await this.applyAction(entity, undefined, action) as Partial<ED[T]['Schema']>);
+                        value.push(await this.applyAction(entity, undefined, action, projection) as Partial<ED[T]['Schema']>);
                     }
                     case 'remove': {
                         const { filter } = action;
@@ -501,8 +509,8 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
                         const row = value.find(
                             ele => ele.id === filter!.id
                         );
-                        await this.applyAction(entity, row!, action);
-                    }                    
+                        await this.applyAction(entity, row!, action, projection);
+                    }
                 }
             }
             return value;
@@ -511,10 +519,10 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
             if (value instanceof Array) {
                 // todo 这里还有种可能不是对所有的行，只对指定id的行操作
                 return (await Promise.all(value.map(
-                    async (row) => await this.applyAction(entity, row, operation)
+                    async (row) => await this.applyAction(entity, row, operation, projection)
                 ))).filter(
                     ele => !!ele
-                ) as Partial<ED[T]['Schema']> [];
+                ) as Partial<ED[T]['Schema']>[];
             }
             else {
                 const { action, data } = operation;
@@ -526,51 +534,91 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
                         }
                         else if (relation === 2) {
                             // 基于entity/entityId的多对一
-                            set(row, attr, await this.applyAction(attr, row[attr], actionData[attr]!));
-                            if (row[attr]) {
-                                assign(row, {
-                                    entity: attr,
-                                    entityId: row[attr]!['id'],
-                                });
-                            }
-                            else {
-                                assign(row, {
-                                    entity: undefined,
-                                    entityId: undefined,
-                                });
+                            if (projection[attr]) {
+                                set(row, attr, await this.applyAction(attr, row[attr], actionData[attr]!, projection[attr]!));
+                                if (row[attr]) {
+                                    assign(row, {
+                                        entity: attr,
+                                        entityId: row[attr]!['id'],
+                                    });
+                                }
+                                else {
+                                    assign(row, {
+                                        entity: undefined,
+                                        entityId: undefined,
+                                    });
+                                }
                             }
                         }
                         else if (typeof relation === 'string') {
-                            set(row, attr, await this.applyAction(relation, row[attr], actionData[attr]!));
-                            if (row[attr]) {
-                                assign(row, {
-                                    [`${attr}Id`]: row[attr]!['id'],
-                                });
-                            }
-                            else {
-                                assign(row, {
-                                    [`${attr}Id`]: undefined,
-                                });
+                            if (projection[attr]) {
+                                set(row, attr, await this.applyAction(relation, row[attr], actionData[attr]!, projection[attr]!));
+                                if (row[attr]) {
+                                    assign(row, {
+                                        [`${attr}Id`]: row[attr]!['id'],
+                                    });
+                                }
+                                else {
+                                    assign(row, {
+                                        [`${attr}Id`]: undefined,
+                                    });
+                                }
                             }
                         }
                         else {
                             assert(relation instanceof Array);
-                            set(row, attr, await this.applyAction(relation[0], row[attr], actionData[attr]!));
-                            row[attr]!.forEach(
-                                (ele: ED[keyof ED]['Schema']) => {
-                                    if (relation[1]) {
-                                        assign(ele, {
-                                            [relation[1]]: row.id,
-                                        });
+                            if (projection[attr]) {
+                                set(row, attr, await this.applyAction(relation[0], row[attr], actionData[attr]!, projection[attr]!));
+                                row[attr]!.forEach(
+                                    (ele: ED[keyof ED]['Schema']) => {
+                                        if (relation[1]) {
+                                            assign(ele, {
+                                                [relation[1]]: row.id,
+                                            });
+                                        }
+                                        else {
+                                            assign(ele, {
+                                                entity,
+                                                entityId: row.id,
+                                            });
+                                        }
                                     }
-                                    else {
-                                        assign(ele, {
-                                            entity,
-                                            entityId: row.id,
-                                        });
+                                );
+                            }
+                        }
+                    }
+
+                    // 这里有一种额外的情况，actionData中更新了某项外键而projection中有相应的请求
+                    for (const attr in projection) {
+                        if (!actionData.hasOwnProperty(attr)) {
+                            const relation = judgeRelation(this.schema!, entity, attr);
+                            if (relation === 2 &&
+                                (actionData.hasOwnProperty('entity') || actionData.hasOwnProperty('entityId'))) {
+                                const entity = actionData.entity || row.entity!;
+                                const entityId = actionData.entityId || row.entityId!;
+                                const [entityRow] = await this.cache.get({
+                                    entity,
+                                    selection: {
+                                        data: projection[attr]!,
+                                        filter: {
+                                            id: entityId,
+                                        } as any,
                                     }
-                                }
-                            )
+                                });
+                                set(row, attr, entityRow);
+                            }
+                            else if (typeof relation === 'string' && actionData.hasOwnProperty(`${attr}Id`)) {
+                                const [entityRow] = await this.cache.get({
+                                    entity: relation,
+                                    selection: {
+                                        data: projection[attr]!,
+                                        filter: {
+                                            id: actionData[`${attr}Id`],
+                                        } as any,
+                                    }
+                                });
+                                set(row, attr, entityRow);
+                            }
                         }
                     }
                 }
@@ -578,7 +626,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
                     case 'create': {
                         assert(!value);
                         const row = {
-                            id: v4({ random: await getRandomValues(16)}),
+                            id: v4({ random: await getRandomValues(16) }),
                         } as Partial<ED[T]['Schema']>;
                         await applyUpsert(row, data as DeduceUpdateOperation<ED[T]['Schema']>['data']);
                         return row;
@@ -600,7 +648,8 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         let value = await node.getValue(this.cache);
         if (node.isDirty()) {
             const operation = node.composeAction();
-            value = (await this.applyAction(node.getEntity(), value, operation!));
+            const projection = node.getProjection();
+            value = (await this.applyAction(node.getEntity(), value, operation!, projection as any));
         }
 
         if (value instanceof Array) {
@@ -616,13 +665,12 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         while (iter < paths.length) {
             const childPath = paths[iter];
             node = (await node.getChild(childPath))!;
-            iter ++;
+            iter++;
         }
         return node;
     }
 
-    @Action
-    async setUpdateData(path: string, attr: string, value: any) {
+    protected async setUpdateDataInner(path: string, attr: string, value: any) {
         let node = await this.findNode(path);
         const attrSplit = attr.split('.');
         let idx = 0;
@@ -650,8 +698,33 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         }
     }
 
-    setStorageSchema(schema: StorageSchema<ED>) {
-        this.schema = schema;
+    @Action
+    async setUpdateData(path: string, attr: string, value: any) {
+        await this.setUpdateDataInner(path, attr, value);
+    }
+
+    @Action
+    async setMultipleData(path: string, data: [string, any][]) {
+        for (const d of data) {
+            await this.setUpdateDataInner(path, d[0], d[1]);
+        }
+    }
+
+    @Action
+    async refresh(path: string) {
+        const node = await this.findNode(path);
+        await node.refresh(this.cache);
+    }
+
+    @Action
+    async setFilters<T extends keyof ED>(path: string, filters: DeduceFilter<ED[T]['Schema']>[], refresh: boolean = true) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.setFilters(filters);
+            if (refresh) {
+                await node.refresh(this.cache);
+            }
+        }
     }
 }
 

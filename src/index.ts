@@ -48,7 +48,7 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
     }
     else {
         // todo initialData
-        const debugStore = createDebugStore(storageSchema, triggers, initialData);
+        const debugStore = createDebugStore(storageSchema, triggers, initialData);       
 
         const connectAspectToDebugStore = (aspect: Aspect<ED>): (p: Parameters<typeof aspect>[0]) => ReturnType<typeof aspect> => {
             return async (params: Parameters<typeof aspect>[0]) => {
@@ -85,11 +85,23 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
                 }
                 const getToken = () => token;
 
-                const runningContext = new DebugRuntimeContext(debugStore, getApplication, getToken)
-                const result = aspect(params, runningContext);
-
-                context.rowStore.sync(runningContext.opRecords, context);
-                return result;
+                const runningContext = new DebugRuntimeContext(debugStore, getApplication, getToken);
+                await runningContext.begin();
+                let aspectCompeleted = false;
+                try {
+                    const result = await aspect(params, runningContext);
+                    await runningContext.commit();
+                    aspectCompeleted = true;
+    
+                    await context.rowStore.sync(runningContext.opRecords, context);
+                    return result;
+                }
+                catch(err) {
+                    if (!aspectCompeleted) {
+                        await runningContext.rollback();                        
+                    }
+                    throw err;
+                }
             }
         };
 
