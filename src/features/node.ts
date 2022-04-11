@@ -435,7 +435,6 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         const entity2 = subEntity ? subEntity.entity : entity!;
         const isList2 = subEntity ? subEntity.isList : isList!;
 
-        const context = this.getContext();
         if (isPicker || isList2) {
             node = new ListNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, pagination, filters, sorter);
         }

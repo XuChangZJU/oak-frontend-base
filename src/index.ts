@@ -33,7 +33,6 @@ class DebugRuntimeContext<ED extends EntityDict> extends DebugContext<ED> implem
 function createAspectProxy<ED extends BaseEntityDict & EntityDict,
     AD extends Record<string, Aspect<ED>>,
     FD extends Record<string, Feature<ED, AD>>>(
-        context: FrontContext<ED>,
         storageSchema: StorageSchema<ED>,
         triggers: Array<Trigger<ED, keyof ED>>,
         applicationId: string,
@@ -93,7 +92,7 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
                     await runningContext.commit();
                     aspectCompeleted = true;
     
-                    await context.rowStore.sync(runningContext.opRecords, context);
+                    await features.cache.sync(runningContext.opRecords);
                     return result;
                 }
                 catch(err) {
@@ -122,7 +121,8 @@ export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Re
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     }) {
-    const basicFeatures = createBasicFeatures<ED, AD>();
+    const cacheStore = new CacheStore<ED>(storageSchema);
+    const basicFeatures = createBasicFeatures<ED, AD>(cacheStore);
     basicFeatures.runningNode.setStorageSchema(storageSchema);
 
     const userDefinedfeatures = createFeatures(basicFeatures);
@@ -133,17 +133,14 @@ export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Re
     }
     const features = assign(basicFeatures, userDefinedfeatures);
 
-    const cacheStore = new CacheStore<ED>(storageSchema);
-    const context = new FrontContext(cacheStore);
 
     // todo default triggers
-    const aspectProxy = createAspectProxy<ED, AD, FD>(context, storageSchema, triggers || [],
+    const aspectProxy = createAspectProxy<ED, AD, FD>(storageSchema, triggers || [],
         applicationId, features, aspectDict, initialData);
 
     keys(features).forEach(
         ele => {
             features[ele].setAspectProxy(aspectProxy);
-            features[ele].setContext(context);
         }
     );
 
@@ -151,7 +148,6 @@ export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Re
     return {
         subscribe,
         features,
-        getContext: () => context as FrontContext<ED>,
     };
 }
 

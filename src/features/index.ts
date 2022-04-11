@@ -6,9 +6,11 @@ import { Cache } from './cache';
 import { Location } from './location';
 import { Token } from './token';
 import { RunningNode } from './node';
+import { CacheStore } from '../cacheStore/CacheStore';
 
-export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> (): BasicFeatures<ED, AD> {
-    const cache = new Cache<ED, AD>();
+export function initialize<ED extends EntityDict & BaseEntityDict,
+    AD extends Record<string, Aspect<ED>>> (cacheStore: CacheStore<ED>): BasicFeatures<ED, AD> {
+    const cache = new Cache<ED, AD>(cacheStore);
     const location = new Location();
     const token = new Token(cache as any);
     const runningNode = new RunningNode<ED, AD>(cache);
