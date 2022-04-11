@@ -2,10 +2,9 @@ import { assign } from 'lodash';
 import { DebugStore } from './debugStore';
 import { DebugContext } from './context';
 import { FormCreateData, Selection, EntityDict } from "oak-domain/lib/types/Entity";
-import { EntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
+import { BaseEntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { Trigger } from 'oak-domain/lib/types/Trigger';
-import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
+import { Trigger, TriggerExecutor } from 'oak-general-business';
 import { data as generalData, triggers as generalTriggers } from 'oak-general-business';
 import { FrontContext } from '../FrontContext';
 

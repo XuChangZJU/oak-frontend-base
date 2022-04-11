@@ -1,5 +1,5 @@
 import { EntityDict, OpRecord } from 'oak-domain/lib/types/Entity';
-import { Aspect } from 'oak-general-business/lib/types/Aspect';
+import { Aspect } from 'oak-general-business';
 import { Action, Feature } from '../types/Feature';
 
 export class Location extends Feature<EntityDict, Record<string, Aspect<EntityDict>>> {

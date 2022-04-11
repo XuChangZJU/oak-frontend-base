@@ -1,4 +1,4 @@
-import { EntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
+import { BaseEntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 import { aspectDict as basicAspectDict } from 'oak-general-business';
 import { Action, Feature } from '../types/Feature';
 import { Cache } from './cache';

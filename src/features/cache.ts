@@ -1,5 +1,5 @@
 import { DeduceSelection, EntityDict, OperateParams, OpRecord } from 'oak-domain/lib/types/Entity';
-import { Aspect } from 'oak-general-business/lib/types/Aspect';
+import { Aspect } from 'oak-general-business';
 import { Action, Feature } from '../types/Feature';
 import { assign } from 'lodash';
 import { FrontContext } from '../FrontContext';
@@ -36,12 +36,17 @@ export class Cache<ED extends EntityDict, AD extends Record<string, Aspect<ED>>>
     }
 
     @Action
-    async operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], params?: OperateParams) {
+    async operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], commit: boolean = true, params?: OperateParams) {
         const context = new FrontContext(this.cacheStore);
         let result: Awaited<ReturnType<typeof this.cacheStore.operate>>;
         try {
             result = await this.cacheStore.operate(entity, operation, context, params);
-            await context.commit();
+            if (commit) {
+                await context.commit();
+            }
+            else {
+                await context.rollback();
+            }
         }
         catch(err) {
             await context.rollback();

@@ -1,9 +1,9 @@
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { Trigger } from "oak-domain/lib/types/Trigger";
-import { EntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
+import { Trigger } from "oak-general-business";
+import { BaseEntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 import { aspectDict as basicAspectDict } from 'oak-general-business';
 
-import { Aspect } from 'oak-general-business/lib/types/Aspect';
+import { Aspect } from 'oak-general-business';
 import { Feature, subscribe } from './types/Feature';
 import { createDebugStore } from './debugStore';
 
@@ -18,17 +18,6 @@ import { Schema as Application } from "oak-general-business/lib/base-ed/Applicat
 import { Schema as Token } from 'oak-general-business/lib/base-ed/Token/Schema';
 import { AspectProxy } from './types/AspectProxy';
 import { CacheStore } from './cacheStore/CacheStore';
-
-class DebugRuntimeContext<ED extends EntityDict> extends DebugContext<ED> implements RuntimeContext<ED> {
-    getApplication: () => Application;
-    getToken: () => Token | undefined;
-
-    constructor(store: DebugStore<ED>, ga: () => Application, gt: () => Token | undefined) {
-        super(store);
-        this.getApplication = ga;
-        this.getToken = gt;
-    }
-};
 
 function createAspectProxy<ED extends BaseEntityDict & EntityDict,
     AD extends Record<string, Aspect<ED>>,
@@ -52,39 +41,9 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
         const connectAspectToDebugStore = (aspect: Aspect<ED>): (p: Parameters<typeof aspect>[0]) => ReturnType<typeof aspect> => {
             return async (params: Parameters<typeof aspect>[0]) => {
                 const context2 = new DebugContext(debugStore);
-
-                const { result: [application] } = await debugStore.select('application', {
-                    data: {
-                        id: 1,
-                        systemId: 1,
-                        system: {
-                            id: 1,
-                        },
-                    },
-                    filter: {
-                        id: applicationId,
-                    }
-                }, context2);
-                const getApplication = () => application as Application;
                 const tokenValue = await features.token.getValue();
-                let token: Token | undefined;
-                if (tokenValue) {
-                    const { result } = await debugStore.select('token', {
-                        data: {
-                            id: 1,
-                            userId: 1,
-                            playerId: 1,
-                        },
-                        filter: {
-                            id: tokenValue,
-                        }
-                    }, context2);
-                    token = result[0] as Token;
-                    // todo 判断 token的合法性
-                }
-                const getToken = () => token;
 
-                const runningContext = new DebugRuntimeContext(debugStore, getApplication, getToken);
+                const runningContext = new DebugContext(debugStore, applicationId, tokenValue);
                 await runningContext.begin();
                 let aspectCompeleted = false;
                 try {

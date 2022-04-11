@@ -1,12 +1,12 @@
 import { EntityDef, EntityDict, OperationResult, SelectionResult } from "oak-domain/lib/types/Entity";
+import { BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 
 import { TreeStore } from 'oak-memory-tree-store';
 import { DebugContext } from './context';
-import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
-import { Trigger, TriggerEntityShape } from "oak-domain/lib/types/Trigger";
+import { TriggerExecutor, Trigger } from 'oak-general-business';
 import { StorageSchema } from "oak-domain/lib/types/Storage";
 
-export class DebugStore<ED extends EntityDict> extends TreeStore<ED> {
+export class DebugStore<ED extends EntityDict & BaseEntityDict> extends TreeStore<ED> {
 
     private executor: TriggerExecutor<ED>;
 

@@ -1,6 +1,6 @@
 import { set, cloneDeep, pull, unset } from 'lodash';
 import { DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceSelection, DeduceUpdateOperation, EntityDict, EntityShape, FormCreateData, OperationResult, OpRecord, SelectionResult } from 'oak-domain/lib/types/Entity';
-import { Aspect } from 'oak-general-business/lib/types/Aspect';
+import { Aspect } from 'oak-general-business';
 import { combineFilters } from 'oak-domain/lib/store/filter';
 import { Action, Feature } from '../types/Feature';
 import { Cache } from './cache';
@@ -116,7 +116,7 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
         this.pagination = pagination || DEFAULT_PAGINATION;
     }
 
-    composeAction(): DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined {
+    composeOperation(): DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined {
         if (!this.isDirty()) {
             return;
         }
@@ -129,7 +129,7 @@ class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T e
         }
         const actions = [];
         for (const node of this.children) {
-            const subAction = node.composeAction();
+            const subAction = node.composeOperation();
             if (subAction) {
                 actions.push(subAction);
             }
@@ -266,7 +266,7 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
         }
     }
 
-    composeAction(): DeduceOperation<ED[T]['Schema']> | undefined {
+    composeOperation(): DeduceOperation<ED[T]['Schema']> | undefined {
         if (!this.isDirty()) {
             return;
         }
@@ -281,7 +281,7 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
             },
         } as DeduceUpdateOperation<ED[T]['Schema']>;
         for (const attr in this.children) {
-            const subAction = this.children[attr]!.composeAction();
+            const subAction = this.children[attr]!.composeOperation();
             if (subAction) {
                 assign(action.data, {
                     [attr]: subAction,
@@ -483,7 +483,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         this.schema = schema;
     }
 
-    private async applyAction<T extends keyof ED>(
+    private async applyOperation<T extends keyof ED>(
         entity: T, value: Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined,
         operation: DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[],
         projection: DeduceSelection<ED[T]['Schema']>['data']): Promise<Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined> {
@@ -492,7 +492,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
             for (const action of operation) {
                 switch (action.action) {
                     case 'create': {
-                        value.push(await this.applyAction(entity, undefined, action, projection) as Partial<ED[T]['Schema']>);
+                        value.push(await this.applyOperation(entity, undefined, action, projection) as Partial<ED[T]['Schema']>);
                     }
                     case 'remove': {
                         const { filter } = action;
@@ -508,7 +508,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
                         const row = value.find(
                             ele => ele.id === filter!.id
                         );
-                        await this.applyAction(entity, row!, action, projection);
+                        await this.applyOperation(entity, row!, action, projection);
                     }
                 }
             }
@@ -518,7 +518,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
             if (value instanceof Array) {
                 // todo 这里还有种可能不是对所有的行，只对指定id的行操作
                 return (await Promise.all(value.map(
-                    async (row) => await this.applyAction(entity, row, operation, projection)
+                    async (row) => await this.applyOperation(entity, row, operation, projection)
                 ))).filter(
                     ele => !!ele
                 ) as Partial<ED[T]['Schema']>[];
@@ -534,7 +534,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
                         else if (relation === 2) {
                             // 基于entity/entityId的多对一
                             if (projection[attr]) {
-                                set(row, attr, await this.applyAction(attr, row[attr], actionData[attr]!, projection[attr]!));
+                                set(row, attr, await this.applyOperation(attr, row[attr], actionData[attr]!, projection[attr]!));
                                 if (row[attr]) {
                                     assign(row, {
                                         entity: attr,
@@ -551,7 +551,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
                         }
                         else if (typeof relation === 'string') {
                             if (projection[attr]) {
-                                set(row, attr, await this.applyAction(relation, row[attr], actionData[attr]!, projection[attr]!));
+                                set(row, attr, await this.applyOperation(relation, row[attr], actionData[attr]!, projection[attr]!));
                                 if (row[attr]) {
                                     assign(row, {
                                         [`${attr}Id`]: row[attr]!['id'],
@@ -567,7 +567,7 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
                         else {
                             assert(relation instanceof Array);
                             if (projection[attr]) {
-                                set(row, attr, await this.applyAction(relation[0], row[attr], actionData[attr]!, projection[attr]!));
+                                set(row, attr, await this.applyOperation(relation[0], row[attr], actionData[attr]!, projection[attr]!));
                                 row[attr]!.forEach(
                                     (ele: ED[keyof ED]['Schema']) => {
                                         if (relation[1]) {
@@ -646,15 +646,20 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
         const node = await this.findNode(path);
         let value = await node.getValue(this.cache);
         if (node.isDirty()) {
-            const operation = node.composeAction();
+            const operation = node.composeOperation();
             const projection = node.getProjection();
-            value = (await this.applyAction(node.getEntity(), value, operation!, projection as any));
+            value = (await this.applyOperation(node.getEntity(), value, operation!, projection as any));
         }
 
         if (value instanceof Array) {
             return value!;
         }
         return [value!];
+    }
+
+    async isDirty(path: string) {
+        const node = await this.findNode(path);
+        return node.isDirty();
     }
 
     private async findNode(path: string) {
@@ -724,6 +729,31 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
                 await node.refresh(this.cache);
             }
         }
+    }
+
+    @Action
+    async execute(path: string, isTry?: boolean) {
+        const node = await this.findNode(path);
+        const operation = node.composeOperation();
+        // 先在cache中尝试能否执行，如果权限上否决了在这里就失败
+        if (operation instanceof Array) {
+            for (const oper of operation) {
+                await this.cache.operate(node.getEntity(), oper, false);
+            }
+        }
+        else if (operation) {
+            await this.cache.operate(node.getEntity(), operation, false);
+        }
+        else {
+            return;
+        }
+
+        if (isTry) {
+            return;
+        }
+
+        console.log('exeucte to aspectProxy');
+        // this.getAspectProxy().operate
     }
 }
 

@@ -1,6 +1,6 @@
 import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
-import { Aspect } from 'oak-general-business/lib/types/Aspect';
+import { BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
+import { Aspect } from 'oak-general-business';
 
 import { Cache } from './cache';
 import { Location } from './location';

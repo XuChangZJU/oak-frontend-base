@@ -1,5 +1,5 @@
 import { pull } from 'lodash';
-import { Aspect } from 'oak-general-business/lib/types/Aspect';
+import { Aspect } from 'oak-general-business';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { aspectDict as basicAspectDict} from 'oak-general-business';
 import { FrontContext } from '../FrontContext';
@@ -8,7 +8,6 @@ import { AspectProxy } from './AspectProxy';
 
 export abstract class Feature<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> {
     private aspectProxy?: AspectProxy<ED, AD & typeof basicAspectDict>;
-    private context?: FrontContext<ED>;
 
     protected getAspectProxy() {
         return this.aspectProxy!;
@@ -16,14 +15,6 @@ export abstract class Feature<ED extends EntityDict, AD extends Record<string, A
 
     setAspectProxy(aspectProxy: AspectProxy<ED, AD & typeof basicAspectDict>) {
         this.aspectProxy = aspectProxy;
-    }
-
-    protected getContext() {
-        return this.context!;
-    }
-
-    setContext(context: FrontContext<ED>) {
-        this.context = context;
     }
 }
 
