@@ -8,14 +8,9 @@ import { Feature, subscribe } from './types/Feature';
 import { createDebugStore } from './debugStore';
 
 import { initialize as createBasicFeatures, BasicFeatures } from './features/index';
-import { assign, intersection, keys, mapValues, pull } from 'lodash';
+import { assign, intersection, keys, mapValues } from 'lodash';
 import { EntityDict, FormCreateData } from 'oak-domain/lib/types/Entity';
-import { FrontContext } from './FrontContext';
-import { RuntimeContext } from "oak-general-business/lib/RuntimeContext";
-import { DebugStore } from './debugStore/debugStore';
 import { DebugContext } from './debugStore/context';
-import { Schema as Application } from "oak-general-business/lib/base-ed/Application/Schema";
-import { Schema as Token } from 'oak-general-business/lib/base-ed/Token/Schema';
 import { AspectProxy } from './types/AspectProxy';
 import { CacheStore } from './cacheStore/CacheStore';
 
@@ -40,7 +35,6 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
 
         const connectAspectToDebugStore = (aspect: Aspect<ED>): (p: Parameters<typeof aspect>[0]) => ReturnType<typeof aspect> => {
             return async (params: Parameters<typeof aspect>[0]) => {
-                const context2 = new DebugContext(debugStore);
                 const tokenValue = await features.token.getValue();
 
                 const runningContext = new DebugContext(debugStore, applicationId, tokenValue);
