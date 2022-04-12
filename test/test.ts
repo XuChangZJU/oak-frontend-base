@@ -1,7 +1,9 @@
-import { unset } from 'lodash';
+type A = {
+    name: 'bbb'
+    [k: string]: string;
+};
 
-const test = [, 'xc', 1234];
-unset(test, 1);
-console.log(test[1]);
+type B = keyof A;
 
-console.log('xc'.lastIndexOf('.'));
+
+const b: B = 1;

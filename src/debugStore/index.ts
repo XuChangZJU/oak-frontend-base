@@ -4,9 +4,8 @@ import { DebugContext } from './context';
 import { FormCreateData, Selection, EntityDict } from "oak-domain/lib/types/Entity";
 import { BaseEntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { Trigger, TriggerExecutor } from 'oak-general-business';
-import { data as generalData, triggers as generalTriggers } from 'oak-general-business';
-import { FrontContext } from '../FrontContext';
+import { Checker, Trigger, TriggerExecutor } from 'oak-general-business';
+import { data as generalData, triggers as generalTriggers, checkers as generalCheckers } from 'oak-general-business';
 
 async function initDataInStore<ED extends EntityDict & BaseEntityDict>(store: DebugStore<ED>, initialData?: {
     [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
@@ -36,17 +35,28 @@ async function initDataInStore<ED extends EntityDict & BaseEntityDict>(store: De
 }
 
 
-export function createDebugStore<ED extends EntityDict & BaseEntityDict>(storageSchema: StorageSchema<ED>, triggers?: Array<Trigger<ED, keyof ED>>, initialData?: {
+export function createDebugStore<ED extends EntityDict & BaseEntityDict>(
+    storageSchema: StorageSchema<ED>,
+    triggers?: Array<Trigger<ED, keyof ED>>,
+    checkers?: Array<Checker<ED, keyof ED>>,
+    initialData?: {
     [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
 }){
     const executor = new TriggerExecutor<ED>();
     const store = new DebugStore<ED>(executor, storageSchema);
     
-    generalTriggers.forEach(
-        ele => store.registerTrigger(ele)
+    (generalTriggers).forEach(
+        ele => store.registerTrigger(ele as any)
     );
     triggers?.forEach(
         ele => store.registerTrigger(ele)
+    );
+
+    generalCheckers.forEach(
+        ele => store.registerChecker(ele as any)
+    );
+    checkers?.forEach(
+        ele => store.registerChecker(ele)
     );
 
     // 如果有物化存储的数据使用此数据，否则使用initialData初始化debugStore

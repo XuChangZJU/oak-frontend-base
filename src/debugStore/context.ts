@@ -8,8 +8,8 @@ import { DebugStore } from './debugStore';
 import { RuntimeContext } from 'oak-general-business';
 
 export class DebugContext<ED extends BaseEntityDict & EntityDict> extends BaseContext<ED> implements RuntimeContext<ED> {
-    getApplication: () => Application | undefined;
-    getToken: () => Token | undefined;
+    getApplication: () => Pick<Token, 'id' | 'userId' | 'playerId'> | undefined;
+    getToken: () => Pick<Application, 'id'> | undefined;
 
     async initGetFn(applicationId?: string, tokenValue?: string) {
         if (applicationId) {

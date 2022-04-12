@@ -1,5 +1,6 @@
 import { set, cloneDeep, pull, unset } from 'lodash';
-import { DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceSelection, DeduceUpdateOperation, EntityDict, EntityShape, FormCreateData, OperationResult, OpRecord, SelectionResult } from 'oak-domain/lib/types/Entity';
+import { DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceSelection, DeduceUpdateOperation, EntityDict, EntityShape } from 'oak-domain/lib/types/Entity';
+import { BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 import { Aspect } from 'oak-general-business';
 import { combineFilters } from 'oak-domain/lib/store/filter';
 import { Action, Feature } from '../types/Feature';
@@ -95,7 +96,7 @@ const DEFAULT_PAGINATION: Pagination = {
     more: true,
 }
 
-class ListNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> extends Node<ED, AD, T>{
+class ListNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> extends Node<ED, AD, T>{
     private ids: string[];
     protected children: SingleNode<ED, AD, T>[];
     protected value: Partial<ED[T]['Schema']>[];
@@ -240,7 +241,7 @@ declare type AttrFilter<SH extends EntityShape> = {
     [K in keyof SH]: any;
 };
 
-class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> extends Node<ED, AD, T>{
+class SingleNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> extends Node<ED, AD, T>{
     private id?: string;
     private value?: Partial<ED[T]['Schema']>;
     private children: {
@@ -266,15 +267,15 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
         }
     }
 
-    composeOperation(): DeduceOperation<ED[T]['Schema']> | undefined {
-        if (!this.isDirty()) {
+    composeOperation(action2?: string): DeduceOperation<ED[T]['Schema']> | undefined {
+        if (!this.isDirty() && !action2) {
             return;
         }
         const action = this.action === 'create' ? {
             action: 'create',
             data: cloneDeep(this.updateData) || {},
         } as DeduceCreateOperation<ED[T]['Schema']> : {
-            action: this.action || 'update',
+            action: action2 || this.action || 'update',
             data: cloneDeep(this.updateData) || {},
             filter: {
                 id: this.id!,
@@ -413,7 +414,7 @@ class SingleNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T
 }
 
 
-export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
+export class RunningNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
     private cache: Cache<ED, AD>;
     private schema?: StorageSchema<ED>;
     private root: Record<string, SingleNode<ED, AD, keyof ED> | ListNode<ED, AD, keyof ED>>;
@@ -732,9 +733,9 @@ export class RunningNode<ED extends EntityDict, AD extends Record<string, Aspect
     }
 
     @Action
-    async execute(path: string, isTry?: boolean) {
+    async execute(path: string, action?: string, isTry?: boolean) {
         const node = await this.findNode(path);
-        const operation = node.composeOperation();
+        const operation = node.composeOperation(action);
         // 先在cache中尝试能否执行，如果权限上否决了在这里就失败
         if (operation instanceof Array) {
             for (const oper of operation) {

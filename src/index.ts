@@ -1,5 +1,5 @@
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { Trigger } from "oak-general-business";
+import { Checker, Trigger } from "oak-general-business";
 import { BaseEntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 import { aspectDict as basicAspectDict } from 'oak-general-business';
 
@@ -19,6 +19,7 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
     FD extends Record<string, Feature<ED, AD>>>(
         storageSchema: StorageSchema<ED>,
         triggers: Array<Trigger<ED, keyof ED>>,
+        checkers: Array<Checker<ED, keyof ED>>,
         applicationId: string,
         features: BasicFeatures<ED, AD> & FD,
         aspectDict?: AD,
@@ -31,11 +32,11 @@ function createAspectProxy<ED extends BaseEntityDict & EntityDict,
     }
     else {
         // todo initialData
-        const debugStore = createDebugStore(storageSchema, triggers, initialData);       
+        const debugStore = createDebugStore(storageSchema, triggers, checkers, initialData);       
 
         const connectAspectToDebugStore = (aspect: Aspect<ED>): (p: Parameters<typeof aspect>[0]) => ReturnType<typeof aspect> => {
             return async (params: Parameters<typeof aspect>[0]) => {
-                const tokenValue = await features.token.getValue();
+                const tokenValue = features.cache.getTokenValue();
 
                 const runningContext = new DebugContext(debugStore, applicationId, tokenValue);
                 await runningContext.begin();
@@ -70,12 +71,12 @@ export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Re
     applicationId: string,
     createFeatures: (basicFeatures: BasicFeatures<ED, AD>) => FD,
     triggers?: Array<Trigger<ED, keyof ED>>,
+    checkers?: Array<Checker<ED, keyof ED>>,
     aspectDict?: AD,
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     }) {
-    const cacheStore = new CacheStore<ED>(storageSchema);
-    const basicFeatures = createBasicFeatures<ED, AD>(cacheStore);
+    const basicFeatures = createBasicFeatures<ED, AD>(storageSchema, applicationId, checkers);
     basicFeatures.runningNode.setStorageSchema(storageSchema);
 
     const userDefinedfeatures = createFeatures(basicFeatures);
@@ -88,7 +89,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Re
 
 
     // todo default triggers
-    const aspectProxy = createAspectProxy<ED, AD, FD>(storageSchema, triggers || [],
+    const aspectProxy = createAspectProxy<ED, AD, FD>(storageSchema, triggers || [], checkers || [],
         applicationId, features, aspectDict, initialData);
 
     keys(features).forEach(
@@ -107,7 +108,6 @@ export function initialize<ED extends EntityDict & BaseEntityDict, AD extends Re
 
 
 export * from './features/node';
-export * from './FrontContext';
 export * from './types/Feature';
 export * from './types/Pagination';
 export * from './features/cache';

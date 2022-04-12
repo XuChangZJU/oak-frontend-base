@@ -3,7 +3,7 @@ import { BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 
 import { TreeStore } from 'oak-memory-tree-store';
 import { DebugContext } from './context';
-import { TriggerExecutor, Trigger } from 'oak-general-business';
+import { TriggerExecutor, Trigger, Checker } from 'oak-general-business';
 import { StorageSchema } from "oak-domain/lib/types/Storage";
 
 export class DebugStore<ED extends EntityDict & BaseEntityDict> extends TreeStore<ED> {
@@ -87,6 +87,10 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict> extends TreeStor
 
     registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T>) {
         this.executor.registerTrigger(trigger);
+    }
+
+    registerChecker<T extends keyof ED>(checker: Checker<ED, T>) {
+        this.executor.registerChecker(checker);
     }
 }
 
