@@ -1,4 +1,4 @@
-import { EntityDict, OperationResult, SelectionResult } from 'oak-domain/lib/types/Entity';
+import { EntityDict, OperationResult } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from "oak-domain/lib/types/Storage";
 import { TriggerExecutor, Checker } from 'oak-general-business';
 import { BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
@@ -43,12 +43,12 @@ export class CacheStore<ED extends EntityDict & BaseEntityDict> extends TreeStor
         return result;
     }
 
-    async select<T extends keyof ED>(
+    async select<T extends keyof ED, S extends ED[T]['Selection']>(
         entity: T,
-        selection: ED[T]['Selection'],
+        selection: S,
         context: CacheContext<ED>,
         params?: Object
-    ): Promise<SelectionResult<ED, T>> {
+    ) {
         
         const autoCommit = !context.uuid;
         if (autoCommit) {

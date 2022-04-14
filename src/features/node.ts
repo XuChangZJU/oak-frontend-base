@@ -1,5 +1,5 @@
 import { set, cloneDeep, pull, unset } from 'lodash';
-import { DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceSelection, DeduceUpdateOperation, EntityDict, EntityShape } from 'oak-domain/lib/types/Entity';
+import { DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceSelection, DeduceUpdateOperation, EntityDict, EntityShape, SelectRowShape } from 'oak-domain/lib/types/Entity';
 import { BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 import { Aspect } from 'oak-general-business';
 import { combineFilters } from 'oak-domain/lib/store/filter';
@@ -99,7 +99,7 @@ const DEFAULT_PAGINATION: Pagination = {
 class ListNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> extends Node<ED, AD, T>{
     private ids: string[];
     protected children: SingleNode<ED, AD, T>[];
-    protected value: Partial<ED[T]['Schema']>[];
+    protected value: Array<Partial<ED[T]['Schema']>>;
 
     private filters: DeduceFilter<ED[T]['Schema']>[];
     private sorter?: ED[T]['Selection']['sorter'];
@@ -212,7 +212,7 @@ class ListNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string,
             });
             this.value = ids.map(
                 id => rows.find(ele => ele.id === id)!
-            );
+            ) as any;
         }
         else {
             this.value = [];
@@ -223,7 +223,7 @@ class ListNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string,
         return this.value;
     }
 
-    setValue(value: Partial<ED[T]['Schema']>[]) {
+    setValue(value: Array<Partial<ED[T]['Schema']>>) {
         this.value = value;
         this.updateChildrenValue();
     }
@@ -401,7 +401,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict, AD extends Record<strin
                     filter,
                 }
             });
-            this.value = value[0];
+            this.value = value[0] as Partial<ED[T]['Schema']>;
             this.updateChildrenValues();
         }
         return this.value;

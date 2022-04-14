@@ -1,4 +1,4 @@
-import { EntityDef, EntityDict, OperationResult, SelectionResult } from "oak-domain/lib/types/Entity";
+import { EntityDef, EntityDict, OperationResult } from "oak-domain/lib/types/Entity";
 import { BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
 
 import { TreeStore } from 'oak-memory-tree-store';
@@ -45,12 +45,12 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict> extends TreeStor
         return result;
     }
 
-    async select<T extends keyof ED>(
+    async select<T extends keyof ED, S extends ED[T]['Selection']>(
         entity: T,
-        selection: ED[T]['Selection'],
+        selection: S,
         context: DebugContext<ED>,
         params?: Object
-    ): Promise<SelectionResult<ED, T>> {
+    ) {
         
         const autoCommit = !context.txn;
         if (autoCommit) {
