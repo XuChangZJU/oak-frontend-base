@@ -7,6 +7,7 @@ import { createDebugStore } from './debugStore';
 import { initialize as createBasicFeatures, BasicFeatures } from './features';
 import { assign, intersection, keys, mapValues } from 'lodash';
 import { AspectProxy } from './types/AspectProxy';
+import baseAspectDict from './aspects';
 
 function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>, 
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -19,7 +20,7 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
         aspectDict?: AD,
         initialData?: {
             [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
-        }): AspectProxy<ED, Cxt, AD> {
+        }): AspectProxy<ED, Cxt, AD & typeof baseAspectDict> {
     if (process.env.NODE_ENV === 'production') {
         // todo 发请求到后台获取数据
         throw new Error('method not implemented');
@@ -50,7 +51,7 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
             }
         };
 
-        const aspectProxy = mapValues(aspectDict, ele => connectAspectToDebugStore(ele));
+        const aspectProxy = mapValues(assign({}, baseAspectDict, aspectDict), ele => connectAspectToDebugStore(ele));
 
         return aspectProxy as any;
     }
@@ -82,6 +83,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     // todo default triggers
     const aspectProxy = createAspectProxy<ED, Cxt, AD, FD>(storageSchema, createContext, triggers || [], checkers || [],
         features, aspectDict, initialData);
+
 
     keys(features).forEach(
         ele => {

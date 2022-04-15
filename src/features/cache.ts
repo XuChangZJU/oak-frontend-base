@@ -1,4 +1,4 @@
-import { StorageSchema, DeduceSelection, EntityDict, OperateParams, OpRecord, Aspect, Checker, RowStore, Context } from 'oak-domain/lib/types';
+import { StorageSchema, DeduceSelection, EntityDict, OperateParams, OpRecord, Aspect, Checker, RowStore, Context, OperationResult } from 'oak-domain/lib/types';
 import { Action, Feature } from '../types/Feature';
 import { assign } from 'lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
@@ -26,7 +26,7 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
             entity: entity as any, 
             operation: assign({}, selection, { action: 'select' }) as DeduceSelection<ED[T]['Schema']>,
             params,
-        });
+        }) as OperationResult;
     }
 
     @Action

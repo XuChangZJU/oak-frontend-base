@@ -159,6 +159,7 @@ function createPageOptions<ED extends EntityDict,
             oakFullpath: string;
             oakExecuting: boolean;
             oakFocused: object;
+            oakDirty: boolean;
         },
         OakPageProperties,
         OakPageMethods<ED, T>,
@@ -179,9 +180,13 @@ function createPageOptions<ED extends EntityDict,
             async reRender() {
                 const $rows = await features.runningNode.get(this.data.oakFullpath);
                 const data = formData($rows as any, features);
-                if (data) {
-                    this.setData(data);
+                for (const k in data) {
+                    if (data[k] === undefined) {
+                        data[k] = null;
+                    }
                 }
+                const dirty = await features.runningNode.isDirty(this.data.oakFullpath);
+                this.setData(assign({}, data, { oakDirty: dirty }));
             },
 
             async refresh() {
@@ -364,6 +369,7 @@ function createComponentOptions<ED extends EntityDict,
             entity: keyof EntityDict;
             oakExecuting: boolean;
             oakFocused: object;
+            oakDirty: boolean;
         },
         OakComponentProperties,
         OakComponentMethods<ED, T>,
@@ -376,10 +382,18 @@ function createComponentOptions<ED extends EntityDict,
             oakParent: String,
         },
         observers: {
-            "oakValue": function (value: Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[]) {
+            "oakValue": async function (value: Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[]) {
                 const $rows = value instanceof Array ? value : [value];
                 const data = formData($rows, features);
-                this.setData(data);
+                for (const k in data) {
+                    if (data[k] === undefined) {
+                        data[k] = null;
+                    }
+                }
+                const dirty = await features.runningNode.isDirty(this.data.oakFullpath);
+                this.setData(assign({}, data, {
+                    oakDirty: dirty,
+                }));
             },
             "oakParent": async function (oakParent) {
                 if (oakParent) {
@@ -455,6 +469,11 @@ function createComponentOptions<ED extends EntityDict,
                 const { oakPath, oakParent, oakValue } = this.data;
                 const $rows = oakValue instanceof Array ? oakValue : [oakValue];
                 const data = formData($rows as Partial<ED[T]['Schema']>[], features);
+                for (const k in data) {
+                    if (data[k] === undefined) {
+                        data[k] = null;
+                    }
+                }
                 if (oakParent) {
                     // 小程序component ready的时候，父组件还未构造完成
                     const oakFullpath = `${oakParent}.${oakPath}`;

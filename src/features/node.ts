@@ -18,7 +18,7 @@ export class Node<ED extends EntityDict, T extends keyof ED> {
     protected projection?: ED[T]['Selection']['data'];      // 只在Page层有
     protected parent?: Node<ED, keyof ED>;
     protected action?: ED[T]['Action'];
-    protected dirty?: boolean;
+    protected dirty: boolean;
     protected updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'];
 
     constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, projection?: ED[T]['Selection']['data'],
@@ -29,6 +29,7 @@ export class Node<ED extends EntityDict, T extends keyof ED> {
         this.projection = projection;
         this.parent = parent;
         this.action = action;
+        this.dirty = false;
     }
 
     getSubEntity(path: string): {
@@ -226,6 +227,16 @@ class ListNode<ED extends EntityDict, T extends keyof ED> extends Node<ED, T>{
         this.value = value;
         this.updateChildrenValue();
     }
+    
+    resetUpdateData() {
+        this.updateData = undefined;
+        // this.action = undefined;
+        this.dirty = false;
+        
+        this.children.forEach(
+            (ele) => ele.resetUpdateData()
+        );
+    }
 
     async nextPage() {
 
@@ -406,6 +417,16 @@ class SingleNode<ED extends EntityDict, T extends keyof ED> extends Node<ED, T>{
     setValue(value: Partial<ED[T]['Schema']>) {
         this.value = value;
         this.updateChildrenValues();
+    }
+
+    resetUpdateData() {
+        this.updateData = undefined;
+        // this.action = undefined;
+        this.dirty = false;
+        
+        for (const attr in this.children) {
+            this.children[attr]?.resetUpdateData();
+        }
     }
 }
 
@@ -749,8 +770,13 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             return;
         }
 
-        console.log('exeucte to aspectProxy');
-        // this.getAspectProxy().operate
+        await this.getAspectProxy().operate({
+            entity: node.getEntity() as string,
+            operation,
+        });
+        
+        // 清空缓存
+        node.resetUpdateData();
     }
 }
 
