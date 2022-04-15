@@ -1,12 +1,9 @@
-import { EntityDef, EntityDict, OperationResult } from "oak-domain/lib/types/Entity";
-import { BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
-
+import { EntityDict, OperationResult, Context } from "oak-domain/lib/types";
 import { TreeStore } from 'oak-memory-tree-store';
-import { DebugContext } from './context';
-import { TriggerExecutor, Trigger, Checker } from 'oak-general-business';
-import { StorageSchema } from "oak-domain/lib/types/Storage";
+import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
+import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 
-export class DebugStore<ED extends EntityDict & BaseEntityDict> extends TreeStore<ED> {
+export class DebugStore<ED extends EntityDict> extends TreeStore<ED> {
 
     private executor: TriggerExecutor<ED>;
 
@@ -22,10 +19,10 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict> extends TreeStor
     async operate<T extends keyof ED>(
         entity: T,
         operation: ED[T]['Operation'],
-        context: DebugContext<ED>,
+        context: Context<ED>,
         params?: Object
     ): Promise<OperationResult> {
-        const autoCommit = !context.txn;
+        const autoCommit = !context.getCurrentTxnId();
         let result;
         if (autoCommit) {
             await context.begin();
@@ -48,11 +45,11 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict> extends TreeStor
     async select<T extends keyof ED, S extends ED[T]['Selection']>(
         entity: T,
         selection: S,
-        context: DebugContext<ED>,
+        context: Context<ED>,
         params?: Object
     ) {
         
-        const autoCommit = !context.txn;
+        const autoCommit = !context.getCurrentTxnId();
         if (autoCommit) {
             await context.begin();
         }
@@ -79,7 +76,7 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict> extends TreeStor
     async count<T extends keyof ED>(
         entity: T,
         selection: Omit<ED[T]['Selection'], 'data' | 'sorter' | 'action'>,
-        context: DebugContext<ED>,
+        context: Context<ED>,
         params?: Object
     ): Promise<number> {
         throw new Error("Method not implemented.");

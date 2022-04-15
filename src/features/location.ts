@@ -1,8 +1,7 @@
-import { EntityDict, OpRecord } from 'oak-domain/lib/types/Entity';
-import { Aspect } from 'oak-general-business';
+import { EntityDict, Aspect, Context } from 'oak-domain/lib/types';
 import { Action, Feature } from '../types/Feature';
 
-export class Location extends Feature<EntityDict, Record<string, Aspect<EntityDict>>> {
+export class Location extends Feature<EntityDict, Context<EntityDict>, Record<string, Aspect<EntityDict, Context<EntityDict>>>> {
     get() {
         throw new Error('Method not implemented.');
     }

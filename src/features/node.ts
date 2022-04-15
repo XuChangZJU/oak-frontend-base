@@ -1,7 +1,6 @@
 import { set, cloneDeep, pull, unset } from 'lodash';
-import { DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceSelection, DeduceUpdateOperation, EntityDict, EntityShape, SelectRowShape } from 'oak-domain/lib/types/Entity';
-import { BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
-import { Aspect } from 'oak-general-business';
+import { AttrFilter, DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceSelection, DeduceUpdateOperation, EntityDict, EntityShape, SelectRowShape } from 'oak-domain/lib/types/Entity';
+import { Aspect, Context } from 'oak-domain/lib/types';
 import { combineFilters } from 'oak-domain/lib/store/filter';
 import { Action, Feature } from '../types/Feature';
 import { Cache } from './cache';
@@ -12,18 +11,18 @@ import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { Pagination } from '../types/Pagination';
 
-export class Node<ED extends EntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> {
+export class Node<ED extends EntityDict, T extends keyof ED> {
     protected entity: T;
     protected fullPath: string;
     protected schema: StorageSchema<ED>;
     protected projection?: ED[T]['Selection']['data'];      // 只在Page层有
-    protected parent?: Node<ED, AD, keyof ED>;
+    protected parent?: Node<ED, keyof ED>;
     protected action?: ED[T]['Action'];
     protected dirty?: boolean;
     protected updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'];
 
     constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, projection?: ED[T]['Selection']['data'],
-        parent?: Node<ED, AD, keyof ED>, action?: ED[T]['Action']) {
+        parent?: Node<ED, keyof ED>, action?: ED[T]['Action']) {
         this.entity = entity;
         this.fullPath = fullPath;
         this.schema = schema;
@@ -96,9 +95,9 @@ const DEFAULT_PAGINATION: Pagination = {
     more: true,
 }
 
-class ListNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> extends Node<ED, AD, T>{
+class ListNode<ED extends EntityDict, T extends keyof ED> extends Node<ED, T>{
     private ids: string[];
-    protected children: SingleNode<ED, AD, T>[];
+    protected children: SingleNode<ED, T>[];
     protected value: Array<Partial<ED[T]['Schema']>>;
 
     private filters: DeduceFilter<ED[T]['Schema']>[];
@@ -106,7 +105,7 @@ class ListNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string,
     private pagination: Pagination;
 
     constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, projection?: ED[T]['Selection']['data'],
-        parent?: Node<ED, AD, keyof ED>, pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[],
+        parent?: Node<ED, keyof ED>, pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[],
         sorter?: ED[T]['Selection']['sorter'], action?: ED[T]['Action']) {
         super(entity, fullPath, schema, projection, parent, action);
         this.ids = [];
@@ -138,7 +137,7 @@ class ListNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string,
         return actions;
     }
 
-    addChild(path: string, node: SingleNode<ED, AD, T>) {
+    addChild(path: string, node: SingleNode<ED, T>) {
         const { children } = this;
         const idx = parseInt(path, 10);
         assert(!children[idx]);
@@ -152,7 +151,7 @@ class ListNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string,
         unset(children, idx);
     }
 
-    async getChild(path: string, create?: boolean, cache?: Cache<ED, AD>) {
+    async getChild(path: string, create?: boolean) {
         const idx = parseInt(path, 10);
         let node = this.children[idx];
         if (create && !node) {
@@ -171,7 +170,7 @@ class ListNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string,
         this.filters = filters;
     }
 
-    async refresh(cache: Cache<ED, AD>) {
+    async refresh<Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(cache: Cache<ED, Cxt, AD>) {
         const { filters, sorter, pagination, entity, projection } = this;
         assert(projection);
         const { step } = pagination;
@@ -194,7 +193,7 @@ class ListNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string,
         );
     }
 
-    async getValue(cache: Cache<ED, AD>) {
+    async getValue<Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(cache: Cache<ED, Cxt, AD>) {
         const { entity, ids, projection } = this;
 
         if (ids.length) {
@@ -237,25 +236,22 @@ class ListNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string,
     }
 }
 
-declare type AttrFilter<SH extends EntityShape> = {
-    [K in keyof SH]: any;
-};
 
-class SingleNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>, T extends keyof ED> extends Node<ED, AD, T>{
+class SingleNode<ED extends EntityDict, T extends keyof ED> extends Node<ED, T>{
     private id?: string;
     private value?: Partial<ED[T]['Schema']>;
     private children: {
-        [K in keyof ED[T]['Schema']]?: SingleNode<ED, AD, keyof ED> | ListNode<ED, AD, keyof ED>;
+        [K in keyof ED[T]['Schema']]?: SingleNode<ED, keyof ED> | ListNode<ED, keyof ED>;
     };
 
     constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, projection?: ED[T]['Selection']['data'],
-        parent?: Node<ED, AD, keyof ED>, id?: string, action?: ED[T]['Action']) {
+        parent?: Node<ED, keyof ED>, id?: string, action?: ED[T]['Action']) {
         super(entity, fullPath, schema, projection, parent, action);
         this.id = id;
         this.children = {};
     }
 
-    async refresh(cache: Cache<ED, AD>) {
+    async refresh<Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(cache: Cache<ED, Cxt, AD>) {
         assert(this.projection);
         if (this.action !== 'create') {
             await cache.refresh(this.entity, {
@@ -292,7 +288,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict, AD extends Record<strin
         return action;
     }
 
-    addChild(path: string, node: Node<ED, AD, keyof ED>) {
+    addChild(path: string, node: Node<ED, keyof ED>) {
         const { children } = this;
         assert(!children[path]);
         assign(children, {
@@ -306,7 +302,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict, AD extends Record<strin
         unset(children, path);
     }
 
-    async getChild(path: keyof ED[T]['Schema'], create?: boolean, cache?: Cache<ED, AD>) {
+    async getChild<Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(path: keyof ED[T]['Schema'], create?: boolean, cache?: Cache<ED, Cxt, AD>) {
         let node = this.children[path];
         if (create && !node) {
             assert(cache);
@@ -387,7 +383,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict, AD extends Record<strin
         }
     }
 
-    async getValue(cache: Cache<ED, AD>) {
+    async getValue<Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(cache: Cache<ED, Cxt, AD>) {
         const { entity, id, projection } = this;
         assert(projection);
         if (id) {
@@ -414,12 +410,12 @@ class SingleNode<ED extends EntityDict & BaseEntityDict, AD extends Record<strin
 }
 
 
-export class RunningNode<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
-    private cache: Cache<ED, AD>;
+export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Feature<ED, Cxt, AD> {
+    private cache: Cache<ED, Cxt, AD>;
     private schema?: StorageSchema<ED>;
-    private root: Record<string, SingleNode<ED, AD, keyof ED> | ListNode<ED, AD, keyof ED>>;
+    private root: Record<string, SingleNode<ED, keyof ED> | ListNode<ED, keyof ED>>;
 
-    constructor(cache: Cache<ED, AD>) {
+    constructor(cache: Cache<ED, Cxt, AD>) {
         super();
         this.cache = cache;
         this.root = {};
@@ -429,7 +425,7 @@ export class RunningNode<ED extends EntityDict & BaseEntityDict, AD extends Reco
         entity?: T, isList?: boolean, isPicker?: boolean, projection?: ED[T]['Selection']['data'], id?: string,
         pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[],
         sorter?: ED[T]['Selection']['sorter']) {
-        let node: ListNode<ED, AD, T> | SingleNode<ED, AD, T>;
+        let node: ListNode<ED, T> | SingleNode<ED, T>;
         const parentNode = parent ? await this.findNode(parent) : undefined;
         const fullPath = parent ? `${parent}.${path}` : `${path}`;
         const subEntity = parentNode && parentNode.getSubEntity(path);
@@ -437,7 +433,7 @@ export class RunningNode<ED extends EntityDict & BaseEntityDict, AD extends Reco
         const isList2 = subEntity ? subEntity.isList : isList!;
 
         if (isPicker || isList2) {
-            node = new ListNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, pagination, filters, sorter);
+            node = new ListNode<ED, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, pagination, filters, sorter);
         }
         else {
             /*  let id2: string = id || v4({ random: await getRandomValues(16) });
@@ -450,7 +446,7 @@ export class RunningNode<ED extends EntityDict & BaseEntityDict, AD extends Reco
                      } as FormCreateData<ED[T]['OpSchema']>,
                  }, context);
              } */
-            node = new SingleNode<ED, AD, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, id, !id ? 'create' : undefined);
+            node = new SingleNode<ED, T>(entity2 as T, fullPath, this.schema!, projection, parentNode, id, !id ? 'create' : undefined);
         }
         if (parentNode) {
             parentNode.addChild(path, node as any);
@@ -645,7 +641,7 @@ export class RunningNode<ED extends EntityDict & BaseEntityDict, AD extends Reco
 
     async get(path: string) {
         const node = await this.findNode(path);
-        let value = await node.getValue(this.cache);
+        let value = await node.getValue<Cxt, AD>(this.cache);
         if (node.isDirty()) {
             const operation = node.composeOperation();
             const projection = node.getProjection();
@@ -669,7 +665,7 @@ export class RunningNode<ED extends EntityDict & BaseEntityDict, AD extends Reco
         let iter = 1;
         while (iter < paths.length) {
             const childPath = paths[iter];
-            node = (await node.getChild(childPath))!;
+            node = (await node.getChild<Cxt, AD>(childPath))!;
             iter++;
         }
         return node;
@@ -697,7 +693,7 @@ export class RunningNode<ED extends EntityDict & BaseEntityDict, AD extends Reco
             }
             else {
                 node.setDirty();
-                node = (await node.getChild(split, true, this.cache))!;
+                node = (await node.getChild<Cxt, AD>(split, true, this.cache))!;
                 idx++;
             }
         }

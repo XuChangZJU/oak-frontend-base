@@ -65,6 +65,10 @@
     "forceConsistentCasingInFileNames": true, /* Disallow inconsistently-cased references to the same file. */   
     "resolveJsonModule": true
   },
+  "types": [
+    "node",
+    "miniprogram-api-typings"
+  ],
   "include": [   "src/**/*.ts" ],
   "exclude": [
     "node_modules",
