@@ -53,6 +53,7 @@ type OakPageProperties = {
     oakFilters: ArrayConstructor;
     oakSorter: ArrayConstructor;
     oakIsPicker?: BooleanConstructor;
+    oakFrom?: StringConstructor;
     oakParentEntity?: StringConstructor;
 }
 
@@ -61,6 +62,7 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     callPicker: (touch: WechatMiniprogram.Touch) => void;
     setFilters: (filters: DeduceFilter<ED[T]['Schema']>[]) => void;
     execute: (touch: WechatMiniprogram.Touch) => void;
+    navigateTo: (...options: Parameters<typeof wx.navigateTo>) => ReturnType<typeof wx.navigateTo>;
 };
 
 type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
@@ -110,7 +112,7 @@ async function execute<ED extends EntityDict, Cxt extends Context<ED>, AD extend
     fullpath: string,
     action?: string, isTry?: boolean) {
     try {
-        await features.runningNode.execute(fullpath, action, isTry);
+        await features.runningNode.execute(fullpath, action, isTry);        
     }
     catch (err) {
         const { message } = err as Error;
@@ -175,6 +177,7 @@ function createPageOptions<ED extends EntityDict,
             oakSorter: Array,
             oakIsPicker: Boolean,
             oakParentEntity: String,
+            oakFrom: String,
         },
         methods: {
             async reRender() {
@@ -267,7 +270,7 @@ function createPageOptions<ED extends EntityDict,
                 if (this.data.oakExecuting) {
                     return;
                 }
-                const { action } = touch.currentTarget.dataset;
+                const { action, then } = touch.currentTarget.dataset;
                 this.setData({
                     oakExecuting: true,
                     oakFocused: {},
@@ -275,6 +278,9 @@ function createPageOptions<ED extends EntityDict,
                 try {
                     await execute(features, this.data.oakFullpath, action);
                     this.setData({ oakExecuting: false });
+                    if (then) {
+                        ((this as any)[then] as any)();
+                    }
                 }
                 catch (err) {
                     if (err instanceof AttrIllegalError) {
@@ -293,6 +299,15 @@ function createPageOptions<ED extends EntityDict,
                     }
                 }
             },
+
+            navigateTo(options) {
+                const { url } = options;
+                const url2 = url.includes('?') ? url.concat(`&oakFrom=${this.data.oakFullpath}`) : url.concat(`?oakFrom=${this.data.oakFullpath}`);
+                assign(options, {
+                    url: url2
+                });
+                return wx.navigateTo(options);
+            }
         },
 
         lifetimes: {
@@ -306,7 +321,7 @@ function createPageOptions<ED extends EntityDict,
 
             async ready() {
                 const { oakId, oakEntity, oakPath, oakProjection, oakParent,
-                    oakSorter, oakFilters, oakIsPicker } = this.data;
+                    oakSorter, oakFilters, oakIsPicker, oakFrom } = this.data;
                 assert(!(isList && oakId));
                 let filters: DeduceFilter<ED[T]['Schema']>[] | undefined;
                 if (oakFilters.length > 0) {
@@ -328,6 +343,7 @@ function createPageOptions<ED extends EntityDict,
                     oakSorter);
                 const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
                 this.data.oakFullpath = oakFullpath;
+                this.data.oakFrom = oakFrom;
                 await this.refresh();
             },
 
@@ -458,6 +474,15 @@ function createComponentOptions<ED extends EntityDict,
                     }
                 }
             },
+            
+            navigateTo(options) {
+                const { url } = options;
+                const url2 = url.includes('?') ? url.concat(`&oakFrom=${this.data.oakFullpath}`) : url.concat(`?oakFrom=${this.data.oakFullpath}`);
+                assign(options, {
+                    url: url2
+                });
+                return wx.navigateTo(options);
+            }
         },
 
         lifetimes: {

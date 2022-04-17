@@ -17,10 +17,10 @@ export abstract class Feature<ED extends EntityDict, Cxt extends Context<ED>, AD
 }
 
 
-const mCallbacks: Array<() => void> = [];
+const mCallbacks: Array<() => any> = [];
 let mActionStackDepth = 0;
 
-export function subscribe(callback: () => void) {
+export function subscribe(callback: () => any) {
     mCallbacks.push(callback);
     return () => {
         pull(mCallbacks, callback);
@@ -47,9 +47,14 @@ export function subscribe(callback: () => void) {
         }
         mActionStackDepth--;
         if (mActionStackDepth === 0) {
-            mCallbacks.forEach(
+            const results = mCallbacks.map(
                 ele => ele()
+            ).filter(
+                ele => ele instanceof Promise
             );
+            if (results.length > 0) {
+                await Promise.all(results);
+            }
         }
         return result;
     }
