@@ -1,11 +1,12 @@
-import { StorageSchema, DeduceSelection, EntityDict, OperateParams, OpRecord, Aspect, Checker, RowStore, Context, OperationResult } from 'oak-domain/lib/types';
+import { StorageSchema, DeduceSelection, EntityDict, OperateParams, OpRecord, Aspect, Checker, RowStore, Context, OperationResult, Trigger, SelectOpResult, UpdateOpResult } from 'oak-domain/lib/types';
 import { Action, Feature } from '../types/Feature';
-import { assign } from 'lodash';
+import { assign, pull, uniq } from 'lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 
 export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Feature<ED, Cxt, AD> {
     cacheStore: CacheStore<ED>;
     createContext: (store: RowStore<ED>) => Cxt;
+    private syncEventsCallbacks: Array<(opRecords: OpRecord<ED>[]) => Promise<void>>;
 
     constructor(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED>) => Cxt, checkers?: Array<Checker<ED, keyof ED>>) {
         const cacheStore = new CacheStore(storageSchema);
@@ -17,6 +18,7 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
         super();
         this.cacheStore = cacheStore;
         this.createContext = createContext;
+        this.syncEventsCallbacks = [];
     }
 
 
@@ -40,6 +42,12 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
             throw err;
         }
         await context.commit();
+
+        // 唤起同步注册的回调
+        const result = this.syncEventsCallbacks.map(
+            ele => ele(records)
+        );
+        await Promise.all(result);
     }
 
     @Action
@@ -72,5 +80,15 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
 
     judgeRelation(entity: keyof ED, attr: string) {
         return this.cacheStore.judgeRelation(entity, attr);
+    }
+
+    
+    bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>) {        
+        this.syncEventsCallbacks.push(callback);
+    }
+
+    
+    unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>) {
+        pull(this.syncEventsCallbacks, callback);
     }
 }

@@ -1,10 +1,10 @@
-import { EntityDict, OperationResult } from 'oak-domain/lib/types/Entity';
+import { EntityDict, OperationResult, OpRecord } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from "oak-domain/lib/types/Storage";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
-import { Checker, Context } from 'oak-domain/lib/types';
+import { Checker, Context, Trigger } from 'oak-domain/lib/types';
 import { TreeStore } from 'oak-memory-tree-store';
 
-export class CacheStore<ED extends EntityDict> extends TreeStore<ED> {   
+export class CacheStore<ED extends EntityDict> extends TreeStore<ED> {
     private executor: TriggerExecutor<ED>;
 
     constructor(storageSchema: StorageSchema<ED>, initialData?: {
@@ -48,13 +48,13 @@ export class CacheStore<ED extends EntityDict> extends TreeStore<ED> {
         context: Context<ED>,
         params?: Object
     ) {
-        
+
         const autoCommit = !context.getCurrentTxnId();
         if (autoCommit) {
             await context.begin();
         }
         let result;
-        
+
         try {
             result = await super.select(entity, selection, context, params);
         }
