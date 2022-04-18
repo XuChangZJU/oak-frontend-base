@@ -11,8 +11,8 @@ export class DebugStore<ED extends EntityDict> extends TreeStore<ED> {
         [T in keyof ED]?: {
             [ID: string]: ED[T]['OpSchema'];
         };
-    }) {
-        super(storageSchema, true, initialData);
+    }, initialStat?: { create: number, update: number, remove: number, commit: number }) {
+        super(storageSchema, initialData, initialStat);
         this.executor = executor;
     }
 

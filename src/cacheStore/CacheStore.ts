@@ -12,7 +12,7 @@ export class CacheStore<ED extends EntityDict> extends TreeStore<ED> {
             [ID: string]: ED[T]['OpSchema'];
         };
     }) {
-        super(storageSchema, true, initialData);
+        super(storageSchema, initialData);
         this.executor = new TriggerExecutor();
     }
 

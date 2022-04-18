@@ -24,6 +24,47 @@ async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(s
     }
 }
 
+function getMaterializedData() {
+    if (/* process.env.OAK_PLATFORM === 'weChatMp' */true) {
+        try {
+            const data = wx.getStorageSync('debugStore');
+            const stat = wx.getStorageSync('debugStoreStat');
+            if (data && stat) {
+                return {
+                    data,
+                    stat,
+                };
+            }
+            return;
+        }
+        catch (e) {
+            return;
+        }
+    }
+}
+
+let lastMaterializedVersion = 0;
+
+function materializeData(data: any, stat: { create: number, update: number, remove: number, commit: number }) {
+    if (/* process.env.OAK_PLATFORM === 'weChatMp' */true) {
+        try {
+            wx.setStorageSync('debugStore', data);
+            wx.setStorageSync('debugStoreStat', stat);
+            lastMaterializedVersion = stat.commit;
+            wx.showToast({
+                title: '数据已物化',
+                icon: 'success',
+            });
+        }
+        catch (e) {
+            console.error(e);
+            wx.showToast({
+                title: '物化数据失败',
+                icon: 'error',
+            });
+        }
+    }
+}
 
 export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>(
     storageSchema: StorageSchema<ED>,
@@ -33,8 +74,9 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
     initialData?: {
     [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
 }){
+    const data = getMaterializedData();
     const executor = new TriggerExecutor<ED>();
-    const store = new DebugStore<ED>(executor, storageSchema);
+    const store = new DebugStore<ED>(executor, storageSchema, data && data.data, data && data.stat);
     
     triggers?.forEach(
         ele => store.registerTrigger(ele)
@@ -44,7 +86,24 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
         ele => store.registerChecker(ele)
     );
 
-    // 如果有物化存储的数据使用此数据，否则使用initialData初始化debugStore
-    initDataInStore(store, createContext, initialData);    
+    // 如果没有物化数据则使用initialData初始化debugStore
+    if (!data) {
+        console.log('使用初始化数据建立debugStore');
+        initDataInStore(store, createContext, initialData);    
+    }
+    else {
+        console.log('使用物化数据建立debugStore');
+    }
+    lastMaterializedVersion = store.getStat().commit;
+
+    // 启动定期的物化例程
+    setInterval(() => {
+        const stat = store.getStat();
+        if (stat.commit === lastMaterializedVersion) {
+            return;
+        }
+        const data = store.getCurrentData();
+        materializeData(data, stat);
+    }, 10000);
     return store;
 }
