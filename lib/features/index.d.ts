@@ -1,14 +1,11 @@
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-general-business/lib/base-ed/EntityDict';
-import { Aspect } from 'oak-general-business/lib/types/Aspect';
+import { Aspect, Checker, Context, EntityDict, RowStore } from 'oak-domain/lib/types';
 import { Cache } from './cache';
 import { Location } from './location';
-import { Token } from './token';
 import { RunningNode } from './node';
-export declare function initialize<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>>(): BasicFeatures<ED, AD>;
-export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, AD extends Record<string, Aspect<ED>>> = {
-    cache: Cache<ED, AD>;
+import { StorageSchema } from 'oak-domain/lib/types/Storage';
+export declare function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED>) => Cxt, checkers?: Array<Checker<ED, keyof ED>>): BasicFeatures<ED, Cxt, AD>;
+export declare type BasicFeatures<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> = {
+    cache: Cache<ED, Cxt, AD>;
     location: Location;
-    token: Token;
-    runningNode: RunningNode<ED, AD>;
+    runningNode: RunningNode<ED, Cxt, AD>;
 };

@@ -1,5 +1,4 @@
-import { Aspect } from "oak-general-business/lib/types/Aspect";
-import { EntityDict } from "oak-domain/lib/types/Entity";
-export declare type AspectProxy<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> = {
+import { EntityDict, Aspect, Context } from "oak-domain/lib/types";
+export declare type AspectProxy<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> = {
     [K in keyof AD]: (p: Parameters<AD[K]>[0]) => ReturnType<AD[K]>;
 };

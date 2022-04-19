@@ -1,40 +1,20 @@
-import { EntityDict, OperateParams, OpRecord } from 'oak-domain/lib/types/Entity';
-import { Aspect } from 'oak-general-business/lib/types/Aspect';
+import { StorageSchema, EntityDict, OperateParams, OpRecord, Aspect, Checker, RowStore, Context, OperationResult } from 'oak-domain/lib/types';
 import { Feature } from '../types/Feature';
-export declare class Cache<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> extends Feature<ED, AD> {
-    refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): ReturnType<(AD & {
-        loginByPassword: typeof import("oak-general-business/src/aspects/token").loginByPassword;
-        loginMp: typeof import("oak-general-business/src/aspects/token").loginMp;
-        operate: typeof import("oak-general-business/src/aspects/crud").operate;
-        select: typeof import("oak-general-business/src/aspects/crud").select;
-    })["operate"]>;
+import { CacheStore } from '../cacheStore/CacheStore';
+export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Feature<ED, Cxt, AD> {
+    cacheStore: CacheStore<ED>;
+    createContext: (store: RowStore<ED>) => Cxt;
+    private syncEventsCallbacks;
+    constructor(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED>) => Cxt, checkers?: Array<Checker<ED, keyof ED>>);
+    refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): OperationResult;
     sync(records: OpRecord<ED>[]): Promise<void>;
-    operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], params?: OperateParams): Promise<import("oak-domain/lib/types/Entity").OperationResult>;
+    operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], commit?: boolean, params?: OperateParams): Promise<OperationResult>;
     get<T extends keyof ED>(options: {
         entity: T;
         selection: ED[T]['Selection'];
         params?: object;
-    }): Promise<Partial<ED[T]["Schema"] & {
-        $expr?: any;
-        $expr1?: any;
-        $expr2?: any;
-        $expr3?: any;
-        $expr4?: any;
-        $expr5?: any;
-        $expr6?: any;
-        $expr7?: any;
-        $expr8?: any;
-        $expr9?: any;
-        $expr10?: any;
-        $expr11?: any;
-        $expr12?: any;
-        $expr13?: any;
-        $expr14?: any;
-        $expr15?: any;
-        $expr16?: any;
-        $expr17?: any;
-        $expr18?: any;
-        $expr19?: any;
-        $expr20?: any;
-    }>[]>;
+    }): Promise<import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]>[]>;
+    judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | 2 | string[];
+    bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
+    unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
 }

@@ -1,22 +1,15 @@
-import { Aspect } from 'oak-general-business/lib/types/Aspect';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { aspectDict as basicAspectDict } from 'oak-general-business';
-import { FrontContext } from '../FrontContext';
+import { EntityDict, Aspect, Context } from 'oak-domain/lib/types';
 import { AspectProxy } from './AspectProxy';
-export declare abstract class Feature<ED extends EntityDict, AD extends Record<string, Aspect<ED>>> {
+import baseAspectDict from '../aspects';
+export declare abstract class Feature<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {
     private aspectProxy?;
-    private context?;
-    protected getAspectProxy(): NonNullable<AspectProxy<ED, AD & {
-        loginByPassword: typeof import("oak-general-business/src/aspects/token").loginByPassword;
-        loginMp: typeof import("oak-general-business/src/aspects/token").loginMp;
-        operate: typeof import("oak-general-business/src/aspects/crud").operate;
-        select: typeof import("oak-general-business/src/aspects/crud").select;
+    protected getAspectProxy(): NonNullable<AspectProxy<ED, Cxt, AD & {
+        operate: typeof import("../aspects/crud").operate;
+        select: typeof import("../aspects/crud").select;
     }>>;
-    setAspectProxy(aspectProxy: AspectProxy<ED, AD & typeof basicAspectDict>): void;
-    protected getContext(): FrontContext<ED>;
-    setContext(context: FrontContext<ED>): void;
+    setAspectProxy(aspectProxy: AspectProxy<ED, Cxt, AD & typeof baseAspectDict>): void;
 }
-export declare function subscribe(callback: () => void): () => void;
+export declare function subscribe(callback: () => any): () => void;
 /**
  * 方法注解，使函数调用最后一层堆栈时唤起所有登记的回调
  * @param target
