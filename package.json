@@ -35,5 +35,5 @@
         "build": "tsc",
         "test": "ts-node ./test/test.ts"
     },
-    "main": "src/index"
+    "main": "lib/index"
 }
