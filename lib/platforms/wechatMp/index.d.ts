@@ -4,11 +4,11 @@ import { Aspect, Checker, Context, DeduceFilter, EntityDict, RowStore, StorageSc
 import { Feature } from '../../types/Feature';
 import { Pagination } from "../../types/Pagination";
 import { BasicFeatures } from "../../features";
-declare type OakComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> = {
+declare type OakComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>, FormedData extends WechatMiniprogram.Component.DataOption> = {
     entity: T;
-    formData: ($rows: Partial<ED[T]['Schema']>[], features: BasicFeatures<ED, Cxt, AD> & FD) => WechatMiniprogram.Component.DataOption;
+    formData: ($rows: Partial<ED[T]['Schema']>[], features: BasicFeatures<ED, Cxt, AD> & FD) => FormedData;
 };
-interface OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> {
+interface OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>, FormedData extends WechatMiniprogram.Component.DataOption> {
     entity: T;
     path: string;
     isList: boolean;
@@ -18,7 +18,7 @@ interface OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends C
     pagination?: Pagination;
     filters?: Array<DeduceFilter<ED[T]['Schema']>>;
     sorter?: ED[T]['Selection']['sorter'];
-    formData: ($rows: Partial<ED[T]['Schema']>[], features: BasicFeatures<ED, Cxt, AD> & FD) => WechatMiniprogram.Component.DataOption;
+    formData: ($rows: Partial<ED[T]['Schema']>[], features: BasicFeatures<ED, Cxt, AD> & FD) => FormedData;
 }
 declare type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     setUpdateData: (input: WechatMiniprogram.Input) => void;
@@ -44,7 +44,7 @@ declare type OakPageInstanceProperties<ED extends EntityDict, T extends keyof ED
 export declare function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(storageSchema: StorageSchema<ED>, createFeatures: (basicFeatures: BasicFeatures<ED, Cxt, AD>) => FD, createContext: (store: RowStore<ED>) => Cxt, triggers?: Array<Trigger<ED, keyof ED>>, checkers?: Array<Checker<ED, keyof ED>>, aspectDict?: AD, initialData?: {
     [T in keyof ED]?: Array<ED[T]['OpSchema']>;
 }): {
-    OakPage: <T extends keyof ED, D extends WechatMiniprogram.Component.DataOption, P extends WechatMiniprogram.Component.PropertyOption, M extends WechatMiniprogram.Component.MethodOption, IS extends WechatMiniprogram.IAnyObject = {}>(options: OakPageOption<ED, T, Cxt, AD, FD>, componentOptions?: WechatMiniprogram.Component.Options<D, P, M, IS & OakComponentMethods<ED, T> & {
+    OakPage: <T extends keyof ED, D extends WechatMiniprogram.Component.DataOption, P extends WechatMiniprogram.Component.PropertyOption, M extends WechatMiniprogram.Component.MethodOption, IS extends WechatMiniprogram.IAnyObject = {}, FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakPageOption<ED, T, Cxt, AD, FD, FormedData>, componentOptions?: WechatMiniprogram.Component.Options<D, P, M, IS & OakComponentMethods<ED, T> & {
         reRender: (extra?: any) => Promise<void>;
         refresh: (extra?: any) => Promise<void>;
         onPullDownRefresh: () => Promise<void>;
@@ -54,8 +54,8 @@ export declare function initialize<ED extends EntityDict, Cxt extends Context<ED
         setForeignKey: (id: string, goBackDelta?: number | undefined) => Promise<void>;
         onForeignKeyPicked: (touch: WechatMiniprogram.Touch<WechatMiniprogram.IAnyObject, WechatMiniprogram.TouchDetail, WechatMiniprogram.IAnyObject, WechatMiniprogram.IAnyObject, WechatMiniprogram.IAnyObject>) => void;
     } & OakComponentInstanceInnerProperties<ED, Cxt, AD, FD>, true>) => string;
-    OakComponent: <T_1 extends string | number, D_1 extends WechatMiniprogram.Component.DataOption, P_1 extends WechatMiniprogram.Component.PropertyOption, M_1 extends WechatMiniprogram.Component.MethodOption, IS_1 extends WechatMiniprogram.IAnyObject = {}>(options: OakComponentOption<ED, T_1, Cxt, AD, FD>, componentOptions?: WechatMiniprogram.Component.Options<D_1, P_1, M_1, IS_1, false>) => string;
+    OakComponent: <T_1 extends string | number, D_1 extends WechatMiniprogram.Component.DataOption, P_1 extends WechatMiniprogram.Component.PropertyOption, M_1 extends WechatMiniprogram.Component.MethodOption, IS_1 extends WechatMiniprogram.IAnyObject = {}, FormedData_1 extends WechatMiniprogram.Component.DataOption = {}>(options: OakComponentOption<ED, T_1, Cxt, AD, FD, FormedData_1>, componentOptions?: WechatMiniprogram.Component.Options<D_1, P_1, M_1, IS_1, false>) => string;
 };
-export declare type MakeOakPage<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> = <T extends keyof ED, D extends WechatMiniprogram.Component.DataOption, P extends WechatMiniprogram.Component.PropertyOption, M extends WechatMiniprogram.Component.MethodOption, IS extends WechatMiniprogram.IAnyObject = {}>(options: OakPageOption<ED, T, Cxt, AD, FD>, componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS & OakPageInstanceProperties<ED, T, Cxt, AD, FD>, true>) => string;
-export declare type MakeOakComponent<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> = <T extends keyof ED, D extends WechatMiniprogram.Component.DataOption, P extends WechatMiniprogram.Component.PropertyOption, M extends WechatMiniprogram.Component.MethodOption, IS extends WechatMiniprogram.IAnyObject = {}>(options: OakComponentOption<ED, T, Cxt, AD, FD>, componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS>) => string;
+export declare type MakeOakPage<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> = <T extends keyof ED, D extends WechatMiniprogram.Component.DataOption, P extends WechatMiniprogram.Component.PropertyOption, M extends WechatMiniprogram.Component.MethodOption, IS extends WechatMiniprogram.IAnyObject = {}, FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakPageOption<ED, T, Cxt, AD, FD, FormedData>, componentOptions: WechatMiniprogram.Component.Options<D & FormedData, P, M, IS & OakPageInstanceProperties<ED, T, Cxt, AD, FD>, true>) => string;
+export declare type MakeOakComponent<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> = <T extends keyof ED, D extends WechatMiniprogram.Component.DataOption, P extends WechatMiniprogram.Component.PropertyOption, M extends WechatMiniprogram.Component.MethodOption, IS extends WechatMiniprogram.IAnyObject = {}, FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData>, componentOptions: WechatMiniprogram.Component.Options<D & FormedData, P, M, IS>) => string;
 export {};
