@@ -1,5 +1,5 @@
 import './polyfill';
-import { Aspect, AttrIllegalError, Checker, Context, DeduceFilter, EntityDict, RowStore, StorageSchema, Trigger } from "oak-domain/lib/types";
+import { Aspect, AttrIllegalError, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
@@ -13,10 +13,11 @@ type OakComponentOption<
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
+    Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption
     > = {
         entity: T;
-        formData: ($rows: Partial<ED[T]['Schema']>[], features: BasicFeatures<ED, Cxt, AD> & FD) => FormedData;
+        formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'], features: BasicFeatures<ED, Cxt, AD> & FD) => FormedData;
     };
 
 interface OakPageOption<
@@ -25,19 +26,20 @@ interface OakPageOption<
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
+    Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption
     > {
     entity: T;
     path: string;
     isList: boolean;
-    projection: ED[T]['Selection']['data'];
+    projection: Proj;
     parent?: string;
     append?: boolean;
     pagination?: Pagination;
-    filters?: Array<DeduceFilter<ED[T]['Schema']>>;
+    filters?: Array<ED[T]['Selection']['filter']>;
     sorter?: ED[T]['Selection']['sorter'];
     // actions?: EntityDict[T]['Action'][];
-    formData: ($rows: Partial<ED[T]['Schema']>[], features: BasicFeatures<ED, Cxt, AD> & FD) => FormedData;
+    formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'], features: BasicFeatures<ED, Cxt, AD> & FD) => FormedData;
 };
 
 type OakComponentProperties = {
@@ -158,7 +160,8 @@ function createPageOptions<ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
-    FormedData extends WechatMiniprogram.Component.DataOption>(options: OakPageOption<ED, T, Cxt, AD, FD, FormedData>, doSubscribe: ReturnType<typeof init>['subscribe'], features: BasicFeatures<ED, Cxt, AD> & FD) {
+    Proj extends ED[T]['Selection']['data'],
+    FormedData extends WechatMiniprogram.Component.DataOption>(options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>, doSubscribe: ReturnType<typeof init>['subscribe'], features: BasicFeatures<ED, Cxt, AD> & FD) {
     const { formData, isList, pagination } = options;
     const componentOptions: WechatMiniprogram.Component.Options<
         {
@@ -329,7 +332,7 @@ function createPageOptions<ED extends EntityDict,
                 const { oakId, oakEntity, oakPath, oakProjection, oakParent,
                     oakSorter, oakFilters, oakIsPicker, oakFrom } = this.data;
                 assert(!(isList && oakId));
-                let filters: DeduceFilter<ED[T]['Schema']>[] | undefined;
+                let filters: ED[T]['Selection']['filter'][] | undefined;
                 if (oakFilters.length > 0) {
                     filters = oakFilters;
                 }
@@ -380,8 +383,9 @@ function createComponentOptions<ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
+    Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption>(
-        options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData>,
+        options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
         doSubscribe: ReturnType<typeof init>['subscribe'],
         features: BasicFeatures<ED, Cxt, AD> & FD) {
     const { formData } = options;
@@ -405,7 +409,7 @@ function createComponentOptions<ED extends EntityDict,
             oakParent: String,
         },
         observers: {
-            "oakValue": async function (value: Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[]) {
+            "oakValue": async function (value) {
                 const $rows = value instanceof Array ? value : [value];
                 const data = formData($rows, features);
                 for (const k in data) {
@@ -502,7 +506,7 @@ function createComponentOptions<ED extends EntityDict,
             async ready() {
                 const { oakPath, oakParent, oakValue } = this.data;
                 const $rows = oakValue instanceof Array ? oakValue : [oakValue];
-                const data = formData($rows as Partial<ED[T]['Schema']>[], features);
+                const data = formData($rows, features);
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {
@@ -628,9 +632,10 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             D extends WechatMiniprogram.Component.DataOption,
             P extends WechatMiniprogram.Component.PropertyOption,
             M extends WechatMiniprogram.Component.MethodOption,
+            Proj extends ED[T]['Selection']['data'],
             IS extends WechatMiniprogram.IAnyObject = {},
             FormedData extends WechatMiniprogram.Component.DataOption = {}>(
-                options: OakPageOption<ED, T, Cxt, AD, FD, FormedData>,
+                options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
                 componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS & OakPageInstanceProperties<ED, T, Cxt, AD, FD>, true> = {}) => {
             const oakOptions = createPageOptions(options, subscribe, features);
             const { properties, pageLifetimes, lifetimes, methods, data, observers } = oakOptions;
@@ -667,8 +672,9 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             D extends WechatMiniprogram.Component.DataOption,
             P extends WechatMiniprogram.Component.PropertyOption,
             M extends WechatMiniprogram.Component.MethodOption,
+            Proj extends ED[T]['Selection']['data'],
             IS extends WechatMiniprogram.IAnyObject = {},
-            FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData>, componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS> = {}) => {
+            FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>, componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS> = {}) => {
             const oakOptions = createComponentOptions(options, subscribe, features);
             const { properties, pageLifetimes, lifetimes, methods, data, observers } = oakOptions;
             const { properties: p2, pageLifetimes: pl2, lifetimes: l2, methods: m2, data: d2, observers: o2, ...restOptions } = componentOptions;
@@ -695,8 +701,9 @@ export type MakeOakPage<ED extends EntityDict, Cxt extends Context<ED>, AD exten
     D extends WechatMiniprogram.Component.DataOption,
     P extends WechatMiniprogram.Component.PropertyOption,
     M extends WechatMiniprogram.Component.MethodOption,
+    Proj extends ED[T]['Selection']['data'],
     IS extends WechatMiniprogram.IAnyObject = {},
-    FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakPageOption<ED, T, Cxt, AD, FD, FormedData>,
+    FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
     componentOptions: WechatMiniprogram.Component.Options<D & FormedData, P, M, IS & OakPageInstanceProperties<ED, T, Cxt, AD, FD>, true>) => string;
 
 export type MakeOakComponent<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> = <
@@ -704,6 +711,7 @@ export type MakeOakComponent<ED extends EntityDict, Cxt extends Context<ED>, AD 
     D extends WechatMiniprogram.Component.DataOption,
     P extends WechatMiniprogram.Component.PropertyOption,
     M extends WechatMiniprogram.Component.MethodOption,
+    Proj extends ED[T]['Selection']['data'],
     IS extends WechatMiniprogram.IAnyObject = {},
-    FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData>,
+    FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
     componentOptions: WechatMiniprogram.Component.Options<D & FormedData, P, M, IS>) => string;

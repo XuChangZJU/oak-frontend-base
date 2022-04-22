@@ -124,12 +124,12 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
     protected children: SingleNode<ED, T, Cxt, AD>[];
     protected value: Array<Partial<ED[T]['Schema']>>;
 
-    private filters: DeduceFilter<ED[T]['Schema']>[];
+    private filters: ED[T]['Selection']['filter'][];
     private sorter?: ED[T]['Selection']['sorter'];
     private pagination: Pagination;
 
     constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection?: ED[T]['Selection']['data'],
-        parent?: Node<ED, keyof ED, Cxt, AD>, pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[],
+        parent?: Node<ED, keyof ED, Cxt, AD>, pagination?: Pagination, filters?: ED[T]['Selection']['filter'][],
         sorter?: ED[T]['Selection']['sorter'], action?: ED[T]['Action']) {
         super(entity, fullPath, schema, cache, projection, parent, action);
         this.ids = [];
@@ -601,7 +601,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
     async createNode<T extends keyof ED>(path: string, parent?: string,
         entity?: T, isList?: boolean, isPicker?: boolean, projection?: ED[T]['Selection']['data'], id?: string,
-        pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[],
+        pagination?: Pagination, filters?: ED[T]['Selection']['filter'][],
         sorter?: ED[T]['Selection']['sorter']) {
         let node: ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>;
         const parentNode = parent ? await this.findNode(parent) : undefined;
