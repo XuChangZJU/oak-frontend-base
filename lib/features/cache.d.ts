@@ -2,10 +2,10 @@ import { StorageSchema, EntityDict, OperateParams, OpRecord, Aspect, Checker, Ro
 import { Feature } from '../types/Feature';
 import { CacheStore } from '../cacheStore/CacheStore';
 export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Feature<ED, Cxt, AD> {
-    cacheStore: CacheStore<ED>;
-    createContext: (store: RowStore<ED>) => Cxt;
+    cacheStore: CacheStore<ED, Cxt>;
+    createContext: (store: RowStore<ED, Cxt>) => Cxt;
     private syncEventsCallbacks;
-    constructor(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED>) => Cxt, checkers?: Array<Checker<ED, keyof ED>>);
+    constructor(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED, Cxt>) => Cxt, checkers?: Array<Checker<ED, keyof ED, Cxt>>);
     refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): OperationResult;
     sync(records: OpRecord<ED>[]): Promise<void>;
     operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], commit?: boolean, params?: OperateParams): Promise<OperationResult>;

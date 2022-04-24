@@ -4,22 +4,22 @@ import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { Checker, Context, Trigger } from 'oak-domain/lib/types';
 import { TreeStore } from 'oak-memory-tree-store';
 
-export class CacheStore<ED extends EntityDict> extends TreeStore<ED> {
-    private executor: TriggerExecutor<ED>;
+export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
+    private executor: TriggerExecutor<ED, Cxt>;
 
-    constructor(storageSchema: StorageSchema<ED>, initialData?: {
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: () => Cxt, initialData?: {
         [T in keyof ED]?: {
             [ID: string]: ED[T]['OpSchema'];
         };
     }) {
         super(storageSchema, initialData);
-        this.executor = new TriggerExecutor();
+        this.executor = new TriggerExecutor(contextBuilder);
     }
 
     async operate<T extends keyof ED>(
         entity: T,
         operation: ED[T]['Operation'],
-        context: Context<ED>,
+        context: Cxt,
         params?: Object
     ): Promise<OperationResult> {
         const autoCommit = !context.getCurrentTxnId();
@@ -45,7 +45,7 @@ export class CacheStore<ED extends EntityDict> extends TreeStore<ED> {
     async select<T extends keyof ED, S extends ED[T]['Selection']>(
         entity: T,
         selection: S,
-        context: Context<ED>,
+        context: Cxt,
         params?: Object
     ) {
 
@@ -71,13 +71,13 @@ export class CacheStore<ED extends EntityDict> extends TreeStore<ED> {
     async count<T extends keyof ED>(
         entity: T,
         selection: Omit<ED[T]['Selection'], 'data' | 'sorter' | 'action'>,
-        context: Context<ED>,
+        context: Cxt,
         params?: Object
     ): Promise<number> {
         throw new Error("Method not implemented.");
     }
 
-    registerChecker<T extends keyof ED>(checker: Checker<ED, T>) {
+    registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
         this.executor.registerChecker(checker);
     }
 }

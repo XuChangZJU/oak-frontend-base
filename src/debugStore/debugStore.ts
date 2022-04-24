@@ -1,25 +1,23 @@
-import { EntityDict, OperationResult, Context } from "oak-domain/lib/types";
+import { EntityDict, OperationResult, Context, RowStore } from "oak-domain/lib/types";
 import { TreeStore } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 
-export class DebugStore<ED extends EntityDict> extends TreeStore<ED> {
-
-    private executor: TriggerExecutor<ED>;
-
-    constructor(executor: TriggerExecutor<ED>, storageSchema: StorageSchema<ED>, initialData?: {
+export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
+    private executor: TriggerExecutor<ED, Cxt>;
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (store: RowStore<ED, Cxt>) => Cxt, initialData?: {
         [T in keyof ED]?: {
             [ID: string]: ED[T]['OpSchema'];
         };
     }, initialStat?: { create: number, update: number, remove: number, commit: number }) {
         super(storageSchema, initialData, initialStat);
-        this.executor = executor;
+        this.executor = new TriggerExecutor(() => contextBuilder(this));
     }
 
     async operate<T extends keyof ED>(
         entity: T,
         operation: ED[T]['Operation'],
-        context: Context<ED>,
+        context: Cxt,
         params?: Object
     ): Promise<OperationResult> {
         const autoCommit = !context.getCurrentTxnId();
@@ -45,7 +43,7 @@ export class DebugStore<ED extends EntityDict> extends TreeStore<ED> {
     async select<T extends keyof ED, S extends ED[T]['Selection']>(
         entity: T,
         selection: S,
-        context: Context<ED>,
+        context: Cxt,
         params?: Object
     ) {
         
@@ -76,17 +74,17 @@ export class DebugStore<ED extends EntityDict> extends TreeStore<ED> {
     async count<T extends keyof ED>(
         entity: T,
         selection: Omit<ED[T]['Selection'], 'data' | 'sorter' | 'action'>,
-        context: Context<ED>,
+        context: Cxt,
         params?: Object
     ): Promise<number> {
         throw new Error("Method not implemented.");
     }
 
-    registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T>) {
+    registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>) {
         this.executor.registerTrigger(trigger);
     }
 
-    registerChecker<T extends keyof ED>(checker: Checker<ED, T>) {
+    registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
         this.executor.registerChecker(checker);
     }
 }

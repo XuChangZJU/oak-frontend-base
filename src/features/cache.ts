@@ -4,12 +4,12 @@ import { assign, pull, uniq } from 'lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 
 export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Feature<ED, Cxt, AD> {
-    cacheStore: CacheStore<ED>;
-    createContext: (store: RowStore<ED>) => Cxt;
+    cacheStore: CacheStore<ED, Cxt>;
+    createContext: (store: RowStore<ED, Cxt>) => Cxt;
     private syncEventsCallbacks: Array<(opRecords: OpRecord<ED>[]) => Promise<void>>;
 
-    constructor(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED>) => Cxt, checkers?: Array<Checker<ED, keyof ED>>) {
-        const cacheStore = new CacheStore(storageSchema);
+    constructor(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED, Cxt>) => Cxt, checkers?: Array<Checker<ED, keyof ED, Cxt>>) {
+        const cacheStore = new CacheStore(storageSchema, () => createContext(this.cacheStore));
         if (checkers) {
             checkers.forEach(
                 (checker) => cacheStore.registerChecker(checker)

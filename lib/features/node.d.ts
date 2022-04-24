@@ -36,7 +36,7 @@ export declare class RunningNode<ED extends EntityDict, Cxt extends Context<ED>,
     private schema?;
     private root;
     constructor(cache: Cache<ED, Cxt, AD>);
-    createNode<T extends keyof ED>(path: string, parent?: string, entity?: T, isList?: boolean, isPicker?: boolean, projection?: ED[T]['Selection']['data'], id?: string, pagination?: Pagination, filters?: DeduceFilter<ED[T]['Schema']>[], sorter?: ED[T]['Selection']['sorter']): Promise<keyof ED>;
+    createNode<T extends keyof ED>(path: string, parent?: string, entity?: T, isList?: boolean, isPicker?: boolean, projection?: ED[T]['Selection']['data'], id?: string, pagination?: Pagination, filters?: ED[T]['Selection']['filter'][], sorter?: ED[T]['Selection']['sorter']): Promise<keyof ED>;
     destroyNode(path: string): Promise<void>;
     setStorageSchema(schema: StorageSchema<ED>): void;
     private applyOperation;

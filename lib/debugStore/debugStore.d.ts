@@ -1,10 +1,9 @@
-import { EntityDict, OperationResult, Context } from "oak-domain/lib/types";
+import { EntityDict, OperationResult, Context, RowStore } from "oak-domain/lib/types";
 import { TreeStore } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
-import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
-export declare class DebugStore<ED extends EntityDict> extends TreeStore<ED> {
+export declare class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
     private executor;
-    constructor(executor: TriggerExecutor<ED>, storageSchema: StorageSchema<ED>, initialData?: {
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (store: RowStore<ED, Cxt>) => Cxt, initialData?: {
         [T in keyof ED]?: {
             [ID: string]: ED[T]['OpSchema'];
         };
@@ -14,9 +13,11 @@ export declare class DebugStore<ED extends EntityDict> extends TreeStore<ED> {
         remove: number;
         commit: number;
     });
-    operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Context<ED>, params?: Object): Promise<OperationResult>;
-    select<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, context: Context<ED>, params?: Object): Promise<import("oak-domain/lib/types").SelectionResult2<ED[T]["Schema"], S["data"]>>;
-    count<T extends keyof ED>(entity: T, selection: Omit<ED[T]['Selection'], 'data' | 'sorter' | 'action'>, context: Context<ED>, params?: Object): Promise<number>;
-    registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T>): void;
-    registerChecker<T extends keyof ED>(checker: Checker<ED, T>): void;
+    operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, params?: Object): Promise<OperationResult>;
+    select<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, context: Cxt, params?: Object): Promise<{
+        result: import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]>[];
+    }>;
+    count<T extends keyof ED>(entity: T, selection: Omit<ED[T]['Selection'], 'data' | 'sorter' | 'action'>, context: Cxt, params?: Object): Promise<number>;
+    registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>): void;
+    registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>): void;
 }

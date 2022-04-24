@@ -13,9 +13,9 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>>(
         storageSchema: StorageSchema<ED>,
-        createContext: (store: RowStore<ED>) => Cxt,
-        triggers: Array<Trigger<ED, keyof ED>>,
-        checkers: Array<Checker<ED, keyof ED>>,
+        createContext: (store: RowStore<ED, Cxt>) => Cxt,
+        triggers: Array<Trigger<ED, keyof ED, Cxt>>,
+        checkers: Array<Checker<ED, keyof ED, Cxt>>,
         features: BasicFeatures<ED, Cxt, AD> & FD,
         aspectDict?: AD,
         initialData?: {
@@ -61,9 +61,9 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     storageSchema: StorageSchema<ED>,
     createFeatures: (basicFeatures: BasicFeatures<ED, Cxt, AD>) => FD,
-    createContext: (store: RowStore<ED>) => Cxt,
-    triggers?: Array<Trigger<ED, keyof ED>>,
-    checkers?: Array<Checker<ED, keyof ED>>,
+    createContext: (store: RowStore<ED, Cxt>) => Cxt,
+    triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
+    checkers?: Array<Checker<ED, keyof ED, Cxt>>,
     aspectDict?: AD,
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
