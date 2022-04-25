@@ -1,5 +1,5 @@
 import './polyfill';
-import { Aspect, AttrIllegalError, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger } from "oak-domain/lib/types";
+import { Aspect, InputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
@@ -292,7 +292,7 @@ function createPageOptions<ED extends EntityDict,
                     }
                 }
                 catch (err) {
-                    if (err instanceof AttrIllegalError) {
+                    if (err instanceof InputIllegalException) {
                         const attr = err.getAttributes()[0];
                         this.setData({
                             oakFocused: {
@@ -471,7 +471,7 @@ function createComponentOptions<ED extends EntityDict,
                     this.setData({ oakExecuting: false });
                 }
                 catch (err) {
-                    if (err instanceof AttrIllegalError) {
+                    if (err instanceof InputIllegalException) {
                         const attr = err.getAttributes()[0];
                         this.setData({
                             oakFocused: {
