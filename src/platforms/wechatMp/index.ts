@@ -1,11 +1,12 @@
 import './polyfill';
-import { Aspect, InputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger } from "oak-domain/lib/types";
+import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
 import { BasicFeatures } from "../../features";
 import assert from "assert";
 import { assign } from "lodash";
+import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 
 type OakComponentOption<
     ED extends EntityDict,
@@ -116,17 +117,8 @@ async function execute<ED extends EntityDict, Cxt extends Context<ED>, AD extend
     features: BasicFeatures<ED, Cxt, AD> & FD,
     fullpath: string,
     action?: string, isTry?: boolean) {
-    try {
-        await features.runningNode.execute(fullpath, action, isTry);
-    }
-    catch (err) {
-        const { message } = err as Error;
-        wx.showToast({
-            title: message,
-            icon: 'error'
-        });
-        throw err;
-    }
+    
+    await features.runningNode.execute(fullpath, action, isTry);
 }
 
 function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
@@ -161,7 +153,10 @@ function createPageOptions<ED extends EntityDict,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
     Proj extends ED[T]['Selection']['data'],
-    FormedData extends WechatMiniprogram.Component.DataOption>(options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>, doSubscribe: ReturnType<typeof init>['subscribe'], features: BasicFeatures<ED, Cxt, AD> & FD) {
+    FormedData extends WechatMiniprogram.Component.DataOption>(
+        options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>, doSubscribe: ReturnType<typeof init>['subscribe'],
+        features: BasicFeatures<ED, Cxt, AD> & FD,
+        exceptionRouterDict: Record<string, ExceptionHandler>) {
     const { formData, isList, pagination } = options;
     const componentOptions: WechatMiniprogram.Component.Options<
         {
@@ -169,6 +164,10 @@ function createPageOptions<ED extends EntityDict,
             oakExecuting: boolean;
             oakFocused: object;
             oakDirty: boolean;
+            oakError: {
+                level: 'warning' | 'error';
+                msg: string;
+            };
         },
         OakPageProperties,
         OakPageMethods<ED, T>,
@@ -292,18 +291,67 @@ function createPageOptions<ED extends EntityDict,
                     }
                 }
                 catch (err) {
-                    if (err instanceof InputIllegalException) {
-                        const attr = err.getAttributes()[0];
-                        this.setData({
-                            oakFocused: {
-                                [attr]: 'focused',
-                            },
-                            oakExecuting: false,
-                        });
+                    if (err instanceof OakException) {
+                        if (err instanceof OakInputIllegalException) {
+                            const attr = err.getAttributes()[0];
+                            this.setData({
+                                oakFocused: {
+                                    [attr]: 'focused',
+                                },
+                                oakExecuting: false,
+                                oakError: {
+                                    level: 'warning',
+                                    msg: err.message,
+                                },
+                            });
+                        }
+                        else {
+                            const { name } = err.constructor;
+                            const handler = exceptionRouterDict[name];
+                            if (handler) {
+                                const { hidden, level, handler: fn, router } = handler;
+                                if (fn) {
+                                    this.setData({
+                                        oakExecuting: false,
+                                    });
+                                    fn(err);
+                                }
+                                else if (router) {
+                                    this.setData({
+                                        oakExecuting: false,
+                                    });
+                                    this.navigateTo({
+                                        url: router,
+                                    });
+                                }
+                                else if (!hidden) {
+                                    this.setData({
+                                        oakExecuting: false,
+                                        oakError: {
+                                            level: level!,
+                                            msg: err.message,
+                                        },
+                                    });
+                                }
+                            }
+                            else {
+                                this.setData({
+                                    oakExecuting: false,
+                                    oakError: {
+                                        level: 'warning',
+                                        msg: err.message,
+                                    },
+                                });
+                            }
+                        }
                     }
                     else {
                         this.setData({
                             oakExecuting: false,
+                            oakError: {
+                                level: 'error',
+                                msg: (err as Error).message,
+                            },
                         });
                     }
                 }
@@ -386,8 +434,8 @@ function createComponentOptions<ED extends EntityDict,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption>(
         options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
-        doSubscribe: ReturnType<typeof init>['subscribe'],
-        features: BasicFeatures<ED, Cxt, AD> & FD) {
+        features: BasicFeatures<ED, Cxt, AD> & FD,
+        exceptionRouterDict: Record<string, ExceptionHandler>) {
     const { formData } = options;
 
     const componentOptions: WechatMiniprogram.Component.Options<
@@ -397,6 +445,10 @@ function createComponentOptions<ED extends EntityDict,
             oakExecuting: boolean;
             oakFocused: object;
             oakDirty: boolean;
+            oakError: {
+                level: 'warning' | 'error';
+                msg: string;
+            };
         },
         OakComponentProperties,
         OakComponentMethods<ED, T>,
@@ -471,18 +523,67 @@ function createComponentOptions<ED extends EntityDict,
                     this.setData({ oakExecuting: false });
                 }
                 catch (err) {
-                    if (err instanceof InputIllegalException) {
-                        const attr = err.getAttributes()[0];
-                        this.setData({
-                            oakFocused: {
-                                [attr]: 'focused',
-                            },
-                            oakExecuting: false,
-                        });
+                    if (err instanceof OakException) {
+                        if (err instanceof OakInputIllegalException) {
+                            const attr = err.getAttributes()[0];
+                            this.setData({
+                                oakFocused: {
+                                    [attr]: 'focused',
+                                },
+                                oakExecuting: false,
+                                oakError: {
+                                    level: 'warning',
+                                    msg: err.message,
+                                },
+                            });
+                        }
+                        else {
+                            const { name } = err.constructor;
+                            const handler = exceptionRouterDict[name];
+                            if (handler) {
+                                const { hidden, level, handler: fn, router } = handler;
+                                if (fn) {
+                                    this.setData({
+                                        oakExecuting: false,
+                                    });
+                                    fn(err);
+                                }
+                                else if (router) {
+                                    this.setData({
+                                        oakExecuting: false,
+                                    });
+                                    this.navigateTo({
+                                        url: router,
+                                    });
+                                }
+                                else if (!hidden) {
+                                    this.setData({
+                                        oakExecuting: false,
+                                        oakError: {
+                                            level: level!,
+                                            msg: err.message,
+                                        },
+                                    });
+                                }
+                            }
+                            else {
+                                this.setData({
+                                    oakExecuting: false,
+                                    oakError: {
+                                        level: 'warning',
+                                        msg: err.message,
+                                    },
+                                });
+                            }
+                        }
                     }
                     else {
                         this.setData({
                             oakExecuting: false,
+                            oakError: {
+                                level: 'error',
+                                msg: (err as Error).message,
+                            },
                         });
                     }
                 }
@@ -614,6 +715,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     storageSchema: StorageSchema<ED>,
     createFeatures: (basicFeatures: BasicFeatures<ED, Cxt, AD>) => FD,
     createContext: (store: RowStore<ED, Cxt>) => Cxt,
+    exceptionRouters: ExceptionRouters = [],
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
     aspectDict?: AD,
@@ -622,6 +724,12 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     }
 ) {
     const { subscribe, features } = init<ED, Cxt, AD, FD>(storageSchema, createFeatures, createContext, triggers, checkers, aspectDict, initialData);
+    const exceptionRouterDict: Record<string, ExceptionHandler> = {};
+    for (const router of exceptionRouters) {
+        assign(exceptionRouterDict, {
+            [router[0].name]: router[1],
+        });
+    }
 
     return {
         OakPage: <
@@ -634,7 +742,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             FormedData extends WechatMiniprogram.Component.DataOption = {}>(
                 options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
                 componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS & OakPageInstanceProperties<ED, T, Cxt, AD, FD>, true> = {}) => {
-            const oakOptions = createPageOptions(options, subscribe, features);
+            const oakOptions = createPageOptions(options, subscribe, features, exceptionRouterDict);
             const { properties, pageLifetimes, lifetimes, methods, data, observers } = oakOptions;
             const { properties: p2, pageLifetimes: pl2, lifetimes: l2, methods: m2, data: d2, observers: o2, ...restOptions } = componentOptions;
 
@@ -672,7 +780,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             Proj extends ED[T]['Selection']['data'],
             IS extends WechatMiniprogram.IAnyObject = {},
             FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>, componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS> = {}) => {
-            const oakOptions = createComponentOptions(options, subscribe, features);
+            const oakOptions = createComponentOptions(options, features, exceptionRouterDict);
             const { properties, pageLifetimes, lifetimes, methods, data, observers } = oakOptions;
             const { properties: p2, pageLifetimes: pl2, lifetimes: l2, methods: m2, data: d2, observers: o2, ...restOptions } = componentOptions;
 

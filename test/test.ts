@@ -1,9 +1,5 @@
-type A = {
-    name: 'bbb'
-    [k: string]: string;
-};
+import { OakException, OakUserException } from 'oak-domain/lib/types';
 
-type B = keyof A;
+const e = new OakUserException();
 
-
-const b: B = 1;
+console.log(e instanceof OakException);

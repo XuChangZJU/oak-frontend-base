@@ -6,4 +6,5 @@ export {
 };
 
 export * from './types/Feature';
+export * from './types/ExceptionRoute';
 export { BasicFeatures } from  './features';
