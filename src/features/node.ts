@@ -394,7 +394,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
         }
         const action = this.action === 'create' ? {
             action: 'create',
-            data: assign({}, this.updateData, { id: v4({ random: await getRandomValues(16) }) }),
+            data: assign({}, this.updateData, { id: await generateNewId() }),
         } as DeduceCreateOperation<ED[T]['Schema']> : {
             action: action2 || this.action || 'update',
             data: cloneDeep(this.updateData) || {},
@@ -440,7 +440,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
                 else {
                     // 新建对象并关联
                     assert(!this.value || this.value.entity);
-                    const id = v4({ random: await getRandomValues(16) });
+                    const id = await generateNewId();
                     /*  await cache.operate(this.entity, {
                          action: 'update',
                          data: {
@@ -466,7 +466,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
                 else {
                     // 新建对象并关联
                     assert(!this.value || !this.value.entity);
-                    const id = v4({ random: await getRandomValues(16) });
+                    const id = await generateNewId();
                     /* await cache.operate(this.entity, {
                         action: 'update',
                         data: {
@@ -801,7 +801,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                     case 'create': {
                         assert(!value);
                         const row = {
-                            id: v4({ random: await getRandomValues(16) }),
+                            id: await generateNewId(),
                         } as Partial<ED[T]['Schema']>;
                         await applyUpsert(row, data as DeduceUpdateOperation<ED[T]['Schema']>['data']);
                         return row;
