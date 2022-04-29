@@ -27,3 +27,4 @@ Object.assign(global, {
     getRandomValues,
     process: {},
 });
+export {}
