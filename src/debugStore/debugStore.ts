@@ -71,15 +71,6 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         return result;
     }
 
-    async count<T extends keyof ED>(
-        entity: T,
-        selection: Omit<ED[T]['Selection'], 'data' | 'sorter' | 'action'>,
-        context: Cxt,
-        params?: Object
-    ): Promise<number> {
-        throw new Error("Method not implemented.");
-    }
-
     registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>) {
         this.executor.registerTrigger(trigger);
     }

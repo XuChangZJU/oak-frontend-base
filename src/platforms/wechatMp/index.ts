@@ -1,5 +1,5 @@
 import './polyfill';
-import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException } from "oak-domain/lib/types";
+import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
@@ -721,9 +721,10 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     aspectDict?: AD,
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
-    }
+    },
+    actionDict?: ActionDictOfEntityDict<ED>
 ) {
-    const { subscribe, features } = init<ED, Cxt, AD, FD>(storageSchema, createFeatures, createContext, triggers, checkers, aspectDict, initialData);
+    const { subscribe, features } = init<ED, Cxt, AD, FD>(storageSchema, createFeatures, createContext, triggers, checkers, aspectDict, initialData, actionDict);
     const exceptionRouterDict: Record<string, ExceptionHandler> = {};
     for (const router of exceptionRouters) {
         assign(exceptionRouterDict, {
@@ -797,6 +798,8 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
                 ...restOptions,
             });
         },
+
+        features,
     };
 }
 

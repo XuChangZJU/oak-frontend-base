@@ -1,7 +1,6 @@
 import { DebugStore } from './debugStore';
-import { Checker, Trigger, StorageSchema, FormCreateData, Context, EntityDict, RowStore } from "oak-domain/lib/types";
-import {  } from 'oak-domain/lib/types';
-import {  TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
+import { Checker, Trigger, StorageSchema, FormCreateData, Context, EntityDict, RowStore, ActionDictOfEntityDict } from "oak-domain/lib/types";
+import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 
 async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(store: DebugStore<ED, Cxt>, createContext: (store: RowStore<ED, Cxt>) => Cxt, initialData?: {
     [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
@@ -72,11 +71,12 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
     initialData?: {
-    [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
-}){
+        [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
+    },
+    actionDict?: ActionDictOfEntityDict<ED>) {
     const data = getMaterializedData();
     const store = new DebugStore<ED, Cxt>(storageSchema, createContext, data && data.data, data && data.stat);
-    
+
     triggers?.forEach(
         ele => store.registerTrigger(ele)
     );
@@ -85,10 +85,20 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
         ele => store.registerChecker(ele)
     );
 
+    if (actionDict) {
+        const { triggers: adTriggers, checkers: adCheckers } = analyzeActionDefDict(storageSchema, actionDict);
+        adTriggers.forEach(
+            ele => store.registerTrigger(ele)
+        );
+        adCheckers.forEach(
+            ele => store.registerChecker(ele)            
+        );
+    }
+
     // 如果没有物化数据则使用initialData初始化debugStore
     if (!data) {
         console.log('使用初始化数据建立debugStore');
-        initDataInStore(store, createContext, initialData);    
+        initDataInStore(store, createContext, initialData);
     }
     else {
         console.log('使用物化数据建立debugStore');
@@ -106,3 +116,4 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
     }, 10000);
     return store;
 }
+

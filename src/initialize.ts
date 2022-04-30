@@ -8,6 +8,7 @@ import { initialize as createBasicFeatures, BasicFeatures } from './features';
 import { assign, intersection, keys, mapValues } from 'lodash';
 import { AspectProxy } from './types/AspectProxy';
 import baseAspectDict from './aspects';
+import { ActionDictOfEntityDict } from "oak-domain/lib/types/Action";
 
 function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>, 
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -20,14 +21,15 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
         aspectDict?: AD,
         initialData?: {
             [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
-        }): AspectProxy<ED, Cxt, AD & typeof baseAspectDict> {
+        },
+        actionDict?: ActionDictOfEntityDict<ED>): AspectProxy<ED, Cxt, AD & typeof baseAspectDict> {
     if (process.env.NODE_ENV === 'production') {
         // todo 发请求到后台获取数据
         throw new Error('method not implemented');
     }
     else {
         // todo initialData
-        const debugStore = createDebugStore(storageSchema, createContext, triggers, checkers, initialData);       
+        const debugStore = createDebugStore(storageSchema, createContext, triggers, checkers, initialData, actionDict);       
 
         const connectAspectToDebugStore = (aspect: Aspect<ED, Cxt>): (p: Parameters<typeof aspect>[0]) => ReturnType<typeof aspect> => {
             return async (params: Parameters<typeof aspect>[0]) => {
@@ -67,7 +69,8 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     aspectDict?: AD,
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
-    }) {
+    },
+    actionDict?: ActionDictOfEntityDict<ED>) {
     const basicFeatures = createBasicFeatures<ED, Cxt, AD>(storageSchema, createContext, checkers);
     basicFeatures.runningNode.setStorageSchema(storageSchema);
 
@@ -82,7 +85,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
 
     // todo default triggers
     const aspectProxy = createAspectProxy<ED, Cxt, AD, FD>(storageSchema, createContext, triggers || [], checkers || [],
-        features, aspectDict, initialData);
+        features, aspectDict, initialData, actionDict);
 
 
     keys(features).forEach(
