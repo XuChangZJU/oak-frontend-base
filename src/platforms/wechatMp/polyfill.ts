@@ -14,3 +14,4 @@ Object.assign(global, {
     clearInterval: clearInterval,
     process: {},
 });
+export {}
