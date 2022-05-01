@@ -1,4 +1,4 @@
-import { EntityDict, OperationResult, Context, RowStore } from "oak-domain/lib/types";
+import { EntityDict, OperationResult, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateParams } from "oak-domain/lib/types";
 import { TreeStore } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 export declare class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
@@ -13,11 +13,10 @@ export declare class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> 
         remove: number;
         commit: number;
     });
+    protected cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, params?: OperateParams): Promise<void>;
+    protected cascadeSelect<T extends keyof ED>(entity: T, selection: ED[T]["Selection"], context: Cxt, params?: OperateParams): Promise<ED[T]["Schema"][]>;
     operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, params?: Object): Promise<OperationResult>;
-    select<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, context: Cxt, params?: Object): Promise<{
-        result: import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]>[];
-    }>;
-    count<T extends keyof ED>(entity: T, selection: Omit<ED[T]['Selection'], 'data' | 'sorter' | 'action'>, context: Cxt, params?: Object): Promise<number>;
+    select<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, context: Cxt, params?: Object): Promise<import("oak-domain/lib/types").SelectionResult<ED[T]["Schema"], S["data"]>>;
     registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>): void;
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>): void;
 }

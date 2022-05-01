@@ -1,4 +1,4 @@
-import { EntityDict, OperationResult, Context, RowStore } from "oak-domain/lib/types";
+import { EntityDict, OperationResult, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateParams } from "oak-domain/lib/types";
 import { TreeStore } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
@@ -14,6 +14,24 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         this.executor = new TriggerExecutor(() => contextBuilder(this));
     }
 
+    protected async cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, params?: OperateParams): Promise<void> {        
+        await this.executor.preOperation(entity, operation, context);
+        const result = super.cascadeUpdate(entity, operation, context, params);
+        await this.executor.postOperation(entity, operation, context);
+        return result;
+    }
+
+    protected async cascadeSelect<T extends keyof ED>(entity: T, selection: ED[T]["Selection"], context: Cxt, params?: OperateParams): Promise<ED[T]["Schema"][]> {        
+        const selection2 = Object.assign({
+            action: 'select',
+        }, selection) as ED[T]['Operation'];
+
+        await this.executor.preOperation(entity, selection2, context);
+        const result = await super.cascadeSelect(entity, selection, context, params);
+        await this.executor.postOperation(entity, selection2, context);
+        return result;
+    }
+
     async operate<T extends keyof ED>(
         entity: T,
         operation: ED[T]['Operation'],
@@ -26,9 +44,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
             await context.begin();
         }
         try {
-            await this.executor.preOperation(entity, operation, context);
             result = await super.operate(entity, operation, context, params);
-            await this.executor.postOperation(entity, operation, context);
         }
         catch (err) {
             await context.rollback();
