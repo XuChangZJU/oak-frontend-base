@@ -5,6 +5,7 @@ import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(store: DebugStore<ED, Cxt>, createContext: (store: RowStore<ED, Cxt>) => Cxt, initialData?: {
     [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
 }) {
+    store.startInitializing();
     if (false) {
         // todo 在不同环境下读取相应的store数据并初始化
     }
@@ -16,11 +17,12 @@ async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(s
                 await store.operate(entity, {
                     action: 'create',
                     data: initialData[entity]!,
-                }, context);
+                }, context, { noLock: true });
             }
         }
         await context.commit();
     }
+    store.endInitalizing();
 }
 
 function getMaterializedData() {

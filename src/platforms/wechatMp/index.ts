@@ -18,7 +18,7 @@ type OakComponentOption<
     FormedData extends WechatMiniprogram.Component.DataOption
     > = {
         entity: T;
-        formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'], features: BasicFeatures<ED, Cxt, AD> & FD) => FormedData;
+        formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'], features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<FormedData>;
     };
 
 interface OakPageOption<
@@ -40,7 +40,7 @@ interface OakPageOption<
     filters?: Array<ED[T]['Selection']['filter']>;
     sorter?: ED[T]['Selection']['sorter'];
     // actions?: EntityDict[T]['Action'][];
-    formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'], features: BasicFeatures<ED, Cxt, AD> & FD) => FormedData;
+    formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'], features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<FormedData>;
 };
 
 type OakComponentProperties = {
@@ -188,7 +188,7 @@ function createPageOptions<ED extends EntityDict,
         methods: {
             async reRender() {
                 const $rows = await features.runningNode.get(this.data.oakFullpath);
-                const data = formData($rows as any, features);
+                const data = await formData($rows as any, features);
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {
@@ -463,7 +463,7 @@ function createComponentOptions<ED extends EntityDict,
         observers: {
             "oakValue": async function (value) {
                 const $rows = value instanceof Array ? value : [value];
-                const data = formData($rows, features);
+                const data = await formData($rows, features);
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {
@@ -607,7 +607,7 @@ function createComponentOptions<ED extends EntityDict,
             async ready() {
                 const { oakPath, oakParent, oakValue } = this.data;
                 const $rows = oakValue instanceof Array ? oakValue : [oakValue];
-                const data = formData($rows, features);
+                const data = await formData($rows, features);
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {
