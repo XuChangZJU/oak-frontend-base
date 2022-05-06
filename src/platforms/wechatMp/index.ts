@@ -33,7 +33,7 @@ interface OakPageOption<
     entity: T;
     path: string;
     isList: boolean;
-    projection: Proj;
+    projection?: Proj;
     parent?: string;
     append?: boolean;
     pagination?: Pagination;
@@ -201,12 +201,16 @@ function createPageOptions<ED extends EntityDict,
             },
 
             async refresh() {
-                await features.runningNode.refresh(this.data.oakFullpath);
+                if (options.projection) {
+                    await features.runningNode.refresh(this.data.oakFullpath);
+                }
             },
 
             async onPullDownRefresh() {
                 console.log('onPullDownRefresh');
-                await this.refresh();
+                if (options.projection) {
+                    await this.refresh();
+                }
             },
 
             subscribe() {
@@ -714,7 +718,7 @@ function mergePageLifetimes(lifetimes: Array<Partial<WechatMiniprogram.Component
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     storageSchema: StorageSchema<ED>,
     createFeatures: (basicFeatures: BasicFeatures<ED, Cxt, AD>) => FD,
-    createContext: (store: RowStore<ED, Cxt>) => Cxt,
+    createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt,
     exceptionRouters: ExceptionRouters = [],
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,

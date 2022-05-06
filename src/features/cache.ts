@@ -5,11 +5,11 @@ import { CacheStore } from '../cacheStore/CacheStore';
 
 export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Feature<ED, Cxt, AD> {
     cacheStore: CacheStore<ED, Cxt>;
-    createContext: (store: RowStore<ED, Cxt>) => Cxt;
+    createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt;
     private syncEventsCallbacks: Array<(opRecords: OpRecord<ED>[]) => Promise<void>>;
 
-    constructor(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED, Cxt>) => Cxt, checkers?: Array<Checker<ED, keyof ED, Cxt>>) {
-        const cacheStore = new CacheStore(storageSchema, () => createContext(this.cacheStore));
+    constructor(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt, checkers?: Array<Checker<ED, keyof ED, Cxt>>) {
+        const cacheStore = new CacheStore(storageSchema, (scene) => createContext(this.cacheStore, scene));
         if (checkers) {
             checkers.forEach(
                 (checker) => cacheStore.registerChecker(checker)
@@ -23,17 +23,17 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
 
 
     @Action
-    refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object) {
+    refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], scene: string, params?: object) {
         return this.getAspectProxy().operate({
             entity: entity as any, 
             operation: assign({}, selection, { action: 'select' }) as DeduceSelection<ED[T]['Schema']>,
             params,
-        }) as OperationResult;
+        }, scene) as OperationResult;
     }
 
     @Action
     async sync(records: OpRecord<ED>[]) {
-        const context = this.createContext(this.cacheStore);
+        const context = this.createContext(this.cacheStore, 'sync');
         try {
             await this.cacheStore.sync(records, context);
         }
@@ -51,8 +51,8 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
     }
 
     @Action
-    async operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], commit: boolean = true, params?: OperateParams) {
-        const context = this.createContext(this.cacheStore);
+    async operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], scene: string, commit: boolean = true, params?: OperateParams) {
+        const context = this.createContext(this.cacheStore, scene);
         let result: Awaited<ReturnType<typeof this.cacheStore.operate>>;
         try {
             result = await this.cacheStore.operate(entity, operation, context, params);
@@ -71,9 +71,9 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
     }
 
 
-    async get<T extends keyof ED>(options: { entity: T, selection: ED[T]['Selection'], params?: object }) {
-        const { entity, selection, params } = options;
-        const context = this.createContext(this.cacheStore);        
+    async get<T extends keyof ED>(options: { entity: T, selection: ED[T]['Selection'], scene: string, params?: object }) {
+        const { entity, selection, params, scene } = options;
+        const context = this.createContext(this.cacheStore, scene);
         const { result } = await this.cacheStore.select(entity, selection, context, params);
         return result;
     }

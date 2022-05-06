@@ -8,7 +8,7 @@ import { StorageSchema } from 'oak-domain/lib/types/Storage';
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, 
     AD extends Record<string, Aspect<ED, Cxt>>> (
         storageSchema: StorageSchema<ED>,
-        createContext: (store: RowStore<ED, Cxt>) => Cxt,
+        createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt,
         checkers?: Array<Checker<ED, keyof ED, Cxt>>): BasicFeatures<ED, Cxt, AD> {
     const cache = new Cache<ED, Cxt, AD>(storageSchema, createContext, checkers);
     const location = new Location();

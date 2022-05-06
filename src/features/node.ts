@@ -35,7 +35,7 @@ export class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context
         this.parent = parent;
         this.action = action;
         this.dirty = false;
-        this.needReGetValue = true;
+        this.needReGetValue = !!this.projection;
         this.refreshing = false;
     }
 
@@ -199,7 +199,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
     }
 
     async refresh() {
-        const { filters, sorter, pagination, entity, projection } = this;
+        const { filters, sorter, pagination, entity, projection, fullPath } = this;
         assert(projection);
         const { step } = pagination;
         this.refreshing = true;
@@ -209,7 +209,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
             sorter,
             indexFrom: 0,
             count: step,
-        });
+        }, fullPath);
         assert(ids);
         this.ids = ids;
         this.pagination.indexFrom = 0;
@@ -224,7 +224,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
     }
 
     async reGetValue() {
-        const { entity, ids, projection } = this;
+        const { entity, ids, projection, fullPath } = this;
         assert(projection);
         if (ids.length > 0) {
             const rows = await this.cache.get({
@@ -235,8 +235,9 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
                         id: {
                             $in: ids,
                         }
-                    } as any,
+                    } as any,                    
                 },
+                scene: fullPath,
             });
             
             this.value = ids.map(
@@ -273,7 +274,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
                             } as any,
                             filter,
                             action: 'select',
-                        }, false, { obscure: true });
+                        }, 'onRecordSynchoronized', false, { obscure: true });
                         if (ids!.length > 0) {
                             // todo 这里更严格应该还要考虑sorter，但前端可能没有完整的供sort用的cache数据
                             this.ids.push(id);
@@ -307,7 +308,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
                                         } as any,
                                         filter,
                                         action: 'select',
-                                    }, false, { obscure: true });
+                                    }, 'onRecordSynchoronized', false, { obscure: true });
                                     if (ids!.length > 0) {
                                         // todo 这里更严格应该还要考虑sorter，但前端可能没有完整的供sort用的cache数据
                                         this.ids.push(id);
@@ -383,7 +384,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
                 filter: {
                     id: this.id,
                 },
-            } as any);
+            } as any, this.fullPath);
             this.refreshing = false;
         }
     }
@@ -509,7 +510,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
     }
 
     async reGetValue() {
-        const { entity, id, projection } = this;
+        const { entity, id, projection, fullPath } = this;
         assert(projection);
         if (id) {
             const filter: Partial<AttrFilter<ED[T]["Schema"]>> = {
@@ -520,7 +521,8 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
                 selection: {
                     data: projection as any,
                     filter,
-                }
+                },
+                scene: fullPath,
             });
             this.value = value[0] as Partial<ED[T]['Schema']>;
             this.updateChildrenValues();
@@ -662,13 +664,14 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     private async applyOperation<T extends keyof ED>(
         entity: T, value: Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined,
         operation: DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[],
-        projection: DeduceSelection<ED[T]['Schema']>['data']): Promise<Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined> {
+        projection: DeduceSelection<ED[T]['Schema']>['data'],
+        scene: string): Promise<Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined> {
         if (operation instanceof Array) {
             assert(value instanceof Array);
             for (const action of operation) {
                 switch (action.action) {
                     case 'create': {
-                        value.push(await this.applyOperation(entity, undefined, action, projection) as Partial<ED[T]['Schema']>);
+                        value.push(await this.applyOperation(entity, undefined, action, projection, scene) as Partial<ED[T]['Schema']>);
                     }
                     case 'remove': {
                         const { filter } = action;
@@ -684,7 +687,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                         const row = value.find(
                             ele => ele.id === filter!.id
                         );
-                        await this.applyOperation(entity, row!, action, projection);
+                        await this.applyOperation(entity, row!, action, projection, scene);
                     }
                 }
             }
@@ -694,7 +697,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             if (value instanceof Array) {
                 // todo 这里还有种可能不是对所有的行，只对指定id的行操作
                 return (await Promise.all(value.map(
-                    async (row) => await this.applyOperation(entity, row, operation, projection)
+                    async (row) => await this.applyOperation(entity, row, operation, projection, scene)
                 ))).filter(
                     ele => !!ele
                 ) as Partial<ED[T]['Schema']>[];
@@ -710,7 +713,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                         else if (relation === 2) {
                             // 基于entity/entityId的多对一
                             if (projection[attr]) {
-                                set(row, attr, await this.applyOperation(attr, row[attr], actionData[attr]!, projection[attr]!));
+                                set(row, attr, await this.applyOperation(attr, row[attr], actionData[attr]!, projection[attr]!, scene));
                                 if (row[attr]) {
                                     assign(row, {
                                         entity: attr,
@@ -727,7 +730,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                         }
                         else if (typeof relation === 'string') {
                             if (projection[attr]) {
-                                set(row, attr, await this.applyOperation(relation, row[attr], actionData[attr]!, projection[attr]!));
+                                set(row, attr, await this.applyOperation(relation, row[attr], actionData[attr]!, projection[attr]!, scene));
                                 if (row[attr]) {
                                     assign(row, {
                                         [`${attr}Id`]: row[attr]!['id'],
@@ -743,7 +746,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                         else {
                             assert(relation instanceof Array);
                             if (projection[attr]) {
-                                set(row, attr, await this.applyOperation(relation[0], row[attr], actionData[attr]!, projection[attr]!));
+                                set(row, attr, await this.applyOperation(relation[0], row[attr], actionData[attr]!, projection[attr]!, scene));
                                 row[attr]!.forEach(
                                     (ele: ED[keyof ED]['Schema']) => {
                                         if (relation[1]) {
@@ -778,7 +781,8 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                                         filter: {
                                             id: entityId,
                                         } as any,
-                                    }
+                                    },
+                                    scene
                                 });
                                 set(row, attr, entityRow);
                             }
@@ -790,7 +794,8 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                                         filter: {
                                             id: actionData[`${attr}Id`],
                                         } as any,
-                                    }
+                                    },
+                                    scene,
                                 });
                                 set(row, attr, entityRow);
                             }
@@ -824,7 +829,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         if (node.isDirty()) {
             const operation = await node.composeOperation();
             const projection = node.getProjection();
-            value = (await this.applyOperation(node.getEntity(), value, operation!, projection as any));
+            value = (await this.applyOperation(node.getEntity(), value, operation!, projection as any, path));
         }
 
         if (value instanceof Array) {
@@ -914,11 +919,11 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         // 先在cache中尝试能否执行，如果权限上否决了在这里就失败
         if (operation instanceof Array) {
             for (const oper of operation) {
-                await this.cache.operate(node.getEntity(), oper, false);
+                await this.cache.operate(node.getEntity(), oper, path, false);
             }
         }
         else if (operation) {
-            await this.cache.operate(node.getEntity(), operation, false);
+            await this.cache.operate(node.getEntity(), operation, path, false);
         }
         else {
             return;
@@ -931,7 +936,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         await this.getAspectProxy().operate({
             entity: node.getEntity() as string,
             operation,
-        });
+        }, path);
         
         // 清空缓存
         node.resetUpdateData();

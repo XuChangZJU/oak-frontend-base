@@ -14,7 +14,7 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>>(
         storageSchema: StorageSchema<ED>,
-        createContext: (store: RowStore<ED, Cxt>) => Cxt,
+        createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt,
         triggers: Array<Trigger<ED, keyof ED, Cxt>>,
         checkers: Array<Checker<ED, keyof ED, Cxt>>,
         features: BasicFeatures<ED, Cxt, AD> & FD,
@@ -31,9 +31,9 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
         // todo initialData
         const debugStore = createDebugStore(storageSchema, createContext, triggers, checkers, initialData, actionDict);       
 
-        const connectAspectToDebugStore = (aspect: Aspect<ED, Cxt>): (p: Parameters<typeof aspect>[0]) => ReturnType<typeof aspect> => {
-            return async (params: Parameters<typeof aspect>[0]) => {
-                const runningContext = createContext(debugStore);
+        const connectAspectToDebugStore = (aspect: Aspect<ED, Cxt>): (p: Parameters<typeof aspect>[0], scene: string) => ReturnType<typeof aspect> => {
+            return async (params: Parameters<typeof aspect>[0], scene: string) => {
+                const runningContext = createContext(debugStore, scene);
                 await runningContext.begin();
                 let aspectCompeleted = false;
                 try {
@@ -63,7 +63,7 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     storageSchema: StorageSchema<ED>,
     createFeatures: (basicFeatures: BasicFeatures<ED, Cxt, AD>) => FD,
-    createContext: (store: RowStore<ED, Cxt>) => Cxt,
+    createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt,
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
     aspectDict?: AD,

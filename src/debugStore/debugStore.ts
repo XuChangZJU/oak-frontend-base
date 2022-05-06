@@ -11,13 +11,13 @@ interface DebugStoreOperationParams extends OperateParams {
 export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;
     private rwLock: RWLock;
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (store: RowStore<ED, Cxt>) => Cxt, initialData?: {
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (store: RowStore<ED, Cxt>, scene: string) => Cxt, initialData?: {
         [T in keyof ED]?: {
             [ID: string]: ED[T]['OpSchema'];
         };
     }, initialStat?: { create: number, update: number, remove: number, commit: number }) {
         super(storageSchema, initialData, initialStat);
-        this.executor = new TriggerExecutor(() => contextBuilder(this));
+        this.executor = new TriggerExecutor((scene) => contextBuilder(this, scene));
         this.rwLock = new RWLock();
     }
 
@@ -34,7 +34,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         }, selection) as ED[T]['Operation'];
 
         await this.executor.preOperation(entity, selection2, context, params);
-        const result = await super.cascadeSelect(entity, selection, context, params);
+        const result = await super.cascadeSelect(entity, selection2 as any, context, params);
         await this.executor.postOperation(entity, selection2, context, params);
         return result;
     }

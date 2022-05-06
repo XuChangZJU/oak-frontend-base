@@ -2,7 +2,9 @@ import { DebugStore } from './debugStore';
 import { Checker, Trigger, StorageSchema, FormCreateData, Context, EntityDict, RowStore, ActionDictOfEntityDict } from "oak-domain/lib/types";
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 
-async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(store: DebugStore<ED, Cxt>, createContext: (store: RowStore<ED, Cxt>) => Cxt, initialData?: {
+async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
+    store: DebugStore<ED, Cxt>,
+    createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt, initialData?: {
     [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
 }) {
     store.startInitializing();
@@ -10,7 +12,7 @@ async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(s
         // todo 在不同环境下读取相应的store数据并初始化
     }
     else {
-        const context = createContext(store);
+        const context = createContext(store, 'initDataInStore');
         await context.begin();
         if (initialData) {
             for (const entity in initialData) {
@@ -69,7 +71,7 @@ function materializeData(data: any, stat: { create: number, update: number, remo
 
 export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>(
     storageSchema: StorageSchema<ED>,
-    createContext: (store: RowStore<ED, Cxt>) => Cxt,
+    createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt,
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
     initialData?: {
