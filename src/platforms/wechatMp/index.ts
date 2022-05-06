@@ -804,22 +804,49 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
 }
 
 
-export type MakeOakPage<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> = <
+export type MakeOakPage<
+    ED extends EntityDict,
+    Cxt extends Context<ED>,
+    AD extends Record<string, Aspect<ED, Cxt>>,
+    FD extends Record<string, Feature<ED, Cxt, AD>>
+> = <
     T extends keyof ED,
     D extends WechatMiniprogram.Component.DataOption,
     P extends WechatMiniprogram.Component.PropertyOption,
     M extends WechatMiniprogram.Component.MethodOption,
     Proj extends ED[T]['Selection']['data'],
     IS extends WechatMiniprogram.IAnyObject = {},
-    FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
-    componentOptions: WechatMiniprogram.Component.Options<D & FormedData, P, M, IS & OakPageInstanceProperties<ED, T, Cxt, AD, FD>, true>) => string;
+    FormedData extends WechatMiniprogram.Component.DataOption = {}
+>(
+    options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
+    componentOptions: WechatMiniprogram.Component.Options<
+        Partial<D & FormedData>,
+        P,
+        M,
+        IS & OakPageInstanceProperties<ED, T, Cxt, AD, FD>,
+        true
+    >
+) => string;
 
-export type MakeOakComponent<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> = <
+export type MakeOakComponent<
+    ED extends EntityDict,
+    Cxt extends Context<ED>,
+    AD extends Record<string, Aspect<ED, Cxt>>,
+    FD extends Record<string, Feature<ED, Cxt, AD>>
+> = <
     T extends keyof ED,
     D extends WechatMiniprogram.Component.DataOption,
     P extends WechatMiniprogram.Component.PropertyOption,
     M extends WechatMiniprogram.Component.MethodOption,
     Proj extends ED[T]['Selection']['data'],
     IS extends WechatMiniprogram.IAnyObject = {},
-    FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
-    componentOptions: WechatMiniprogram.Component.Options<D & FormedData, P, M, IS>) => string;
+    FormedData extends WechatMiniprogram.Component.DataOption = {}
+>(
+    options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
+    componentOptions: WechatMiniprogram.Component.Options<
+        Partial<D & FormedData>,
+        P,
+        M,
+        IS
+    >
+) => string;
