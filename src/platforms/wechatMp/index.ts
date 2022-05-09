@@ -5,7 +5,7 @@ import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
 import { BasicFeatures } from "../../features";
 import assert from "assert";
-import { assign } from "lodash";
+import { assign, rest } from "lodash";
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 
 type OakComponentOption<
@@ -63,16 +63,26 @@ type OakPageProperties = {
     oakParentEntity?: StringConstructor;
 }
 
+type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
+    oakId?: string;
+    oakEntity?: T;
+    oakPath?: string;
+    oakParent?: string;
+    oakProjection?: ED[T]['Selection']['data'],
+    oakSorter?: ED[T]['Selection']['sorter'],
+    oakFilters?: Array<ED[T]['Selection']['filter']>;
+    oakIsPicker?: boolean;
+};
+
 type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
-    setUpdateData: (input: WechatMiniprogram.Input) => void;
-    callPicker: (touch: WechatMiniprogram.Touch) => void;
+    setUpdateData: (attr: string, input: any) => void;
+    callPicker: (attr: string, params: Record<string, any>) => void;
     setFilters: (filters: DeduceFilter<ED[T]['Schema']>[]) => void;
-    execute: (touch: WechatMiniprogram.Touch) => void;
-    navigateTo: (...options: Parameters<typeof wx.navigateTo>) => ReturnType<typeof wx.navigateTo>;
+    execute: (action: ED[T]['Action'], afterExecuted?: () => any) => void;
+    navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
 };
 
 type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
-    // setUpdateData: (detail: WechatMiniprogram.Input) => void;
     reRender: (extra?: any) => Promise<void>;
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
@@ -96,15 +106,6 @@ type OakPageInstanceProperties<
     > = OakPageMethods<ED, T> & OakComponentInstanceInnerProperties<ED, Cxt, AD, FD>;
 
 
-function setUpdateData<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
-    features: BasicFeatures<ED, Cxt, AD> & FD,
-    fullpath: string,
-    input: WechatMiniprogram.Input) {
-    const { target, detail } = input;
-    const { dataset: { path } } = target;
-    const { value } = detail;
-    features.runningNode.setUpdateData(fullpath, path, value);
-}
 
 function setFilters<ED extends EntityDict, T extends keyof EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     features: BasicFeatures<ED, Cxt, AD> & FD,
@@ -123,24 +124,23 @@ async function execute<ED extends EntityDict, Cxt extends Context<ED>, AD extend
 
 function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     features: BasicFeatures<ED, Cxt, AD> & FD,
-    touch: WechatMiniprogram.Touch,
+    attr: string,
+    params: Record<string, any>,
     entity: keyof ED,
     parent: string) {
-    const { currentTarget: { dataset } } = touch;
-    const { path, ...rest } = dataset;
 
-    const relation = features.cache.judgeRelation(entity, path);
+    const relation = features.cache.judgeRelation(entity, attr);
     let subEntity: string;
     if (relation === 2) {
-        subEntity = path;
+        subEntity = attr;
     }
     else {
         assert(typeof relation === 'string');
         subEntity = relation;
     }
-    let url = `/pages/pickers/${subEntity}/index?oakIsPicker=true&oakParentEntity=${entity}&oakParent=${parent}&oakPath=${path}`;
-    for (const k in rest) {
-        url += `&${k}=${JSON.stringify(rest[k])}`;
+    let url = `/pages/pickers/${subEntity}/index?oakIsPicker=true&oakParentEntity=${entity}&oakParent=${parent}&oakPath=${attr}`;
+    for (const k in params) {
+        url += `&${k}=${JSON.stringify(params[k])}`;
     }
     wx.navigateTo({
         url,
@@ -228,18 +228,18 @@ function createPageOptions<ED extends EntityDict,
                 }
             },
 
-            setUpdateData(input) {
+            setUpdateData(attr, value) {
                 if (this.data.oakExecuting) {
                     return;
                 }
-                setUpdateData(features, this.data.oakFullpath, input);
+                features.runningNode.setUpdateData(this.data.oakFullpath, attr, value);
             },
 
-            callPicker(touch) {
+            callPicker(attr: string, params: Record<string, any>) {
                 if (this.data.oakExecuting) {
                     return;
                 }
-                callPicker(features, touch, options.entity, this.data.oakFullpath);
+                callPicker(features, attr, params, options.entity, this.data.oakFullpath);
             },
 
             async setForeignKey(id: string, goBackDelta: number = -1) {
@@ -278,11 +278,10 @@ function createPageOptions<ED extends EntityDict,
                 setFilters(features, this.data.oakFullpath, filters);
             },
 
-            async execute(touch) {
+            async execute(action, afterExecuted) {
                 if (this.data.oakExecuting) {
                     return;
                 }
-                const { action, then } = touch.currentTarget.dataset;
                 this.setData({
                     oakExecuting: true,
                     oakFocused: {},
@@ -290,9 +289,7 @@ function createPageOptions<ED extends EntityDict,
                 try {
                     await execute(features, this.data.oakFullpath, action);
                     this.setData({ oakExecuting: false });
-                    if (then) {
-                        ((this as any)[then] as any)();
-                    }
+                    afterExecuted && afterExecuted();
                 }
                 catch (err) {
                     if (err instanceof OakException) {
@@ -300,7 +297,7 @@ function createPageOptions<ED extends EntityDict,
                             const attr = err.getAttributes()[0];
                             this.setData({
                                 oakFocused: {
-                                    [attr]: 'focused',
+                                    [attr]: true,
                                 },
                                 oakExecuting: false,
                                 oakError: {
@@ -362,8 +359,13 @@ function createPageOptions<ED extends EntityDict,
             },
 
             navigateTo(options) {
-                const { url } = options;
-                const url2 = url.includes('?') ? url.concat(`&oakFrom=${this.data.oakFullpath}`) : url.concat(`?oakFrom=${this.data.oakFullpath}`);
+                const { url, events, fail, complete, success, ...rest } = options;
+                let url2 = url.includes('?') ? url.concat(`&oakFrom=${this.data.oakFullpath}`) : url.concat(`?oakFrom=${this.data.oakFullpath}`);
+               
+                for (const param in rest) {
+                    const param2 = param as unknown as keyof typeof rest;
+                    url2 += `&${param}=${typeof rest[param2] === 'string' ? rest[param2] : JSON.stringify(rest[param2])}`;
+                }
                 assign(options, {
                     url: url2
                 });
@@ -492,18 +494,18 @@ function createComponentOptions<ED extends EntityDict,
             }
         },
         methods: {
-            setUpdateData(input) {
+            setUpdateData(attr, value) {
                 if (this.data.oakExecuting) {
                     return;
                 }
-                setUpdateData(features, this.data.oakFullpath, input);
+                features.runningNode.setUpdateData(this.data.oakFullpath, attr, value);
             },
 
-            callPicker(touch) {
+            callPicker(attr: string, params: Record<string, any>) {
                 if (this.data.oakExecuting) {
                     return;
                 }
-                callPicker(features, touch, this.data.entity, this.data.oakFullpath);
+                callPicker(features, attr, params, this.data.entity, this.data.oakFullpath);
             },
 
             setFilters(filters) {
@@ -513,11 +515,10 @@ function createComponentOptions<ED extends EntityDict,
                 setFilters(features, this.data.oakFullpath, filters);
             },
 
-            async execute(touch) {
+            async execute(action, afterExecuted) {
                 if (this.data.oakExecuting) {
                     return;
                 }
-                const { action } = touch.currentTarget.dataset;
                 this.setData({
                     oakExecuting: true,
                     oakFocused: {},
@@ -525,6 +526,7 @@ function createComponentOptions<ED extends EntityDict,
                 try {
                     await execute(features, this.data.oakFullpath, action);
                     this.setData({ oakExecuting: false });
+                    afterExecuted && afterExecuted();
                 }
                 catch (err) {
                     if (err instanceof OakException) {
@@ -532,8 +534,8 @@ function createComponentOptions<ED extends EntityDict,
                             const attr = err.getAttributes()[0];
                             this.setData({
                                 oakFocused: {
-                                    [attr]: 'focused',
                                 },
+                                [attr]: true,
                                 oakExecuting: false,
                                 oakError: {
                                     level: 'warning',
