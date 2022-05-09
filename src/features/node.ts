@@ -390,7 +390,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
     }
 
     async composeOperation(action2?: string): Promise<DeduceOperation<ED[T]['Schema']> | undefined> {
-        if (!this.isDirty() && !action2) {
+        if (!action2 && !this.action) {
             return;
         }
         const action = this.action === 'create' ? {
