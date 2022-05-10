@@ -10,12 +10,13 @@ import { assign } from 'lodash';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { Pagination } from '../types/Pagination';
+import { NamedFilterItem, NamedSorterItem } from '../types/NamedCondition';
 
 export class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {
     protected entity: T;
     protected fullPath: string;
     protected schema: StorageSchema<ED>;
-    protected projection?: ED[T]['Selection']['data'];      // 只在Page层有
+    private projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>);      // 只在Page层有
     protected parent?: Node<ED, keyof ED, Cxt, AD>;
     protected action?: ED[T]['Action'];
     protected dirty: boolean;
@@ -25,7 +26,8 @@ export class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context
     protected refreshing: boolean;
     private refreshFn?: (opRecords: OpRecord<ED>[]) => Promise<void>;
 
-    constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection?: ED[T]['Selection']['data'],
+    constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
+        projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
         parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action']) {
         this.entity = entity;
         this.fullPath = fullPath;
@@ -91,8 +93,10 @@ export class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context
         return this.parent;
     }
 
-    getProjection() {
-        return this.projection!;
+    async getProjection() {
+        if (this.projection) {
+            return typeof this.projection === 'function' ? await this.projection() : this.projection;
+        }
     }
 
     registerValueSentry(refreshFn: (opRecords: OpRecord<ED>[]) => Promise<void>) {
@@ -124,19 +128,21 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
     protected children: SingleNode<ED, T, Cxt, AD>[];
     protected value: Array<Partial<ED[T]['Schema']>>;
 
-    private filters: ED[T]['Selection']['filter'][];
-    private sorter?: ED[T]['Selection']['sorter'];
+    private filters: NamedFilterItem<ED, T>[];
+    private sorters: NamedSorterItem<ED, T>[];
     private pagination: Pagination;
 
-    constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection?: ED[T]['Selection']['data'],
-        parent?: Node<ED, keyof ED, Cxt, AD>, pagination?: Pagination, filters?: ED[T]['Selection']['filter'][],
-        sorter?: ED[T]['Selection']['sorter'], action?: ED[T]['Action']) {
+    constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
+        projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
+        parent?: Node<ED, keyof ED, Cxt, AD>, pagination?: Pagination,
+        filters?: NamedFilterItem<ED, T>[],
+        sorters?: NamedSorterItem<ED, T>[], action?: ED[T]['Action']) {
         super(entity, fullPath, schema, cache, projection, parent, action);
         this.ids = [];
         this.value = [];
         this.children = [];
         this.filters = filters || [];
-        this.sorter = sorter || [];
+        this.sorters = sorters || [];
         this.pagination = pagination || DEFAULT_PAGINATION;
 
         if (projection) {
@@ -192,23 +198,44 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         return node;
     }
 
-    getFilter() {
-        return combineFilters(this.filters);
+    getFilters() {
+        return this.filters;
     }
 
-    setFilters(filters: DeduceFilter<ED[T]['Schema']>[]) {
+    setFilters(filters: NamedFilterItem<ED, T>[]) {
         this.filters = filters;
     }
 
     async refresh() {
-        const { filters, sorter, pagination, entity, projection, fullPath } = this;
-        assert(projection);
+        const { filters, sorters, pagination, entity,  fullPath } = this;
         const { step } = pagination;
+        const proj = await this.getProjection();
+        assert (proj);
+        const sorterss = await Promise.all(sorters.map(
+            async (ele) => {
+                const { sorter } = ele;
+                if (typeof sorter === 'function') {
+                    return await sorter();
+                }
+                else {
+                    return sorter;
+                }
+            }
+        ));
+        const filterss = await Promise.all(filters.map(
+            async (ele) => {
+                const { filter } = ele;
+                if (typeof filter === 'function') {
+                    return await filter();
+                }
+                return filter;
+            }
+        ));
         this.refreshing = true;
         const { ids } = await this.cache.refresh(entity, {
-            data: projection as any,
-            filter: filters.length > 0 ? combineFilters(filters) : undefined,
-            sorter,
+            data: proj as any,
+            filter: filterss.length > 0 ? combineFilters(filterss) : undefined,
+            sorter: sorterss,
             indexFrom: 0,
             count: step,
         }, fullPath);
@@ -226,7 +253,8 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
     }
 
     async reGetValue() {
-        const { entity, ids, projection, fullPath } = this;
+        const { entity, ids, fullPath } = this;
+        const projection = await this.getProjection();
         assert(projection);
         if (ids.length > 0) {
             const rows = await this.cache.get({
@@ -378,11 +406,12 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
     }
 
     async refresh() {
-        assert(this.projection);
+        const projection = await this.getProjection();
+        assert(projection);
         if (this.action !== 'create') {
             this.refreshing = true;
             await this.cache.refresh(this.entity, {
-                data: this.projection,
+                data: projection,
                 filter: {
                     id: this.id,
                 },
@@ -514,7 +543,8 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
     }
 
     async reGetValue() {
-        const { entity, id, projection, fullPath } = this;
+        const { entity, id, fullPath } = this;
+        const projection = await this.getProjection();
         assert(projection);
         if (id) {
             const filter: Partial<AttrFilter<ED[T]["Schema"]>> = {
@@ -606,9 +636,10 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     async createNode<T extends keyof ED>(path: string, parent?: string,
-        entity?: T, isList?: boolean, isPicker?: boolean, projection?: ED[T]['Selection']['data'], id?: string,
-        pagination?: Pagination, filters?: ED[T]['Selection']['filter'][],
-        sorter?: ED[T]['Selection']['sorter']) {
+        entity?: T, isList?: boolean, isPicker?: boolean,
+        projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
+        id?: string, pagination?: Pagination, filters?: NamedFilterItem<ED, T>[],
+        sorters?: NamedSorterItem<ED, T>[]) {
         let node: ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>;
         const parentNode = parent ? await this.findNode(parent) : undefined;
         const fullPath = parent ? `${parent}.${path}` : `${path}`;
@@ -617,7 +648,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         const isList2 = subEntity ? subEntity.isList : isList!;
 
         if (isPicker || isList2) {
-            node = new ListNode<ED, T, Cxt, AD>(entity2 as T, fullPath, this.schema!, this.cache, projection, parentNode, pagination, filters, sorter);
+            node = new ListNode<ED, T, Cxt, AD>(entity2 as T, fullPath, this.schema!, this.cache, projection, parentNode, pagination, filters, sorters);
         }
         else {
             node = new SingleNode<ED, T, Cxt, AD>(entity2 as T, fullPath, this.schema!, this.cache, projection, parentNode, id);
@@ -889,7 +920,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async setFilters<T extends keyof ED>(path: string, filters: DeduceFilter<ED[T]['Schema']>[], refresh: boolean = true) {
+    async setFilters<T extends keyof ED>(path: string, filters: NamedFilterItem<ED, T>[], refresh: boolean = true) {
         const node = await this.findNode(path);
         if (node instanceof ListNode) {
             node.setFilters(filters);

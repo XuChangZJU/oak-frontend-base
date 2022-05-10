@@ -1,5 +1,5 @@
 import './polyfill';
-import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict } from "oak-domain/lib/types";
+import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
@@ -7,6 +7,7 @@ import { BasicFeatures } from "../../features";
 import assert from "assert";
 import { assign, rest } from "lodash";
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
+import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
 
 type OakComponentOption<
     ED extends EntityDict,
@@ -33,12 +34,18 @@ interface OakPageOption<
     entity: T;
     path: string;
     isList: boolean;
-    projection?: Proj;
+    projection?: Proj | ((features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<Proj>);
     parent?: string;
     append?: boolean;
     pagination?: Pagination;
-    filters?: Array<ED[T]['Selection']['filter']>;
-    sorter?: ED[T]['Selection']['sorter'];
+    filters?: Array<{
+        filter: ED[T]['Selection']['filter'] | ((features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<ED[T]['Selection']['filter']>)
+        '#name'?: string;
+    }>;
+    sorters?: Array<{
+        sorter: DeduceSorterItem<ED[T]['Schema']> | ((features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<DeduceSorterItem<ED[T]['Schema']>>)
+        '#name'?: string;
+    }>;
     actions?: ED[T]['Action'][];
     formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'], features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<FormedData>;
 };
@@ -57,7 +64,7 @@ type OakPageProperties = {
     oakId: StringConstructor;
     oakProjection: ObjectConstructor;
     oakFilters: ArrayConstructor;
-    oakSorter: ArrayConstructor;
+    oakSorters: ArrayConstructor;
     oakIsPicker?: BooleanConstructor;
     oakFrom?: StringConstructor;
     oakParentEntity?: StringConstructor;
@@ -70,8 +77,8 @@ type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
     oakPath?: string;
     oakParent?: string;
     oakProjection?: ED[T]['Selection']['data'],
-    oakSorter?: ED[T]['Selection']['sorter'],
-    oakFilters?: Array<ED[T]['Selection']['filter']>;
+    oakSorters?: Array<NamedSorterItem<ED, T>>,
+    oakFilters?: Array<NamedFilterItem<ED, T>>;
     oakIsPicker?: boolean;
     oakActions?: Array<ED[T]['Action']>
 };
@@ -79,7 +86,7 @@ type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
 type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     setUpdateData: (attr: string, input: any) => void;
     callPicker: (attr: string, params: Record<string, any>) => void;
-    setFilters: (filters: DeduceFilter<ED[T]['Schema']>[]) => void;
+    setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
 };
 
@@ -116,7 +123,7 @@ type OakPageInstanceProperties<
 function setFilters<ED extends EntityDict, T extends keyof EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     features: BasicFeatures<ED, Cxt, AD> & FD,
     fullpath: string,
-    filters: DeduceFilter<EntityDict[T]['Schema']>[]) {
+    filters: NamedFilterItem<ED, T>[]) {
     features.runningNode.setFilters(fullpath, filters);
 }
 
@@ -187,7 +194,7 @@ function createPageOptions<ED extends EntityDict,
             oakParent: String,
             oakProjection: Object,
             oakFilters: Array,
-            oakSorter: Array,
+            oakSorters: Array,
             oakIsPicker: Boolean,
             oakParentEntity: String,
             oakFrom: String,
@@ -300,10 +307,7 @@ function createPageOptions<ED extends EntityDict,
             },
 
             setFilters(filters) {
-                if (this.data.oakExecuting) {
-                    return;
-                }
-                setFilters(features, this.data.oakFullpath, filters);
+                setFilters(features, this.data.oakFullpath, filters as any);
             },
 
             async execute(action, afterExecuted) {
@@ -419,14 +423,56 @@ function createPageOptions<ED extends EntityDict,
 
             async ready() {
                 const { oakId, oakEntity, oakPath, oakProjection, oakParent,
-                    oakSorter, oakFilters, oakIsPicker, oakFrom, oakActions } = this.data;
+                    oakSorters, oakFilters, oakIsPicker, oakFrom, oakActions } = this.data;
                 assert(!(isList && oakId));
-                let filters: ED[T]['Selection']['filter'][] | undefined;
+                const filters: NamedFilterItem<ED, T>[] = [];
                 if (oakFilters.length > 0) {
-                    filters = oakFilters;
+                    // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
+                    filters.push(...oakFilters);
                 }
                 else if (options.filters) {
-                    filters = options.filters;
+                    filters.push(...options.filters.map(
+                        (ele) => {
+                            const { filter, "#name": name } = ele;
+                            if (typeof filter === 'function') {
+                                return {
+                                    filter: () => filter(features),
+                                    ['#name']: name,
+                                };
+                            }
+                            return {
+                                filter,
+                                ['#name']: name,
+                            }
+                        }
+                    ));
+                }
+                let proj = oakProjection;
+                if (!proj && options.projection) {
+                    const { projection } = options;
+                    proj = typeof projection === 'function' ? () => projection(features) : projection;
+                }
+                let sorters: NamedSorterItem<ED, T>[] = [];
+                if (oakSorters.length > 0) {
+                    // 这里在跳页面的时候用this.navigate应该可以限制传过来的sorter的格式
+                    sorters.push(...oakSorters);
+                }
+                else if (options.sorters) {
+                    sorters.push(...options.sorters.map(
+                        (ele) => {
+                            const { sorter, "#name": name } = ele;
+                            if (typeof sorter === 'function') {
+                                return {
+                                    sorter: () => sorter(features),
+                                    ['#name']: name,
+                                };
+                            }
+                            return {
+                                sorter,
+                                ['#name']: name,
+                            }
+                        }
+                    ));
                 }
                 await features.runningNode.createNode(
                     oakPath || options.path,
@@ -434,11 +480,11 @@ function createPageOptions<ED extends EntityDict,
                     (oakEntity || options.entity) as T,
                     isList,
                     oakIsPicker,
-                    (oakProjection || options.projection) as ED[T]['Selection']['data'],
+                    proj,
                     oakId,
                     pagination,
                     filters,
-                    oakSorter);
+                    sorters);
                 const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
                 this.data.oakFullpath = oakFullpath;
                 this.data.oakFrom = oakFrom;
@@ -548,7 +594,7 @@ function createComponentOptions<ED extends EntityDict,
                 if (this.data.oakExecuting) {
                     return;
                 }
-                setFilters(features, this.data.oakFullpath, filters);
+                setFilters(features, this.data.oakFullpath, filters as any);
             },
 
             /* async execute(action, afterExecuted) {
