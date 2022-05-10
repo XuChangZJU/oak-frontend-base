@@ -50,18 +50,23 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
         await Promise.all(result);
     }
 
-    @Action
-    async operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], scene: string, commit: boolean = true, params?: OperateParams) {
+    /**
+     * 前端缓存做operation只可能是测试权限，必然回滚
+     * @param entity 
+     * @param operation 
+     * @param scene 
+     * @param commit 
+     * @param params 
+     * @returns 
+     */
+    async operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], scene: string, params?: OperateParams) {
         const context = this.createContext(this.cacheStore, scene);
         let result: Awaited<ReturnType<typeof this.cacheStore.operate>>;
+        await context.begin();
         try {
             result = await this.cacheStore.operate(entity, operation, context, params);
-            if (commit) {
-                await context.commit();
-            }
-            else {
-                await context.rollback();
-            }
+            
+            await context.rollback();
         }
         catch(err) {
             await context.rollback();
@@ -90,5 +95,11 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
     
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>) {
         pull(this.syncEventsCallbacks, callback);
+    }
+
+    registerCheckers(checkers: Array<Checker<ED, keyof ED, Cxt>>) {
+        checkers.forEach(
+            (checker) => this.cacheStore.registerChecker(checker)
+        );
     }
 }

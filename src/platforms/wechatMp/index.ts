@@ -39,7 +39,7 @@ interface OakPageOption<
     pagination?: Pagination;
     filters?: Array<ED[T]['Selection']['filter']>;
     sorter?: ED[T]['Selection']['sorter'];
-    // actions?: EntityDict[T]['Action'][];
+    actions?: ED[T]['Action'][];
     formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'], features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<FormedData>;
 };
 
@@ -61,6 +61,7 @@ type OakPageProperties = {
     oakIsPicker?: BooleanConstructor;
     oakFrom?: StringConstructor;
     oakParentEntity?: StringConstructor;
+    oakActions: ArrayConstructor;
 }
 
 type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
@@ -72,13 +73,13 @@ type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
     oakSorter?: ED[T]['Selection']['sorter'],
     oakFilters?: Array<ED[T]['Selection']['filter']>;
     oakIsPicker?: boolean;
+    oakActions?: Array<ED[T]['Action']>
 };
 
 type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     setUpdateData: (attr: string, input: any) => void;
     callPicker: (attr: string, params: Record<string, any>) => void;
     setFilters: (filters: DeduceFilter<ED[T]['Schema']>[]) => void;
-    execute: (action: ED[T]['Action'], afterExecuted?: () => any) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
 };
 
@@ -91,11 +92,16 @@ type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMet
     unsubscribe: () => void;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
     onForeignKeyPicked: (touch: WechatMiniprogram.Touch) => void;
+    execute: (action: ED[T]['Action'], afterExecuted?: () => any) => Promise<void>;
 };
 
-type OakComponentInstanceInnerProperties<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> = {
-    features: BasicFeatures<ED, Cxt, AD> & FD;
-};
+type OakComponentInstanceInnerProperties<
+    ED extends EntityDict,
+    Cxt extends Context<ED>,
+    AD extends Record<string, Aspect<ED, Cxt>>,
+    FD extends Record<string, Feature<ED, Cxt, AD>>> = {
+        features: BasicFeatures<ED, Cxt, AD> & FD;
+    };
 
 type OakPageInstanceProperties<
     ED extends EntityDict,
@@ -117,9 +123,9 @@ function setFilters<ED extends EntityDict, T extends keyof EntityDict, Cxt exten
 async function execute<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     features: BasicFeatures<ED, Cxt, AD> & FD,
     fullpath: string,
-    action?: string, isTry?: boolean) {
-    
-    await features.runningNode.execute(fullpath, action, isTry);
+    action: string) {
+
+    await features.runningNode.execute(fullpath, action);
 }
 
 function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
@@ -165,9 +171,10 @@ function createPageOptions<ED extends EntityDict,
             oakFocused: object;
             oakDirty: boolean;
             oakError: {
-                level: 'warning' | 'error';
+                type: 'warning' | 'error' | 'inform';
                 msg: string;
             };
+            oakLegalActions: string[],
         },
         OakPageProperties,
         OakPageMethods<ED, T>,
@@ -184,6 +191,7 @@ function createPageOptions<ED extends EntityDict,
             oakIsPicker: Boolean,
             oakParentEntity: String,
             oakFrom: String,
+            oakActions: Array,
         },
         methods: {
             async reRender() {
@@ -197,7 +205,27 @@ function createPageOptions<ED extends EntityDict,
                     }
                 }
                 const dirty = await features.runningNode.isDirty(this.data.oakFullpath);
-                this.setData(assign({}, data, { oakDirty: dirty }));
+                assign(data, { oakDirty: dirty });
+
+                if (this.data.oakActions) {
+                    const oakLegalActions = [];
+                    for (const action of this.data.oakActions) {
+                        try {
+                            await features.runningNode.testAction(this.data.oakFullpath, action);
+                            oakLegalActions.push(action);
+                        }
+                        catch (e) {
+                            if (e instanceof OakInputIllegalException) {
+                                oakLegalActions.push(action);
+                            }
+                        }
+                    }
+                    assign(data, {
+                        oakLegalActions,
+                    });
+                }
+
+                this.setData(data);
             },
 
             async refresh() {
@@ -289,6 +317,12 @@ function createPageOptions<ED extends EntityDict,
                 try {
                     await execute(features, this.data.oakFullpath, action);
                     this.setData({ oakExecuting: false });
+                    this.setData({
+                        oakError: {
+                            type: 'inform',
+                            msg: '操作成功',
+                        },
+                    });
                     afterExecuted && afterExecuted();
                 }
                 catch (err) {
@@ -301,7 +335,7 @@ function createPageOptions<ED extends EntityDict,
                                 },
                                 oakExecuting: false,
                                 oakError: {
-                                    level: 'warning',
+                                    type: 'warning',
                                     msg: err.message,
                                 },
                             });
@@ -329,7 +363,7 @@ function createPageOptions<ED extends EntityDict,
                                     this.setData({
                                         oakExecuting: false,
                                         oakError: {
-                                            level: level!,
+                                            type: level!,
                                             msg: err.message,
                                         },
                                     });
@@ -339,7 +373,7 @@ function createPageOptions<ED extends EntityDict,
                                 this.setData({
                                     oakExecuting: false,
                                     oakError: {
-                                        level: 'warning',
+                                        type: 'warning',
                                         msg: err.message,
                                     },
                                 });
@@ -350,18 +384,19 @@ function createPageOptions<ED extends EntityDict,
                         this.setData({
                             oakExecuting: false,
                             oakError: {
-                                level: 'error',
+                                type: 'error',
                                 msg: (err as Error).message,
                             },
                         });
                     }
+                    throw err;
                 }
             },
 
             navigateTo(options) {
                 const { url, events, fail, complete, success, ...rest } = options;
                 let url2 = url.includes('?') ? url.concat(`&oakFrom=${this.data.oakFullpath}`) : url.concat(`?oakFrom=${this.data.oakFullpath}`);
-               
+
                 for (const param in rest) {
                     const param2 = param as unknown as keyof typeof rest;
                     url2 += `&${param}=${typeof rest[param2] === 'string' ? rest[param2] : JSON.stringify(rest[param2])}`;
@@ -384,7 +419,7 @@ function createPageOptions<ED extends EntityDict,
 
             async ready() {
                 const { oakId, oakEntity, oakPath, oakProjection, oakParent,
-                    oakSorter, oakFilters, oakIsPicker, oakFrom } = this.data;
+                    oakSorter, oakFilters, oakIsPicker, oakFrom, oakActions } = this.data;
                 assert(!(isList && oakId));
                 let filters: ED[T]['Selection']['filter'][] | undefined;
                 if (oakFilters.length > 0) {
@@ -407,6 +442,7 @@ function createPageOptions<ED extends EntityDict,
                 const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
                 this.data.oakFullpath = oakFullpath;
                 this.data.oakFrom = oakFrom;
+                this.data.oakActions = oakActions.length > 0 ? oakActions : options.actions || [];
                 await this.refresh();
             },
 
@@ -515,7 +551,7 @@ function createComponentOptions<ED extends EntityDict,
                 setFilters(features, this.data.oakFullpath, filters);
             },
 
-            async execute(action, afterExecuted) {
+            /* async execute(action, afterExecuted) {
                 if (this.data.oakExecuting) {
                     return;
                 }
@@ -593,7 +629,7 @@ function createComponentOptions<ED extends EntityDict,
                         });
                     }
                 }
-            },
+            }, */
 
             navigateTo(options) {
                 const { url } = options;
@@ -768,7 +804,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
                 observers: assign({}, o2, observers),
                 methods: {
                     onLoad() {
-                        console.log('onLoad', this.data.oakId);
+                        // console.log('onLoad', this.data.oakId);
                     },
                     ...m2!,
                     ...methods!,
@@ -815,44 +851,44 @@ export type MakeOakPage<
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>
-> = <
-    T extends keyof ED,
-    D extends WechatMiniprogram.Component.DataOption,
-    P extends WechatMiniprogram.Component.PropertyOption,
-    M extends WechatMiniprogram.Component.MethodOption,
-    Proj extends ED[T]['Selection']['data'],
-    IS extends WechatMiniprogram.IAnyObject = {},
-    FormedData extends WechatMiniprogram.Component.DataOption = {}
->(
-    options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
-    componentOptions: WechatMiniprogram.Component.Options<
-        Partial<D & FormedData>,
-        P,
-        M,
-        IS & OakPageInstanceProperties<ED, T, Cxt, AD, FD>,
-        true
-    >
-) => string;
+    > = <
+        T extends keyof ED,
+        D extends WechatMiniprogram.Component.DataOption,
+        P extends WechatMiniprogram.Component.PropertyOption,
+        M extends WechatMiniprogram.Component.MethodOption,
+        Proj extends ED[T]['Selection']['data'],
+        IS extends WechatMiniprogram.IAnyObject = {},
+        FormedData extends WechatMiniprogram.Component.DataOption = {}
+        >(
+        options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
+        componentOptions: WechatMiniprogram.Component.Options<
+            Partial<D & FormedData>,
+            P,
+            M,
+            IS & OakPageInstanceProperties<ED, T, Cxt, AD, FD>,
+            true
+        >
+    ) => string;
 
 export type MakeOakComponent<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>
-> = <
-    T extends keyof ED,
-    D extends WechatMiniprogram.Component.DataOption,
-    P extends WechatMiniprogram.Component.PropertyOption,
-    M extends WechatMiniprogram.Component.MethodOption,
-    Proj extends ED[T]['Selection']['data'],
-    IS extends WechatMiniprogram.IAnyObject = {},
-    FormedData extends WechatMiniprogram.Component.DataOption = {}
->(
-    options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
-    componentOptions: WechatMiniprogram.Component.Options<
-        Partial<D & FormedData>,
-        P,
-        M,
-        IS
-    >
-) => string;
+    > = <
+        T extends keyof ED,
+        D extends WechatMiniprogram.Component.DataOption,
+        P extends WechatMiniprogram.Component.PropertyOption,
+        M extends WechatMiniprogram.Component.MethodOption,
+        Proj extends ED[T]['Selection']['data'],
+        IS extends WechatMiniprogram.IAnyObject = {},
+        FormedData extends WechatMiniprogram.Component.DataOption = {}
+        >(
+        options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
+        componentOptions: WechatMiniprogram.Component.Options<
+            Partial<D & FormedData>,
+            P,
+            M,
+            IS
+        >
+    ) => string;

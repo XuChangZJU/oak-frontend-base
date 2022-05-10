@@ -9,6 +9,7 @@ import { assign, intersection, keys, mapValues } from 'lodash';
 import { AspectProxy } from './types/AspectProxy';
 import baseAspectDict from './aspects';
 import { ActionDictOfEntityDict } from "oak-domain/lib/types/Action";
+import { analyzeActionDefDict } from "oak-domain/lib/store/actionDef";
 
 function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>, 
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -71,7 +72,13 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
     actionDict?: ActionDictOfEntityDict<ED>) {
-    const basicFeatures = createBasicFeatures<ED, Cxt, AD>(storageSchema, createContext, checkers);
+     
+    const basicFeatures = createBasicFeatures<ED, Cxt, AD>(storageSchema, createContext, checkers);    
+    if (actionDict) {
+        const { checkers: adCheckers } = analyzeActionDefDict(storageSchema, actionDict);
+        basicFeatures.cache.registerCheckers(adCheckers);
+    }
+    
     basicFeatures.runningNode.setStorageSchema(storageSchema);
 
     const userDefinedfeatures = createFeatures(basicFeatures);

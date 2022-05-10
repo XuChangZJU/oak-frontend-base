@@ -144,13 +144,15 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         }
     }
 
-    async composeOperation(): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined> {
-        if (!this.isDirty()) {
+    async composeOperation(action?: string): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined> {
+        if (!action && !this.isDirty()) {
             return;
         }
-        if (this.action || this.updateData) {
+        
+        // todo 这里的逻辑还没有测试过
+        if (action || this.action || this.updateData) {
             return {
-                action: this.action || 'update',
+                action: action || this.action || 'update',
                 data: cloneDeep(this.updateData),
                 filter: combineFilters(this.filters),
             } as DeduceUpdateOperation<ED[T]['Schema']>;  // todo 这里以后再增加对选中id的过滤
@@ -274,7 +276,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
                             } as any,
                             filter,
                             action: 'select',
-                        }, 'onRecordSynchoronized', false, { obscure: true });
+                        }, 'onRecordSynchoronized', { obscure: true });
                         if (ids!.length > 0) {
                             // todo 这里更严格应该还要考虑sorter，但前端可能没有完整的供sort用的cache数据
                             this.ids.push(id);
@@ -308,7 +310,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
                                         } as any,
                                         filter,
                                         action: 'select',
-                                    }, 'onRecordSynchoronized', false, { obscure: true });
+                                    }, 'onRecordSynchoronized', { obscure: true });
                                     if (ids!.length > 0) {
                                         // todo 这里更严格应该还要考虑sorter，但前端可能没有完整的供sort用的cache数据
                                         this.ids.push(id);
@@ -390,14 +392,16 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
     }
 
     async composeOperation(action2?: string): Promise<DeduceOperation<ED[T]['Schema']> | undefined> {
-        if (!action2 && !this.action) {
+        if (!action2 && !this.isDirty()) {
             return;
         }
-        const action = this.action === 'create' ? {
+        const action = action2 || this.action || (this.id ? 'update' : 'create');
+        
+        const operation = action === 'create' ? {
             action: 'create',
             data: assign({}, this.updateData, { id: await generateNewId() }),
         } as DeduceCreateOperation<ED[T]['Schema']> : {
-            action: action2 || this.action || 'update',
+            action,
             data: cloneDeep(this.updateData) || {},
             filter: {
                 id: this.id!,
@@ -406,12 +410,12 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
         for (const attr in this.children) {
             const subAction = await this.children[attr]!.composeOperation();
             if (subAction) {
-                assign(action.data, {
+                assign(operation.data, {
                     [attr]: subAction,
                 });
             }
         }
-        return action;
+        return operation;
     }
 
     addChild(path: string, node: Node<ED, keyof ED, Cxt, AD>) {
@@ -616,17 +620,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             node = new ListNode<ED, T, Cxt, AD>(entity2 as T, fullPath, this.schema!, this.cache, projection, parentNode, pagination, filters, sorter);
         }
         else {
-            /*  let id2: string = id || v4({ random: await getRandomValues(16) });
-             if (!id) {
-                 // 如果!isList并且没有id，说明是create，在这里先插入cache
-                 await context.rowStore.operate(entity2, {
-                     action: 'create',
-                     data: {
-                         id: id2,
-                     } as FormCreateData<ED[T]['OpSchema']>,
-                 }, context);
-             } */
-            node = new SingleNode<ED, T, Cxt, AD>(entity2 as T, fullPath, this.schema!, this.cache, projection, parentNode, id, !id ? 'create' : undefined);
+            node = new SingleNode<ED, T, Cxt, AD>(entity2 as T, fullPath, this.schema!, this.cache, projection, parentNode, id);
         }
         if (parentNode) {
             parentNode.addChild(path, node as any);
@@ -865,14 +859,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             if (relation === 1) {
                 // todo transform data format
                 const attrName = attrSplit.slice(idx).join('.');
-                node.setUpdateData(attrName, value);
-                /* this.cache.operate(entity, {
-                    action: 'update',
-                    data: {
-                        [attrName]: value,
-                    } as any,
-                    filter: node.getFilter(),
-                }); */
+                node.setUpdateData(attrName, value);                
                 return;
             }
             else {
@@ -912,26 +899,30 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
-    @Action
-    async execute(path: string, action?: string, isTry?: boolean) {
+    async testAction(path: string, action: string) {
         const node = await this.findNode(path);
         const operation = await node.composeOperation(action);
         // 先在cache中尝试能否执行，如果权限上否决了在这里就失败
         if (operation instanceof Array) {
             for (const oper of operation) {
-                await this.cache.operate(node.getEntity(), oper, path, false);
+                await this.cache.operate(node.getEntity(), oper, path);
             }
         }
         else if (operation) {
-            await this.cache.operate(node.getEntity(), operation, path, false);
+            await this.cache.operate(node.getEntity(), operation, path);
         }
         else {
-            return;
+            assert(false);
         }
+        return {
+            node,
+            operation,
+        };
+    }
 
-        if (isTry) {
-            return;
-        }
+    @Action
+    async execute(path: string, action: string) {
+        const { node, operation } = await this.testAction(path, action);
 
         await this.getAspectProxy().operate({
             entity: node.getEntity() as string,
