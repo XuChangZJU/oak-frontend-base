@@ -68,15 +68,6 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         return result;
     }
 
-    async count<T extends keyof ED>(
-        entity: T,
-        selection: Omit<ED[T]['Selection'], 'data' | 'sorter' | 'action'>,
-        context: Cxt,
-        params?: Object
-    ): Promise<number> {
-        throw new Error("Method not implemented.");
-    }
-
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
         this.executor.registerChecker(checker);
     }
