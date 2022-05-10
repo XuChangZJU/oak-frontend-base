@@ -171,7 +171,7 @@ function createPageOptions<ED extends EntityDict,
             oakFocused: object;
             oakDirty: boolean;
             oakError: {
-                type: 'warning' | 'error' | 'inform';
+                type: 'warning' | 'error' | 'success' | 'primary';
                 msg: string;
             };
             oakLegalActions: string[],
@@ -319,7 +319,7 @@ function createPageOptions<ED extends EntityDict,
                     this.setData({ oakExecuting: false });
                     this.setData({
                         oakError: {
-                            type: 'inform',
+                            type: 'success',
                             msg: '操作成功',
                         },
                     });
