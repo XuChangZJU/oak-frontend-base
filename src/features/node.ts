@@ -689,7 +689,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     private async applyOperation<T extends keyof ED>(
         entity: T, value: Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined,
         operation: DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[],
-        projection: DeduceSelection<ED[T]['Schema']>['data'],
+        projection: ED[T]['Selection']['data'],
         scene: string): Promise<Partial<ED[T]['Schema']> | Partial<ED[T]['Schema']>[] | undefined> {
         if (operation instanceof Array) {
             assert(value instanceof Array);
@@ -853,7 +853,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         let value = await node.getValue();
         if (node.isDirty()) {
             const operation = await node.composeOperation();
-            const projection = node.getProjection();
+            const projection = await node.getProjection();
             value = (await this.applyOperation(node.getEntity(), value, operation!, projection as any, path));
         }
 

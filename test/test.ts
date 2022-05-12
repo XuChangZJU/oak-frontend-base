@@ -1,22 +1,33 @@
-import { OakException, OakUserException } from 'oak-domain/lib/types';
 
-const e = new OakUserException();
-
-console.log(e instanceof OakException);
-type Tessst = {
-    name: string;
-    no: number;
-    friends?: Array<string>;
+type OakPageData = {
+    oakFullpath: string;
+    oakExecuting: boolean;
+    oakFocused: object;
+    oakDirty: boolean;
+    oakError: {
+        type: 'warning' | 'error' | 'success' | 'primary';
+        msg: string;
+    };
+    oakLegalActions: string[],
 };
 
-type Eliminate<K extends keyof Tessst = never> = Tessst & {
-    [k in K]: never;
+type A = {
+    name: string;
+    method: Function,
+} & ThisType<{
+    data: OakPageData
+}>;
+
+const a: A = {
+    name: 'xc',
+    method() {
+    }
+};
+
+function tt<FormedData extends Record<string, any>>(p: Partial<OakPageData & FormedData>) {
+    console.log(p);
 }
 
-type TT = Eliminate<'name'>;
-
-type Deduce<T extends Record<string, any>> = {
-    [K in keyof T]: T[K] extends Array<any> ? string : number;
-};
-
-type DD = Deduce<Tessst>;
+tt({
+    oakExecuting: false,
+})

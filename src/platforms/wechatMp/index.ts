@@ -955,7 +955,7 @@ export type MakeOakPage<
             M,
             OakPageProperties,
             OakPageMethods<ED, T>,
-            OakPageData,
+            OakPageData & FormedData,
             OakPageInstanceProperties<ED, Cxt, AD, FD>,
             IS,
             true
@@ -983,7 +983,7 @@ export type MakeOakComponent<
             M,
             OakComponentProperties,
             OakComponentMethods<ED, T>,
-            OakComponentData,
+            OakComponentData & FormedData,
             OakComponentInstanceProperties<ED, Cxt, AD, FD>,
             IS,
             true
