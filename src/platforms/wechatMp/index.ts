@@ -65,9 +65,9 @@ type OakPageProperties = {
     oakProjection: ObjectConstructor;
     oakFilters: ArrayConstructor;
     oakSorters: ArrayConstructor;
-    oakIsPicker?: BooleanConstructor;
-    oakFrom?: StringConstructor;
-    oakParentEntity?: StringConstructor;
+    oakIsPicker: BooleanConstructor;
+    oakFrom: StringConstructor;
+    oakParentEntity: StringConstructor;
     oakActions: ArrayConstructor;
 }
 
@@ -102,7 +102,7 @@ type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMet
     execute: (action: ED[T]['Action'], afterExecuted?: () => any) => Promise<void>;
 };
 
-type OakComponentInstanceInnerProperties<
+type OakComponentInstanceProperties<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -112,11 +112,10 @@ type OakComponentInstanceInnerProperties<
 
 type OakPageInstanceProperties<
     ED extends EntityDict,
-    T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>
-    > = OakPageMethods<ED, T> & OakComponentInstanceInnerProperties<ED, Cxt, AD, FD>;
+    > = OakComponentInstanceProperties<ED, Cxt, AD, FD>;
 
 
 
@@ -160,6 +159,22 @@ function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends R
     });
 }
 
+type OakPageData = {
+    oakFullpath: string;
+    oakExecuting: boolean;
+    oakFocused: object;
+    oakDirty: boolean;
+    oakError: {
+        type: 'warning' | 'error' | 'success' | 'primary';
+        msg: string;
+    };
+    oakLegalActions: string[],
+};
+
+type OakComponentData = {
+    entity: keyof EntityDict;
+} & OakPageData;
+
 function createPageOptions<ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
@@ -172,20 +187,10 @@ function createPageOptions<ED extends EntityDict,
         exceptionRouterDict: Record<string, ExceptionHandler>) {
     const { formData, isList, pagination } = options;
     const componentOptions: WechatMiniprogram.Component.Options<
-        {
-            oakFullpath: string;
-            oakExecuting: boolean;
-            oakFocused: object;
-            oakDirty: boolean;
-            oakError: {
-                type: 'warning' | 'error' | 'success' | 'primary';
-                msg: string;
-            };
-            oakLegalActions: string[],
-        },
+        OakPageData,
         OakPageProperties,
         OakPageMethods<ED, T>,
-        OakComponentInstanceInnerProperties<ED, Cxt, AD, FD>
+        OakComponentInstanceProperties<ED, Cxt, AD, FD>
     > = {
         properties: {
             oakEntity: String,
@@ -527,20 +532,10 @@ function createComponentOptions<ED extends EntityDict,
     const { formData } = options;
 
     const componentOptions: WechatMiniprogram.Component.Options<
-        {
-            oakFullpath: string;
-            entity: keyof EntityDict;
-            oakExecuting: boolean;
-            oakFocused: object;
-            oakDirty: boolean;
-            oakError: {
-                level: 'warning' | 'error';
-                msg: string;
-            };
-        },
+        OakComponentData,
         OakComponentProperties,
         OakComponentMethods<ED, T>,
-        OakComponentInstanceInnerProperties<ED, Cxt, AD, FD>
+        OakComponentInstanceProperties<ED, Cxt, AD, FD>
     > = {
         properties: {
             oakValue: Object,
@@ -830,7 +825,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             IS extends WechatMiniprogram.IAnyObject = {},
             FormedData extends WechatMiniprogram.Component.DataOption = {}>(
                 options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
-                componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS & OakPageInstanceProperties<ED, T, Cxt, AD, FD>, true> = {}) => {
+                componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS & OakPageInstanceProperties<ED, Cxt, AD, FD>, true> = {}) => {
             const oakOptions = createPageOptions(options, subscribe, features, exceptionRouterDict);
             const { properties, pageLifetimes, lifetimes, methods, data, observers } = oakOptions;
             const { properties: p2, pageLifetimes: pl2, lifetimes: l2, methods: m2, data: d2, observers: o2, ...restOptions } = componentOptions;
@@ -844,21 +839,25 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             if (l2) {
                 ls.push(l2);
             }
-            return Component<D, P & OakPageProperties, M & OakComponentMethods<ED, T>, IS & OakComponentInstanceInnerProperties<ED, Cxt, AD, FD>, true>({
-                data: assign({}, d2, data),
-                properties: assign({}, p2, properties),
-                observers: assign({}, o2, observers),
-                methods: {
-                    onLoad() {
-                        // console.log('onLoad', this.data.oakId);
+            return Component<
+                D & OakPageData,
+                P & OakPageProperties,
+                M & OakComponentMethods<ED, T>,
+                IS & OakComponentInstanceProperties<ED, Cxt, AD, FD>, true>({
+                    data: assign({}, d2, data),
+                    properties: assign({}, p2, properties),
+                    observers: assign({}, o2, observers),
+                    methods: {
+                        onLoad() {
+                            // console.log('onLoad', this.data.oakId);
+                        },
+                        ...m2!,
+                        ...methods!,
                     },
-                    ...m2!,
-                    ...methods!,
-                },
-                pageLifetimes: mergePageLifetimes(pls),
-                lifetimes: mergeLifetimes(ls),
-                ...restOptions,
-            });
+                    pageLifetimes: mergePageLifetimes(pls),
+                    lifetimes: mergeLifetimes(ls),
+                    ...restOptions,
+                });
         },
 
         OakComponent: <
@@ -868,7 +867,19 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             M extends WechatMiniprogram.Component.MethodOption,
             Proj extends ED[T]['Selection']['data'],
             IS extends WechatMiniprogram.IAnyObject = {},
-            FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>, componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS> = {}) => {
+            FormedData extends WechatMiniprogram.Component.DataOption = {}>(
+                options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
+                componentOptions: OakWechatMpOptions<
+                    D,
+                    P,
+                    M,
+                    OakPageProperties,
+                    OakPageMethods<ED, T>,
+                    OakPageData,
+                    OakPageInstanceProperties<ED, Cxt, AD, FD>,
+                    IS,
+                    true
+                > = {}) => {
             const oakOptions = createComponentOptions(options, features, exceptionRouterDict);
             const { properties, pageLifetimes, lifetimes, methods, data, observers } = oakOptions;
             const { properties: p2, pageLifetimes: pl2, lifetimes: l2, methods: m2, data: d2, observers: o2, ...restOptions } = componentOptions;
@@ -876,21 +887,52 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             const pls = [pageLifetimes, pl2].filter(ele => !!ele) as Array<Partial<WechatMiniprogram.Component.PageLifetimes>>;
             const ls = [lifetimes, l2].filter(ele => !!ele) as Array<Partial<WechatMiniprogram.Component.Lifetimes>>;
 
-            return Component<D, P, M, IS, false>({
-                data: assign({}, d2, data),
-                properties: assign({}, p2, properties),
-                observers: assign({}, o2, observers),
-                methods: assign({}, m2, methods),
-                pageLifetimes: mergePageLifetimes(pls),
-                lifetimes: mergeLifetimes(ls),
-                ...restOptions,
-            });
+            return Component<
+                D & OakComponentData,
+                P & OakComponentProperties,
+                M & OakComponentMethods<ED, T>,
+                IS & OakComponentInstanceProperties<ED, Cxt, AD, FD>, false>({
+                    data: assign({}, d2, data),
+                    properties: assign({}, p2, properties),
+                    observers: assign({}, o2, observers),
+                    methods: assign({}, m2, methods),
+                    pageLifetimes: mergePageLifetimes(pls),
+                    lifetimes: mergeLifetimes(ls),
+                    ...restOptions,
+                });
         },
 
         features,
     };
 }
 
+/**
+ * 根据WechatMiniprogram.Component.Options写的，规定OakPage和OakComponent中第二个参数的定义
+ */
+type OakWechatMpOptions<
+    TData extends WechatMiniprogram.Component.DataOption,
+    TProperty extends WechatMiniprogram.Component.PropertyOption,
+    TMethod extends WechatMiniprogram.Component.MethodOption,
+    InherentProperties extends WechatMiniprogram.Component.PropertyOption,
+    InherentMethods extends WechatMiniprogram.Component.MethodOption,
+    InherentData extends WechatMiniprogram.Component.DataOption,
+    InherentInstanceProperty extends WechatMiniprogram.IAnyObject,
+    TCustomInstanceProperty extends WechatMiniprogram.IAnyObject = {},
+    TIsPage extends boolean = false,
+    > = Partial<TData> &
+    Partial<WechatMiniprogram.Component.Property<TProperty>> &
+    Partial<WechatMiniprogram.Component.Method<TMethod, TIsPage>> &
+    Partial<WechatMiniprogram.Component.OtherOption> &
+    Partial<WechatMiniprogram.Component.Lifetimes> &
+    ThisType<
+        WechatMiniprogram.Component.Instance<
+            TData & InherentData,
+            TProperty & InherentProperties,
+            TMethod & InherentMethods,
+            TCustomInstanceProperty & InherentInstanceProperty,
+            TIsPage
+        >
+    >
 
 export type MakeOakPage<
     ED extends EntityDict,
@@ -905,13 +947,17 @@ export type MakeOakPage<
         Proj extends ED[T]['Selection']['data'],
         IS extends WechatMiniprogram.IAnyObject = {},
         FormedData extends WechatMiniprogram.Component.DataOption = {}
-        >(
+        > (
         options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
-        componentOptions: WechatMiniprogram.Component.Options<
-            Partial<D & FormedData>,
+        componentOptions: OakWechatMpOptions<
+            D,
             P,
             M,
-            IS & OakPageInstanceProperties<ED, T, Cxt, AD, FD>,
+            OakPageProperties,
+            OakPageMethods<ED, T>,
+            OakPageData,
+            OakPageInstanceProperties<ED, Cxt, AD, FD>,
+            IS,
             true
         >
     ) => string;
@@ -931,10 +977,15 @@ export type MakeOakComponent<
         FormedData extends WechatMiniprogram.Component.DataOption = {}
         >(
         options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
-        componentOptions: WechatMiniprogram.Component.Options<
-            Partial<D & FormedData>,
+        componentOptions: OakWechatMpOptions<
+            D,
             P,
             M,
-            IS
+            OakComponentProperties,
+            OakComponentMethods<ED, T>,
+            OakComponentData,
+            OakComponentInstanceProperties<ED, Cxt, AD, FD>,
+            IS,
+            true
         >
     ) => string;
