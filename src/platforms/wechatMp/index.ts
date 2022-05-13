@@ -5,7 +5,7 @@ import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
 import { BasicFeatures } from "../../features";
 import assert from "assert";
-import { assign, intersection, rest } from "lodash";
+import { assign, intersection, rest, union } from "lodash";
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
 
@@ -800,9 +800,9 @@ function mergePageLifetimes(lifetimes: Array<Partial<WechatMiniprogram.Component
 
 function mergeMethods(methods: Array<Record<string, Function>>) {
     const merged: Record<string, Function> = {};
-    const names = intersection(...methods.map(
+    const names = union(...(methods.map(
         ele => Object.keys(ele)
-    ));
+    )));
     for (const name of names) {
         Object.assign(merged, {
             [name]: async function () {
