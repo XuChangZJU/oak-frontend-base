@@ -5,7 +5,7 @@ import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
 import { BasicFeatures } from "../../features";
 import assert from "assert";
-import { assign, rest } from "lodash";
+import { assign, intersection, rest } from "lodash";
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
 
@@ -94,6 +94,7 @@ type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMet
     reRender: (extra?: any) => Promise<void>;
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
+    onLoad: () => Promise<void>;
     subscribed?: () => void;
     subscribe: () => void;
     unsubscribe: () => void;
@@ -414,19 +415,9 @@ function createPageOptions<ED extends EntityDict,
                     url: url2
                 });
                 return wx.navigateTo(options);
-            }
-        },
-
-        lifetimes: {
-            async created() {
-                this.features = features;
             },
 
-            async attached() {
-                this.subscribe();
-            },
-
-            async ready() {
+            async onLoad() {
                 const { oakId, oakEntity, oakPath, oakProjection, oakParent,
                     oakSorters, oakFilters, oakIsPicker, oakFrom, oakActions } = this.data;
                 assert(!(isList && oakId));
@@ -494,6 +485,19 @@ function createPageOptions<ED extends EntityDict,
                 this.data.oakFullpath = oakFullpath;
                 this.data.oakFrom = oakFrom;
                 this.data.oakActions = oakActions.length > 0 ? oakActions : options.actions || [];
+            }
+        },
+
+        lifetimes: {
+            async created() {
+                this.features = features;
+            },
+
+            async attached() {
+                this.subscribe();
+            },
+
+            async ready() {
                 await this.refresh();
             },
 
@@ -794,6 +798,26 @@ function mergePageLifetimes(lifetimes: Array<Partial<WechatMiniprogram.Component
     };
 }
 
+function mergeMethods(methods: Array<Record<string, Function>>) {
+    const merged: Record<string, Function> = {};
+    const names = intersection(...methods.map(
+        ele => Object.keys(ele)
+    ));
+    for (const name of names) {
+        Object.assign(merged, {
+            [name]: async function () {
+                for (const m of methods) {
+                    if (m[name]) {
+                        await m[name].call(this, arguments);
+                    }
+                }
+            }
+        });
+    }
+
+    return merged;
+}
+
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     storageSchema: StorageSchema<ED>,
     createFeatures: (basicFeatures: BasicFeatures<ED, Cxt, AD>) => FD,
@@ -847,13 +871,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
                     data: assign({}, d2, data),
                     properties: assign({}, p2, properties),
                     observers: assign({}, o2, observers),
-                    methods: {
-                        onLoad() {
-                            // console.log('onLoad', this.data.oakId);
-                        },
-                        ...m2!,
-                        ...methods!,
-                    },
+                    methods: (m2 ? mergeMethods([methods!, m2]) : methods!) as any,
                     pageLifetimes: mergePageLifetimes(pls),
                     lifetimes: mergeLifetimes(ls),
                     ...restOptions,
@@ -895,7 +913,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
                     data: assign({}, d2, data),
                     properties: assign({}, p2, properties),
                     observers: assign({}, o2, observers),
-                    methods: assign({}, m2, methods),
+                    methods: (m2 ? mergeMethods([methods!, m2]) : methods!) as any,
                     pageLifetimes: mergePageLifetimes(pls),
                     lifetimes: mergeLifetimes(ls),
                     ...restOptions,
