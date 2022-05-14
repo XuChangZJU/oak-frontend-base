@@ -477,10 +477,10 @@ function createPageOptions<ED extends EntityDict,
                     isList,
                     oakIsPicker,
                     proj,
-                    oakId,
                     pagination,
                     filters,
-                    sorters);
+                    sorters,
+                    oakId);
                 const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
                 this.data.oakFullpath = oakFullpath;
                 this.data.oakFrom = oakFrom;

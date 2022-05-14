@@ -41,21 +41,30 @@ export class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context
         this.refreshing = false;
     }
 
-    getSubEntity(path: string): {
-        entity: keyof ED;
-        isList: boolean;
-    } {
+    async getSubEntity(path: string) {
+        if (this instanceof ListNode) {
+            const idx = parseInt(path, 10);
+            assert (typeof idx === 'number');
+            return {
+                entity: this.entity,
+                isList: false,
+                id: this.getIds()[idx],
+            }
+        }
+        assert(this instanceof SingleNode);
         const relation = judgeRelation(this.schema, this.entity, path);
         if (relation === 2) {
             return {
                 entity: path,
                 isList: false,
+                id: (await this.getValue())!['entityId'],
             };
         }
         else if (typeof relation === 'string') {
             return {
                 entity: relation,
                 isList: false,
+                id: (await this.getValue())![`${path}Id`],
             };
         }
         else {
@@ -63,6 +72,9 @@ export class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context
             return {
                 entity: relation[0],
                 isList: true,
+                ids: (await this.getValue())!.map(
+                    (ele: any) => ele.id,
+                ),
             };
         }
     }
@@ -135,10 +147,10 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
     constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
         parent?: Node<ED, keyof ED, Cxt, AD>, pagination?: Pagination,
-        filters?: NamedFilterItem<ED, T>[],
-        sorters?: NamedSorterItem<ED, T>[], action?: ED[T]['Action']) {
+        filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[],
+        ids?: string[], action?: ED[T]['Action']) {
         super(entity, fullPath, schema, cache, projection, parent, action);
-        this.ids = [];
+        this.ids = ids || [];
         this.value = [];
         this.children = [];
         this.filters = filters || [];
@@ -148,6 +160,10 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         if (projection) {
             this.registerValueSentry((records) => this.onRecordSynchoronized(records));
         }
+    }
+
+    getIds() {
+        return this.ids;
     }
 
     async composeOperation(action?: string): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined> {
@@ -520,7 +536,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
             }
             else {
                 assert(relation instanceof Array);
-                node = new ListNode(relation[0] as any, `${this.fullPath}.${path}`, this.schema, this.cache, undefined, this as any);
+                node = new ListNode(relation[0] as any, `${this.fullPath}.${path}`, this.schema, this.cache, undefined, this as any, undefined, undefined, undefined, this.value && this.value[path].map((ele: any) => ele.id));
             }
             node.setValue(this.value && this.value[path] as any);
             this.addChild(path as string, node);
@@ -638,20 +654,22 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     async createNode<T extends keyof ED>(path: string, parent?: string,
         entity?: T, isList?: boolean, isPicker?: boolean,
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
-        id?: string, pagination?: Pagination, filters?: NamedFilterItem<ED, T>[],
-        sorters?: NamedSorterItem<ED, T>[]) {
+        pagination?: Pagination, filters?: NamedFilterItem<ED, T>[],
+        sorters?: NamedSorterItem<ED, T>[], action?: ED[T]['Action'], id?: string,  ids?: string[]) {
         let node: ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>;
         const parentNode = parent ? await this.findNode(parent) : undefined;
         const fullPath = parent ? `${parent}.${path}` : `${path}`;
-        const subEntity = parentNode && parentNode.getSubEntity(path);
+        const subEntity = parentNode && await parentNode.getSubEntity(path);
         const entity2 = subEntity ? subEntity.entity : entity!;
         const isList2 = subEntity ? subEntity.isList : isList!;
-
+        const id2 = subEntity && subEntity.id || id;
+        const ids2 = subEntity && subEntity.ids || ids;
+        
         if (isPicker || isList2) {
-            node = new ListNode<ED, T, Cxt, AD>(entity2 as T, fullPath, this.schema!, this.cache, projection, parentNode, pagination, filters, sorters);
+            node = new ListNode<ED, T, Cxt, AD>(entity2 as T, fullPath, this.schema!, this.cache, projection, parentNode, pagination, filters, sorters, ids2, action);
         }
         else {
-            node = new SingleNode<ED, T, Cxt, AD>(entity2 as T, fullPath, this.schema!, this.cache, projection, parentNode, id);
+            node = new SingleNode<ED, T, Cxt, AD>(entity2 as T, fullPath, this.schema!, this.cache, projection, parentNode, id2, action);
         }
         if (parentNode) {
             parentNode.addChild(path, node as any);
