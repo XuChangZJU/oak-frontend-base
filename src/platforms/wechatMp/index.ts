@@ -8,6 +8,7 @@ import assert from "assert";
 import { assign, intersection, rest, union } from "lodash";
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
+import { FileCarrier } from '../../types/FileCarrier';
 
 type OakComponentOption<
     ED extends EntityDict,
@@ -19,7 +20,10 @@ type OakComponentOption<
     FormedData extends WechatMiniprogram.Component.DataOption
     > = {
         entity: T;
-        formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'], features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<FormedData>;
+        formData: (
+            $rows: SelectionResult<ED[T]['Schema'], Proj>['result'],
+            features: BasicFeatures<ED, Cxt, AD> & FD,
+            fileCarrier?: ED[T]['IsFileCarrier'] extends boolean ? FileCarrier : undefined) => Promise<FormedData>
     };
 
 interface OakPageOption<
@@ -47,7 +51,10 @@ interface OakPageOption<
         '#name'?: string;
     }>;
     actions?: ED[T]['Action'][];
-    formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'], features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<FormedData>;
+    formData: (
+        $rows: SelectionResult<ED[T]['Schema'], Proj>['result'],
+        features: BasicFeatures<ED, Cxt, AD> & FD,
+        fileCarrier?: ED[T]['IsFileCarrier'] extends boolean ? FileCarrier : undefined) => Promise<FormedData>
 };
 
 type OakComponentProperties = {
@@ -88,6 +95,7 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     callPicker: (attr: string, params: Record<string, any>) => void;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
+    setFileCarrier: (fileCarrier: ED[T]['IsFileCarrier'] extends true ? FileCarrier : never) => void;
 };
 
 type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
@@ -274,6 +282,10 @@ function createPageOptions<ED extends EntityDict,
                     return;
                 }
                 features.runningNode.setUpdateData(this.data.oakFullpath, attr, value);
+            },
+
+            setFileCarrier(fileCarrier) {
+                return features.runningNode.setFileCarrier(this.data.oakFullpath, fileCarrier);
             },
 
             callPicker(attr: string, params: Record<string, any>) {
@@ -581,6 +593,10 @@ function createComponentOptions<ED extends EntityDict,
                     return;
                 }
                 features.runningNode.setUpdateData(this.data.oakFullpath, attr, value);
+            },
+
+            setFileCarrier(fileCarrier) {
+                return features.runningNode.setFileCarrier(this.data.oakFullpath, fileCarrier);
             },
 
             callPicker(attr: string, params: Record<string, any>) {
@@ -1005,6 +1021,6 @@ export type MakeOakComponent<
             OakComponentData & FormedData,
             OakComponentInstanceProperties<ED, Cxt, AD, FD>,
             IS,
-            true
+            false
         >
     ) => string;

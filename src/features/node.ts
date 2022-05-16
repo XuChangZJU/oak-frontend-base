@@ -11,6 +11,7 @@ import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { Pagination } from '../types/Pagination';
 import { NamedFilterItem, NamedSorterItem } from '../types/NamedCondition';
+import { FileCarrier } from '../types/FileCarrier';
 
 export class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {
     protected entity: T;
@@ -410,6 +411,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
     private children: {
         [K in keyof ED[T]['Schema']]?: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
     };
+    private fileCarrier?: FileCarrier;
 
     constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection?: ED[T]['Selection']['data'],
         parent?: Node<ED, keyof ED, Cxt, AD>, id?: string, action?: ED[T]['Action']) {
@@ -590,6 +592,14 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
     setValue(value: Partial<ED[T]['Schema']>) {
         this.value = value;
         this.updateChildrenValues();
+    }
+
+    setFileCarrier(fileCarrier: FileCarrier) {
+        this.fileCarrier = fileCarrier;
+    }
+
+    getFileCarrier() {
+        return this.fileCarrier;
     }
 
     resetUpdateData() {
@@ -892,8 +902,8 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         let iter = 1;
         while (iter < paths.length) {
             const childPath = paths[iter];
-            node = (await node.getChild<Cxt, AD>(childPath))!;
             iter++;
+            node = (await node.getChild<Cxt, AD>(childPath))!;
         }
         return node;
     }
@@ -929,6 +939,14 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         for (const d of data) {
             await this.setUpdateDataInner(path, d[0], d[1]);
         }
+    }
+
+    @Action
+    async setFileCarrier(path: string, fileCarrier: FileCarrier) {
+        const node = await this.findNode(path);
+        assert(node instanceof SingleNode);
+
+
     }
 
     @Action
