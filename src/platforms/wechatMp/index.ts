@@ -809,7 +809,7 @@ function mergeMethods(methods: Array<Record<string, Function>>) {
             [name]: async function () {
                 for (const m of methods) {
                     if (m[name]) {
-                        await m[name].call(this, arguments);
+                        await m[name].apply(this, arguments);
                     }
                 }
             }
