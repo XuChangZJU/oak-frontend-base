@@ -23,7 +23,7 @@ type OakComponentOption<
         formData: (
             $rows: SelectionResult<ED[T]['Schema'], Proj>['result'],
             features: BasicFeatures<ED, Cxt, AD> & FD,
-            fileCarrier?: ED[T]['IsFileCarrier'] extends boolean ? FileCarrier : undefined) => Promise<FormedData>
+            fileCarrier?: ED[T]['IsFileCarrier'] extends boolean ? FileCarrier<ED, T> : undefined) => Promise<FormedData>
     };
 
 interface OakPageOption<
@@ -54,7 +54,7 @@ interface OakPageOption<
     formData: (
         $rows: SelectionResult<ED[T]['Schema'], Proj>['result'],
         features: BasicFeatures<ED, Cxt, AD> & FD,
-        fileCarrier?: ED[T]['IsFileCarrier'] extends boolean ? FileCarrier : undefined) => Promise<FormedData>
+        fileCarrier?: ED[T]['IsFileCarrier'] extends boolean ? FileCarrier<ED, T> : undefined) => Promise<FormedData>
 };
 
 type OakComponentProperties = {
@@ -95,7 +95,7 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     callPicker: (attr: string, params: Record<string, any>) => void;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
-    setFileCarrier: (fileCarrier: ED[T]['IsFileCarrier'] extends true ? FileCarrier : never) => void;
+    setFileCarrier: (fileCarrier: ED[T]['IsFileCarrier'] extends true ? FileCarrier<ED, T> : never) => void;
 };
 
 type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
@@ -822,12 +822,14 @@ function mergeMethods(methods: Array<Record<string, Function>>) {
     )));
     for (const name of names) {
         Object.assign(merged, {
-            [name]: async function () {
+            [name]: function () {
+                let result;
                 for (const m of methods) {
                     if (m[name]) {
-                        await m[name].apply(this, arguments);
+                        result = m[name].apply(this, arguments);
                     }
                 }
+                return result;
             }
         });
     }
