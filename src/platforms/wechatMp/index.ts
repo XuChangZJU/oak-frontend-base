@@ -217,7 +217,7 @@ function createPageOptions<ED extends EntityDict,
         methods: {
             async reRender() {
                 const $rows = await features.runningNode.get(this.data.oakFullpath);
-                const data = await formData($rows as any, features);
+                const data = await formData.call(this, $rows as any, features);
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {
@@ -299,23 +299,14 @@ function createPageOptions<ED extends EntityDict,
                 if (this.data.oakExecuting) {
                     return;
                 }
-                const { oakParentEntity, oakPath, oakIsPicker, oakFullpath } = this.data;
-                if (oakIsPicker) {
-                    const relation = features.cache.judgeRelation(oakParentEntity as any, oakPath);
-                    const parentPath = oakFullpath.slice(0, oakFullpath.lastIndexOf('.'));
-                    if (relation === 2) {
-                        await features.runningNode.setMultipleData(parentPath, [['entity', oakPath], ['entityId', id]]);
-                    }
-                    else {
-                        assert(typeof relation === 'string');
-                        await features.runningNode.setUpdateData(parentPath, `${oakPath}Id`, id);
-                    }
+                const { oakIsPicker } = this.data;
+                assert(oakIsPicker);
+                await features.runningNode.setForeignKey(this.data.oakFullpath, id);
 
-                    if (goBackDelta !== 0) {
-                        wx.navigateBack({
-                            delta: goBackDelta,
-                        });
-                    }
+                if (goBackDelta !== 0) {
+                    wx.navigateBack({
+                        delta: goBackDelta,
+                    });
                 }
             },
 
@@ -563,7 +554,7 @@ function createComponentOptions<ED extends EntityDict,
         observers: {
             "oakValue": async function (value) {
                 const $rows = value instanceof Array ? value : [value];
-                const data = await formData($rows, features);
+                const data = await formData.call(this, $rows, features);
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {
@@ -711,7 +702,7 @@ function createComponentOptions<ED extends EntityDict,
             async ready() {
                 const { oakPath, oakParent, oakValue } = this.data;
                 const $rows = oakValue instanceof Array ? oakValue : [oakValue];
-                const data = await formData($rows, features);
+                const data = await formData.call(this, $rows, features);
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {
@@ -722,10 +713,10 @@ function createComponentOptions<ED extends EntityDict,
                 if (oakParent) {
                     // 小程序component ready的时候，父组件还未构造完成
                     const oakFullpath = `${oakParent}.${oakPath}`;
-                    const entity = await features.runningNode.createNode(oakPath, oakParent) as string;
+                    const node = await features.runningNode.createNode(oakPath, oakParent);
                     this.setData(assign(data, {
                         oakFullpath,
-                        entity,
+                        entity: node.getEntity() as string,
                     }));
                 }
                 else {
