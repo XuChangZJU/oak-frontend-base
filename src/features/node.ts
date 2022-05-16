@@ -238,6 +238,32 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         this.filters = filters;
     }
 
+    addFilter(filter: NamedFilterItem<ED, T>) {
+        // filter 根据#name查找
+        const fIndex = this.filters.findIndex(ele => filter['#name'] && ele['#name'] === filter['#name']);
+        if (fIndex >= 0) {
+            this.filters.splice(fIndex, 1, filter);
+        } else {
+            this.filters.push(filter);
+        }
+    }
+
+    removeFilter(filter: NamedFilterItem<ED, T>) {
+        // filter 根据#name查找
+        const fIndex = this.filters.findIndex(ele => filter['#name'] && ele['#name'] === filter['#name']);
+        if (fIndex >= 0) {
+            this.filters.splice(fIndex, 1);
+        }
+    }
+
+    removeFilterByName(name: string) {
+        // filter 根据#name查找
+        const fIndex = this.filters.findIndex(ele => ele['#name'] === name);
+        if (fIndex >= 0) {
+            this.filters.splice(fIndex, 1);
+        }
+    }
+
     async refresh() {
         const { filters, sorters, pagination, entity, fullPath } = this;
         const { step } = pagination;
@@ -1052,10 +1078,51 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
+    async getFilters<T extends keyof ED>(path: string) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            return await node.getFilters();
+        }
+    }
+
+    @Action
     async setFilters<T extends keyof ED>(path: string, filters: NamedFilterItem<ED, T>[], refresh: boolean = true) {
         const node = await this.findNode(path);
         if (node instanceof ListNode) {
             node.setFilters(filters);
+            if (refresh) {
+                await node.refresh();
+            }
+        }
+    }
+
+    @Action
+    async addFilter<T extends keyof ED>(path: string, filter: NamedFilterItem<ED, T>, refresh: boolean = false) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.addFilter(filter);
+            if (refresh) {
+                await node.refresh();
+            }
+        }
+    }
+
+    @Action
+    async removeFilter<T extends keyof ED>(path: string, filter: NamedFilterItem<ED, T>, refresh: boolean = false) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.removeFilter(filter);
+            if (refresh) {
+                await node.refresh();
+            }
+        }
+    }
+
+    @Action
+    async removeFilterByName<T extends keyof ED>(path: string, name: string, refresh: boolean = false) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.removeFilterByName(name);
             if (refresh) {
                 await node.refresh();
             }

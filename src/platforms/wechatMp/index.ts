@@ -94,6 +94,10 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     setUpdateData: (attr: string, input: any) => void;
     callPicker: (attr: string, params: Record<string, any>) => void;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
+    getFilters: () => void;
+    addFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
+    removeFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
+    removeFilterByName: (name: string, refresh?: boolean) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
     setFileCarrier: (fileCarrier: ED[T]['IsFileCarrier'] extends true ? FileCarrier<ED, T> : never) => void;
 };
@@ -126,7 +130,11 @@ type OakPageInstanceProperties<
     FD extends Record<string, Feature<ED, Cxt, AD>>
     > = OakComponentInstanceProperties<ED, Cxt, AD, FD>;
 
-
+function getFilters<ED extends EntityDict, T extends keyof EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
+    features: BasicFeatures<ED, Cxt, AD> & FD,
+    fullpath: string) {
+    return features.runningNode.getFilters(fullpath);
+}
 
 function setFilters<ED extends EntityDict, T extends keyof EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     features: BasicFeatures<ED, Cxt, AD> & FD,
@@ -135,11 +143,34 @@ function setFilters<ED extends EntityDict, T extends keyof EntityDict, Cxt exten
     features.runningNode.setFilters(fullpath, filters);
 }
 
+function addFilter<ED extends EntityDict, T extends keyof EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
+    features: BasicFeatures<ED, Cxt, AD> & FD,
+    fullpath: string,
+    filter: NamedFilterItem<ED, T>,
+    refresh: boolean = true) {
+    features.runningNode.addFilter(fullpath, filter, refresh);
+}
+
+function removeFilter<ED extends EntityDict, T extends keyof EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
+    features: BasicFeatures<ED, Cxt, AD> & FD,
+    fullpath: string,
+    filter: NamedFilterItem<ED, T>,
+    refresh: boolean = true) {
+    features.runningNode.removeFilter(fullpath, filter, refresh);
+}
+
+function removeFilterByName<ED extends EntityDict, T extends keyof EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
+    features: BasicFeatures<ED, Cxt, AD> & FD,
+    fullpath: string,
+    name: string,
+    refresh: boolean = true) {
+    features.runningNode.removeFilterByName(fullpath, name, refresh);
+}
+
 async function execute<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     features: BasicFeatures<ED, Cxt, AD> & FD,
     fullpath: string,
     action: string) {
-
     await features.runningNode.execute(fullpath, action);
 }
 
@@ -317,6 +348,22 @@ function createPageOptions<ED extends EntityDict,
 
             setFilters(filters) {
                 setFilters(features, this.data.oakFullpath, filters as any);
+            },
+
+            getFilters() {
+                return getFilters(features, this.data.oakFullpath);
+            },
+
+            addFilter(filter, refresh = false) {
+                addFilter(features, this.data.oakFullpath, filter as any, refresh);
+            },
+
+            removeFilter(filter, refresh = false) {
+                removeFilter(features, this.data.oakFullpath, filter as any, refresh);
+            },
+
+            removeFilterByName(name, refresh = false) {
+                removeFilterByName(features, this.data.oakFullpath, name, refresh);
             },
 
             async execute(action, afterExecuted) {
