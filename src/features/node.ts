@@ -219,15 +219,29 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         unset(children, idx);
     }
 
-    async getChild(path: string, create?: boolean) {
-        const idx = parseInt(path, 10);
-        let node = this.children[idx];
-        if (create && !node) {
-            node = new SingleNode(this.entity, `${this.fullPath}.${idx}`, this.schema, this.cache, undefined, this as any, this.ids[idx]);
-            node.setValue(this.value[idx]);
-            this.addChild(path, node);
+    async getChild(path?: string, create?: boolean) {
+        if (path) {
+            const idx = parseInt(path, 10);
+            let node = this.children[idx];
+            if (create && !node) {
+                node = new SingleNode(this.entity, `${this.fullPath}.${idx}`, this.schema, this.cache, undefined, this as any, this.ids[idx]);
+                node.setValue(this.value[idx]);
+                this.addChild(path, node);
+            }
+            return node;
         }
-        return node;
+        else {
+            // 不传path说明是在list里增加一个结点，找空位就行了
+            assert(create);
+            let idx = this.ids.length;
+            while (this.children[idx]) {
+                idx ++;
+            }
+            const node = new SingleNode(this.entity, `${this.fullPath}.${idx}`, this.schema, this.cache, undefined, this as any, undefined);
+            this.children[idx] = node;
+
+            return node;
+        }
     }
 
     getFilters() {
@@ -727,7 +741,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         this.root = {};
     }
 
-    async createNode<T extends keyof ED>(path: string, parent?: string,
+    async createNode<T extends keyof ED>(path?: string, parent?: string,
         entity?: T, isList?: boolean, isPicker?: boolean,
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
         pagination?: Pagination, filters?: NamedFilterItem<ED, T>[],
@@ -739,11 +753,13 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         if (parentNode) {
             if (isPicker) {
                 // 如果是picker，使用list来选择
+                assert(path);
                 assert(parentNode instanceof SingleNode);
                 node = parentNode.createPicker(path, projection, pagination, filters, sorters);
             }
             else {
-                node = (await parentNode.getChild(path, true)) as ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>;
+                assert(path || parentNode instanceof ListNode);
+                node = (await parentNode.getChild(path!, true)) as ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>;
             }
             if (action) {
                 node.setAction(action);
@@ -757,7 +773,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             }
         }
         else {
-            assert(entity);
+            assert(entity && path);
             if (isPicker || isList) {
                 node = new ListNode<ED, T, Cxt, AD>(entity, path, this.schema!, this.cache, projection, undefined, pagination, filters, sorters, ids, action, updateData);
             }

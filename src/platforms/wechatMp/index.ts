@@ -16,12 +16,11 @@ type OakComponentOption<
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
-    Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption
     > = {
         entity: T;
         formData: (
-            $rows: SelectionResult<ED[T]['Schema'], Proj>['result'],
+            $rows: SelectionResult<ED[T]['Schema'], Required<ED[T]['Selection']['data']>>['result'],
             features: BasicFeatures<ED, Cxt, AD> & FD,
             fileCarrier?: ED[T]['IsFileCarrier'] extends boolean ? FileCarrier<ED, T> : undefined) => Promise<FormedData>
     };
@@ -581,7 +580,7 @@ function createComponentOptions<ED extends EntityDict,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption>(
-        options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
+        options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData>,
         features: BasicFeatures<ED, Cxt, AD> & FD,
         exceptionRouterDict: Record<string, ExceptionHandler>) {
     const { formData } = options;
@@ -956,7 +955,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             Proj extends ED[T]['Selection']['data'],
             IS extends WechatMiniprogram.IAnyObject = {},
             FormedData extends WechatMiniprogram.Component.DataOption = {}>(
-                options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
+                options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData>,
                 componentOptions: OakWechatMpOptions<
                     D,
                     P,
@@ -1060,11 +1059,10 @@ export type MakeOakComponent<
         D extends WechatMiniprogram.Component.DataOption,
         P extends WechatMiniprogram.Component.PropertyOption,
         M extends WechatMiniprogram.Component.MethodOption,
-        Proj extends ED[T]['Selection']['data'],
         IS extends WechatMiniprogram.IAnyObject = {},
         FormedData extends WechatMiniprogram.Component.DataOption = {}
         >(
-        options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
+        options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData>,
         componentOptions: OakWechatMpOptions<
             D,
             P,

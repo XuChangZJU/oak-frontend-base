@@ -1,33 +1,12 @@
-
-type OakPageData = {
-    oakFullpath: string;
-    oakExecuting: boolean;
-    oakFocused: object;
-    oakDirty: boolean;
-    oakError: {
-        type: 'warning' | 'error' | 'success' | 'primary';
-        msg: string;
-    };
-    oakLegalActions: string[],
-};
+type IsOptional<T, K extends keyof T> = { [K1 in Exclude<keyof T, K>]: T[K1] } & { K?: T[K] } extends T ? K : never
+type OptionalKeys<T> = { [K in keyof T]: IsOptional<T, K> }[keyof T]
 
 type A = {
-    name: string;
-    method: Function,
-} & ThisType<{
-    data: OakPageData
-}>;
-
-const a: A = {
-    name: 'xc',
-    method() {
+    a: number
+    b?: {
+        x: string
     }
-};
-
-function tt<FormedData extends Record<string, any>>(p: Partial<OakPageData & FormedData>) {
-    console.log(p);
+    c?:string
+    d?:1
 }
-
-tt({
-    oakExecuting: false,
-})
+type RR = OptionalKeys<A> // type RR = "b" | "c"
