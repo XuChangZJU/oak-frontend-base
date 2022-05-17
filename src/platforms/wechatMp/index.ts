@@ -102,6 +102,15 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     setFileCarrier: (fileCarrier: ED[T]['IsFileCarrier'] extends true ? FileCarrier<ED, T> : never) => void;
 };
 
+type ComponentOnPropsChangeOption = {
+    value?: object;
+    parent?: string;
+}
+
+type OakComponentOnlyMethods = {    
+    onPropsChanged: (options: ComponentOnPropsChangeOption) => Promise<void>;
+};
+
 type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
     reRender: (extra?: any) => Promise<void>;
     refresh: (extra?: any) => Promise<void>;
@@ -210,37 +219,40 @@ function createPageOptions<ED extends EntityDict,
         },
         methods: {
             async reRender() {
-                const $rows = await features.runningNode.get(this.data.oakFullpath);
-                const data = await formData.call(this, $rows as any, features);
-                for (const k in data) {
-                    if (data[k] === undefined) {
-                        assign(data, {
-                            [k]: null,
-                        })
-                    }
-                }
-                const dirty = await features.runningNode.isDirty(this.data.oakFullpath);
-                assign(data, { oakDirty: dirty });
-
-                if (this.data.oakActions) {
-                    const oakLegalActions = [];
-                    for (const action of this.data.oakActions) {
-                        try {
-                            await features.runningNode.testAction(this.data.oakFullpath, action);
-                            oakLegalActions.push(action);
+                if (this.data.oakFullpath) {
+                    const $rows = await features.runningNode.get(this.data.oakFullpath);
+                    const fileCarrier = await features.runningNode.getFileCarrier(this.data.oakFullpath);
+                    const data = await formData.call(this, $rows as any, features, fileCarrier as any);
+                    for (const k in data) {
+                        if (data[k] === undefined) {
+                            assign(data, {
+                                [k]: null,
+                            })
                         }
-                        catch (e) {
-                            if (e instanceof OakInputIllegalException) {
+                    }
+                    const dirty = await features.runningNode.isDirty(this.data.oakFullpath);
+                    assign(data, { oakDirty: dirty });
+    
+                    if (this.data.oakActions) {
+                        const oakLegalActions = [];
+                        for (const action of this.data.oakActions) {
+                            try {
+                                await features.runningNode.testAction(this.data.oakFullpath, action);
                                 oakLegalActions.push(action);
                             }
+                            catch (e) {
+                                if (e instanceof OakInputIllegalException) {
+                                    oakLegalActions.push(action);
+                                }
+                            }
                         }
+                        assign(data, {
+                            oakLegalActions,
+                        });
                     }
-                    assign(data, {
-                        oakLegalActions,
-                    });
+    
+                    this.setData(data);
                 }
-
-                this.setData(data);
             },
 
             async refresh() {
@@ -286,7 +298,7 @@ function createPageOptions<ED extends EntityDict,
                 if (this.data.oakExecuting) {
                     return;
                 }
-                return callPicker(features, attr, params, options.entity, this.data.oakFullpath);
+                return callPicker(features, attr, params, this.data.oakEntity, this.data.oakFullpath);
             },
 
             async setForeignKey(id: string, goBackDelta: number = -1) {
@@ -487,22 +499,25 @@ function createPageOptions<ED extends EntityDict,
                         }
                     ));
                 }
-                await features.runningNode.createNode(
-                    oakPath || options.path,
-                    oakParent,
-                    (oakEntity || options.entity) as T,
+                const node = await features.runningNode.createNode({
+                    path: oakPath || options.path,
+                    parent: oakParent,
+                    entity: (oakEntity || options.entity) as T,
                     isList,
-                    oakIsPicker,
-                    proj,
+                    isPicker: oakIsPicker,
+                    projection: proj,
                     pagination,
                     filters,
                     sorters,
-                    undefined,
-                    oakId);
+                    id: oakId,
+                });
                 const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
-                this.data.oakFullpath = oakFullpath;
-                this.data.oakFrom = oakFrom;
-                this.data.oakActions = oakActions.length > 0 ? oakActions : options.actions || [];
+                this.setData({
+                    oakEntity: node.getEntity(),
+                    oakFullpath,
+                    oakFrom,
+                    oakActions: oakActions.length > 0 ? oakActions : options.actions || [],
+                });
             }
         },
 
@@ -556,7 +571,7 @@ function createComponentOptions<ED extends EntityDict,
     const componentOptions: WechatMiniprogram.Component.Options<
         OakComponentData,
         OakComponentProperties,
-        OakComponentMethods<ED, T>,
+        OakComponentMethods<ED, T> & OakComponentOnlyMethods,
         OakComponentInstanceProperties<ED, Cxt, AD, FD>
     > = {
         properties: {
@@ -566,9 +581,10 @@ function createComponentOptions<ED extends EntityDict,
             oakParent: String,
         },
         observers: {
-            "oakValue": async function (value) {
-                const $rows = value instanceof Array ? value : [value];
-                const data = await formData.call(this, $rows, features);
+            "oakValue": function (value) {
+                /* const $rows = value instanceof Array ? value : [value];
+                const fileCarrier = this.data.oakFullpath && await features.runningNode.getFileCarrier(this.data.oakFullpath);
+                const data = await formData.call(this, $rows, features, fileCarrier as any);
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {
@@ -579,20 +595,51 @@ function createComponentOptions<ED extends EntityDict,
                 const dirty = await features.runningNode.isDirty(this.data.oakFullpath);
                 this.setData(assign({}, data, {
                     oakDirty: dirty,
-                }));
+                    oakValue: $rows,
+                })); */
+                return this.onPropsChanged({
+                    value,
+                })
             },
-            "oakParent": async function (oakParent) {
-                if (oakParent) {
-                    const oakFullpath = `${oakParent}.${this.data.oakPath}`;
-                    const entity = await features.runningNode.createNode(this.data.oakPath, oakParent);
-                    this.setData({
-                        oakFullpath,
-                        entity,
-                    } as any);
-                }
+            "oakParent": function (parent) {
+                return this.onPropsChanged({
+                    parent,
+                })               
             }
         },
         methods: {
+            async onPropsChanged(options) {
+                const value2 = options.hasOwnProperty('value') ? options.value! : this.data.oakValue;
+                const parent2 = options.hasOwnProperty('parent') && options.parent!;
+                const $rows = value2 instanceof Array ? value2 : [value2];
+                const data2 = {} as Record<string, any>;
+                if (parent2) {
+                    const node = await features.runningNode.createNode({
+                        path: this.data.oakPath,
+                        parent: parent2,
+                    });
+                    assign(data2, {
+                        oakFullpath: `${parent2}.${this.data.oakPath}`,
+                        oakEntity: node.getEntity(),
+                    })
+                }
+                const fullpath = data2.oakFullpath || this.data.oakFullpath;
+                const fileCarrier = fullpath && await features.runningNode.getFileCarrier(fullpath);
+                const data = await formData.call(this, $rows, features, fileCarrier as any);
+                for (const k in data) {
+                    if (data[k] === undefined) {
+                        assign(data, {
+                            [k]: null,
+                        });
+                    }
+                }
+                const dirty = fullpath && await features.runningNode.isDirty(fullpath);
+                this.setData(assign(data2, data, {
+                    oakDirty: !!dirty,
+                    // oakValue: value2,
+                }));
+            },
+
             getFilters() {
                 return features.runningNode.getFilters(this.data.oakFullpath);
             },
@@ -628,7 +675,7 @@ function createComponentOptions<ED extends EntityDict,
                 if (this.data.oakExecuting) {
                     return;
                 }
-                return callPicker(features, attr, params, this.data.entity, this.data.oakFullpath);
+                return callPicker(features, attr, params, this.data.oakEntity, this.data.oakFullpath);
             },
 
             setFilters(filters) {
@@ -733,7 +780,8 @@ function createComponentOptions<ED extends EntityDict,
             async ready() {
                 const { oakPath, oakParent, oakValue } = this.data;
                 const $rows = oakValue instanceof Array ? oakValue : [oakValue];
-                const data = await formData.call(this, $rows, features);
+                const fileCarrier = this.data.oakFullpath && await features.runningNode.getFileCarrier(this.data.oakFullpath);
+                const data = await formData.call(this, $rows, features, fileCarrier as any);
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {
@@ -744,10 +792,13 @@ function createComponentOptions<ED extends EntityDict,
                 if (oakParent) {
                     // 小程序component ready的时候，父组件还未构造完成
                     const oakFullpath = `${oakParent}.${oakPath}`;
-                    const node = await features.runningNode.createNode(oakPath, oakParent);
+                    const node = await features.runningNode.createNode({
+                        path: oakPath,
+                        parent: oakParent,
+                    });
                     this.setData(assign(data, {
                         oakFullpath,
-                        entity: node.getEntity() as string,
+                        oakEntity: node.getEntity,
                     }));
                 }
                 else {
