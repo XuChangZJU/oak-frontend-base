@@ -312,7 +312,7 @@ function createPageOptions<ED extends EntityDict,
                 if (this.data.oakExecuting) {
                     return;
                 }
-                features.runningNode.setUpdateData(this.data.oakFullpath, attr, value);
+                return features.runningNode.setUpdateData(this.data.oakFullpath, attr, value);
             },
 
             setFileCarrier(fileCarrier) {
@@ -323,7 +323,7 @@ function createPageOptions<ED extends EntityDict,
                 if (this.data.oakExecuting) {
                     return;
                 }
-                callPicker(features, attr, params, options.entity, this.data.oakFullpath);
+                return callPicker(features, attr, params, options.entity, this.data.oakFullpath);
             },
 
             async setForeignKey(id: string, goBackDelta: number = -1) {
@@ -347,23 +347,23 @@ function createPageOptions<ED extends EntityDict,
             },
 
             setFilters(filters) {
-                setFilters(features, this.data.oakFullpath, filters as any);
+                return features.runningNode.setFilters(this.data.oakFullpath, filters);
             },
 
             getFilters() {
-                return getFilters(features, this.data.oakFullpath);
+                return features.runningNode.getFilters(this.data.oakFullpath);
             },
 
             addFilter(filter, refresh = false) {
-                addFilter(features, this.data.oakFullpath, filter as any, refresh);
+                return features.runningNode.addFilter(this.data.oakFullpath, filter, refresh);
             },
 
             removeFilter(filter, refresh = false) {
-                removeFilter(features, this.data.oakFullpath, filter as any, refresh);
+                return features.runningNode.removeFilter(this.data.oakFullpath, filter, refresh);
             },
 
             removeFilterByName(name, refresh = false) {
-                removeFilterByName(features, this.data.oakFullpath, name, refresh);
+                return features.runningNode.removeFilterByName(this.data.oakFullpath, name, refresh);
             },
 
             async execute(action, afterExecuted) {
@@ -626,11 +626,27 @@ function createComponentOptions<ED extends EntityDict,
             }
         },
         methods: {
+            getFilters() {
+                return features.runningNode.getFilters(this.data.oakFullpath);
+            },
+
+            addFilter(filter, refresh = false) {
+                return features.runningNode.addFilter(this.data.oakFullpath, filter, refresh);
+            },
+
+            removeFilter(filter, refresh = false) {
+                return features.runningNode.removeFilter(this.data.oakFullpath, filter, refresh);
+            },
+
+            removeFilterByName(name, refresh = false) {
+                return features.runningNode.removeFilterByName(this.data.oakFullpath, name, refresh);
+            },
+
             setUpdateData(attr, value) {
                 if (this.data.oakExecuting) {
                     return;
                 }
-                features.runningNode.setUpdateData(this.data.oakFullpath, attr, value);
+                return features.runningNode.setUpdateData(this.data.oakFullpath, attr, value);
             },
 
             setFileCarrier(fileCarrier) {
@@ -641,14 +657,11 @@ function createComponentOptions<ED extends EntityDict,
                 if (this.data.oakExecuting) {
                     return;
                 }
-                callPicker(features, attr, params, this.data.entity, this.data.oakFullpath);
+                return callPicker(features, attr, params, this.data.entity, this.data.oakFullpath);
             },
 
             setFilters(filters) {
-                if (this.data.oakExecuting) {
-                    return;
-                }
-                setFilters(features, this.data.oakFullpath, filters as any);
+                return features.runningNode.setFilters(this.data.oakFullpath, filters);
             },
 
             /* async execute(action, afterExecuted) {
