@@ -1098,7 +1098,6 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         await node.refresh();
     }
 
-    @Action
     async getFilters<T extends keyof ED>(path: string) {
         const node = await this.findNode(path);
         if (node instanceof ListNode) {
@@ -1106,7 +1105,6 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
-    @Action
     async getFilterByName<T extends keyof ED>(path: string, name: string) {
         const node = await this.findNode(path);
         if (node instanceof ListNode) {
