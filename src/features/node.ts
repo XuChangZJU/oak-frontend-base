@@ -248,6 +248,11 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         return this.filters;
     }
 
+    getFilterByName(name: string) {
+        const filter = this.filters.find((ele) => ele['#name'] === name);
+        return filter;
+    }
+
     setFilters(filters: NamedFilterItem<ED, T>[]) {
         this.filters = filters;
     }
@@ -1098,6 +1103,14 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         const node = await this.findNode(path);
         if (node instanceof ListNode) {
             return await node.getFilters();
+        }
+    }
+
+    @Action
+    async getFilterByName<T extends keyof ED>(path: string, name: string) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            return await node.getFilterByName(name);
         }
     }
 
