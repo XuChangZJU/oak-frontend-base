@@ -287,6 +287,45 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         }
     }
 
+    getSorters() {
+        return this.sorters;
+    }
+
+    getSorterByName(name: string) {
+        const sorter = this.sorters.find((ele) => ele['#name'] === name);
+        return sorter;
+    }
+
+    setSorters(sorters: NamedSorterItem<ED, T>[]) {
+        this.sorters = sorters;
+    }
+
+    addSorter(sorter: NamedSorterItem<ED, T>) {
+        // sorter 根据#name查找
+        const fIndex = this.sorters.findIndex(ele => sorter['#name'] && ele['#name'] === sorter['#name']);
+        if (fIndex >= 0) {
+            this.sorters.splice(fIndex, 1, sorter);
+        } else {
+            this.sorters.push(sorter);
+        }
+    }
+
+    removeSorter(sorter: NamedSorterItem<ED, T>) {
+        // sorter 根据#name查找
+        const fIndex = this.sorters.findIndex(ele => sorter['#name'] && ele['#name'] === sorter['#name']);
+        if (fIndex >= 0) {
+            this.sorters.splice(fIndex, 1);
+        }
+    }
+
+    removeSorterByName(name: string) {
+        // sorter 根据#name查找
+        const fIndex = this.sorters.findIndex(ele => ele['#name'] === name);
+        if (fIndex >= 0) {
+            this.sorters.splice(fIndex, 1);
+        }
+    }
+
     async refresh() {
         const { filters, sorters, pagination, entity, fullPath } = this;
         const { step } = pagination;
@@ -1136,7 +1175,69 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
+<<<<<<< HEAD
     async testAction(path: string, action: string, realId?: boolean) {
+=======
+    async getSorters<T extends keyof ED>(path: string) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            return await node.getSorters();
+        }
+    }
+
+    async getSorterByName<T extends keyof ED>(path: string, name: string) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            return await node.getSorterByName(name);
+        }
+    }
+
+    @Action
+    async setSorters<T extends keyof ED>(path: string, sorters: NamedSorterItem<ED, T>[], refresh: boolean = true) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.setSorters(sorters);
+            if (refresh) {
+                await node.refresh();
+            }
+        }
+    }
+
+    @Action
+    async addSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh: boolean = false) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.addSorter(sorter);
+            if (refresh) {
+                await node.refresh();
+            }
+        }
+    }
+
+    @Action
+    async removeSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh: boolean = false) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.removeSorter(sorter);
+            if (refresh) {
+                await node.refresh();
+            }
+        }
+    }
+
+    @Action
+    async removeSorterByName<T extends keyof ED>(path: string, name: string, refresh: boolean = false) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.removeSorterByName(name);
+            if (refresh) {
+                await node.refresh();
+            }
+        }
+    }
+
+    async testAction(path: string, action: string) {
+>>>>>>> 902cba0c2cd4e94ca0aeaeb59ec449623dab3c42
         const node = await this.findNode(path);
         const operation = await node.composeOperation(action, realId);
         // 先在cache中尝试能否执行，如果权限上否决了在这里就失败
