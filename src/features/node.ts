@@ -1,4 +1,4 @@
-import { set, cloneDeep, pull, unset, cloneDeep } from 'lodash';
+import { set, cloneDeep, pull, unset } from 'lodash';
 import { AttrFilter, CreateOpResult, DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceSelection, DeduceUpdateOperation, EntityDict, EntityShape, OpRecord, SelectOpResult, SelectRowShape, UpdateOpResult } from 'oak-domain/lib/types/Entity';
 import { Aspect, Context, Trigger } from 'oak-domain/lib/types';
 import { combineFilters } from 'oak-domain/lib/store/filter';
@@ -283,6 +283,45 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         const fIndex = this.filters.findIndex(ele => ele['#name'] === name);
         if (fIndex >= 0) {
             this.filters.splice(fIndex, 1);
+        }
+    }
+
+    getSorters() {
+        return this.sorters;
+    }
+
+    getSorterByName(name: string) {
+        const sorter = this.sorters.find((ele) => ele['#name'] === name);
+        return sorter;
+    }
+
+    setSorters(sorters: NamedSorterItem<ED, T>[]) {
+        this.sorters = sorters;
+    }
+
+    addSorter(sorter: NamedSorterItem<ED, T>) {
+        // sorter 根据#name查找
+        const fIndex = this.sorters.findIndex(ele => sorter['#name'] && ele['#name'] === sorter['#name']);
+        if (fIndex >= 0) {
+            this.sorters.splice(fIndex, 1, sorter);
+        } else {
+            this.sorters.push(sorter);
+        }
+    }
+
+    removeSorter(sorter: NamedSorterItem<ED, T>) {
+        // sorter 根据#name查找
+        const fIndex = this.sorters.findIndex(ele => sorter['#name'] && ele['#name'] === sorter['#name']);
+        if (fIndex >= 0) {
+            this.sorters.splice(fIndex, 1);
+        }
+    }
+
+    removeSorterByName(name: string) {
+        // sorter 根据#name查找
+        const fIndex = this.sorters.findIndex(ele => ele['#name'] === name);
+        if (fIndex >= 0) {
+            this.sorters.splice(fIndex, 1);
         }
     }
 
@@ -1195,6 +1234,64 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         const node = await this.findNode(path);
         if (node instanceof ListNode) {
             node.removeFilterByName(name);
+            if (refresh) {
+                await node.refresh();
+            }
+        }
+    }
+
+    async getSorters<T extends keyof ED>(path: string) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            return await node.getSorters();
+        }
+    }
+
+    async getSorterByName<T extends keyof ED>(path: string, name: string) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            return await node.getSorterByName(name);
+        }
+    }
+
+    @Action
+    async setSorters<T extends keyof ED>(path: string, sorters: NamedSorterItem<ED, T>[], refresh: boolean = true) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.setSorters(sorters);
+            if (refresh) {
+                await node.refresh();
+            }
+        }
+    }
+
+    @Action
+    async addSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh: boolean = false) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.addSorter(sorter);
+            if (refresh) {
+                await node.refresh();
+            }
+        }
+    }
+
+    @Action
+    async removeSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh: boolean = false) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.removeSorter(sorter);
+            if (refresh) {
+                await node.refresh();
+            }
+        }
+    }
+
+    @Action
+    async removeSorterByName<T extends keyof ED>(path: string, name: string, refresh: boolean = false) {
+        const node = await this.findNode(path);
+        if (node instanceof ListNode) {
+            node.removeSorterByName(name);
             if (refresh) {
                 await node.refresh();
             }

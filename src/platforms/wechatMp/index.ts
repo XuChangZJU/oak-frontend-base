@@ -98,6 +98,12 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     addFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
     removeFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
     removeFilterByName: (name: string, refresh?: boolean) => void;
+    setSorters: (sorters: NamedSorterItem<ED, T>[]) => void;
+    getSorters: () => void;
+    getSorterByName: (name: string) => void;
+    addSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
+    removeSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
+    removeSorterByName: (name: string, refresh?: boolean) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
     setFileCarrier: (fileCarrier: ED[T]['IsFileCarrier'] extends true ? FileCarrier<ED, T> : never) => void;
 };
@@ -343,6 +349,30 @@ function createPageOptions<ED extends EntityDict,
 
             removeFilterByName(name, refresh = false) {
                 return features.runningNode.removeFilterByName(this.data.oakFullpath, name, refresh);
+            },
+
+            setSorters(sorters) {
+                return features.runningNode.setSorters(this.data.oakFullpath, sorters);
+            },
+
+            getSorters() {
+                return features.runningNode.getSorters(this.data.oakFullpath);
+            },
+
+            getSorterByName(name) {
+                return features.runningNode.getSorterByName(this.data.oakFullpath, name)
+            },
+
+            addSorter(sorter, refresh = false) {
+                return features.runningNode.addSorter(this.data.oakFullpath, sorter, refresh);
+            },
+
+            removeSorter(sorter, refresh = false) {
+                return features.runningNode.removeSorter(this.data.oakFullpath, sorter, refresh);
+            },
+
+            removeSorterByName(name, refresh = false) {
+                return features.runningNode.removeSorterByName(this.data.oakFullpath, name, refresh);
             },
 
             async execute(action, afterExecuted) {
@@ -658,6 +688,30 @@ function createComponentOptions<ED extends EntityDict,
 
             removeFilterByName(name, refresh = false) {
                 return features.runningNode.removeFilterByName(this.data.oakFullpath, name, refresh);
+            },
+
+            setSorters(sorters) {
+                return features.runningNode.setSorters(this.data.oakFullpath, sorters);
+            },
+
+            getSorters() {
+                return features.runningNode.getSorters(this.data.oakFullpath);
+            },
+
+            getSorterByName(name) {
+                return features.runningNode.getSorterByName(this.data.oakFullpath, name)
+            },
+
+            addSorter(sorter, refresh = false) {
+                return features.runningNode.addSorter(this.data.oakFullpath, sorter, refresh);
+            },
+
+            removeSorter(sorter, refresh = false) {
+                return features.runningNode.removeSorter(this.data.oakFullpath, sorter, refresh);
+            },
+
+            removeSorterByName(name, refresh = false) {
+                return features.runningNode.removeSorterByName(this.data.oakFullpath, name, refresh);
             },
 
             setUpdateData(attr, value) {
