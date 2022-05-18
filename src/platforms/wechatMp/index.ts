@@ -19,10 +19,8 @@ type OakComponentOption<
     FormedData extends WechatMiniprogram.Component.DataOption
     > = {
         entity: T;
-        formData: (
-            $rows: SelectionResult<ED[T]['Schema'], Required<ED[T]['Selection']['data']>>['result'],
-            features: BasicFeatures<ED, Cxt, AD> & FD,
-            fileCarrier?: ED[T]['IsFileCarrier'] extends boolean ? FileCarrier<ED, T> : undefined) => Promise<FormedData>
+        formData: ($rows: SelectionResult<ED[T]['Schema'], Required<ED[T]['Selection']['data']>>['result'],
+            features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<FormedData>;
     };
 
 interface OakPageOption<
@@ -50,10 +48,8 @@ interface OakPageOption<
         '#name'?: string;
     }>;
     actions?: ED[T]['Action'][];
-    formData: (
-        $rows: SelectionResult<ED[T]['Schema'], Proj>['result'],
-        features: BasicFeatures<ED, Cxt, AD> & FD,
-        fileCarrier?: ED[T]['IsFileCarrier'] extends boolean ? FileCarrier<ED, T> : undefined) => Promise<FormedData>
+    formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'],
+        features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<FormedData>
 };
 
 type OakComponentProperties = {
@@ -90,6 +86,7 @@ type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
 };
 
 type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
+    addNode: (path?: string, updateData?: object) =>Promise<void>;
     setUpdateData: (attr: string, input: any) => void;
     callPicker: (attr: string, params: Record<string, any>) => void;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
@@ -99,7 +96,6 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     removeFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
     removeFilterByName: (name: string, refresh?: boolean) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
-    setFileCarrier: (fileCarrier: ED[T]['IsFileCarrier'] extends true ? FileCarrier<ED, T> : never) => void;
 };
 
 type ComponentOnPropsChangeOption = {
@@ -221,8 +217,7 @@ function createPageOptions<ED extends EntityDict,
             async reRender() {
                 if (this.data.oakFullpath) {
                     const $rows = await features.runningNode.get(this.data.oakFullpath);
-                    const fileCarrier = await features.runningNode.getFileCarrier(this.data.oakFullpath);
-                    const data = await formData.call(this, $rows as any, features, fileCarrier as any);
+                    const data = await formData.call(this, $rows as any, features);
                     for (const k in data) {
                         if (data[k] === undefined) {
                             assign(data, {
@@ -253,6 +248,13 @@ function createPageOptions<ED extends EntityDict,
     
                     this.setData(data);
                 }
+            },
+
+            async addNode(path, updateData) {
+                await features.runningNode.addNode({
+                    parent: path ? `${this.data.oakFullpath}.${path}` : this.data.oakFullpath,
+                    updateData,
+                });
             },
 
             async refresh() {
@@ -288,10 +290,6 @@ function createPageOptions<ED extends EntityDict,
                     return;
                 }
                 return features.runningNode.setUpdateData(this.data.oakFullpath, attr, value);
-            },
-
-            setFileCarrier(fileCarrier) {
-                return features.runningNode.setFileCarrier(this.data.oakFullpath, fileCarrier);
             },
 
             callPicker(attr: string, params: Record<string, any>) {
@@ -624,8 +622,7 @@ function createComponentOptions<ED extends EntityDict,
                     })
                 }
                 const fullpath = data2.oakFullpath || this.data.oakFullpath;
-                const fileCarrier = fullpath && await features.runningNode.getFileCarrier(fullpath);
-                const data = await formData.call(this, $rows, features, fileCarrier as any);
+                const data = await formData.call(this, $rows, features);
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {
@@ -638,6 +635,13 @@ function createComponentOptions<ED extends EntityDict,
                     oakDirty: !!dirty,
                     // oakValue: value2,
                 }));
+            },
+            
+            async addNode(path, updateData) {
+                await features.runningNode.addNode({
+                    parent: path ? `${this.data.oakFullpath}.${path}` : this.data.oakFullpath,
+                    updateData,
+                });
             },
 
             getFilters() {
@@ -665,10 +669,6 @@ function createComponentOptions<ED extends EntityDict,
                     return;
                 }
                 return features.runningNode.setUpdateData(this.data.oakFullpath, attr, value);
-            },
-
-            setFileCarrier(fileCarrier) {
-                return features.runningNode.setFileCarrier(this.data.oakFullpath, fileCarrier);
             },
 
             callPicker(attr: string, params: Record<string, any>) {
@@ -780,8 +780,7 @@ function createComponentOptions<ED extends EntityDict,
             async ready() {
                 const { oakPath, oakParent, oakValue } = this.data;
                 const $rows = oakValue instanceof Array ? oakValue : [oakValue];
-                const fileCarrier = this.data.oakFullpath && await features.runningNode.getFileCarrier(this.data.oakFullpath);
-                const data = await formData.call(this, $rows, features, fileCarrier as any);
+                const data = await formData.call(this, $rows, features);
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {

@@ -1,10 +1,9 @@
-import { set, cloneDeep, pull, unset, cloneDeep } from 'lodash';
+import { set, cloneDeep, pull, unset } from 'lodash';
 import { AttrFilter, CreateOpResult, DeduceCreateOperation, DeduceFilter, DeduceOperation, DeduceSelection, DeduceUpdateOperation, EntityDict, EntityShape, OpRecord, SelectOpResult, SelectRowShape, UpdateOpResult } from 'oak-domain/lib/types/Entity';
 import { Aspect, Context, Trigger } from 'oak-domain/lib/types';
 import { combineFilters } from 'oak-domain/lib/store/filter';
 import { Action, Feature } from '../types/Feature';
 import { Cache } from './cache';
-import { v4 } from 'uuid';
 import assert from 'assert';
 import { assign } from 'lodash';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
@@ -12,6 +11,7 @@ import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { Pagination } from '../types/Pagination';
 import { NamedFilterItem, NamedSorterItem } from '../types/NamedCondition';
 import { FileCarrier } from '../types/FileCarrier';
+import { generateMockId } from '../utils/mockId';
 
 export class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {
     protected entity: T;
@@ -29,7 +29,8 @@ export class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context
 
     constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
-        parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data']) {
+        parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], 
+        updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data']) {
         this.entity = entity;
         this.fullPath = fullPath;
         this.schema = schema;
@@ -181,7 +182,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         return this.ids;
     }
 
-    async composeOperation(action?: string): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined> {
+    async composeOperation(action?: string, realId?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined> {
         if (!action && !this.isDirty()) {
             return;
         }
@@ -196,7 +197,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         }
         const actions = [];
         for (const node of this.children) {
-            const subAction = await node.composeOperation();
+            const subAction = await node.composeOperation(undefined, realId);
             if (subAction) {
                 actions.push(subAction);
             }
@@ -474,19 +475,14 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
     private children: {
         [K: string]: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
     };
-    private fileCarrier?: FileCarrier<ED, T>;
 
     constructor(entity: T, fullPath: string, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection?: ED[T]['Selection']['data'],
-        parent?: Node<ED, keyof ED, Cxt, AD>, id?: string, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'],
-        fileCarrier?: FileCarrier<ED, T>) {
+        parent?: Node<ED, keyof ED, Cxt, AD>, id?: string, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data']) {
         super(entity, fullPath, schema, cache, projection, parent, action, updateData);
         this.id = id;
         this.children = {};
         if (projection) {
             this.registerValueSentry((record) => this.onRecordSynchoronized(record));
-        }
-        if (fileCarrier) {
-            this.fileCarrier = fileCarrier;
         }
     }
 
@@ -505,7 +501,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
         }
     }
 
-    async composeOperation(action2?: string): Promise<DeduceOperation<ED[T]['Schema']> | undefined> {
+    async composeOperation(action2?: string, realId?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | undefined> {
         if (!action2 && !this.isDirty()) {
             return;
         }
@@ -513,7 +509,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
 
         const operation = action === 'create' ? {
             action: 'create',
-            data: assign({}, this.updateData, { id: await generateNewId() }),
+            data: assign({}, this.updateData, { id: realId ? await generateNewId() : generateMockId() }),
         } as DeduceCreateOperation<ED[T]['Schema']> : {
             action,
             data: cloneDeep(this.updateData) || {},
@@ -522,7 +518,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
             },
         } as DeduceUpdateOperation<ED[T]['Schema']>;
         for (const attr in this.children) {
-            const subAction = await this.children[attr]!.composeOperation();
+            const subAction = await this.children[attr]!.composeOperation(undefined, realId);
             if (subAction) {
                 assign(operation.data, {
                     [attr]: subAction,
@@ -557,28 +553,12 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
             if (relation === 2) {
                 // 基于entityId的多对一
                 if (this.value && this.value.entityId) {
-                    node = new SingleNode(path as keyof ED, `${this.fullPath}.${path}`, this.schema, this.cache, undefined, this as any, this.value.entityId);
+                    node = new SingleNode(path as keyof ED, `${this.fullPath}.${path}`, this.schema, this.cache, undefined, this, this.value.entityId);
                 }
                 else {
                     // 新建对象并关联
                     assert(!this.value || this.value.entity);
-                    // const id = await generateNewId();
-                    /*  await cache.operate(this.entity, {
-                         action: 'update',
-                         data: {
-                             entity: path as any,
-                             [path]: {
-                                 action: 'create',
-                                 data: {
-                                     id,
-                                 },
-                             },
-                         },
-                         filter: {
-                             id: this.id!,
-                         }
-                     } as any); */
-                    node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, this.cache, undefined, this as any, undefined, 'create');
+                    node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, this.cache, undefined, this, undefined, 'create');
                 }
             }
             else if (typeof relation === 'string') {
@@ -588,21 +568,6 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
                 else {
                     // 新建对象并关联
                     assert(!this.value || !this.value.entity);
-                    // const id = await generateNewId();
-                    /* await cache.operate(this.entity, {
-                        action: 'update',
-                        data: {
-                            [path]: {
-                                action: 'create',
-                                data: {
-                                    id,
-                                },
-                            },
-                        },
-                        filter: {
-                            id: this.id!,
-                        }
-                    } as any); */
                     node = new SingleNode(path as any, `${this.fullPath}.${path}`, this.schema, this.cache, undefined, this as any, undefined, 'create');
                 }
             }
@@ -662,15 +627,6 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
     setValue(value: Partial<ED[T]['Schema']>) {
         this.value = value;
         this.updateChildrenValues();
-    }
-
-    setFileCarrier(fileCarrier: FileCarrier<ED, T> | undefined) {
-        this.fileCarrier = fileCarrier;
-        this.setDirty();
-    }
-
-    getFileCarrier() {
-        return this.fileCarrier;
     }
 
     resetUpdateData() {
@@ -752,7 +708,6 @@ type CreateNodeOptions<ED extends EntityDict, T extends keyof ED> = {
     id?: string;
     ids?: string[];
     updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'];
-    fileCarrier?: FileCarrier<ED, T>;
 }
 
 export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Feature<ED, Cxt, AD> {
@@ -772,7 +727,6 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             parent,
             pagination,
             path,
-            fileCarrier,
             filters,
             sorters,
             id,
@@ -802,10 +756,6 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             if (updateData) {
                 node.setWholeUpdateData(updateData);
             }
-            if (fileCarrier) {
-                assert(node instanceof SingleNode);
-                node.setFileCarrier(fileCarrier);
-            }
         }
         else {
             assert(entity && path);
@@ -813,7 +763,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                 node = new ListNode<ED, T, Cxt, AD>(entity, path, this.schema!, this.cache, projection, undefined, pagination, filters, sorters, ids, action, updateData);
             }
             else {
-                node = new SingleNode<ED, T, Cxt, AD>(entity, path, this.schema!, this.cache, projection, undefined, id, action, updateData, fileCarrier);
+                node = new SingleNode<ED, T, Cxt, AD>(entity, path, this.schema!, this.cache, projection, undefined, id, action, updateData);
             }
             this.root[path] = node as any;
         }
@@ -844,7 +794,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
     // 目前addNode应该只有在list中新加一项这一种情况
     @Action
-    addNode<T extends keyof ED>(options: Pick<CreateNodeOptions<ED, T>, 'fileCarrier' | 'parent' | 'updateData'>) {
+    addNode<T extends keyof ED>(options: Pick<CreateNodeOptions<ED, T>, 'parent' | 'updateData'>) {
         return this.createNode(options);
     }
 
@@ -1013,12 +963,11 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                             }
                         }
                     }
-                }
+                };
                 switch (action) {
                     case 'create': {
                         assert(!value);
                         const row = {
-                            id: await generateNewId(),
                         } as Partial<ED[T]['Schema']>;
                         await applyUpsert(row, data as DeduceUpdateOperation<ED[T]['Schema']>['data']);
                         return row;
@@ -1105,20 +1054,6 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
-    @Action
-    async setFileCarrier<T extends keyof ED>(path: string, fileCarrier: FileCarrier<ED, T> | undefined) {
-        const node = await this.findNode(path);
-        assert(node instanceof SingleNode);
-
-        node.setFileCarrier(fileCarrier);
-    }
-
-    async getFileCarrier<T extends keyof ED>(path: string) {
-        const node = await this.findNode(path);
-        if (node instanceof SingleNode) {
-            return node.getFileCarrier() as FileCarrier<ED, T> | undefined;
-        }
-    }
 
     @Action
     async setForeignKey(path: string, id: string) {
@@ -1201,9 +1136,9 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
-    async testAction(path: string, action: string) {
+    async testAction(path: string, action: string, realId?: boolean) {
         const node = await this.findNode(path);
-        const operation = await node.composeOperation(action);
+        const operation = await node.composeOperation(action, realId);
         // 先在cache中尝试能否执行，如果权限上否决了在这里就失败
         if (operation instanceof Array) {
             for (const oper of operation) {
@@ -1222,26 +1157,9 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         };
     }
 
-    async beforeExecute(node2: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>) {
+    private async beforeExecute(node2: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>) {
         async function beNode(node: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>) {
-            if (node instanceof SingleNode) {
-                const fileCarrier = node.getFileCarrier();
-                if (fileCarrier) {
-                    // 上传文件
-                    const value = await node.getValue();
-                    await fileCarrier.upload(node.getEntity(), value as ED[keyof ED]['Schema']);
-                }
-                const children = node.getChildren();
-                for (const k in children) {
-                    await beNode(children[k]);
-                }
-            }
-            else {
-                const children = node.getChildren();
-                for (const child of children) {
-                    await beNode(child);
-                }
-            }
+            
         }
         await beNode(node2);
     }
@@ -1250,8 +1168,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     async execute(path: string, action: string) {
         const { node, operation } = await this.testAction(path, action);
 
-        await
-            await this.getAspectProxy().operate({
+        await this.getAspectProxy().operate({
                 entity: node.getEntity() as string,
                 operation,
             }, path);

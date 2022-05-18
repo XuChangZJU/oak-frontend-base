@@ -1,5 +1,5 @@
 
 declare global {
-    const generateNewId: () => Promise<string>;
+    const generateNewId: (options?: { timestamp?: boolean }) => Promise<string>;
 }
 export {}
