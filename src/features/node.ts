@@ -10,7 +10,6 @@ import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { Pagination } from '../types/Pagination';
 import { NamedFilterItem, NamedSorterItem } from '../types/NamedCondition';
-import { FileCarrier } from '../types/FileCarrier';
 import { generateMockId } from '../utils/mockId';
 
 export class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {
@@ -248,20 +247,20 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         }
     }
 
-    getFilters() {
+    getNamedFilters() {
         return this.filters;
     }
 
-    getFilterByName(name: string) {
+    getNamedFilterByName(name: string) {
         const filter = this.filters.find((ele) => ele['#name'] === name);
         return filter;
     }
 
-    setFilters(filters: NamedFilterItem<ED, T>[]) {
+    setNamedFilters(filters: NamedFilterItem<ED, T>[]) {
         this.filters = filters;
     }
 
-    addFilter(filter: NamedFilterItem<ED, T>) {
+    addNamedFilter(filter: NamedFilterItem<ED, T>) {
         // filter 根据#name查找
         const fIndex = this.filters.findIndex(ele => filter['#name'] && ele['#name'] === filter['#name']);
         if (fIndex >= 0) {
@@ -271,7 +270,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         }
     }
 
-    removeFilter(filter: NamedFilterItem<ED, T>) {
+    removeNamedFilter(filter: NamedFilterItem<ED, T>) {
         // filter 根据#name查找
         const fIndex = this.filters.findIndex(ele => filter['#name'] && ele['#name'] === filter['#name']);
         if (fIndex >= 0) {
@@ -279,7 +278,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         }
     }
 
-    removeFilterByName(name: string) {
+    removeNamedFilterByName(name: string) {
         // filter 根据#name查找
         const fIndex = this.filters.findIndex(ele => ele['#name'] === name);
         if (fIndex >= 0) {
@@ -287,20 +286,20 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         }
     }
 
-    getSorters() {
+    getNamedSorters() {
         return this.sorters;
     }
 
-    getSorterByName(name: string) {
+    getNamedSorterByName(name: string) {
         const sorter = this.sorters.find((ele) => ele['#name'] === name);
         return sorter;
     }
 
-    setSorters(sorters: NamedSorterItem<ED, T>[]) {
+    setNamedSorters(sorters: NamedSorterItem<ED, T>[]) {
         this.sorters = sorters;
     }
 
-    addSorter(sorter: NamedSorterItem<ED, T>) {
+    addNamedSorter(sorter: NamedSorterItem<ED, T>) {
         // sorter 根据#name查找
         const fIndex = this.sorters.findIndex(ele => sorter['#name'] && ele['#name'] === sorter['#name']);
         if (fIndex >= 0) {
@@ -310,7 +309,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         }
     }
 
-    removeSorter(sorter: NamedSorterItem<ED, T>) {
+    removeNamedSorter(sorter: NamedSorterItem<ED, T>) {
         // sorter 根据#name查找
         const fIndex = this.sorters.findIndex(ele => sorter['#name'] && ele['#name'] === sorter['#name']);
         if (fIndex >= 0) {
@@ -318,7 +317,7 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         }
     }
 
-    removeSorterByName(name: string) {
+    removeNamedSorterByName(name: string) {
         // sorter 根据#name查找
         const fIndex = this.sorters.findIndex(ele => ele['#name'] === name);
         if (fIndex >= 0) {
@@ -1117,127 +1116,111 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         await node.refresh();
     }
 
-    async getFilters<T extends keyof ED>(path: string) {
+    async getNamedFilters<T extends keyof ED>(path: string) {
         const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            return await node.getFilters();
-        }
+        assert (node instanceof ListNode);
+        return await node.getNamedFilters();
     }
 
-    async getFilterByName<T extends keyof ED>(path: string, name: string) {
+    async getNamedFilterByName<T extends keyof ED>(path: string, name: string) {
         const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            return await node.getFilterByName(name);
+        assert (node instanceof ListNode);
+        return await node.getNamedFilterByName(name);
+    }
+
+    @Action
+    async setNamedFilters<T extends keyof ED>(path: string, filters: NamedFilterItem<ED, T>[], refresh: boolean = true) {
+        const node = await this.findNode(path);
+        assert (node instanceof ListNode);
+        node.setNamedFilters(filters);
+        if (refresh) {
+            await node.refresh();
         }
     }
 
     @Action
-    async setFilters<T extends keyof ED>(path: string, filters: NamedFilterItem<ED, T>[], refresh: boolean = true) {
+    async addNamedFilter<T extends keyof ED>(path: string, filter: NamedFilterItem<ED, T>, refresh: boolean = false) {
         const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            node.setFilters(filters);
-            if (refresh) {
-                await node.refresh();
-            }
+        assert (node instanceof ListNode);
+        node.addNamedFilter(filter);
+        if (refresh) {
+            await node.refresh();
         }
     }
 
     @Action
-    async addFilter<T extends keyof ED>(path: string, filter: NamedFilterItem<ED, T>, refresh: boolean = false) {
+    async removeNamedFilter<T extends keyof ED>(path: string, filter: NamedFilterItem<ED, T>, refresh: boolean = false) {
         const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            node.addFilter(filter);
-            if (refresh) {
-                await node.refresh();
-            }
+        assert (node instanceof ListNode);
+        node.removeNamedFilter(filter);
+        if (refresh) {
+            await node.refresh();
         }
     }
 
     @Action
-    async removeFilter<T extends keyof ED>(path: string, filter: NamedFilterItem<ED, T>, refresh: boolean = false) {
+    async removeNamedFilterByName<T extends keyof ED>(path: string, name: string, refresh: boolean = false) {
         const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            node.removeFilter(filter);
-            if (refresh) {
-                await node.refresh();
-            }
+        assert (node instanceof ListNode);
+        node.removeNamedFilterByName(name);
+        if (refresh) {
+            await node.refresh();
+        }
+    }
+
+    async getNamedSorters<T extends keyof ED>(path: string) {
+        const node = await this.findNode(path);
+        assert (node instanceof ListNode);
+        return await node.getNamedSorters();
+    }
+
+    async getNamedSorterByName<T extends keyof ED>(path: string, name: string) {
+        const node = await this.findNode(path);
+        assert (node instanceof ListNode);
+        return await node.getNamedSorterByName(name);
+    }
+
+    @Action
+    async setNamedSorters<T extends keyof ED>(path: string, sorters: NamedSorterItem<ED, T>[], refresh: boolean = true) {
+        const node = await this.findNode(path);
+        assert (node instanceof ListNode);
+        node.setNamedSorters(sorters);
+        if (refresh) {
+            await node.refresh();
         }
     }
 
     @Action
-    async removeFilterByName<T extends keyof ED>(path: string, name: string, refresh: boolean = false) {
+    async addNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh: boolean = false) {
         const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            node.removeFilterByName(name);
-            if (refresh) {
-                await node.refresh();
-            }
+        assert (node instanceof ListNode);
+        node.addNamedSorter(sorter);
+        if (refresh) {
+            await node.refresh();
         }
     }
 
-<<<<<<< HEAD
+    @Action
+    async removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh: boolean = false) {
+        const node = await this.findNode(path);
+        assert (node instanceof ListNode);
+        node.removeNamedSorter(sorter);
+        if (refresh) {
+            await node.refresh();
+        }
+    }
+
+    @Action
+    async removeNamedSorterByName<T extends keyof ED>(path: string, name: string, refresh: boolean = false) {
+        const node = await this.findNode(path);
+        assert (node instanceof ListNode);
+        node.removeNamedSorterByName(name);
+        if (refresh) {
+            await node.refresh();
+        }
+    }
+
     async testAction(path: string, action: string, realId?: boolean) {
-=======
-    async getSorters<T extends keyof ED>(path: string) {
-        const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            return await node.getSorters();
-        }
-    }
-
-    async getSorterByName<T extends keyof ED>(path: string, name: string) {
-        const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            return await node.getSorterByName(name);
-        }
-    }
-
-    @Action
-    async setSorters<T extends keyof ED>(path: string, sorters: NamedSorterItem<ED, T>[], refresh: boolean = true) {
-        const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            node.setSorters(sorters);
-            if (refresh) {
-                await node.refresh();
-            }
-        }
-    }
-
-    @Action
-    async addSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh: boolean = false) {
-        const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            node.addSorter(sorter);
-            if (refresh) {
-                await node.refresh();
-            }
-        }
-    }
-
-    @Action
-    async removeSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh: boolean = false) {
-        const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            node.removeSorter(sorter);
-            if (refresh) {
-                await node.refresh();
-            }
-        }
-    }
-
-    @Action
-    async removeSorterByName<T extends keyof ED>(path: string, name: string, refresh: boolean = false) {
-        const node = await this.findNode(path);
-        if (node instanceof ListNode) {
-            node.removeSorterByName(name);
-            if (refresh) {
-                await node.refresh();
-            }
-        }
-    }
-
-    async testAction(path: string, action: string) {
->>>>>>> 902cba0c2cd4e94ca0aeaeb59ec449623dab3c42
         const node = await this.findNode(path);
         const operation = await node.composeOperation(action, realId);
         // 先在cache中尝试能否执行，如果权限上否决了在这里就失败
@@ -1267,7 +1250,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
     @Action
     async execute(path: string, action: string) {
-        const { node, operation } = await this.testAction(path, action);
+        const { node, operation } = await this.testAction(path, action, true);
 
         await this.getAspectProxy().operate({
                 entity: node.getEntity() as string,

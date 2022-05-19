@@ -86,20 +86,20 @@ type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
 };
 
 type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
-    addNode: (path?: string, updateData?: object) =>Promise<void>;
+    addNode: (path?: string, updateData?: object) => Promise<void>;
     setUpdateData: (attr: string, input: any) => void;
     callPicker: (attr: string, params: Record<string, any>) => void;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
-    getFilters: () => void;
-    getFilterByName: (name: string) => void;
-    addFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
-    removeFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
-    removeFilterByName: (name: string, refresh?: boolean) => void;
-    setSorters: (sorters: NamedSorterItem<ED, T>[]) => void;
-    getSorters: () => void;
-    getSorterByName: (name: string) => void;
-    addSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
-    removeSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
+    getFilters: () => Promise<ED[T]['Selection']['filter'][]>;
+    getFilterByName: (name: string) => Promise<ED[T]['Selection']['filter']>;
+    addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
+    removeNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
+    removeNamedFilterByName: (name: string, refresh?: boolean) => void;
+    setNamedSorters: (sorters: NamedSorterItem<ED, T>[]) => void;
+    getSorters: () => Promise<ED[T]['Selection']['sorter']>;
+    getSorterByName: (name: string) => Promise<DeduceSorterItem<ED[T]['Schema']>>;
+    addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
+    removeNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
     removeSorterByName: (name: string, refresh?: boolean) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
 };
@@ -109,7 +109,7 @@ type ComponentOnPropsChangeOption = {
     parent?: string;
 }
 
-type OakComponentOnlyMethods = {    
+type OakComponentOnlyMethods = {
     onPropsChanged: (options: ComponentOnPropsChangeOption) => Promise<void>;
 };
 
@@ -233,7 +233,7 @@ function createPageOptions<ED extends EntityDict,
                     }
                     const dirty = await features.runningNode.isDirty(this.data.oakFullpath);
                     assign(data, { oakDirty: dirty });
-    
+
                     if (this.data.oakActions) {
                         const oakLegalActions = [];
                         for (const action of this.data.oakActions) {
@@ -251,7 +251,7 @@ function createPageOptions<ED extends EntityDict,
                             oakLegalActions,
                         });
                     }
-    
+
                     this.setData(data);
                 }
             },
@@ -326,51 +326,77 @@ function createPageOptions<ED extends EntityDict,
             },
 
             setFilters(filters) {
-                return features.runningNode.setFilters(this.data.oakFullpath, filters);
+                return features.runningNode.setNamedFilters(this.data.oakFullpath, filters);
             },
 
-            getFilters() {
-                return features.runningNode.getFilters(this.data.oakFullpath);
+            async getFilters() {
+                const namedFilters = await features.runningNode.getNamedFilters(this.data.oakFullpath);
+                const filters = await Promise.all(
+                    namedFilters.map(
+                        ({ filter }) => {
+                            if (typeof filter === 'function') {
+                                return filter();
+                            }
+                            return filter;
+                        }
+                    )
+                );
+                return filters;
             },
 
             getFilterByName(name) {
-                return features.runningNode.getFilterByName(this.data.oakFullpath, name)
+                return features.runningNode.getNamedFilterByName(this.data.oakFullpath, name)
             },
 
-            addFilter(filter, refresh = false) {
-                return features.runningNode.addFilter(this.data.oakFullpath, filter, refresh);
+            addNamedFilter(filter, refresh = false) {
+                return features.runningNode.addNamedFilter(this.data.oakFullpath, filter, refresh);
             },
 
-            removeFilter(filter, refresh = false) {
-                return features.runningNode.removeFilter(this.data.oakFullpath, filter, refresh);
+            removeNamedFilter(filter, refresh = false) {
+                return features.runningNode.removeNamedFilter(this.data.oakFullpath, filter, refresh);
             },
 
-            removeFilterByName(name, refresh = false) {
-                return features.runningNode.removeFilterByName(this.data.oakFullpath, name, refresh);
+            removeNamedFilterByName(name, refresh = false) {
+                return features.runningNode.removeNamedFilterByName(this.data.oakFullpath, name, refresh);
             },
 
-            setSorters(sorters) {
-                return features.runningNode.setSorters(this.data.oakFullpath, sorters);
+            setNamedSorters(sorters) {
+                return features.runningNode.setNamedSorters(this.data.oakFullpath, sorters);
             },
 
-            getSorters() {
-                return features.runningNode.getSorters(this.data.oakFullpath);
+            async getSorters() {
+                const namedSorters = await features.runningNode.getNamedSorters(this.data.oakFullpath);
+                const sorters = await Promise.all(
+                    namedSorters.map(
+                        ({ sorter }) => {
+                            if (typeof sorter === 'function') {
+                                return sorter();
+                            }
+                            return sorter;
+                        }
+                    )
+                );
+                return sorters;
             },
 
-            getSorterByName(name) {
-                return features.runningNode.getSorterByName(this.data.oakFullpath, name)
+            async getSorterByName(name) {
+                const { sorter } = (await features.runningNode.getNamedSorterByName(this.data.oakFullpath, name))!;
+                if (typeof sorter === 'function') {
+                    return sorter();
+                }
+                return sorter;                
             },
 
-            addSorter(sorter, refresh = false) {
-                return features.runningNode.addSorter(this.data.oakFullpath, sorter, refresh);
+            addNamedSorter(sorter, refresh = false) {
+                return features.runningNode.addNamedSorter(this.data.oakFullpath, sorter, refresh);
             },
 
-            removeSorter(sorter, refresh = false) {
-                return features.runningNode.removeSorter(this.data.oakFullpath, sorter, refresh);
+            removeNamedSorter(sorter, refresh = false) {
+                return features.runningNode.removeNamedSorter(this.data.oakFullpath, sorter, refresh);
             },
 
             removeSorterByName(name, refresh = false) {
-                return features.runningNode.removeSorterByName(this.data.oakFullpath, name, refresh);
+                return features.runningNode.removeNamedSorterByName(this.data.oakFullpath, name, refresh);
             },
 
             async execute(action, afterExecuted) {
@@ -632,7 +658,7 @@ function createComponentOptions<ED extends EntityDict,
             "oakParent": function (parent) {
                 return this.onPropsChanged({
                     parent,
-                })               
+                })
             }
         },
         methods: {
@@ -666,7 +692,7 @@ function createComponentOptions<ED extends EntityDict,
                     // oakValue: value2,
                 }));
             },
-            
+
             async addNode(path, updateData) {
                 await features.runningNode.addNode({
                     parent: path ? `${this.data.oakFullpath}.${path}` : this.data.oakFullpath,
@@ -674,48 +700,74 @@ function createComponentOptions<ED extends EntityDict,
                 });
             },
 
-            getFilters() {
-                return features.runningNode.getFilters(this.data.oakFullpath);
+            async getFilters() {
+                const namedFilters = await features.runningNode.getNamedFilters(this.data.oakFullpath);
+                const filters = await Promise.all(
+                    namedFilters.map(
+                        ({ filter }) => {
+                            if (typeof filter === 'function') {
+                                return filter();
+                            }
+                            return filter;
+                        }
+                    )
+                );
+                return filters;
             },
 
             getFilterByName(name) {
-                return features.runningNode.getFilterByName(this.data.oakFullpath, name)
+                return features.runningNode.getNamedFilterByName(this.data.oakFullpath, name)
             },
 
-            addFilter(filter, refresh = false) {
-                return features.runningNode.addFilter(this.data.oakFullpath, filter, refresh);
+            addNamedFilter(namedFilter, refresh = false) {
+                return features.runningNode.addNamedFilter(this.data.oakFullpath, namedFilter, refresh);
             },
 
-            removeFilter(filter, refresh = false) {
-                return features.runningNode.removeFilter(this.data.oakFullpath, filter, refresh);
+            removeNamedFilter(namedFilter, refresh = false) {
+                return features.runningNode.removeNamedFilter(this.data.oakFullpath, namedFilter, refresh);
             },
 
-            removeFilterByName(name, refresh = false) {
-                return features.runningNode.removeFilterByName(this.data.oakFullpath, name, refresh);
+            removeNamedFilterByName(name, refresh = false) {
+                return features.runningNode.removeNamedFilterByName(this.data.oakFullpath, name, refresh);
             },
 
-            setSorters(sorters) {
-                return features.runningNode.setSorters(this.data.oakFullpath, sorters);
+            setNamedSorters(namedSorters) {
+                return features.runningNode.setNamedSorters(this.data.oakFullpath, namedSorters);
             },
 
-            getSorters() {
-                return features.runningNode.getSorters(this.data.oakFullpath);
+            async getSorters() {
+                const namedSorters = await features.runningNode.getNamedSorters(this.data.oakFullpath);
+                const sorters = await Promise.all(
+                    namedSorters.map(
+                        ({ sorter }) => {
+                            if (typeof sorter === 'function') {
+                                return sorter();
+                            }
+                            return sorter;
+                        }
+                    )
+                );
+                return sorters;
             },
 
-            getSorterByName(name) {
-                return features.runningNode.getSorterByName(this.data.oakFullpath, name)
+            async getSorterByName(name) {
+                const { sorter } = (await features.runningNode.getNamedSorterByName(this.data.oakFullpath, name))!;
+                if (typeof sorter === 'function') {
+                    return sorter();
+                }
+                return sorter;                
             },
 
-            addSorter(sorter, refresh = false) {
-                return features.runningNode.addSorter(this.data.oakFullpath, sorter, refresh);
+            addNamedSorter(namedSorter, refresh = false) {
+                return features.runningNode.addNamedSorter(this.data.oakFullpath, namedSorter, refresh);
             },
 
-            removeSorter(sorter, refresh = false) {
-                return features.runningNode.removeSorter(this.data.oakFullpath, sorter, refresh);
+            removeNamedSorter(namedSorter, refresh = false) {
+                return features.runningNode.removeNamedSorter(this.data.oakFullpath, namedSorter, refresh);
             },
 
             removeSorterByName(name, refresh = false) {
-                return features.runningNode.removeSorterByName(this.data.oakFullpath, name, refresh);
+                return features.runningNode.removeNamedSorterByName(this.data.oakFullpath, name, refresh);
             },
 
             setUpdateData(attr, value) {
@@ -733,7 +785,7 @@ function createComponentOptions<ED extends EntityDict,
             },
 
             setFilters(filters) {
-                return features.runningNode.setFilters(this.data.oakFullpath, filters);
+                return features.runningNode.setNamedFilters(this.data.oakFullpath, filters);
             },
 
             /* async execute(action, afterExecuted) {
@@ -1111,7 +1163,16 @@ export type MakeOakPage<
         IS extends WechatMiniprogram.IAnyObject = {},
         FormedData extends WechatMiniprogram.Component.DataOption = {}
         > (
-        options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
+        options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData> &
+            ThisType<
+                WechatMiniprogram.Component.Instance<
+                    D & OakPageData,
+                    P & OakPageProperties,
+                    M & OakPageMethods<ED, T>,
+                    IS & OakPageInstanceProperties<ED, Cxt, AD, FD>,
+                    true
+                >
+            >,
         componentOptions: OakWechatMpOptions<
             D,
             P,
@@ -1138,7 +1199,16 @@ export type MakeOakComponent<
         IS extends WechatMiniprogram.IAnyObject = {},
         FormedData extends WechatMiniprogram.Component.DataOption = {}
         >(
-        options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData>,
+        options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData> &
+            ThisType<
+                WechatMiniprogram.Component.Instance<
+                    D & OakPageData,
+                    P & OakPageProperties,
+                    M & OakPageMethods<ED, T>,
+                    IS & OakPageInstanceProperties<ED, Cxt, AD, FD>,
+                    true
+                >
+            >,
         componentOptions: OakWechatMpOptions<
             D,
             P,
