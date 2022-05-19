@@ -8,7 +8,6 @@ import assert from "assert";
 import { assign, intersection, rest, union } from "lodash";
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
-import { FileCarrier } from '../../types/FileCarrier';
 
 type OakComponentOption<
     ED extends EntityDict,
