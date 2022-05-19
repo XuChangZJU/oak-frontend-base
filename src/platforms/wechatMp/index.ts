@@ -91,16 +91,16 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     callPicker: (attr: string, params: Record<string, any>) => void;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
     getFilters: () => Promise<ED[T]['Selection']['filter'][]>;
-    getFilterByName: (name: string) => Promise<ED[T]['Selection']['filter']>;
+    getFilterByName: (name: string) => Promise<ED[T]['Selection']['filter']> | undefined;
     addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
     removeNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
     removeNamedFilterByName: (name: string, refresh?: boolean) => void;
     setNamedSorters: (sorters: NamedSorterItem<ED, T>[]) => void;
     getSorters: () => Promise<ED[T]['Selection']['sorter']>;
-    getSorterByName: (name: string) => Promise<DeduceSorterItem<ED[T]['Schema']>>;
+    getSorterByName: (name: string) => Promise<DeduceSorterItem<ED[T]['Schema']> | undefined>;
     addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
     removeNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
-    removeSorterByName: (name: string, refresh?: boolean) => void;
+    removeNamedSorterByName: (name: string, refresh?: boolean) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
 };
 
@@ -343,8 +343,15 @@ function createPageOptions<ED extends EntityDict,
                 return filters;
             },
 
-            getFilterByName(name) {
-                return features.runningNode.getNamedFilterByName(this.data.oakFullpath, name)
+            async getFilterByName(name) {
+                const filter = await features.runningNode.getNamedFilterByName(this.data.oakFullpath, name);
+                if (filter?.filter) {
+                    if (typeof filter.filter === 'function') {
+                        return filter.filter();
+                    }
+                    return filter.filter;
+                }
+                return; 
             },
 
             addNamedFilter(filter, refresh = false) {
@@ -379,11 +386,14 @@ function createPageOptions<ED extends EntityDict,
             },
 
             async getSorterByName(name) {
-                const { sorter } = (await features.runningNode.getNamedSorterByName(this.data.oakFullpath, name))!;
-                if (typeof sorter === 'function') {
-                    return sorter();
-                }
-                return sorter;                
+                const sorter = await features.runningNode.getNamedSorterByName(this.data.oakFullpath, name);
+                if (sorter?.sorter) {
+                    if (typeof sorter.sorter === 'function') {
+                        return sorter.sorter();
+                    }
+                    return sorter.sorter; 
+                }  
+                return;             
             },
 
             addNamedSorter(sorter, refresh = false) {
@@ -394,7 +404,7 @@ function createPageOptions<ED extends EntityDict,
                 return features.runningNode.removeNamedSorter(this.data.oakFullpath, sorter, refresh);
             },
 
-            removeSorterByName(name, refresh = false) {
+            removeNamedSorterByName(name, refresh = false) {
                 return features.runningNode.removeNamedSorterByName(this.data.oakFullpath, name, refresh);
             },
 
@@ -713,8 +723,15 @@ function createComponentOptions<ED extends EntityDict,
                 return filters;
             },
 
-            getFilterByName(name) {
-                return features.runningNode.getNamedFilterByName(this.data.oakFullpath, name)
+            async getFilterByName(name) {
+                const filter = await features.runningNode.getNamedFilterByName(this.data.oakFullpath, name);
+                if (filter?.filter) {
+                    if (typeof filter.filter === 'function') {
+                        return filter.filter();
+                    }
+                    return filter.filter;
+                }
+                return; 
             },
 
             addNamedFilter(namedFilter, refresh = false) {
@@ -749,11 +766,14 @@ function createComponentOptions<ED extends EntityDict,
             },
 
             async getSorterByName(name) {
-                const { sorter } = (await features.runningNode.getNamedSorterByName(this.data.oakFullpath, name))!;
-                if (typeof sorter === 'function') {
-                    return sorter();
-                }
-                return sorter;                
+                const sorter = await features.runningNode.getNamedSorterByName(this.data.oakFullpath, name);
+                if (sorter?.sorter) {
+                    if (typeof sorter.sorter === 'function') {
+                        return sorter.sorter();
+                    }
+                    return sorter.sorter; 
+                }  
+                return;             
             },
 
             addNamedSorter(namedSorter, refresh = false) {
@@ -764,7 +784,7 @@ function createComponentOptions<ED extends EntityDict,
                 return features.runningNode.removeNamedSorter(this.data.oakFullpath, namedSorter, refresh);
             },
 
-            removeSorterByName(name, refresh = false) {
+            removeNamedSorterByName(name, refresh = false) {
                 return features.runningNode.removeNamedSorterByName(this.data.oakFullpath, name, refresh);
             },
 
