@@ -376,18 +376,14 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         const projection = await this.getProjection();
         assert(projection);
         if (ids.length > 0) {
-            const rows = await this.cache.get({
-                entity,
-                selection: {
-                    data: projection as any,
-                    filter: {
-                        id: {
-                            $in: ids,
-                        }
-                    } as any,
-                },
-                scene: fullPath,
-            });
+            const rows = await this.cache.get(entity, {
+                data: projection as any,
+                filter: {
+                    id: {
+                        $in: ids,
+                    }
+                } as any,
+            }, fullPath);
 
             this.value = ids.map(
                 (id) => rows.find(
@@ -641,14 +637,10 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
             const filter: Partial<AttrFilter<ED[T]["Schema"]>> = {
                 id,
             } as any;
-            const value = await this.cache.get({
-                entity,
-                selection: {
-                    data: projection as any,
-                    filter,
-                },
-                scene: fullPath,
-            });
+            const value = await this.cache.get(entity, {
+                data: projection as any,
+                filter,
+            }, fullPath);
             this.value = value[0] as Partial<ED[T]['Schema']>;
             this.updateChildrenValues();
         }
@@ -974,29 +966,21 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                                 (actionData.hasOwnProperty('entity') || actionData.hasOwnProperty('entityId'))) {
                                 const entity = actionData.entity || row.entity!;
                                 const entityId = actionData.entityId || row.entityId!;
-                                const [entityRow] = await this.cache.get({
-                                    entity,
-                                    selection: {
-                                        data: projection[attr]!,
-                                        filter: {
-                                            id: entityId,
-                                        } as any,
-                                    },
-                                    scene
-                                });
+                                const [entityRow] = await this.cache.get(entity, {
+                                    data: projection[attr]!,
+                                    filter: {
+                                        id: entityId,
+                                    } as any,
+                                }, scene);
                                 set(row, attr, entityRow);
                             }
                             else if (typeof relation === 'string' && actionData.hasOwnProperty(`${attr}Id`)) {
-                                const [entityRow] = await this.cache.get({
-                                    entity: relation,
-                                    selection: {
-                                        data: projection[attr]!,
-                                        filter: {
-                                            id: actionData[`${attr}Id`],
-                                        } as any,
-                                    },
-                                    scene,
-                                });
+                                const [entityRow] = await this.cache.get(relation, {
+                                    data: projection[attr]!,
+                                    filter: {
+                                        id: actionData[`${attr}Id`],
+                                    } as any,
+                                }, scene);
                                 set(row, attr, entityRow);
                             }
                         }

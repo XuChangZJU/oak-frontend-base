@@ -76,8 +76,7 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
     }
 
 
-    async get<T extends keyof ED>(options: { entity: T, selection: ED[T]['Selection'], scene: string, params?: object }) {
-        const { entity, selection, params, scene } = options;
+    async get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], scene: string, params?: object) {        
         const context = this.createContext(this.cacheStore, scene);
         const { result } = await this.cacheStore.select(entity, selection, context, params);
         return result;
