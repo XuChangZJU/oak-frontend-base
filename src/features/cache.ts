@@ -28,7 +28,7 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
             entity: entity as any, 
             operation: assign({}, selection, { action: 'select' }) as DeduceSelection<ED[T]['Schema']>,
             params,
-        }, scene) as OperationResult;
+        }, scene) as Promise<OperationResult>;
     }
 
     @Action

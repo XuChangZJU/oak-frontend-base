@@ -1,13 +1,14 @@
 import './polyfill';
-import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem } from "oak-domain/lib/types";
+import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
 import { BasicFeatures } from "../../features";
 import assert from "assert";
-import { assign, intersection, rest, union } from "lodash";
+import { assign, union } from "lodash";
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
+import { CreateNodeOptions } from '../../features/node';
 
 type OakComponentOption<
     ED extends EntityDict,
@@ -85,7 +86,7 @@ type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
 };
 
 type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
-    addNode: (path?: string, updateData?: object) => Promise<void>;
+    addNode: (path?: string, options?: Pick<CreateNodeOptions<ED, keyof ED>, 'updateData' | 'beforeExecute' | 'afterExecute'>) => Promise<void>;
     setUpdateData: (attr: string, input: any) => void;
     callPicker: (attr: string, params: Record<string, any>) => void;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
@@ -255,11 +256,10 @@ function createPageOptions<ED extends EntityDict,
                 }
             },
 
-            async addNode(path, updateData) {
-                await features.runningNode.addNode({
-                    parent: path ? `${this.data.oakFullpath}.${path}` : this.data.oakFullpath,
-                    updateData,
-                });
+            async addNode(path, options) {
+                await features.runningNode.addNode(assign({
+                    parent: path ? `${this.data.oakFullpath}.${path}` : this.data.oakFullpath
+                }, options));
             },
 
             async refresh() {
@@ -692,11 +692,10 @@ function createComponentOptions<ED extends EntityDict,
                 }));
             },
 
-            async addNode(path, updateData) {
-                await features.runningNode.addNode({
-                    parent: path ? `${this.data.oakFullpath}.${path}` : this.data.oakFullpath,
-                    updateData,
-                });
+            async addNode(path, options) {
+                await features.runningNode.addNode(assign({
+                    parent: path ? `${this.data.oakFullpath}.${path}` : this.data.oakFullpath
+                }, options));
             },
 
             async getFilters() {
