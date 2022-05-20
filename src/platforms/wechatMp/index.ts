@@ -562,7 +562,7 @@ function createPageOptions<ED extends EntityDict,
                         }
                     ));
                 }
-                const node = await features.runningNode.createNode({
+                const node = features.runningNode.createNode({
                     path: oakPath || options.path,
                     parent: oakParent,
                     entity: (oakEntity || options.entity) as T,
@@ -607,10 +607,11 @@ function createPageOptions<ED extends EntityDict,
 
         pageLifetimes: {
             show() {
-                // this.subscribe();
+                this.reRender();
+                this.subscribe();
             },
             hide() {
-                // this.unsubscribe();
+                this.unsubscribe();
             }
         },
     };
@@ -677,7 +678,7 @@ function createComponentOptions<ED extends EntityDict,
                 const $rows = value2 instanceof Array ? value2 : [value2];
                 const data2 = {} as Record<string, any>;
                 if (parent2) {
-                    const node = await features.runningNode.createNode({
+                    const node = features.runningNode.createNode({
                         path: this.data.oakPath,
                         parent: parent2,
                     });
@@ -915,7 +916,7 @@ function createComponentOptions<ED extends EntityDict,
                 if (oakParent) {
                     // 小程序component ready的时候，父组件还未构造完成
                     const oakFullpath = `${oakParent}.${oakPath}`;
-                    const node = await features.runningNode.createNode({
+                    const node = features.runningNode.createNode({
                         path: oakPath,
                         parent: oakParent,
                     });

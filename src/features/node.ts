@@ -237,6 +237,10 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
         return this.children;
     }
 
+    getNewBorn() {
+        return this.newBorn;
+    }
+
     addChild(node: SingleNode<ED, T, Cxt, AD>, path?: string) {
         const { children, newBorn } = this;
         if (path) {
@@ -528,6 +532,9 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
 
     setValue(value: Array<Partial<ED[T]['Schema']>>) {
         this.value = value;
+        if (value instanceof Array) {
+            this.ids = value.map(ele => ele.id!) ;
+        }
         this.updateChildrenValue();
     }
 
@@ -708,6 +715,7 @@ class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<
 
     setValue(value: Partial<ED[T]['Schema']>) {
         this.value = value;
+        this.id = value && value.id;
         this.updateChildrenValues();
     }
 
@@ -815,7 +823,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         this.root = {};
     }
 
-    async createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>) {
+    createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>) {
         const {
             entity,
             parent,
@@ -834,7 +842,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             afterExecute,
         } = options;
         let node: ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>;
-        const parentNode = parent && this.findNode(parent);
+        const parentNode = parent && this.findNode(parent, true);
         if (parentNode) {
             if (isPicker) {
                 // 如果是picker，使用list来选择
@@ -929,7 +937,7 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
-    async destroyNode(path: string) {
+    destroyNode(path: string) {
         const node = this.findNode(path);
         if (node) {
             node.unregisterValueSentry();
@@ -1336,6 +1344,9 @@ export class RunningNode<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                 }
                 if (node instanceof ListNode) {
                     for (const child of node.getChildren()) {
+                        await beNode(child);
+                    }
+                    for (const child of node.getNewBorn()) {
                         await beNode(child);
                     }
                 }
