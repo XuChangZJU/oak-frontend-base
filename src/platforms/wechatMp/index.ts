@@ -64,14 +64,14 @@ type OakPageProperties = {
     oakPath: StringConstructor;
     oakParent: StringConstructor;
     oakId: StringConstructor;
-    oakProjection: ObjectConstructor;
-    oakFilters: ArrayConstructor;
-    oakSorters: ArrayConstructor;
+    oakProjection: StringConstructor;
+    oakFilters: StringConstructor;
+    oakSorters: StringConstructor;
     oakIsPicker: BooleanConstructor;
     oakFrom: StringConstructor;
     oakParentEntity: StringConstructor;
-    oakActions: ArrayConstructor;
-}
+    oakActions: StringConstructor;
+};
 
 type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
     oakId?: string;
@@ -211,13 +211,13 @@ function createPageOptions<ED extends EntityDict,
             oakId: String,
             oakPath: String,
             oakParent: String,
-            oakProjection: Object,
-            oakFilters: Array,
-            oakSorters: Array,
+            oakProjection: String,
+            oakFilters: String,
+            oakSorters: String,
             oakIsPicker: Boolean,
             oakParentEntity: String,
             oakFrom: String,
-            oakActions: Array,
+            oakActions: String,
         },
         methods: {
             async reRender() {
@@ -514,9 +514,10 @@ function createPageOptions<ED extends EntityDict,
                     oakSorters, oakFilters, oakIsPicker, oakFrom, oakActions } = this.data;
                 assert(!(isList && oakId));
                 const filters: NamedFilterItem<ED, T>[] = [];
-                if (oakFilters.length > 0) {
+                if (oakFilters?.length > 0) {
                     // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
-                    filters.push(...oakFilters);
+                    const oakFilters2 = JSON.parse(oakFilters);
+                    filters.push(...oakFilters2);
                 }
                 else if (options.filters) {
                     filters.push(...options.filters.map(
@@ -535,15 +536,16 @@ function createPageOptions<ED extends EntityDict,
                         }
                     ));
                 }
-                let proj = oakProjection;
+                let proj = oakProjection && JSON.parse(oakProjection);
                 if (!proj && options.projection) {
                     const { projection } = options;
                     proj = typeof projection === 'function' ? () => projection(features) : projection;
                 }
                 let sorters: NamedSorterItem<ED, T>[] = [];
-                if (oakSorters.length > 0) {
+                if (oakSorters?.length > 0) {
                     // 这里在跳页面的时候用this.navigate应该可以限制传过来的sorter的格式
-                    sorters.push(...oakSorters);
+                    const oakSorters2 = JSON.parse(oakSorters);
+                    sorters.push(...oakSorters2);
                 }
                 else if (options.sorters) {
                     sorters.push(...options.sorters.map(
@@ -579,7 +581,7 @@ function createPageOptions<ED extends EntityDict,
                     oakEntity: node.getEntity(),
                     oakFullpath,
                     oakFrom,
-                    oakActions: oakActions.length > 0 ? oakActions : options.actions || [],
+                    oakActions: oakActions?.length > 0 ? JSON.parse(oakActions) : options.actions || [],
                 });
             }
         },
