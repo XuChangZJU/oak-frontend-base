@@ -6,6 +6,7 @@ export declare abstract class Feature<ED extends EntityDict, Cxt extends Context
     protected getAspectProxy(): NonNullable<AspectProxy<ED, Cxt, AD & {
         operate: typeof import("../aspects/crud").operate;
         select: typeof import("../aspects/crud").select;
+        amap: typeof import("../aspects/amap").amap;
     }>>;
     setAspectProxy(aspectProxy: AspectProxy<ED, Cxt, AD & typeof baseAspectDict>): void;
 }

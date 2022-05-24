@@ -71,6 +71,7 @@ type OakPageProperties = {
     oakFrom: StringConstructor;
     oakParentEntity: StringConstructor;
     oakActions: StringConstructor;
+    newOakActions: ArrayConstructor;
 };
 
 type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
@@ -218,6 +219,7 @@ function createPageOptions<ED extends EntityDict,
             oakParentEntity: String,
             oakFrom: String,
             oakActions: String,
+            newOakActions: Array,
         },
         methods: {
             async reRender() {
@@ -234,9 +236,9 @@ function createPageOptions<ED extends EntityDict,
                     const dirty = await features.runningNode.isDirty(this.data.oakFullpath);
                     assign(data, { oakDirty: dirty });
 
-                    if (this.data.oakActions) {
+                    if (this.data.newOakActions) {
                         const oakLegalActions = [];
-                        for (const action of this.data.oakActions) {
+                        for (const action of this.data.newOakActions) {
                             try {
                                 await features.runningNode.testAction(this.data.oakFullpath, action);
                                 oakLegalActions.push(action);
@@ -581,7 +583,7 @@ function createPageOptions<ED extends EntityDict,
                     oakEntity: node.getEntity(),
                     oakFullpath,
                     oakFrom,
-                    oakActions: oakActions?.length > 0 ? JSON.parse(oakActions) : options.actions || [],
+                    newOakActions: oakActions && JSON.parse(oakActions).length > 0 ? JSON.parse(oakActions) : options.actions || [],
                 });
             }
         },
