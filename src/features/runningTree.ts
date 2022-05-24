@@ -1,6 +1,6 @@
 import assert from "assert";
 import { assign, cloneDeep, keys, omit, pick, pull, set, unset } from "lodash";
-import { combineFilters, contains } from "oak-domain/lib/store/filter";
+import { combineFilters, contains, repel } from "oak-domain/lib/store/filter";
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult } from "oak-domain/lib/types";
 import { Action, Feature, Pagination } from "../initialize";
@@ -109,6 +109,10 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
 
     protected contains(filter: ED[T]['Selection']['filter'],  conditionalFilter: ED[T]['Selection']['filter']) {
         return contains(this.entity, this.schema, filter, conditionalFilter);
+    }
+
+    protected repel(filter1: ED[T]['Selection']['filter'],  filter2: ED[T]['Selection']['filter']) {
+        return repel(this.entity, this.schema, filter1, filter2);
     }
 }
 
@@ -382,7 +386,7 @@ class SingleNode<ED extends EntityDict,
 
     async onCachSync(records: OpRecord<ED>[]): Promise<void> {
         let needReGetValue = false;
-        if (this.refreshing) {
+        if (this.refreshing || !this.id) {
             return;
         }
         for (const record of records) {
@@ -398,8 +402,11 @@ class SingleNode<ED extends EntityDict,
                     const { e, f } = record as UpdateOpResult<ED, T>;
                     if (e === this.entity) {
                         // todo 这里更严格应该考虑f对当前filter有无影响，同上面一样这里可能没有完整的供f用的cache数据
-                        if (f && typeof f.id === )
-                        needReGetValue = true;
+                        if (!this.repel(f || {}, {
+                            id: this.id,
+                        })) {
+                            needReGetValue = true;
+                        }
                     }
                     break;
                 }
@@ -423,7 +430,12 @@ class SingleNode<ED extends EntityDict,
             }
         }
         if (needReGetValue) {
-            await this.reGetValue();
+            const value = await this.cache.get(this.entity, {
+                data: this.projection,
+                filter: {
+                    id: this.id,
+                }
+            } as any, 'onCacheSync');
         }
     }
 
