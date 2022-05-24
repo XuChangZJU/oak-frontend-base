@@ -269,11 +269,9 @@ class ListNode<ED extends EntityDict,
         }
     }
 
-    async getValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[]> {
-        const value = await Promise.all(
-            this.children.map(
-                ele => ele.getValue()
-            )
+    getValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[] {
+        const value = this.children.map(
+            ele => ele.getValue()
         );
         return value;
     }
@@ -515,13 +513,8 @@ class SingleNode<ED extends EntityDict,
         this.value = value;
     }
 
-    async getValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>> {
-        const [value] = await this.cache.get(this.entity, {
-            data: this.projection,
-            filter: {
-                id: this.id!,
-            }
-        } as any, 'getValue');
+    getValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> {
+        const value = this.value ? cloneDeep(this.value) : {} as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
 
         for (const k in this.children) {
             assign(value, {
