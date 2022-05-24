@@ -3,6 +3,7 @@ import { Aspect, Checker, Context, EntityDict, RowStore } from 'oak-domain/lib/t
 import { Cache } from './cache';
 import { Location } from './location';
 import { RunningNode } from './node';
+import { Upload } from './uplpad';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, 
@@ -13,16 +14,22 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>,
     const cache = new Cache<ED, Cxt, AD>(storageSchema, createContext, checkers);
     const location = new Location();
     const runningNode = new RunningNode<ED, Cxt, AD>(cache);
-
+    const upload = new Upload();
     return {
         cache,
         location,
         runningNode,
+        upload,
     };
 }
 
-export type BasicFeatures<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> = {
+export type BasicFeatures<
+    ED extends EntityDict,
+    Cxt extends Context<ED>,
+    AD extends Record<string, Aspect<ED, Cxt>>
+> = {
     cache: Cache<ED, Cxt, AD>;
     location: Location;
     runningNode: RunningNode<ED, Cxt, AD>;
+    upload: Upload;
 };

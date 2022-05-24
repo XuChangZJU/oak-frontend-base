@@ -6,6 +6,7 @@ import { Pagination } from "../../types/Pagination";
 import { BasicFeatures } from "../../features";
 import { ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
+import { CreateNodeOptions } from '../../features/node';
 declare type OakComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>, FormedData extends WechatMiniprogram.Component.DataOption> = {
     entity: T;
     formData: ($rows: SelectionResult<ED[T]['Schema'], Required<ED[T]['Selection']['data']>>['result'], features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<FormedData>;
@@ -40,13 +41,14 @@ declare type OakPageProperties = {
     oakPath: StringConstructor;
     oakParent: StringConstructor;
     oakId: StringConstructor;
-    oakProjection: ObjectConstructor;
-    oakFilters: ArrayConstructor;
-    oakSorters: ArrayConstructor;
+    oakProjection: StringConstructor;
+    oakFilters: StringConstructor;
+    oakSorters: StringConstructor;
     oakIsPicker: BooleanConstructor;
     oakFrom: StringConstructor;
     oakParentEntity: StringConstructor;
-    oakActions: ArrayConstructor;
+    oakActions: StringConstructor;
+    newOakActions: ArrayConstructor;
 };
 declare type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
     oakId?: string;
@@ -60,21 +62,21 @@ declare type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> 
     oakActions?: Array<ED[T]['Action']>;
 };
 declare type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
-    addNode: (path?: string, updateData?: object) => Promise<void>;
+    addNode: (path?: string, options?: Pick<CreateNodeOptions<ED, keyof ED>, 'updateData' | 'beforeExecute' | 'afterExecute'>) => Promise<void>;
     setUpdateData: (attr: string, input: any) => void;
     callPicker: (attr: string, params: Record<string, any>) => void;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
     getFilters: () => Promise<ED[T]['Selection']['filter'][]>;
-    getFilterByName: (name: string) => Promise<ED[T]['Selection']['filter']>;
+    getFilterByName: (name: string) => Promise<ED[T]['Selection']['filter']> | undefined;
     addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
     removeNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
     removeNamedFilterByName: (name: string, refresh?: boolean) => void;
     setNamedSorters: (sorters: NamedSorterItem<ED, T>[]) => void;
     getSorters: () => Promise<ED[T]['Selection']['sorter']>;
-    getSorterByName: (name: string) => Promise<DeduceSorterItem<ED[T]['Schema']>>;
+    getSorterByName: (name: string) => Promise<DeduceSorterItem<ED[T]['Schema']> | undefined>;
     addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
     removeNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
-    removeSorterByName: (name: string, refresh?: boolean) => void;
+    removeNamedSorterByName: (name: string, refresh?: boolean) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
 };
 declare type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
