@@ -2,7 +2,7 @@ import assert from "assert";
 import { assign, cloneDeep, keys, omit, pick, pull, set, unset } from "lodash";
 import { combineFilters, contains, repel } from "oak-domain/lib/store/filter";
 import { judgeRelation } from "oak-domain/lib/store/relation";
-import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult } from "oak-domain/lib/types";
+import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult, CreateOpResult, RemoveOpResult } from "oak-domain/lib/types";
 import { Action, Feature, Pagination } from "../initialize";
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
 import { generateMockId } from "../utils/mockId";
@@ -107,11 +107,11 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
         return judgeRelation(this.schema, this.entity, attr);
     }
 
-    protected contains(filter: ED[T]['Selection']['filter'],  conditionalFilter: ED[T]['Selection']['filter']) {
+    protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']) {
         return contains(this.entity, this.schema, filter, conditionalFilter);
     }
 
-    protected repel(filter1: ED[T]['Selection']['filter'],  filter2: ED[T]['Selection']['filter']) {
+    protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']) {
         return repel(this.entity, this.schema, filter1, filter2);
     }
 }
@@ -136,7 +136,66 @@ class ListNode<ED extends EntityDict,
     private projectionShape: ED[T]['Selection']['data'];
 
     async onCachSync(records: OpRecord<ED>[]): Promise<void> {
-        // 当相应的entity发生create和remove时，对相应的children进行更改。
+        if (this.refreshing) {
+            return;
+        }
+        const createdIds: string[] = [];
+        let removeIds = false;
+        for (const record of records) {
+            const { a } = record;
+            switch (a) {
+                case 'c': {
+                    const { e, d } = record as CreateOpResult<ED, T>;
+                    if (e === this.entity) {
+                        const { id } = d;
+                        createdIds.push(id);
+                    }
+                    break;
+                }
+                case 'r': {
+                    const { e, f } = record as RemoveOpResult<ED, T>;
+                    if (e === this.entity) {
+                        // todo 这里更严格应该考虑f对当前value有无影响，同上面一样这里可能没有完整的供f用的cache数据
+                        removeIds = true;
+                    }
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }
+        }
+        if (createdIds.length > 0 || removeIds) {
+            const currentIds = this.children.map(
+                ele => ele.getValue().id
+            ) as string[];
+
+            const filter = combineFilters([{
+                id: {
+                    $in: currentIds.concat(createdIds),
+                }
+            }, ...(this.filters).map(ele => ele.filter)]);
+
+            const sorterss = await Promise.all(this.sorters.map(
+                async (ele) => {
+                    const { sorter } = ele;
+                    if (typeof sorter === 'function') {
+                        return await sorter();
+                    }
+                    else {
+                        return sorter;
+                    }
+                }
+            ));
+            const value = await this.cache.get(this.entity, {
+                data: {
+                    id: 1,
+                } as any,
+                filter,
+                sorter: sorterss,
+            }, 'listNode:onCachSync', { obscure: true });
+            this.setValue(value);
+        }
     }
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
@@ -396,6 +455,12 @@ class SingleNode<ED extends EntityDict,
             const { a } = record;
             switch (a) {
                 case 'c': {
+                    const { e, d } = record as CreateOpResult<ED, T>;
+                    if (e === this.entity && d.id === this.id) {
+                        // this.id应该是通过父结点来设置到子结点上
+                        needReGetValue = true;
+                    }
+                    break;
                 }
                 case 'r':
                 case 'u': {
@@ -430,12 +495,13 @@ class SingleNode<ED extends EntityDict,
             }
         }
         if (needReGetValue) {
-            const value = await this.cache.get(this.entity, {
+            const [value] = await this.cache.get(this.entity, {
                 data: this.projection,
                 filter: {
                     id: this.id,
                 }
             } as any, 'onCacheSync');
+            this.updateValue(value);
         }
     }
 
@@ -523,6 +589,15 @@ class SingleNode<ED extends EntityDict,
         }
         this.id = value.id as string;
         this.value = value;
+    }
+
+    updateValue(value: SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>) {
+        if (!this.value) {
+            this.value = {} as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
+        }
+        assign(this.value, value);
+
+        // todo，可能的一对多和多对一的子结点上的处理
     }
 
     getValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> {
