@@ -219,7 +219,14 @@ class ListNode<ED extends EntityDict,
     getChild(path: string): SingleNode<ED, T, Cxt, AD> {
         const idx = parseInt(path, 10);
         assert(typeof idx === 'number');
-        return this.children[idx];
+        if (idx < this.children.length) {
+            return this.children[idx];
+        }
+        else {
+            const idx2 = idx - this.children.length;
+            // assert(idx2 < this.newBorn.length);  // 在删除结点时可能还是会跑到
+            return this.newBorn[idx2];
+        }
     }
 
     getChildren() {
@@ -242,16 +249,12 @@ class ListNode<ED extends EntityDict,
     }
 
     setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[]) {
+        this.children = [];
         value.forEach(
             (ele, idx) => {
-                if (this.children[idx]) {
-                    this.children[idx].setValue(ele);
-                }
-                else {
-                    const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this);
-                    this.children[idx] = node;
-                    node.setValue(ele);
-                }
+                const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this);
+                this.children[idx] = node;
+                node.setValue(ele);
             }
         );
     }
@@ -562,7 +565,7 @@ class SingleNode<ED extends EntityDict,
                         const projection2 = await projection();
                         return projection2[attr].filter;
                     } : projection[attr].filter;
-                    const sorters =  typeof projection === 'function' ? async () => {
+                    const sorters = typeof projection === 'function' ? async () => {
                         const projection2 = await projection();
                         return projection2[attr].sorter;
                     } : projection[attr].sorter;
@@ -616,7 +619,7 @@ class SingleNode<ED extends EntityDict,
                     } : {
                         entityId: value.id!,
                     };
-    
+
                     node.removeNamedFilterByName('inherent:parentId');
                     node.addNamedFilter({
                         filter,
@@ -686,7 +689,7 @@ class SingleNode<ED extends EntityDict,
         const projection = await this.getProjection();
         if (this.id) {
             this.refreshing = true;
-            const { result: [ value ]} = await this.cache.refresh(this.entity, {
+            const { result: [value] } = await this.cache.refresh(this.entity, {
                 data: projection,
                 filter: {
                     id: this.id,
@@ -980,15 +983,18 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
     async getValue(path: string) {
         const node = this.findNode(path);
-        let value: ReturnType<typeof node.getValue> | undefined = node.getValue();
+        if (node) {
+            let value: ReturnType<typeof node.getValue> | undefined = node.getValue();
 
-        if (node.isDirty()) {
-            const operation = await node.composeOperation();
-            const projection = await node.getProjection();
-            value = (await this.applyOperation(node.getEntity(), cloneDeep(value), operation!, projection, path));
+            if (node.isDirty()) {
+                const operation = await node.composeOperation();
+                const projection = await node.getProjection();
+                value = (await this.applyOperation(node.getEntity(), cloneDeep(value), operation!, projection, path));
+            }
+
+            return value instanceof Array ? value : [value];
         }
-
-        return value instanceof Array ? value : [value];
+        return [undefined];
     }
 
     isDirty(path: string) {
@@ -1225,9 +1231,9 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     @Action
     async removeNode(parent: string, path: string) {
         const parentNode = this.findNode(parent);
-        
+
         const node = parentNode.getChild(path);
-        assert (parentNode instanceof ListNode && node instanceof SingleNode);        // 现在应该不可能remove一个list吧，未来对list的处理还要细化
+        assert(parentNode instanceof ListNode && node instanceof SingleNode);        // 现在应该不可能remove一个list吧，未来对list的处理还要细化
         if (node.getValue().id) {
             // 如果有id，说明是删除数据
             await this.getAspectProxy().operate({

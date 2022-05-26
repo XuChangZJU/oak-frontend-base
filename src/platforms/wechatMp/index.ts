@@ -89,7 +89,7 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     subscribed?: () => void;
     subscribe: () => void;
     unsubscribe: () => void;
-    reRender: (extra?: any) => Promise<void>;
+    reRender: (extra?: Record<string, any>) => Promise<void>;
     pushNode: (path?: string, options?: Pick<CreateNodeOptions<ED, keyof ED>, 'updateData' | 'beforeExecute' | 'afterExecute'>) => void;
     removeNode: (parent: string, path: string) => void;
     setUpdateData: (attr: string, input: any) => void;
@@ -223,7 +223,7 @@ function createPageOptions<ED extends EntityDict,
             newOakActions: Array,
         },
         methods: {
-            async reRender() {
+            async reRender(extra) {
                 if (this.data.oakFullpath) {
                     const $rows = await features.runningTree.getValue(this.data.oakFullpath);
                     const data = await formData.call(this, $rows as any, features);
@@ -253,6 +253,9 @@ function createPageOptions<ED extends EntityDict,
                         assign(data, {
                             oakLegalActions,
                         });
+                    }
+                    if (extra) {
+                        assign(data, extra);
                     }
 
                     this.setData(data);
@@ -679,7 +682,7 @@ function createComponentOptions<ED extends EntityDict,
                 }
             },
 
-            async reRender() {
+            async reRender(extra) {
                 if (this.data.oakFullpath) {
                     const $rows = await features.runningTree.getValue(this.data.oakFullpath);
                     const data = await formData.call(this, $rows as any, features);
@@ -711,6 +714,9 @@ function createComponentOptions<ED extends EntityDict,
                         });
                     } */
 
+                    if (extra) {
+                        assign(data, extra);
+                    }
                     this.setData(data);
                 }
             },
@@ -721,7 +727,9 @@ function createComponentOptions<ED extends EntityDict,
                 if (path2 && parent2) {
                     const oakFullpath2 = `${parent2}.${path2}`;
                     if (oakFullpath2 !== this.data.oakFullpath) {
-                        this.data.oakFullpath = oakFullpath2;
+                        this.setData({
+                            oakFullpath: oakFullpath2,
+                        });
                         this.reRender();
                     }
                 }
@@ -852,7 +860,10 @@ function createComponentOptions<ED extends EntityDict,
             async ready() {
                 const { oakPath, oakParent } = this.data;
                 if (oakParent && oakPath) {
-                    this.data.oakFullpath = `${oakParent}.${oakPath}`;
+                    const oakFullpath = `${oakParent}.${oakPath}`;
+                    this.setData({
+                        oakFullpath,
+                    });                    
                     this.reRender();
                 }
             },            
