@@ -402,13 +402,14 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
             }
         ));
         this.refreshing = true;
-        const { ids } = await this.cache.refresh(entity, {
+        const { result } = await this.cache.refresh(entity, {
             data: proj as any,
             filter: filterss.length > 0 ? combineFilters(filterss) : undefined,
             sorter: sorterss,
             indexFrom: 0,
             count: step,
         }, scene);
+        const ids = result.map(ele => ele.id!) as string[];
         assert(ids);
         this.ids = ids;
         this.pagination.indexFrom = 0;

@@ -3,10 +3,12 @@ import { assign, cloneDeep, keys, omit, pick, pull, set, unset } from "lodash";
 import { combineFilters, contains, repel } from "oak-domain/lib/store/filter";
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult, CreateOpResult, RemoveOpResult } from "oak-domain/lib/types";
-import { Action, Feature, Pagination } from "../initialize";
+
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
 import { generateMockId } from "../utils/mockId";
 import { Cache } from './cache';
+import { Pagination } from '../types/Pagination';
+import { Action, Feature } from '../types/Feature';
 
 abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {
     protected entity: T;
@@ -37,7 +39,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
         this.dirty = false;
         this.refreshing = false;
         this.updateData = updateData || {};
-        this.cache.bindOnSync(this.onCachSync);
+        this.cache.bindOnSync((records) => this.onCachSync(records));
     }
 
     getEntity() {
@@ -45,8 +47,8 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
     }
 
     setUpdateData(attr: string, value: any) {
-        this.setDirty();
         set(this.updateData, attr, value);
+        this.setDirty();
     }
 
     getUpdateData() {
@@ -55,6 +57,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
 
     setMultiUpdateData(updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data']) {
         assign(this.updateData, updateData);
+        this.setDirty();
     }
 
     setDirty() {
@@ -187,10 +190,9 @@ class ListNode<ED extends EntityDict,
                     }
                 }
             ));
+            const projection = typeof this.projection === 'function' ? await this.projection() : this.projection;
             const value = await this.cache.get(this.entity, {
-                data: {
-                    id: 1,
-                } as any,
+                data: projection as any,
                 filter,
                 sorter: sorterss,
             }, 'listNode:onCachSync', { obscure: true });
@@ -246,7 +248,7 @@ class ListNode<ED extends EntityDict,
                     this.children[idx].setValue(ele);
                 }
                 else {
-                    const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this);
+                    const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this);
                     this.children[idx] = node;
                     node.setValue(ele);
                 }
@@ -399,15 +401,7 @@ class ListNode<ED extends EntityDict,
             }
         ));
         this.refreshing = true;
-        const { ids } = await this.cache.refresh(entity, {
-            data: proj as any,
-            filter: filterss.length > 0 ? combineFilters(filterss) : undefined,
-            sorter: sorterss,
-            indexFrom: 0,
-            count: step,
-        }, scene);
-        assert(ids);
-        const result = await this.cache.get(entity, {
+        const { result } = await this.cache.refresh(entity, {
             data: proj as any,
             filter: filterss.length > 0 ? combineFilters(filterss) : undefined,
             sorter: sorterss,
@@ -415,7 +409,7 @@ class ListNode<ED extends EntityDict,
             count: step,
         }, scene);
         this.pagination.indexFrom = 0;
-        this.pagination.more = ids.length === step;
+        this.pagination.more = result.length === step;
         this.refreshing = false;
 
         this.setValue(result as any);
@@ -429,6 +423,30 @@ class ListNode<ED extends EntityDict,
         this.children.forEach(
             (ele) => ele.resetUpdateData()
         );
+    }
+
+    pushNode(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>) {
+        const { updateData, beforeExecute, afterExecute } = options;
+        const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this, 'create');
+
+        if (updateData) {
+            node.setMultiUpdateData(updateData);
+        }
+        if (beforeExecute) {
+            node.setBeforeExecute(beforeExecute);
+        }
+        if (afterExecute) {
+            node.setAfterExecute(afterExecute);
+        }
+        this.newBorn.push(node);
+    }
+
+    popNode(path: string) {
+        const index = parseInt(path, 10);
+        assert(typeof index === 'number' && index >= this.children.length);
+        const index2 = index - this.children.length;
+        assert(index2 < this.newBorn.length);
+        this.newBorn.splice(index2, 1);
     }
 }
 
@@ -495,8 +513,9 @@ class SingleNode<ED extends EntityDict,
             }
         }
         if (needReGetValue) {
+            const projection = typeof this.projection === 'function' ? await this.projection() : this.projection;
             const [value] = await this.cache.get(this.entity, {
-                data: this.projection,
+                data: projection,
                 filter: {
                     id: this.id,
                 }
@@ -516,29 +535,46 @@ class SingleNode<ED extends EntityDict,
         const ownKeys: string[] = [];
         keys(projectionShape).forEach(
             (attr) => {
+                const proj = typeof projection === 'function' ? async () => {
+                    const projection2 = await projection();
+                    return projection2[attr];
+                } : projection[attr];
                 const rel = this.judgeRelation(attr);
                 if (rel === 2) {
-                    const node = new SingleNode(attr, this.schema, this.cache, projectionShape[attr], projectionShape[attr], this);
+                    const node = new SingleNode(attr, this.schema, this.cache, proj, projectionShape[attr], this);
                     assign(this.children, {
                         [attr]: node,
                     });
                 }
                 else if (typeof rel === 'string') {
-                    const node = new SingleNode(rel, this.schema, this.cache, projectionShape[attr], projectionShape[attr], this);
+                    const node = new SingleNode(rel, this.schema, this.cache, proj, projectionShape[attr], this);
                     assign(this.children, {
                         [attr]: node,
                     });
                 }
                 else if (typeof rel === 'object' && rel instanceof Array) {
-                    const { data, filter, sorter, indexFrom, count } = projectionShape[attr] as ED[keyof ED]['Selection'];
-                    const node = new ListNode(rel[0], this.schema, this.cache, data, data, this);
+                    const { data: subProjectionShape } = projectionShape[attr] as ED[keyof ED]['Selection'];
+                    const proj = typeof projection === 'function' ? async () => {
+                        const projection2 = await projection();
+                        return projection2[attr].data;
+                    } : projection[attr].data;
+                    const filter = typeof projection === 'function' ? async () => {
+                        const projection2 = await projection();
+                        return projection2[attr].filter;
+                    } : projection[attr].filter;
+                    const sorters =  typeof projection === 'function' ? async () => {
+                        const projection2 = await projection();
+                        return projection2[attr].sorter;
+                    } : projection[attr].sorter;
+                    const node = new ListNode(rel[0], this.schema, this.cache, proj, subProjectionShape, this);
                     if (filter) {
                         node.addNamedFilter({
                             filter,
                         });
                     }
-                    if (sorter && sorter.length > 0) {
-                        sorter.forEach(
+                    if (sorters && sorters instanceof Array) {
+                        // todo 没有处理projection是一个function的case
+                        sorters.forEach(
                             ele => node.addNamedSorter({
                                 sorter: ele
                             })
@@ -553,8 +589,6 @@ class SingleNode<ED extends EntityDict,
                 }
             }
         );
-
-        this.projection = pick(projectionShape, ownKeys);
     }
 
     getChild(path: string): SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD> {
@@ -572,19 +606,23 @@ class SingleNode<ED extends EntityDict,
     setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>) {
         for (const attr in this.children) {
             const node = this.children[attr];
-            node.setValue(value[attr] as any);
-            if (node instanceof ListNode) {
-                const rel = this.judgeRelation(attr);
-                assert(rel instanceof Array);
-                const filter = rel[1] ? {
-                    [rel[1]]: value.id!,
-                } : {
-                    entityId: value.id!,
-                };
-
-                node.addNamedFilter({
-                    filter,
-                });
+            if (value[attr]) {
+                node.setValue(value[attr] as any);
+                if (node instanceof ListNode) {
+                    const rel = this.judgeRelation(attr);
+                    assert(rel instanceof Array);
+                    const filter = rel[1] ? {
+                        [rel[1]]: value.id!,
+                    } : {
+                        entityId: value.id!,
+                    };
+    
+                    node.removeNamedFilterByName('inherent:parentId');
+                    node.addNamedFilter({
+                        filter,
+                        "#name": 'inherent:parentId',
+                    });
+                }
             }
         }
         this.id = value.id as string;
@@ -648,20 +686,13 @@ class SingleNode<ED extends EntityDict,
         const projection = await this.getProjection();
         if (this.id) {
             this.refreshing = true;
-            await this.cache.refresh(this.entity, {
+            const { result: [ value ]} = await this.cache.refresh(this.entity, {
                 data: projection,
                 filter: {
                     id: this.id,
                 },
             } as any, scene);
             this.refreshing = false;
-
-            const value = this.cache.get(this.entity, {
-                data: projection,
-                filter: {
-                    id: this.id,
-                },
-            } as any, scene);
             this.setValue(value as any);
         }
     }
@@ -733,9 +764,16 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
         else {
             node = new SingleNode<ED, T, Cxt, AD>(entity, this.schema!, this.cache, projection, projectionShape, parentNode, action, updateData);
+            if (id) {
+                node.setValue({ id } as any);
+            }
         }
         if (parentNode) {
             // todo，这里有几种情况，待处理
+        }
+        else {
+            assert(!this.root[path]);
+            this.root[path] = node;
         }
 
         if (action) {
@@ -925,11 +963,8 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                 };
                 switch (action) {
                     case 'create': {
-                        assert(!value);
-                        const row = {
-                        } as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
-                        await applyUpsert(row, data as DeduceUpdateOperation<ED[T]['Schema']>['data']);
-                        return row;
+                        await applyUpsert(value, data as DeduceUpdateOperation<ED[T]['Schema']>['data']);
+                        return value;
                     }
                     case 'remove': {
                         return undefined;
@@ -945,15 +980,15 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
     async getValue(path: string) {
         const node = this.findNode(path);
-        let value = await node.getValue();
+        let value: ReturnType<typeof node.getValue> | undefined = node.getValue();
 
         if (node.isDirty()) {
             const operation = await node.composeOperation();
             const projection = await node.getProjection();
-            return (await this.applyOperation(node.getEntity(), cloneDeep(value), operation!, projection, path));
+            value = (await this.applyOperation(node.getEntity(), cloneDeep(value), operation!, projection, path));
         }
 
-        return value;
+        return value instanceof Array ? value : [value];
     }
 
     isDirty(path: string) {
@@ -994,6 +1029,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
     @Action
     async setForeignKey(path: string, id: string) {
+        throw new Error('method not implemented');
         const node = this.findNode(path);
         const parent = node.getParent()!;
         const attr = path.slice(path.lastIndexOf('.') + 1);
@@ -1015,13 +1051,13 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         await node.refresh(path);
     }
 
-    async getNamedFilters<T extends keyof ED>(path: string) {
+    getNamedFilters<T extends keyof ED>(path: string) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         return node.getNamedFilters();
     }
 
-    async getNamedFilterByName<T extends keyof ED>(path: string, name: string) {
+    getNamedFilterByName<T extends keyof ED>(path: string, name: string) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         return node.getNamedFilterByName(name);
@@ -1067,14 +1103,14 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
-    async getNamedSorters<T extends keyof ED>(path: string) {
-        const node = await this.findNode(path);
+    getNamedSorters<T extends keyof ED>(path: string) {
+        const node = this.findNode(path);
         assert(node instanceof ListNode);
         return node.getNamedSorters();
     }
 
-    async getNamedSorterByName<T extends keyof ED>(path: string, name: string) {
-        const node = await this.findNode(path);
+    getNamedSorterByName<T extends keyof ED>(path: string, name: string) {
+        const node = this.findNode(path);
         assert(node instanceof ListNode);
         return node.getNamedSorterByName(name);
     }
@@ -1177,5 +1213,37 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
         // 清空缓存
         node.resetUpdateData();
+    }
+
+    @Action
+    pushNode<T extends keyof ED>(path: string, options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>) {
+        const parent = this.findNode(path);
+        assert(parent instanceof ListNode);
+
+        parent.pushNode(options);
+    }
+    @Action
+    async removeNode(parent: string, path: string) {
+        const parentNode = this.findNode(parent);
+        
+        const node = parentNode.getChild(path);
+        assert (parentNode instanceof ListNode && node instanceof SingleNode);        // 现在应该不可能remove一个list吧，未来对list的处理还要细化
+        if (node.getValue().id) {
+            // 如果有id，说明是删除数据
+            await this.getAspectProxy().operate({
+                entity: node.getEntity() as string,
+                operation: {
+                    action: 'remove',
+                    data: {},
+                    filter: {
+                        id: node.getValue().id,
+                    },
+                }
+            }, parent);
+        }
+        else {
+            // 删除子结点
+            parentNode.popNode(path);
+        }
     }
 }

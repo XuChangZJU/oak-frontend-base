@@ -5,6 +5,7 @@ import { Location } from './location';
 import { RunningNode } from './node';
 import { Upload } from './uplpad';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
+import { RunningTree } from './runningTree';
 
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, 
     AD extends Record<string, Aspect<ED, Cxt>>> (
@@ -14,11 +15,13 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>,
     const cache = new Cache<ED, Cxt, AD>(storageSchema, createContext, checkers);
     const location = new Location();
     const runningNode = new RunningNode<ED, Cxt, AD>(cache);
+    const runningTree = new RunningTree<ED, Cxt, AD>(cache);
     const upload = new Upload();
     return {
         cache,
         location,
         runningNode,
+        runningTree,
         upload,
     };
 }
@@ -31,5 +34,6 @@ export type BasicFeatures<
     cache: Cache<ED, Cxt, AD>;
     location: Location;
     runningNode: RunningNode<ED, Cxt, AD>;
+    runningTree: RunningTree<ED, Cxt, AD>;
     upload: Upload;
 };

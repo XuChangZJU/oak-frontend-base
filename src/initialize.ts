@@ -80,6 +80,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     }
     
     basicFeatures.runningNode.setStorageSchema(storageSchema);
+    basicFeatures.runningTree.setStorageSchema(storageSchema);
 
     const userDefinedfeatures = createFeatures(basicFeatures);
 

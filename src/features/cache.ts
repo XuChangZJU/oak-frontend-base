@@ -24,11 +24,11 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
 
     @Action
     refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], scene: string, params?: object) {
-        return this.getAspectProxy().operate({
-            entity: entity as any, 
-            operation: assign({}, selection, { action: 'select' }) as DeduceSelection<ED[T]['Schema']>,
+        return this.getAspectProxy().select({
+            entity: entity as string, 
+            selection,
             params,
-        }, scene) as Promise<OperationResult>;
+        }, scene);
     }
 
     @Action
