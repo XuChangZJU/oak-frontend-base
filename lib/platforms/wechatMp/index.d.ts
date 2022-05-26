@@ -33,7 +33,6 @@ interface OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends C
 declare type OakComponentProperties = {
     oakEntity: StringConstructor;
     oakPath: StringConstructor;
-    oakValue: ObjectConstructor;
     oakParent: StringConstructor;
 };
 declare type OakPageProperties = {
@@ -62,7 +61,12 @@ declare type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> 
     oakActions?: Array<ED[T]['Action']>;
 };
 declare type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
-    addNode: (path?: string, options?: Pick<CreateNodeOptions<ED, keyof ED>, 'updateData' | 'beforeExecute' | 'afterExecute'>) => Promise<void>;
+    subscribed?: () => void;
+    subscribe: () => void;
+    unsubscribe: () => void;
+    reRender: (extra?: any) => Promise<void>;
+    pushNode: (path?: string, options?: Pick<CreateNodeOptions<ED, keyof ED>, 'updateData' | 'beforeExecute' | 'afterExecute'>) => void;
+    removeNode: (parent: string, path: string) => void;
     setUpdateData: (attr: string, input: any) => void;
     callPicker: (attr: string, params: Record<string, any>) => void;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
@@ -80,13 +84,9 @@ declare type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
 };
 declare type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
-    reRender: (extra?: any) => Promise<void>;
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
     onLoad: () => Promise<void>;
-    subscribed?: () => void;
-    subscribe: () => void;
-    unsubscribe: () => void;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
     onForeignKeyPicked: (touch: WechatMiniprogram.Touch) => void;
     execute: (action: ED[T]['Action'], afterExecuted?: () => any) => Promise<void>;
