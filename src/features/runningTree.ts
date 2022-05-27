@@ -738,6 +738,37 @@ class SingleNode<ED extends EntityDict,
         }
         this.refreshValue();
     }
+
+    async setForeignKey(attr: string, id: string) {
+        const rel = this.judgeRelation(attr);
+
+        let subEntity: string;
+        if (rel === 2) {
+            this.setMultiUpdateData({
+                entity: attr,
+                entityId: id,
+            } as any);
+            subEntity = attr;
+        }
+        else {
+            assert(typeof rel === 'string');
+            this.setUpdateData(`${attr}Id`, id);
+            subEntity = rel;
+        }
+
+        // 如果修改了外键且对应的外键上有子结点，在这里把子结点的value更新掉
+        if (this.children[attr]) {
+            const proj = typeof this.projection === 'function' ? await this.projection() : this.projection;
+            const subProj = proj[attr];
+            const [value] = await this.cache.get(subEntity, {
+                data: subProj,
+                filter: {
+                    id,
+                } as any,
+            }, 'SingleNode:setForeignKey');
+            (<SingleNode<ED, keyof ED, Cxt, AD>>this.children[attr]).setValue(value);
+        }
+    }
 }
 
 export type CreateNodeOptions<ED extends EntityDict, T extends keyof ED> = {
@@ -1010,15 +1041,9 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
-    async getValue(path: string) {
+    async getFreshValue(path: string) {
         const node = this.findNode(path);
-        let value: ReturnType<typeof node.getValue> | undefined = node.getValue();
-
-        if (node.isDirty()) {
-            const operation = await node.composeOperation();
-            const projection = await node.getProjection();
-            value = (await this.applyOperation(node.getEntity(), cloneDeep(value), operation!, projection, path));
-        }
+        let value = node.getFreshValue();
 
         return value instanceof Array ? value : [value];
     }
@@ -1060,21 +1085,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async setForeignKey(path: string, id: string) {
-        throw new Error('method not implemented');
-        const node = this.findNode(path);
-        const parent = node.getParent()!;
-        const attr = path.slice(path.lastIndexOf('.') + 1);
-        const rel = judgeRelation(this.schema!, parent.getEntity(), attr);
+    async setForeignKey(parent: string, attr: string, id: string) {
+        const parentNode = this.findNode(parent);
+        assert (parentNode instanceof SingleNode);
 
-        if (rel === 2) {
-            parent.setUpdateData('entity', node.getEntity());
-            parent.setUpdateData('entityId', id);
-        }
-        else {
-            assert(typeof rel === 'string');
-            parent.setUpdateData(`${attr}Id`, id);
-        }
+        parentNode.setForeignKey(attr, id);
     }
 
     @Action
@@ -1260,7 +1275,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
         const node = parentNode.getChild(path);
         assert(parentNode instanceof ListNode && node instanceof SingleNode);        // 现在应该不可能remove一个list吧，未来对list的处理还要细化
-        if (node.getValue().id) {
+        if (node.getFreshValue().id) {
             // 如果有id，说明是删除数据
             await this.getAspectProxy().operate({
                 entity: node.getEntity() as string,
@@ -1268,7 +1283,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                     action: 'remove',
                     data: {},
                     filter: {
-                        id: node.getValue().id,
+                        id: node.getFreshValue().id,
                     },
                 }
             }, parent);
