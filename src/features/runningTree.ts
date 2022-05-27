@@ -230,7 +230,14 @@ class ListNode<ED extends EntityDict,
     getChild(path: string): SingleNode<ED, T, Cxt, AD> {
         const idx = parseInt(path, 10);
         assert(typeof idx === 'number');
-        return this.children[idx];
+        if (idx < this.children.length) {
+            return this.children[idx];
+        }
+        else {
+            const idx2 = idx - this.children.length;
+            // assert(idx2 < this.newBorn.length);  // 在删除结点时可能还是会跑到
+            return this.newBorn[idx2];
+        }
     }
 
     getChildren() {
@@ -253,16 +260,12 @@ class ListNode<ED extends EntityDict,
     }
 
     setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[]) {
+        this.children = [];
         value.forEach(
             (ele, idx) => {
-                if (this.children[idx]) {
-                    this.children[idx].setValue(ele);
-                }
-                else {
-                    const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this);
-                    this.children[idx] = node;
-                    node.setValue(ele);
-                }
+                const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this);
+                this.children[idx] = node;
+                node.setValue(ele);
             }
         );
     }

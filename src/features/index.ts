@@ -3,7 +3,7 @@ import { Aspect, Checker, Context, EntityDict, RowStore } from 'oak-domain/lib/t
 import { Cache } from './cache';
 import { Location } from './location';
 import { RunningNode } from './node';
-import { Upload } from './uplpad';
+import { Upload } from './upload';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { RunningTree } from './runningTree';
 
