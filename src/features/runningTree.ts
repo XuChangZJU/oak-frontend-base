@@ -994,7 +994,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
             return value instanceof Array ? value : [value];
         }
-        return [undefined];
+        return [];
     }
 
     isDirty(path: string) {
