@@ -26,6 +26,8 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
 
     abstract onCachSync(opRecords: OpRecord<ED>[]): Promise<void>;
 
+    abstract refreshValue(): void;
+
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
         projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
         parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'],
@@ -49,6 +51,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
     setUpdateData(attr: string, value: any) {
         set(this.updateData, attr, value);
         this.setDirty();
+        this.refreshValue();
     }
 
     getUpdateData() {
@@ -58,6 +61,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
     setMultiUpdateData(updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data']) {
         assign(this.updateData, updateData);
         this.setDirty();
+        this.refreshValue();
     }
 
     setDirty() {
@@ -72,6 +76,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
     setAction(action: ED[T]['Action']) {
         this.action = action;
         this.setDirty();
+        this.refreshValue();
     }
 
     isDirty() {
@@ -170,7 +175,7 @@ class ListNode<ED extends EntityDict,
         }
         if (createdIds.length > 0 || removeIds) {
             const currentIds = this.children.map(
-                ele => ele.getValue().id
+                ele => ele.getFreshValue().id
             ) as string[];
 
             const filter = combineFilters([{
@@ -179,17 +184,19 @@ class ListNode<ED extends EntityDict,
                 }
             }, ...(this.filters).map(ele => ele.filter)]);
 
-            const sorterss = await Promise.all(this.sorters.map(
-                async (ele) => {
-                    const { sorter } = ele;
-                    if (typeof sorter === 'function') {
-                        return await sorter();
+            const sorterss = await Promise.all(
+                this.sorters.map(
+                    async (ele) => {
+                        const { sorter } = ele;
+                        if (typeof sorter === 'function') {
+                            return await sorter();
+                        }
+                        else {
+                            return sorter;
+                        }
                     }
-                    else {
-                        return sorter;
-                    }
-                }
-            ));
+                )
+            );
             const projection = typeof this.projection === 'function' ? await this.projection() : this.projection;
             const value = await this.cache.get(this.entity, {
                 data: projection as any,
@@ -198,6 +205,10 @@ class ListNode<ED extends EntityDict,
             }, 'listNode:onCachSync', { obscure: true });
             this.setValue(value);
         }
+    }
+
+    refreshValue(): void {
+        
     }
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
@@ -337,11 +348,23 @@ class ListNode<ED extends EntityDict,
         }
     }
 
-    getValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[] {
+    getFreshValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[] {
         const value = this.children.map(
-            ele => ele.getValue()
+            ele => ele.getFreshValue()
         );
-        return value;
+        if (this.isDirty()) {
+            const action = this.action || 'update';
+
+            if (action === 'remove') {
+                return [];  // 这个可能跑到吗？
+            }
+            return value.map(
+                ele => assign({}, ele, this.updateData)
+            );
+        }
+        else {
+            return value;
+        }
     }
 
     getAction() {
@@ -459,6 +482,7 @@ class SingleNode<ED extends EntityDict,
     AD extends Record<string, Aspect<ED, Cxt>>> extends Node<ED, T, Cxt, AD> {
     private id?: string;
     private value?: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>;
+    private freshValue?: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>;
 
     private children: {
         [K: string]: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
@@ -523,7 +547,7 @@ class SingleNode<ED extends EntityDict,
                     id: this.id,
                 }
             } as any, 'onCacheSync');
-            this.updateValue(value);
+            this.setValue(value);
         }
     }
 
@@ -606,6 +630,21 @@ class SingleNode<ED extends EntityDict,
         unset(this.children, path);
     }
 
+    refreshValue() {
+        const action = this.action || (this.isDirty() ? 'update' : '');
+        if (!action) {
+            this.freshValue = this.value;
+        }
+        else {
+            if (action === 'remove') {
+                this.freshValue = undefined;
+            }
+            else {
+                this.freshValue = assign({}, this.value, this.updateData);
+            }
+        }
+    }
+
     setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>) {
         for (const attr in this.children) {
             const node = this.children[attr];
@@ -630,27 +669,19 @@ class SingleNode<ED extends EntityDict,
         }
         this.id = value.id as string;
         this.value = value;
+        this.refreshValue();
     }
 
-    updateValue(value: SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>) {
-        if (!this.value) {
-            this.value = {} as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
-        }
-        assign(this.value, value);
-
-        // todo，可能的一对多和多对一的子结点上的处理
-    }
-
-    getValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> {
-        const value = this.value ? cloneDeep(this.value) : {} as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
+    getFreshValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> {
+        const freshValue = this.freshValue ? cloneDeep(this.freshValue) : {} as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
 
         for (const k in this.children) {
-            assign(value, {
-                [k]: this.children[k].getValue(),
+            assign(freshValue, {
+                [k]: this.children[k].getFreshValue(),
             });
         }
 
-        return value;
+        return freshValue;
     }
 
     getAction() {
@@ -707,6 +738,38 @@ class SingleNode<ED extends EntityDict,
 
         for (const attr in this.children) {
             this.children[attr].resetUpdateData();
+        }
+        this.refreshValue();
+    }
+
+    async setForeignKey(attr: string, id: string) {
+        const rel = this.judgeRelation(attr);
+
+        let subEntity: string;
+        if (rel === 2) {
+            this.setMultiUpdateData({
+                entity: attr,
+                entityId: id,
+            } as any);
+            subEntity = attr;
+        }
+        else {
+            assert(typeof rel === 'string');
+            this.setUpdateData(`${attr}Id`, id);
+            subEntity = rel;
+        }
+
+        // 如果修改了外键且对应的外键上有子结点，在这里把子结点的value更新掉
+        if (this.children[attr]) {
+            const proj = typeof this.projection === 'function' ? await this.projection() : this.projection;
+            const subProj = proj[attr];
+            const [value] = await this.cache.get(subEntity, {
+                data: subProj,
+                filter: {
+                    id,
+                } as any,
+            }, 'SingleNode:setForeignKey');
+            (<SingleNode<ED, keyof ED, Cxt, AD>>this.children[attr]).setValue(value);
         }
     }
 }
@@ -981,20 +1044,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
-    async getValue(path: string) {
+    async getFreshValue(path: string) {
         const node = this.findNode(path);
-        if (node) {
-            let value: ReturnType<typeof node.getValue> | undefined = node.getValue();
+        let value = node.getFreshValue();
 
-            if (node.isDirty()) {
-                const operation = await node.composeOperation();
-                const projection = await node.getProjection();
-                value = (await this.applyOperation(node.getEntity(), cloneDeep(value), operation!, projection, path));
-            }
-
-            return value instanceof Array ? value : [value];
-        }
-        return [];
+        return value instanceof Array ? value : [value];
     }
 
     isDirty(path: string) {
@@ -1034,21 +1088,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async setForeignKey(path: string, id: string) {
-        throw new Error('method not implemented');
-        const node = this.findNode(path);
-        const parent = node.getParent()!;
-        const attr = path.slice(path.lastIndexOf('.') + 1);
-        const rel = judgeRelation(this.schema!, parent.getEntity(), attr);
+    async setForeignKey(parent: string, attr: string, id: string) {
+        const parentNode = this.findNode(parent);
+        assert (parentNode instanceof SingleNode);
 
-        if (rel === 2) {
-            parent.setUpdateData('entity', node.getEntity());
-            parent.setUpdateData('entityId', id);
-        }
-        else {
-            assert(typeof rel === 'string');
-            parent.setUpdateData(`${attr}Id`, id);
-        }
+        parentNode.setForeignKey(attr, id);
     }
 
     @Action
@@ -1234,7 +1278,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
         const node = parentNode.getChild(path);
         assert(parentNode instanceof ListNode && node instanceof SingleNode);        // 现在应该不可能remove一个list吧，未来对list的处理还要细化
-        if (node.getValue().id) {
+        if (node.getFreshValue().id) {
             // 如果有id，说明是删除数据
             await this.getAspectProxy().operate({
                 entity: node.getEntity() as string,
@@ -1242,7 +1286,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                     action: 'remove',
                     data: {},
                     filter: {
-                        id: node.getValue().id,
+                        id: node.getFreshValue().id,
                     },
                 }
             }, parent);

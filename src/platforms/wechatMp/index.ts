@@ -225,7 +225,7 @@ function createPageOptions<ED extends EntityDict,
         methods: {
             async reRender(extra) {
                 if (this.data.oakFullpath) {
-                    const $rows = await features.runningTree.getValue(this.data.oakFullpath);
+                    const $rows = await features.runningTree.getFreshValue(this.data.oakFullpath);
                     const data = await formData.call(this, $rows as any, features);
                     for (const k in data) {
                         if (data[k] === undefined) {
@@ -573,9 +573,9 @@ function createPageOptions<ED extends EntityDict,
                         }
                     ));
                 }
+                const path2 = oakParent ? `${oakParent}:${oakPath || options.path}` : oakPath || options.path;
                 const node = await features.runningTree.createNode({
-                    path: oakPath || options.path,
-                    parent: oakParent,
+                    path: path2,
                     entity: (oakEntity || options.entity) as T,
                     isList,
                     isPicker: oakIsPicker,
@@ -585,10 +585,10 @@ function createPageOptions<ED extends EntityDict,
                     sorters,
                     id: oakId,
                 });
-                const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
+                // const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
                 this.setData({
                     oakEntity: node.getEntity(),
-                    oakFullpath,
+                    oakFullpath: path2,
                     oakFrom,
                     newOakActions: oakActions && JSON.parse(oakActions).length > 0 ? JSON.parse(oakActions) : options.actions || [],
                 });
@@ -684,7 +684,7 @@ function createComponentOptions<ED extends EntityDict,
 
             async reRender(extra) {
                 if (this.data.oakFullpath) {
-                    const $rows = await features.runningTree.getValue(this.data.oakFullpath);
+                    const $rows = await features.runningTree.getFreshValue(this.data.oakFullpath);
                     const data = await formData.call(this, $rows as any, features);
                     for (const k in data) {
                         if (data[k] === undefined) {
