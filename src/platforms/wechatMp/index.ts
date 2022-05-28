@@ -107,6 +107,7 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     removeNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
     removeNamedSorterByName: (name: string, refresh?: boolean) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
+    resetUpdateData: () => void;
 };
 
 type ComponentOnPropsChangeOption = {
@@ -254,6 +255,7 @@ function createPageOptions<ED extends EntityDict,
                             oakLegalActions,
                         });
                     }
+
                     if (extra) {
                         assign(data, extra);
                     }
@@ -317,9 +319,9 @@ function createPageOptions<ED extends EntityDict,
                 if (this.data.oakExecuting) {
                     return;
                 }
-                const { oakIsPicker } = this.data;
+                const { oakIsPicker, oakParent, oakPath } = this.data;
                 assert(oakIsPicker);
-                await features.runningTree.setForeignKey(this.data.oakFullpath, id);
+                await features.runningTree.setForeignKey(oakParent, oakPath, id);
 
                 if (goBackDelta !== 0) {
                     wx.navigateBack({
@@ -415,6 +417,10 @@ function createPageOptions<ED extends EntityDict,
 
             removeNamedSorterByName(name, refresh = false) {
                 return features.runningTree.removeNamedSorterByName(this.data.oakFullpath, name, refresh);
+            },
+
+            resetUpdateData() {
+                return features.runningTree.resetUpdateData(this.data.oakFullpath);
             },
 
             async execute(action, afterExecuted) {
@@ -729,7 +735,7 @@ function createComponentOptions<ED extends EntityDict,
                     if (oakFullpath2 !== this.data.oakFullpath) {
                         this.setData({
                             oakFullpath: oakFullpath2,
-                        });
+                        })
                         this.reRender();
                     }
                 }
@@ -823,6 +829,10 @@ function createComponentOptions<ED extends EntityDict,
             removeNamedSorterByName(name, refresh = false) {
                 return features.runningTree.removeNamedSorterByName(this.data.oakFullpath, name, refresh);
             },
+            
+            resetUpdateData() {
+                return features.runningTree.resetUpdateData(this.data.oakFullpath);
+            },
 
             setUpdateData(attr, value) {
                 if (this.data.oakExecuting) {
@@ -863,7 +873,7 @@ function createComponentOptions<ED extends EntityDict,
                     const oakFullpath = `${oakParent}.${oakPath}`;
                     this.setData({
                         oakFullpath,
-                    });                    
+                    });
                     this.reRender();
                 }
             },            

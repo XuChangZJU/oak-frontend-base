@@ -79,7 +79,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
         basicFeatures.cache.registerCheckers(adCheckers);
     }
     
-    basicFeatures.runningNode.setStorageSchema(storageSchema);
+    // basicFeatures.runningNode.setStorageSchema(storageSchema);
     basicFeatures.runningTree.setStorageSchema(storageSchema);
 
     const userDefinedfeatures = createFeatures(basicFeatures);

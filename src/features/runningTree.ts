@@ -175,8 +175,8 @@ class ListNode<ED extends EntityDict,
         }
         if (createdIds.length > 0 || removeIds) {
             const currentIds = this.children.map(
-                ele => ele.getFreshValue().id
-            ) as string[];
+                ele => ele.getFreshValue()?.id
+            ).filter(ele => !!ele) as string[];
 
             const filter = combineFilters([{
                 id: {
@@ -259,9 +259,9 @@ class ListNode<ED extends EntityDict,
         this.children.splice(idx, 1);
     }
 
-    setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[]) {
+    setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined) {
         this.children = [];
-        value.forEach(
+        value && value.forEach(
             (ele, idx) => {
                 const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this);
                 this.children[idx] = node;
@@ -350,7 +350,7 @@ class ListNode<ED extends EntityDict,
 
     getFreshValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[] {
         const value = this.children.map(
-            ele => ele.getFreshValue()
+            ele => ele.getFreshValue()!
         );
         if (this.isDirty()) {
             const action = this.action || 'update';
@@ -645,10 +645,10 @@ class SingleNode<ED extends EntityDict,
         }
     }
 
-    setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>) {
+    setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']> | undefined) {
         for (const attr in this.children) {
             const node = this.children[attr];
-            if (value[attr]) {
+            if (value && value[attr]) {
                 node.setValue(value[attr] as any);
                 if (node instanceof ListNode) {
                     const rel = this.judgeRelation(attr);
@@ -666,19 +666,23 @@ class SingleNode<ED extends EntityDict,
                     });
                 }
             }
+            else {
+                node.setValue(undefined);
+            }
         }
-        this.id = value.id as string;
+        this.id = value && value.id as string;
         this.value = value;
         this.refreshValue();
     }
 
-    getFreshValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> {
-        const freshValue = this.freshValue ? cloneDeep(this.freshValue) : {} as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
-
-        for (const k in this.children) {
-            assign(freshValue, {
-                [k]: this.children[k].getFreshValue(),
-            });
+    getFreshValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined {
+        const freshValue = this.freshValue && cloneDeep(this.freshValue) as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
+        if (freshValue) {
+            for (const k in this.children) {
+                assign(freshValue, {
+                    [k]: this.children[k].getFreshValue(),
+                });
+            }
         }
 
         return freshValue;
@@ -731,14 +735,36 @@ class SingleNode<ED extends EntityDict,
         }
     }
 
-    resetUpdateData() {
-        this.updateData = {};
-        // this.action = undefined;
-        this.dirty = false;
-
+    resetUpdateData(attrs?: string[]) {
+        const attrsReset = attrs || Object.keys(this.updateData);
         for (const attr in this.children) {
-            this.children[attr].resetUpdateData();
+            const rel = this.judgeRelation(attr);
+            if (rel === 2) {
+                if (attrsReset.includes('entityId')) {
+                    (<SingleNode<ED, keyof ED, Cxt, AD>>this.children[attr]).setValue(this.value && this.value[attr] as any);
+                }
+                else {
+                    this.children[attr].setValue(undefined);
+                }
+            }
+            else if (typeof rel === 'string') {                
+                if (attrsReset.includes(`${attr}Id`)) {
+                    (<SingleNode<ED, keyof ED, Cxt, AD>>this.children[attr]).setValue(this.value && this.value[attr] as any);
+                }
+                else {
+                    this.children[attr].setValue(undefined);
+                }
+            }
+            else if (typeof rel === 'object') {
+                assert(!attrsReset.includes(attr));
+            }
         }
+        unset(this.updateData, attrsReset);
+        // this.action = undefined;
+        if (!attrs) {
+            this.dirty = false;
+        }
+
         this.refreshValue();
     }
 
@@ -1278,7 +1304,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
         const node = parentNode.getChild(path);
         assert(parentNode instanceof ListNode && node instanceof SingleNode);        // 现在应该不可能remove一个list吧，未来对list的处理还要细化
-        if (node.getFreshValue().id) {
+        if (node.getFreshValue()?.id) {
             // 如果有id，说明是删除数据
             await this.getAspectProxy().operate({
                 entity: node.getEntity() as string,
@@ -1286,7 +1312,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                     action: 'remove',
                     data: {},
                     filter: {
-                        id: node.getFreshValue().id,
+                        id: node.getFreshValue()!.id,
                     },
                 }
             }, parent);
@@ -1295,5 +1321,12 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             // 删除子结点
             parentNode.popNode(path);
         }
+    }
+
+    @Action
+    resetUpdateData(path: string) {
+        const node = this.findNode(path);
+
+        node.resetUpdateData();
     }
 }
