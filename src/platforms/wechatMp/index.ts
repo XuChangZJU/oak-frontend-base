@@ -35,16 +35,16 @@ interface OakPageOption<
     entity: T;
     path: string;
     isList: boolean;
-    projection?: Proj | ((features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<Proj>);
+    projection?: Proj | ((features: BasicFeatures<ED, Cxt, AD> & FD, rest: Record<string, any>) => Promise<Proj>);
     parent?: string;
     append?: boolean;
     pagination?: Pagination;
     filters?: Array<{
-        filter: ED[T]['Selection']['filter'] | ((features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<ED[T]['Selection']['filter']>)
+        filter: ED[T]['Selection']['filter'] | ((features: BasicFeatures<ED, Cxt, AD> & FD, rest: Record<string, any>) => Promise<ED[T]['Selection']['filter']>)
         '#name'?: string;
     }>;
     sorters?: Array<{
-        sorter: DeduceSorterItem<ED[T]['Schema']> | ((features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<DeduceSorterItem<ED[T]['Schema']>>)
+        sorter: DeduceSorterItem<ED[T]['Schema']> | ((features: BasicFeatures<ED, Cxt, AD> & FD, rest: Record<string, any>) => Promise<DeduceSorterItem<ED[T]['Schema']>>)
         '#name'?: string;
     }>;
     actions?: ED[T]['Action'][];
@@ -83,6 +83,7 @@ type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
     oakFilters?: Array<NamedFilterItem<ED, T>>;
     oakIsPicker?: boolean;
     oakActions?: Array<ED[T]['Action']>
+    [k: string]: any;
 };
 
 type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {    
@@ -134,6 +135,7 @@ type OakComponentInstanceProperties<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>> = {
         features: BasicFeatures<ED, Cxt, AD> & FD;
+        isReady: boolean;
     };
 
 type OakPageInstanceProperties<
@@ -274,7 +276,7 @@ function createPageOptions<ED extends EntityDict,
             },
 
             async refresh() {
-                if (options.projection) {
+                if (options.projection && this.data.oakFullpath) {
                     await features.runningTree.refresh(this.data.oakFullpath);
                 }
             },
@@ -526,7 +528,7 @@ function createPageOptions<ED extends EntityDict,
 
             async onLoad() {
                 const { oakId, oakEntity, oakPath, oakProjection, oakParent,
-                    oakSorters, oakFilters, oakIsPicker, oakFrom, oakActions } = this.data;
+                    oakSorters, oakFilters, oakIsPicker, oakFrom, oakActions, ...rest } = this.data;
                 assert(!(isList && oakId));
                 const filters: NamedFilterItem<ED, T>[] = [];
                 if (oakFilters?.length > 0) {
@@ -535,26 +537,18 @@ function createPageOptions<ED extends EntityDict,
                     filters.push(...oakFilters2);
                 }
                 else if (options.filters) {
-                    filters.push(...options.filters.map(
-                        (ele) => {
-                            const { filter, "#name": name } = ele;
-                            if (typeof filter === 'function') {
-                                return {
-                                    filter: () => filter(features),
-                                    ['#name']: name,
-                                };
-                            }
-                            return {
-                                filter,
-                                ['#name']: name,
-                            }
-                        }
-                    ));
+                    for (const ele of options.filters) {
+                        const { filter, "#name": name } = ele;
+                        filters.push({
+                            filter: typeof filter === 'function' ? await filter(features, rest): filter,
+                            ['#name']: name,
+                        });
+                    }
                 }
                 let proj = oakProjection && JSON.parse(oakProjection);
                 if (!proj && options.projection) {
                     const { projection } = options;
-                    proj = typeof projection === 'function' ? () => projection(features) : projection;
+                    proj = typeof projection === 'function' ? () => projection(features, rest) : projection;
                 }
                 let sorters: NamedSorterItem<ED, T>[] = [];
                 if (oakSorters?.length > 0) {
@@ -563,21 +557,13 @@ function createPageOptions<ED extends EntityDict,
                     sorters.push(...oakSorters2);
                 }
                 else if (options.sorters) {
-                    sorters.push(...options.sorters.map(
-                        (ele) => {
-                            const { sorter, "#name": name } = ele;
-                            if (typeof sorter === 'function') {
-                                return {
-                                    sorter: () => sorter(features),
-                                    ['#name']: name,
-                                };
-                            }
-                            return {
-                                sorter,
-                                ['#name']: name,
-                            }
-                        }
-                    ));
+                    for (const ele of options.sorters) {
+                        const { sorter, "#name": name } = ele;
+                        sorters.push({
+                            sorter: typeof sorter === 'function' ? await sorter(features, rest): sorter,
+                            ['#name']: name,
+                        });
+                    }
                 }
                 const path2 = oakParent ? `${oakParent}:${oakPath || options.path}` : oakPath || options.path;
                 const node = await features.runningTree.createNode({
@@ -598,12 +584,16 @@ function createPageOptions<ED extends EntityDict,
                     oakFrom,
                     newOakActions: oakActions && JSON.parse(oakActions).length > 0 ? JSON.parse(oakActions) : options.actions || [],
                 });
+                if (this.isReady) {
+                    this.refresh();
+                }
             }
         },
 
         lifetimes: {
             created() {
                 this.features = features;
+                this.isReady = false;
             },
 
             attached() {
@@ -612,6 +602,7 @@ function createPageOptions<ED extends EntityDict,
 
             ready() {
                 this.refresh();
+                this.isReady = true;
             },
 
             detached() {
