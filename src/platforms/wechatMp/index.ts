@@ -1,5 +1,5 @@
 import './polyfill';
-import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation } from "oak-domain/lib/types";
+import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation, DeduceOperation } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
@@ -126,7 +126,9 @@ type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMet
     onLoad: () => Promise<void>;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
     onForeignKeyPicked: (touch: WechatMiniprogram.Touch) => void;
-    execute: (action: ED[T]['Action'], afterExecuted?: () => any) => Promise<void>;
+    execute: (
+        action: ED[T]['Action'],
+        legalExceptions?: Array<new (...args: any) => OakException>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
 };
 
 type OakComponentInstanceProperties<
@@ -149,7 +151,7 @@ async function execute<ED extends EntityDict, Cxt extends Context<ED>, AD extend
     features: BasicFeatures<ED, Cxt, AD> & FD,
     fullpath: string,
     action: string) {
-    await features.runningTree.execute(fullpath, action);
+    return await features.runningTree.execute(fullpath, action);
 }
 
 function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
@@ -425,7 +427,7 @@ function createPageOptions<ED extends EntityDict,
                 return features.runningTree.resetUpdateData(this.data.oakFullpath);
             },
 
-            async execute(action, afterExecuted) {
+            async execute(action, legalExceptions) {
                 if (this.data.oakExecuting) {
                     return;
                 }
@@ -434,7 +436,7 @@ function createPageOptions<ED extends EntityDict,
                     oakFocused: {},
                 });
                 try {
-                    await execute(features, this.data.oakFullpath, action);
+                    const result = await execute(features, this.data.oakFullpath, action);
                     this.setData({ oakExecuting: false });
                     this.setData({
                         oakError: {
@@ -442,7 +444,7 @@ function createPageOptions<ED extends EntityDict,
                             msg: '操作成功',
                         },
                     });
-                    afterExecuted && afterExecuted();
+                    return result;
                 }
                 catch (err) {
                     if (err instanceof OakException) {
@@ -489,13 +491,20 @@ function createPageOptions<ED extends EntityDict,
                                 }
                             }
                             else {
-                                this.setData({
-                                    oakExecuting: false,
-                                    oakError: {
-                                        type: 'warning',
-                                        msg: err.message,
-                                    },
-                                });
+                                if (legalExceptions && legalExceptions.find(
+                                    ele => err instanceof ele
+                                )) {
+                                    
+                                }
+                                else {
+                                    this.setData({
+                                        oakExecuting: false,
+                                        oakError: {
+                                            type: 'warning',
+                                            msg: err.message,
+                                        },
+                                    });
+                                }
                             }
                         }
                     }

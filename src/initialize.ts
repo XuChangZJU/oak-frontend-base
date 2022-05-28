@@ -1,4 +1,4 @@
-import { Aspect, Checker, Trigger, StorageSchema, Context, RowStore } from "oak-domain/lib/types";
+import { Aspect, Checker, Trigger, StorageSchema, Context, RowStore, OakRowInconsistencyException } from "oak-domain/lib/types";
 import { EntityDict, FormCreateData } from 'oak-domain/lib/types/Entity';
 
 import { Feature, subscribe } from './types/Feature';
@@ -48,6 +48,10 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
                 catch(err) {
                     if (!aspectCompeleted) {
                         await runningContext.rollback();                        
+                    }
+                    if (err instanceof OakRowInconsistencyException) {
+                        // 在这里可以同步相应的数据 todo
+                        console.log('todo');
                     }
                     throw err;
                 }

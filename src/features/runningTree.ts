@@ -1289,6 +1289,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
         // 清空缓存
         node.resetUpdateData();
+        return operation;
     }
 
     @Action
