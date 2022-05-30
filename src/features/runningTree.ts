@@ -350,7 +350,11 @@ class ListNode<ED extends EntityDict,
 
     getFreshValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[] {
         const value = this.children.map(
-            ele => ele.getFreshValue()!
+            ele => ele.getFreshValue()
+        ).concat(this.newBorn.map(
+            ele => ele.getFreshValue()
+        )).filter(
+            ele => !!ele
         );
         if (this.isDirty()) {
             const action = this.action || 'update';
@@ -638,6 +642,11 @@ class SingleNode<ED extends EntityDict,
         else {
             if (action === 'remove') {
                 this.freshValue = undefined;
+            }
+            else if (action === 'create') {
+                this.freshValue = assign({
+                    id: generateMockId(),
+                }, this.value, this.updateData);
             }
             else {
                 this.freshValue = assign({}, this.value, this.updateData);
@@ -1072,7 +1081,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
     async getFreshValue(path: string) {
         const node = this.findNode(path);
-        let value = node.getFreshValue();
+        let value = node && node.getFreshValue();
 
         return value instanceof Array ? value : [value];
     }
@@ -1305,8 +1314,8 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
         const node = parentNode.getChild(path);
         assert(parentNode instanceof ListNode && node instanceof SingleNode);        // 现在应该不可能remove一个list吧，未来对list的处理还要细化
-        if (node.getFreshValue()?.id) {
-            // 如果有id，说明是删除数据
+        if (node.getAction() !== 'create') {
+            // 不是增加，说明是删除数据
             await this.getAspectProxy().operate({
                 entity: node.getEntity() as string,
                 operation: {
