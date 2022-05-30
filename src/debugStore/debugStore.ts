@@ -1,4 +1,4 @@
-import { EntityDict, OperationResult, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateParams } from "oak-domain/lib/types";
+import { EntityDict, OperationResult, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateParams, SelectionResult } from "oak-domain/lib/types";
 import { TreeStore } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
@@ -35,7 +35,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
 
         await this.executor.preOperation(entity, selection2, context, params);
         const result = await super.cascadeSelect(entity, selection2 as any, context, params);
-        await this.executor.postOperation(entity, selection2, context, params);
+        await this.executor.postOperation(entity, selection2, context, params, result);
         return result;
     }
 
@@ -83,11 +83,8 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         if (autoCommit) {
             await context.begin();
         }
-        let result;
+        let result: SelectionResult<ED[T]['Schema'], S['data']>;
 
-        const selection2 = Object.assign({
-            action: 'select',
-        }, selection) as ED[T]['Operation'];
         try {
             result = await super.select(entity, selection, context, params);
         }
