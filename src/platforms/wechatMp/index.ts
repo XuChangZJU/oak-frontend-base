@@ -86,7 +86,7 @@ type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
     [k: string]: any;
 };
 
-type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {    
+type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     subscribed?: () => void;
     subscribe: () => void;
     unsubscribe: () => void;
@@ -128,7 +128,7 @@ type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMet
     onForeignKeyPicked: (touch: WechatMiniprogram.Touch) => void;
     execute: (
         action: ED[T]['Action'],
-        legalExceptions?: Array<new (...args: any) => OakException>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
+        legalExceptions?: Array<string>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
 };
 
 type OakComponentInstanceProperties<
@@ -202,7 +202,7 @@ function createPageOptions<ED extends EntityDict,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption>(
-        options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>, 
+        options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
         doSubscribe: ReturnType<typeof init>['subscribe'],
         features: BasicFeatures<ED, Cxt, AD> & FD,
         exceptionRouterDict: Record<string, ExceptionHandler>) {
@@ -366,7 +366,7 @@ function createPageOptions<ED extends EntityDict,
                     }
                     return filter.filter;
                 }
-                return; 
+                return;
             },
 
             addNamedFilter(filter, refresh = false) {
@@ -406,9 +406,9 @@ function createPageOptions<ED extends EntityDict,
                     if (typeof sorter.sorter === 'function') {
                         return sorter.sorter();
                     }
-                    return sorter.sorter; 
-                }  
-                return;             
+                    return sorter.sorter;
+                }
+                return;
             },
 
             addNamedSorter(sorter, refresh = false) {
@@ -464,13 +464,32 @@ function createPageOptions<ED extends EntityDict,
                         else {
                             const { name } = err.constructor;
                             const handler = exceptionRouterDict[name];
-                            if (handler) {
+                            if (legalExceptions && legalExceptions.includes(name)) {
+                                // 如果调用时就知道有异常，直接抛出
+                                this.setData({
+                                    oakExecuting: false,
+                                });
+                                throw err;
+                            }
+                            else if (handler) {
                                 const { hidden, level, handler: fn, router } = handler;
-                                if (fn) {
+                                if (!hidden) {
+                                    this.setData({
+                                        oakExecuting: false,
+                                        oakError: {
+                                            type: level!,
+                                            msg: err.message,
+                                        },
+                                    });
+                                }
+                                else {
                                     this.setData({
                                         oakExecuting: false,
                                     });
+                                }
+                                if (fn) {
                                     fn(err);
+                                    return;
                                 }
                                 else if (router) {
                                     this.setData({
@@ -480,31 +499,15 @@ function createPageOptions<ED extends EntityDict,
                                         url: router,
                                     });
                                 }
-                                else if (!hidden) {
-                                    this.setData({
-                                        oakExecuting: false,
-                                        oakError: {
-                                            type: level!,
-                                            msg: err.message,
-                                        },
-                                    });
-                                }
                             }
                             else {
-                                if (legalExceptions && legalExceptions.find(
-                                    ele => err instanceof ele
-                                )) {
-                                    
-                                }
-                                else {
-                                    this.setData({
-                                        oakExecuting: false,
-                                        oakError: {
-                                            type: 'warning',
-                                            msg: err.message,
-                                        },
-                                    });
-                                }
+                                this.setData({
+                                    oakExecuting: false,
+                                    oakError: {
+                                        type: 'warning',
+                                        msg: err.message,
+                                    },
+                                });
                             }
                         }
                     }
@@ -549,7 +552,7 @@ function createPageOptions<ED extends EntityDict,
                     for (const ele of options.filters) {
                         const { filter, "#name": name } = ele;
                         filters.push({
-                            filter: typeof filter === 'function' ? await filter(features, rest): filter,
+                            filter: typeof filter === 'function' ? await filter(features, rest) : filter,
                             ['#name']: name,
                         });
                     }
@@ -569,7 +572,7 @@ function createPageOptions<ED extends EntityDict,
                     for (const ele of options.sorters) {
                         const { sorter, "#name": name } = ele;
                         sorters.push({
-                            sorter: typeof sorter === 'function' ? await sorter(features, rest): sorter,
+                            sorter: typeof sorter === 'function' ? await sorter(features, rest) : sorter,
                             ['#name']: name,
                         });
                     }
@@ -672,7 +675,7 @@ function createComponentOptions<ED extends EntityDict,
                 })
             }
         },
-        methods: {            
+        methods: {
             subscribe() {
                 if (!this.subscribed) {
                     this.subscribed = doSubscribe(
@@ -728,8 +731,8 @@ function createComponentOptions<ED extends EntityDict,
             },
 
             async onPropsChanged(options) {
-                const path2 = options.hasOwnProperty('path') ? options.path!: this.data.oakPath;
-                const parent2 = options.hasOwnProperty('parent') ? options.parent!: this.data.oakParent;
+                const path2 = options.hasOwnProperty('path') ? options.path! : this.data.oakPath;
+                const parent2 = options.hasOwnProperty('parent') ? options.parent! : this.data.oakParent;
                 if (path2 && parent2) {
                     const oakFullpath2 = `${parent2}.${path2}`;
                     if (oakFullpath2 !== this.data.oakFullpath) {
@@ -745,7 +748,7 @@ function createComponentOptions<ED extends EntityDict,
                 const path2 = path ? `${this.data.oakFullpath}.${path}` : this.data.oakFullpath;
                 features.runningTree.pushNode(path2, options || {});
             },
-            
+
             removeNode(parent, path) {
                 features.runningTree.removeNode(parent, path);
             },
@@ -773,7 +776,7 @@ function createComponentOptions<ED extends EntityDict,
                     }
                     return filter.filter;
                 }
-                return; 
+                return;
             },
 
             addNamedFilter(namedFilter, refresh = false) {
@@ -813,9 +816,9 @@ function createComponentOptions<ED extends EntityDict,
                     if (typeof sorter.sorter === 'function') {
                         return sorter.sorter();
                     }
-                    return sorter.sorter; 
-                }  
-                return;             
+                    return sorter.sorter;
+                }
+                return;
             },
 
             addNamedSorter(namedSorter, refresh = false) {
@@ -829,7 +832,7 @@ function createComponentOptions<ED extends EntityDict,
             removeNamedSorterByName(name, refresh = false) {
                 return features.runningTree.removeNamedSorterByName(this.data.oakFullpath, name, refresh);
             },
-            
+
             resetUpdateData() {
                 return features.runningTree.resetUpdateData(this.data.oakFullpath);
             },
@@ -876,7 +879,7 @@ function createComponentOptions<ED extends EntityDict,
                     });
                     this.reRender();
                 }
-            },            
+            },
 
             async attached() {
                 this.subscribe();
@@ -888,7 +891,7 @@ function createComponentOptions<ED extends EntityDict,
                 // await context.rollback();
             },
         },
-        
+
         pageLifetimes: {
             show() {
                 this.reRender();
