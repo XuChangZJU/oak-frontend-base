@@ -355,7 +355,7 @@ class ListNode<ED extends EntityDict,
             ele => ele.getFreshValue()
         )).filter(
             ele => !!ele
-        );
+        ) as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[];
         if (this.isDirty()) {
             const action = this.action || 'update';
 
