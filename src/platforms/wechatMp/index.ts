@@ -382,9 +382,14 @@ function makeComponentMethods<ED extends EntityDict,
             return features.runningTree.setNamedFilters(this.data.oakFullpath, filters);
         },
 
-        navigateTo(options) {
-            const { url } = options;
-            const url2 = url.includes('?') ? url.concat(`&oakFrom=${this.data.oakFullpath}`) : url.concat(`?oakFrom=${this.data.oakFullpath}`);
+        navigateTo(options) {            
+            const { url, events, fail, complete, success, ...rest } = options;
+            let url2 = url.includes('?') ? url.concat(`&oakFrom=${this.data.oakFullpath}`) : url.concat(`?oakFrom=${this.data.oakFullpath}`);
+
+            for (const param in rest) {
+                const param2 = param as unknown as keyof typeof rest;
+                url2 += `&${param}=${typeof rest[param2] === 'string' ? rest[param2] : JSON.stringify(rest[param2])}`;
+            }
             assign(options, {
                 url: url2
             });
