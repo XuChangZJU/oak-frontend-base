@@ -160,13 +160,6 @@ type OakPageInstanceProperties<
     FD extends Record<string, Feature<ED, Cxt, AD>>
     > = OakComponentInstanceProperties<ED, Cxt, AD, FD>;
 
-async function execute<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
-    features: BasicFeatures<ED, Cxt, AD> & FD,
-    fullpath: string,
-    action: string) {
-    return await features.runningTree.execute(fullpath, action);
-}
-
 function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     features: BasicFeatures<ED, Cxt, AD> & FD,
     attr: string,
@@ -405,7 +398,7 @@ function makeComponentMethods<ED extends EntityDict,
                 oakFocused: {},
             });
             try {
-                const result = await execute(features, this.data.oakFullpath, action);
+                const result = await features.runningTree.execute(this.data.oakFullpath, action);
                 this.setData({ oakExecuting: false });
                 this.setData({
                     oakError: {
@@ -578,6 +571,7 @@ function createPageOptions<ED extends EntityDict,
             },
 
             async onLoad() {
+                console.log('onLoad1111');
                 const { oakId, oakEntity, oakPath, oakProjection, oakParent,
                     oakSorters, oakFilters, oakIsPicker, oakFrom, oakActions, ...rest } = this.data;
                 assert(!(isList && oakId));

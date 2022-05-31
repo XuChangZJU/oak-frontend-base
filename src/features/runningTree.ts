@@ -451,6 +451,7 @@ class ListNode<ED extends EntityDict,
         this.children.forEach(
             (ele) => ele.resetUpdateData()
         );
+        this.newBorn = [];
     }
 
     pushNode(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>) {
@@ -765,6 +766,7 @@ class SingleNode<ED extends EntityDict,
             else if (typeof rel === 'object') {
                 assert(!attrsReset.includes(attr));
             }
+            this.children[attr].resetUpdateData();
         }
         unset(this.updateData, attrsReset);
         // this.action = undefined;
@@ -1086,7 +1088,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
     isDirty(path: string) {
         const node = this.findNode(path);
-        return node.isDirty();
+        return node ? node.isDirty() : false;
     }
 
     private async setUpdateDataInner(path: string, attr: string, value: any) {
