@@ -47,16 +47,28 @@ interface OakPageOption<
     entity: T;
     path: string;
     isList: IsList;
-    projection?: Proj | ((features: BasicFeatures<ED, Cxt, AD> & FD, rest: Record<string, any>) => Promise<Proj>);
+    projection?: Proj | ((options: {
+        features: BasicFeatures<ED, Cxt, AD> & FD;
+        rest: Record<string, any>;
+        onLoadOptions: Record<string, string | undefined>;
+    }) => Promise<Proj>);
     parent?: string;
     append?: boolean;
     pagination?: Pagination;
     filters?: Array<{
-        filter: ED[T]['Selection']['filter'] | ((features: BasicFeatures<ED, Cxt, AD> & FD, rest: Record<string, any>) => Promise<ED[T]['Selection']['filter']>)
+        filter: ED[T]['Selection']['filter'] | ((options: {
+            features: BasicFeatures<ED, Cxt, AD> & FD;
+            rest: Record<string, any>;
+            onLoadOptions: Record<string, string | undefined>;
+        }) => Promise<ED[T]['Selection']['filter']>)
         '#name'?: string;
     }>;
     sorters?: Array<{
-        sorter: DeduceSorterItem<ED[T]['Schema']> | ((features: BasicFeatures<ED, Cxt, AD> & FD, rest: Record<string, any>) => Promise<DeduceSorterItem<ED[T]['Schema']>>)
+        sorter: DeduceSorterItem<ED[T]['Schema']> | ((options: {
+            features: BasicFeatures<ED, Cxt, AD> & FD;
+            rest: Record<string, any>;
+            onLoadOptions: Record<string, string | undefined>;
+        }) => Promise<DeduceSorterItem<ED[T]['Schema']>>)
         '#name'?: string;
     }>;
     actions?: ED[T]['Action'][];
@@ -139,7 +151,7 @@ type OakComponentOnlyMethods = {
 type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
-    onLoad: () => Promise<void>;
+    onLoad: (options: Record<string, string | undefined>) => Promise<void>;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
     onForeignKeyPicked: (touch: WechatMiniprogram.Touch) => void;
 };
@@ -570,7 +582,7 @@ function createPageOptions<ED extends EntityDict,
                 this.setForeignKey(id);
             },
 
-            async onLoad() {
+            async onLoad(options2) {
                 console.log('onLoad1111');
                 const { oakId, oakEntity, oakPath, oakProjection, oakParent,
                     oakSorters, oakFilters, oakIsPicker, oakFrom, oakActions, ...rest } = this.data;
@@ -585,7 +597,11 @@ function createPageOptions<ED extends EntityDict,
                     for (const ele of options.filters) {
                         const { filter, "#name": name } = ele;
                         filters.push({
-                            filter: typeof filter === 'function' ? await filter(features, rest) : filter,
+                            filter: typeof filter === 'function' ? await filter({
+                                features,
+                                rest,
+                                onLoadOptions: options2,
+                            }) : filter,
                             ['#name']: name,
                         });
                     }
@@ -593,7 +609,11 @@ function createPageOptions<ED extends EntityDict,
                 let proj = oakProjection && JSON.parse(oakProjection);
                 if (!proj && options.projection) {
                     const { projection } = options;
-                    proj = typeof projection === 'function' ? () => projection(features, rest) : projection;
+                    proj = typeof projection === 'function' ? () => projection({
+                        features,
+                        rest,
+                        onLoadOptions: options2,
+                    }) : projection;
                 }
                 let sorters: NamedSorterItem<ED, T>[] = [];
                 if (oakSorters?.length > 0) {
@@ -605,7 +625,11 @@ function createPageOptions<ED extends EntityDict,
                     for (const ele of options.sorters) {
                         const { sorter, "#name": name } = ele;
                         sorters.push({
-                            sorter: typeof sorter === 'function' ? await sorter(features, rest) : sorter,
+                            sorter: typeof sorter === 'function' ? await sorter({
+                                features,
+                                rest,
+                                onLoadOptions: options2,
+                            }) : sorter,
                             ['#name']: name,
                         });
                     }
