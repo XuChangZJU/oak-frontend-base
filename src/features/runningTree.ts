@@ -348,14 +348,12 @@ class ListNode<ED extends EntityDict,
         }
     }
 
-    getFreshValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[] {
+    getFreshValue() {
         const value = this.children.map(
             ele => ele.getFreshValue()
         ).concat(this.newBorn.map(
             ele => ele.getFreshValue()
-        )).filter(
-            ele => !!ele
-        );
+        ));
         if (this.isDirty()) {
             const action = this.action || 'update';
 
@@ -684,7 +682,7 @@ class SingleNode<ED extends EntityDict,
         this.refreshValue();
     }
 
-    getFreshValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined {
+    getFreshValue() {
         const freshValue = this.freshValue && cloneDeep(this.freshValue) as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
         if (freshValue) {
             for (const k in this.children) {
@@ -1079,11 +1077,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
-    async getFreshValue(path: string) {
+    getFreshValue(path: string) {
         const node = this.findNode(path);
         let value = node && node.getFreshValue();
 
-        return value instanceof Array ? value : [value];
+        return value;
     }
 
     isDirty(path: string) {

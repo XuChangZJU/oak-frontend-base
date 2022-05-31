@@ -1,5 +1,5 @@
 import './polyfill';
-import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation, DeduceOperation } from "oak-domain/lib/types";
+import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation, DeduceOperation, SelectRowShape } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
@@ -10,17 +10,28 @@ import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
 import { CreateNodeOptions } from '../../features/node';
 
+type RowSelected<
+    ED extends EntityDict,
+    T extends keyof ED,
+    Proj extends ED[T]['Selection']['data'] = Required<ED[T]['Selection']['data']>
+    > = SelectRowShape<ED[T]['Schema'], Proj> | undefined;
+
 type OakComponentOption<
     ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
-    FormedData extends WechatMiniprogram.Component.DataOption
+    FormedData extends WechatMiniprogram.Component.DataOption,
+    IsList extends boolean
     > = {
         entity: T;
-        formData: ($rows: SelectionResult<ED[T]['Schema'], Required<ED[T]['Selection']['data']>>['result'],
-            features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<FormedData>;
+        isList: IsList;
+        formData: (options: {
+            data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
+            features: BasicFeatures<ED, Cxt, AD> & FD;
+            params?: Record<string, any>;
+        }) => Promise<FormedData>;
     };
 
 interface OakPageOption<
@@ -30,11 +41,12 @@ interface OakPageOption<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
     Proj extends ED[T]['Selection']['data'],
-    FormedData extends WechatMiniprogram.Component.DataOption
+    FormedData extends WechatMiniprogram.Component.DataOption,
+    IsList extends boolean,
     > {
     entity: T;
     path: string;
-    isList: boolean;
+    isList: IsList;
     projection?: Proj | ((features: BasicFeatures<ED, Cxt, AD> & FD, rest: Record<string, any>) => Promise<Proj>);
     parent?: string;
     append?: boolean;
@@ -48,8 +60,11 @@ interface OakPageOption<
         '#name'?: string;
     }>;
     actions?: ED[T]['Action'][];
-    formData: ($rows: SelectionResult<ED[T]['Schema'], Proj>['result'],
-        features: BasicFeatures<ED, Cxt, AD> & FD) => Promise<FormedData>
+    formData: (options: {
+        data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
+        features: BasicFeatures<ED, Cxt, AD> & FD;
+        params?: Record<string, any>;
+    }) => Promise<FormedData>
 };
 
 type OakComponentProperties = {
@@ -109,6 +124,7 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     removeNamedSorterByName: (name: string, refresh?: boolean) => void;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
     resetUpdateData: () => void;
+    execute: (action: ED[T]['Action'], legalExceptions?: Array<string>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
 };
 
 type ComponentOnPropsChangeOption = {
@@ -126,9 +142,6 @@ type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMet
     onLoad: () => Promise<void>;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
     onForeignKeyPicked: (touch: WechatMiniprogram.Touch) => void;
-    execute: (
-        action: ED[T]['Action'],
-        legalExceptions?: Array<string>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
 };
 
 type OakComponentInstanceProperties<
@@ -179,6 +192,304 @@ function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends R
     });
 }
 
+function makeComponentMethods<ED extends EntityDict,
+    T extends keyof ED, Cxt extends Context<ED>,
+    AD extends Record<string, Aspect<ED, Cxt>>,
+    FD extends Record<string, Feature<ED, Cxt, AD>>,
+    FormedData extends WechatMiniprogram.Component.DataOption,
+    IsList extends boolean>(
+        features: BasicFeatures<ED, Cxt, AD> & FD,
+        doSubscribe: ReturnType<typeof init>['subscribe'],
+        formData: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList>['formData'],
+        exceptionRouterDict: Record<string, ExceptionHandler>
+    ): OakComponentMethods<ED, T> & ThisType<
+        WechatMiniprogram.Component.Instance<
+            OakComponentData,
+            OakPageProperties,
+            OakPageMethods<ED, T>,
+            OakComponentInstanceProperties<ED, Cxt, AD, FD>,
+            false
+        >
+    > {
+    return {
+        subscribe() {
+            if (!this.subscribed) {
+                this.subscribed = doSubscribe(
+                    () => this.reRender()
+                );
+            }
+        },
+
+        unsubscribe() {
+            if (this.subscribed) {
+                this.subscribed();
+                this.subscribed = undefined;
+            }
+        },
+
+        async reRender(extra) {
+            if (this.data.oakFullpath) {
+                const rows = await features.runningTree.getFreshValue(this.data.oakFullpath);
+                const data = await formData.call(this, {
+                    data: rows as any,
+                    features,
+                    params: this.data,
+                });
+                for (const k in data) {
+                    if (data[k] === undefined) {
+                        assign(data, {
+                            [k]: null,
+                        })
+                    }
+                }
+                const dirty = features.runningTree.isDirty(this.data.oakFullpath);
+                assign(data, { oakDirty: dirty });
+
+                if (this.data.newOakActions) {
+                    const oakLegalActions = [];
+                    for (const action of this.data.newOakActions) {
+                        try {
+                            await features.runningTree.testAction(this.data.oakFullpath, action);
+                            oakLegalActions.push(action);
+                        }
+                        catch (e) {
+                            if (e instanceof OakInputIllegalException) {
+                                oakLegalActions.push(action);
+                            }
+                        }
+                    }
+                    assign(data, {
+                        oakLegalActions,
+                    });
+                }
+
+                if (extra) {
+                    assign(data, extra);
+                }
+
+                this.setData(data);
+            }
+        },
+
+        pushNode(path, options) {
+            const path2 = path ? `${this.data.oakFullpath}.${path}` : this.data.oakFullpath;
+            features.runningTree.pushNode(path2, options || {});
+        },
+
+        removeNode(parent, path) {
+            features.runningTree.removeNode(parent, path);
+        },
+
+        async getFilters() {
+            const namedFilters = features.runningTree.getNamedFilters(this.data.oakFullpath);
+            const filters = await Promise.all(
+                namedFilters.map(
+                    ({ filter }) => {
+                        if (typeof filter === 'function') {
+                            return filter();
+                        }
+                        return filter;
+                    }
+                )
+            );
+            return filters;
+        },
+
+        async getFilterByName(name) {
+            const filter = features.runningTree.getNamedFilterByName(this.data.oakFullpath, name);
+            if (filter?.filter) {
+                if (typeof filter.filter === 'function') {
+                    return filter.filter();
+                }
+                return filter.filter;
+            }
+            return;
+        },
+
+        addNamedFilter(namedFilter, refresh = false) {
+            return features.runningTree.addNamedFilter(this.data.oakFullpath, namedFilter, refresh);
+        },
+
+        removeNamedFilter(namedFilter, refresh = false) {
+            return features.runningTree.removeNamedFilter(this.data.oakFullpath, namedFilter, refresh);
+        },
+
+        removeNamedFilterByName(name, refresh = false) {
+            return features.runningTree.removeNamedFilterByName(this.data.oakFullpath, name, refresh);
+        },
+
+        setNamedSorters(namedSorters) {
+            return features.runningTree.setNamedSorters(this.data.oakFullpath, namedSorters);
+        },
+
+        async getSorters() {
+            const namedSorters = features.runningTree.getNamedSorters(this.data.oakFullpath);
+            const sorters = await Promise.all(
+                namedSorters.map(
+                    ({ sorter }) => {
+                        if (typeof sorter === 'function') {
+                            return sorter();
+                        }
+                        return sorter;
+                    }
+                )
+            );
+            return sorters;
+        },
+
+        async getSorterByName(name) {
+            const sorter = features.runningTree.getNamedSorterByName(this.data.oakFullpath, name);
+            if (sorter?.sorter) {
+                if (typeof sorter.sorter === 'function') {
+                    return sorter.sorter();
+                }
+                return sorter.sorter;
+            }
+            return;
+        },
+
+        addNamedSorter(namedSorter, refresh = false) {
+            return features.runningTree.addNamedSorter(this.data.oakFullpath, namedSorter, refresh);
+        },
+
+        removeNamedSorter(namedSorter, refresh = false) {
+            return features.runningTree.removeNamedSorter(this.data.oakFullpath, namedSorter, refresh);
+        },
+
+        removeNamedSorterByName(name, refresh = false) {
+            return features.runningTree.removeNamedSorterByName(this.data.oakFullpath, name, refresh);
+        },
+
+        resetUpdateData() {
+            return features.runningTree.resetUpdateData(this.data.oakFullpath);
+        },
+
+        setUpdateData(attr, value) {
+            if (this.data.oakExecuting) {
+                return;
+            }
+            return features.runningTree.setUpdateData(this.data.oakFullpath, attr, value);
+        },
+
+        callPicker(attr: string, params: Record<string, any>) {
+            if (this.data.oakExecuting) {
+                return;
+            }
+            return callPicker(features, attr, params, this.data.oakEntity, this.data.oakFullpath);
+        },
+
+        setFilters(filters) {
+            return features.runningTree.setNamedFilters(this.data.oakFullpath, filters);
+        },
+
+        navigateTo(options) {
+            const { url } = options;
+            const url2 = url.includes('?') ? url.concat(`&oakFrom=${this.data.oakFullpath}`) : url.concat(`?oakFrom=${this.data.oakFullpath}`);
+            assign(options, {
+                url: url2
+            });
+            return wx.navigateTo(options);
+        },
+
+        async execute(action, legalExceptions) {
+            if (this.data.oakExecuting) {
+                return;
+            }
+            this.setData({
+                oakExecuting: true,
+                oakFocused: {},
+            });
+            try {
+                const result = await execute(features, this.data.oakFullpath, action);
+                this.setData({ oakExecuting: false });
+                this.setData({
+                    oakError: {
+                        type: 'success',
+                        msg: '操作成功',
+                    },
+                });
+                return result;
+            }
+            catch (err) {
+                if (err instanceof OakException) {
+                    if (err instanceof OakInputIllegalException) {
+                        const attr = err.getAttributes()[0];
+                        this.setData({
+                            oakFocused: {
+                                [attr]: true,
+                            },
+                            oakExecuting: false,
+                            oakError: {
+                                type: 'warning',
+                                msg: err.message,
+                            },
+                        });
+                    }
+                    else {
+                        const { name } = err.constructor;
+                        const handler = exceptionRouterDict[name];
+                        if (legalExceptions && legalExceptions.includes(name)) {
+                            // 如果调用时就知道有异常，直接抛出
+                            this.setData({
+                                oakExecuting: false,
+                            });
+                            throw err;
+                        }
+                        else if (handler) {
+                            const { hidden, level, handler: fn, router } = handler;
+                            if (!hidden) {
+                                this.setData({
+                                    oakExecuting: false,
+                                    oakError: {
+                                        type: level!,
+                                        msg: err.message,
+                                    },
+                                });
+                            }
+                            else {
+                                this.setData({
+                                    oakExecuting: false,
+                                });
+                            }
+                            if (fn) {
+                                fn(err);
+                                return;
+                            }
+                            else if (router) {
+                                this.setData({
+                                    oakExecuting: false,
+                                });
+                                this.navigateTo({
+                                    url: router,
+                                });
+                            }
+                        }
+                        else {
+                            this.setData({
+                                oakExecuting: false,
+                                oakError: {
+                                    type: 'warning',
+                                    msg: err.message,
+                                },
+                            });
+                        }
+                    }
+                }
+                else {
+                    this.setData({
+                        oakExecuting: false,
+                        oakError: {
+                            type: 'error',
+                            msg: (err as Error).message,
+                        },
+                    });
+                }
+                throw err;
+            }
+        },
+    }
+}
+
 type OakPageData = {
     oakFullpath: string;
     oakExecuting: boolean;
@@ -192,7 +503,7 @@ type OakPageData = {
 };
 
 type OakComponentData = {
-    entity: keyof EntityDict;
+    // entity: keyof EntityDict;
 } & OakPageData;
 
 function createPageOptions<ED extends EntityDict,
@@ -201,8 +512,9 @@ function createPageOptions<ED extends EntityDict,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
     Proj extends ED[T]['Selection']['data'],
-    FormedData extends WechatMiniprogram.Component.DataOption>(
-        options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
+    FormedData extends WechatMiniprogram.Component.DataOption,
+    IsList extends boolean>(
+        options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList>,
         doSubscribe: ReturnType<typeof init>['subscribe'],
         features: BasicFeatures<ED, Cxt, AD> & FD,
         exceptionRouterDict: Record<string, ExceptionHandler>) {
@@ -228,55 +540,6 @@ function createPageOptions<ED extends EntityDict,
             newOakActions: Array,
         },
         methods: {
-            async reRender(extra) {
-                if (this.data.oakFullpath) {
-                    const $rows = await features.runningTree.getFreshValue(this.data.oakFullpath);
-                    const data = await formData.call(this, $rows as any, features);
-                    for (const k in data) {
-                        if (data[k] === undefined) {
-                            assign(data, {
-                                [k]: null,
-                            })
-                        }
-                    }
-                    const dirty = features.runningTree.isDirty(this.data.oakFullpath);
-                    assign(data, { oakDirty: dirty });
-
-                    if (this.data.newOakActions) {
-                        const oakLegalActions = [];
-                        for (const action of this.data.newOakActions) {
-                            try {
-                                await features.runningTree.testAction(this.data.oakFullpath, action);
-                                oakLegalActions.push(action);
-                            }
-                            catch (e) {
-                                if (e instanceof OakInputIllegalException) {
-                                    oakLegalActions.push(action);
-                                }
-                            }
-                        }
-                        assign(data, {
-                            oakLegalActions,
-                        });
-                    }
-
-                    if (extra) {
-                        assign(data, extra);
-                    }
-
-                    this.setData(data);
-                }
-            },
-
-            pushNode(path, options) {
-                const path2 = path ? `${this.data.oakFullpath}.${path}` : this.data.oakFullpath;
-                features.runningTree.pushNode(path2, options || {});
-            },
-
-            removeNode(parent, path) {
-                features.runningTree.removeNode(parent, path);
-            },
-
             async refresh() {
                 if (options.projection && this.data.oakFullpath) {
                     await features.runningTree.refresh(this.data.oakFullpath);
@@ -284,39 +547,9 @@ function createPageOptions<ED extends EntityDict,
             },
 
             async onPullDownRefresh() {
-                console.log('onPullDownRefresh');
                 if (options.projection) {
                     await this.refresh();
                 }
-            },
-
-            subscribe() {
-                if (!this.subscribed) {
-                    this.subscribed = doSubscribe(
-                        () => this.reRender()
-                    );
-                }
-            },
-
-            unsubscribe() {
-                if (this.subscribed) {
-                    this.subscribed();
-                    this.subscribed = undefined;
-                }
-            },
-
-            setUpdateData(attr, value) {
-                if (this.data.oakExecuting) {
-                    return;
-                }
-                return features.runningTree.setUpdateData(this.data.oakFullpath, attr, value);
-            },
-
-            callPicker(attr: string, params: Record<string, any>) {
-                if (this.data.oakExecuting) {
-                    return;
-                }
-                return callPicker(features, attr, params, this.data.oakEntity, this.data.oakFullpath);
             },
 
             async setForeignKey(id: string, goBackDelta: number = -1) {
@@ -337,205 +570,6 @@ function createPageOptions<ED extends EntityDict,
             onForeignKeyPicked(input) {
                 const { id } = input.currentTarget.dataset;
                 this.setForeignKey(id);
-            },
-
-            setFilters(filters) {
-                return features.runningTree.setNamedFilters(this.data.oakFullpath, filters);
-            },
-
-            async getFilters() {
-                const namedFilters = features.runningTree.getNamedFilters(this.data.oakFullpath);
-                const filters = await Promise.all(
-                    namedFilters.map(
-                        ({ filter }) => {
-                            if (typeof filter === 'function') {
-                                return filter();
-                            }
-                            return filter;
-                        }
-                    )
-                );
-                return filters;
-            },
-
-            async getFilterByName(name) {
-                const filter = features.runningTree.getNamedFilterByName(this.data.oakFullpath, name);
-                if (filter?.filter) {
-                    if (typeof filter.filter === 'function') {
-                        return filter.filter();
-                    }
-                    return filter.filter;
-                }
-                return;
-            },
-
-            addNamedFilter(filter, refresh = false) {
-                return features.runningTree.addNamedFilter(this.data.oakFullpath, filter, refresh);
-            },
-
-            removeNamedFilter(filter, refresh = false) {
-                return features.runningTree.removeNamedFilter(this.data.oakFullpath, filter, refresh);
-            },
-
-            removeNamedFilterByName(name, refresh = false) {
-                return features.runningTree.removeNamedFilterByName(this.data.oakFullpath, name, refresh);
-            },
-
-            setNamedSorters(sorters) {
-                return features.runningTree.setNamedSorters(this.data.oakFullpath, sorters);
-            },
-
-            async getSorters() {
-                const namedSorters = features.runningTree.getNamedSorters(this.data.oakFullpath);
-                const sorters = await Promise.all(
-                    namedSorters.map(
-                        ({ sorter }) => {
-                            if (typeof sorter === 'function') {
-                                return sorter();
-                            }
-                            return sorter;
-                        }
-                    )
-                );
-                return sorters;
-            },
-
-            async getSorterByName(name) {
-                const sorter = await features.runningTree.getNamedSorterByName(this.data.oakFullpath, name);
-                if (sorter?.sorter) {
-                    if (typeof sorter.sorter === 'function') {
-                        return sorter.sorter();
-                    }
-                    return sorter.sorter;
-                }
-                return;
-            },
-
-            addNamedSorter(sorter, refresh = false) {
-                return features.runningTree.addNamedSorter(this.data.oakFullpath, sorter, refresh);
-            },
-
-            removeNamedSorter(sorter, refresh = false) {
-                return features.runningTree.removeNamedSorter(this.data.oakFullpath, sorter, refresh);
-            },
-
-            removeNamedSorterByName(name, refresh = false) {
-                return features.runningTree.removeNamedSorterByName(this.data.oakFullpath, name, refresh);
-            },
-
-            resetUpdateData() {
-                return features.runningTree.resetUpdateData(this.data.oakFullpath);
-            },
-
-            async execute(action, legalExceptions) {
-                if (this.data.oakExecuting) {
-                    return;
-                }
-                this.setData({
-                    oakExecuting: true,
-                    oakFocused: {},
-                });
-                try {
-                    const result = await execute(features, this.data.oakFullpath, action);
-                    this.setData({ oakExecuting: false });
-                    this.setData({
-                        oakError: {
-                            type: 'success',
-                            msg: '操作成功',
-                        },
-                    });
-                    return result;
-                }
-                catch (err) {
-                    if (err instanceof OakException) {
-                        if (err instanceof OakInputIllegalException) {
-                            const attr = err.getAttributes()[0];
-                            this.setData({
-                                oakFocused: {
-                                    [attr]: true,
-                                },
-                                oakExecuting: false,
-                                oakError: {
-                                    type: 'warning',
-                                    msg: err.message,
-                                },
-                            });
-                        }
-                        else {
-                            const { name } = err.constructor;
-                            const handler = exceptionRouterDict[name];
-                            if (legalExceptions && legalExceptions.includes(name)) {
-                                // 如果调用时就知道有异常，直接抛出
-                                this.setData({
-                                    oakExecuting: false,
-                                });
-                                throw err;
-                            }
-                            else if (handler) {
-                                const { hidden, level, handler: fn, router } = handler;
-                                if (!hidden) {
-                                    this.setData({
-                                        oakExecuting: false,
-                                        oakError: {
-                                            type: level!,
-                                            msg: err.message,
-                                        },
-                                    });
-                                }
-                                else {
-                                    this.setData({
-                                        oakExecuting: false,
-                                    });
-                                }
-                                if (fn) {
-                                    fn(err);
-                                    return;
-                                }
-                                else if (router) {
-                                    this.setData({
-                                        oakExecuting: false,
-                                    });
-                                    this.navigateTo({
-                                        url: router,
-                                    });
-                                }
-                            }
-                            else {
-                                this.setData({
-                                    oakExecuting: false,
-                                    oakError: {
-                                        type: 'warning',
-                                        msg: err.message,
-                                    },
-                                });
-                            }
-                        }
-                    }
-                    else {
-                        this.setData({
-                            oakExecuting: false,
-                            oakError: {
-                                type: 'error',
-                                msg: (err as Error).message,
-                            },
-                        });
-                    }
-                    throw err;
-                }
-            },
-
-            navigateTo(options) {
-                const { url, events, fail, complete, success, ...rest } = options;
-                let url2 = url.includes('?') ? url.concat(`&oakFrom=${this.data.oakFullpath}`) : url.concat(`?oakFrom=${this.data.oakFullpath}`);
-
-                for (const param in rest) {
-                    const param2 = param as unknown as keyof typeof rest;
-                    url2 += `&${param}=${typeof rest[param2] === 'string' ? rest[param2] : JSON.stringify(rest[param2])}`;
-                }
-                assign(options, {
-                    url: url2
-                });
-                return wx.navigateTo(options);
             },
 
             async onLoad() {
@@ -599,7 +633,9 @@ function createPageOptions<ED extends EntityDict,
                 if (this.isReady) {
                     this.refresh();
                 }
-            }
+            },
+
+            ...makeComponentMethods(features, doSubscribe, formData as any, exceptionRouterDict),
         },
 
         lifetimes: {
@@ -644,9 +680,9 @@ function createComponentOptions<ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
-    Proj extends ED[T]['Selection']['data'],
+    IsList extends boolean,
     FormedData extends WechatMiniprogram.Component.DataOption>(
-        options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData>,
+        options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList>,
         features: BasicFeatures<ED, Cxt, AD> & FD,
         doSubscribe: ReturnType<typeof init>['subscribe'],
         exceptionRouterDict: Record<string, ExceptionHandler>) {
@@ -676,60 +712,6 @@ function createComponentOptions<ED extends EntityDict,
             }
         },
         methods: {
-            subscribe() {
-                if (!this.subscribed) {
-                    this.subscribed = doSubscribe(
-                        () => this.reRender()
-                    );
-                }
-            },
-
-            unsubscribe() {
-                if (this.subscribed) {
-                    this.subscribed();
-                    this.subscribed = undefined;
-                }
-            },
-
-            async reRender(extra) {
-                if (this.data.oakFullpath) {
-                    const $rows = await features.runningTree.getFreshValue(this.data.oakFullpath);
-                    const data = await formData.call(this, $rows as any, features);
-                    for (const k in data) {
-                        if (data[k] === undefined) {
-                            assign(data, {
-                                [k]: null,
-                            })
-                        }
-                    }
-                    const dirty = features.runningTree.isDirty(this.data.oakFullpath);
-                    assign(data, { oakDirty: dirty });
-
-                    /* if (this.data.newOakActions) {
-                        const oakLegalActions = [];
-                        for (const action of this.data.newOakActions) {
-                            try {
-                                await features.runningTree.testAction(this.data.oakFullpath, action);
-                                oakLegalActions.push(action);
-                            }
-                            catch (e) {
-                                if (e instanceof OakInputIllegalException) {
-                                    oakLegalActions.push(action);
-                                }
-                            }
-                        }
-                        assign(data, {
-                            oakLegalActions,
-                        });
-                    } */
-
-                    if (extra) {
-                        assign(data, extra);
-                    }
-                    this.setData(data);
-                }
-            },
-
             async onPropsChanged(options) {
                 const path2 = options.hasOwnProperty('path') ? options.path! : this.data.oakPath;
                 const parent2 = options.hasOwnProperty('parent') ? options.parent! : this.data.oakParent;
@@ -743,126 +725,7 @@ function createComponentOptions<ED extends EntityDict,
                     }
                 }
             },
-
-            pushNode(path, options) {
-                const path2 = path ? `${this.data.oakFullpath}.${path}` : this.data.oakFullpath;
-                features.runningTree.pushNode(path2, options || {});
-            },
-
-            removeNode(parent, path) {
-                features.runningTree.removeNode(parent, path);
-            },
-
-            async getFilters() {
-                const namedFilters = features.runningTree.getNamedFilters(this.data.oakFullpath);
-                const filters = await Promise.all(
-                    namedFilters.map(
-                        ({ filter }) => {
-                            if (typeof filter === 'function') {
-                                return filter();
-                            }
-                            return filter;
-                        }
-                    )
-                );
-                return filters;
-            },
-
-            async getFilterByName(name) {
-                const filter = features.runningTree.getNamedFilterByName(this.data.oakFullpath, name);
-                if (filter?.filter) {
-                    if (typeof filter.filter === 'function') {
-                        return filter.filter();
-                    }
-                    return filter.filter;
-                }
-                return;
-            },
-
-            addNamedFilter(namedFilter, refresh = false) {
-                return features.runningTree.addNamedFilter(this.data.oakFullpath, namedFilter, refresh);
-            },
-
-            removeNamedFilter(namedFilter, refresh = false) {
-                return features.runningTree.removeNamedFilter(this.data.oakFullpath, namedFilter, refresh);
-            },
-
-            removeNamedFilterByName(name, refresh = false) {
-                return features.runningTree.removeNamedFilterByName(this.data.oakFullpath, name, refresh);
-            },
-
-            setNamedSorters(namedSorters) {
-                return features.runningTree.setNamedSorters(this.data.oakFullpath, namedSorters);
-            },
-
-            async getSorters() {
-                const namedSorters = features.runningTree.getNamedSorters(this.data.oakFullpath);
-                const sorters = await Promise.all(
-                    namedSorters.map(
-                        ({ sorter }) => {
-                            if (typeof sorter === 'function') {
-                                return sorter();
-                            }
-                            return sorter;
-                        }
-                    )
-                );
-                return sorters;
-            },
-
-            async getSorterByName(name) {
-                const sorter = features.runningTree.getNamedSorterByName(this.data.oakFullpath, name);
-                if (sorter?.sorter) {
-                    if (typeof sorter.sorter === 'function') {
-                        return sorter.sorter();
-                    }
-                    return sorter.sorter;
-                }
-                return;
-            },
-
-            addNamedSorter(namedSorter, refresh = false) {
-                return features.runningTree.addNamedSorter(this.data.oakFullpath, namedSorter, refresh);
-            },
-
-            removeNamedSorter(namedSorter, refresh = false) {
-                return features.runningTree.removeNamedSorter(this.data.oakFullpath, namedSorter, refresh);
-            },
-
-            removeNamedSorterByName(name, refresh = false) {
-                return features.runningTree.removeNamedSorterByName(this.data.oakFullpath, name, refresh);
-            },
-
-            resetUpdateData() {
-                return features.runningTree.resetUpdateData(this.data.oakFullpath);
-            },
-
-            setUpdateData(attr, value) {
-                if (this.data.oakExecuting) {
-                    return;
-                }
-                return features.runningTree.setUpdateData(this.data.oakFullpath, attr, value);
-            },
-
-            callPicker(attr: string, params: Record<string, any>) {
-                if (this.data.oakExecuting) {
-                    return;
-                }
-                return callPicker(features, attr, params, this.data.oakEntity, this.data.oakFullpath);
-            },
-
-            setFilters(filters) {
-                return features.runningTree.setNamedFilters(this.data.oakFullpath, filters);
-            },
-
-            navigateTo(options) {
-                const { url } = options;
-                const url2 = url.includes('?') ? url.concat(`&oakFrom=${this.data.oakFullpath}`) : url.concat(`?oakFrom=${this.data.oakFullpath}`);
-                assign(options, {
-                    url: url2
-                });
-                return wx.navigateTo(options);
-            }
+            ...makeComponentMethods(features, doSubscribe, formData, exceptionRouterDict)
         },
 
         lifetimes: {
@@ -1028,10 +891,11 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             D extends WechatMiniprogram.Component.DataOption,
             P extends WechatMiniprogram.Component.PropertyOption,
             M extends WechatMiniprogram.Component.MethodOption,
+            IsList extends boolean,
             Proj extends ED[T]['Selection']['data'],
             IS extends WechatMiniprogram.IAnyObject = {},
             FormedData extends WechatMiniprogram.Component.DataOption = {}>(
-                options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData>,
+                options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList>,
                 componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS & OakPageInstanceProperties<ED, Cxt, AD, FD>, true> = {}) => {
             const oakOptions = createPageOptions(options, subscribe, features, exceptionRouterDict);
             const { properties, pageLifetimes, lifetimes, methods, data, observers } = oakOptions;
@@ -1066,10 +930,10 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             D extends WechatMiniprogram.Component.DataOption,
             P extends WechatMiniprogram.Component.PropertyOption,
             M extends WechatMiniprogram.Component.MethodOption,
-            Proj extends ED[T]['Selection']['data'],
+            IsList extends boolean,
             IS extends WechatMiniprogram.IAnyObject = {},
             FormedData extends WechatMiniprogram.Component.DataOption = {}>(
-                options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData>,
+                options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList>,
                 componentOptions: OakWechatMpOptions<
                     D,
                     P,
@@ -1146,10 +1010,11 @@ export type MakeOakPage<
         P extends WechatMiniprogram.Component.PropertyOption,
         M extends WechatMiniprogram.Component.MethodOption,
         Proj extends ED[T]['Selection']['data'],
+        IsList extends boolean,
         IS extends WechatMiniprogram.IAnyObject = {},
         FormedData extends WechatMiniprogram.Component.DataOption = {}
         > (
-        options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData> &
+        options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList> &
             ThisType<
                 WechatMiniprogram.Component.Instance<
                     D & OakPageData,
@@ -1182,10 +1047,11 @@ export type MakeOakComponent<
         D extends WechatMiniprogram.Component.DataOption,
         P extends WechatMiniprogram.Component.PropertyOption,
         M extends WechatMiniprogram.Component.MethodOption,
+        IsList extends boolean,
         IS extends WechatMiniprogram.IAnyObject = {},
         FormedData extends WechatMiniprogram.Component.DataOption = {}
         >(
-        options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData> &
+        options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList> &
             ThisType<
                 WechatMiniprogram.Component.Instance<
                     D & OakPageData,
