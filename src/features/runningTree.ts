@@ -374,7 +374,7 @@ class ListNode<ED extends EntityDict,
         return this.action || 'update';
     }
 
-    async composeOperation(action?: string, realId?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined> {
+    async composeOperation(action?: string, execute?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined> {
         if (!this.isDirty()) {
             return;
         }
@@ -389,13 +389,13 @@ class ListNode<ED extends EntityDict,
         }
         const actions = [];
         for (const node of this.children) {
-            const subAction = await node.composeOperation(undefined, realId);
+            const subAction = await node.composeOperation(undefined, execute);
             if (subAction) {
                 actions.push(subAction);
             }
         }
         for (const node of this.newBorn) {
-            const subAction = await node.composeOperation(undefined, realId);
+            const subAction = await node.composeOperation(undefined, execute);
             if (subAction) {
                 actions.push(subAction);
             }
@@ -700,7 +700,7 @@ class SingleNode<ED extends EntityDict,
         return this.action || (this.id ? 'update' : 'create');
     }
 
-    async composeOperation(action2?: string, realId?: boolean) {
+    async composeOperation(action2?: string, execute?: boolean) {
         if (!action2 && !this.isDirty()) {
             return;
         }
@@ -708,7 +708,7 @@ class SingleNode<ED extends EntityDict,
 
         const operation = action === 'create' ? {
             action: 'create',
-            data: assign({}, this.updateData, { id: realId ? await generateNewId() : generateMockId() }),
+            data: assign({}, this.updateData, { id: execute ? await generateNewId() : generateMockId() }),
         } as DeduceCreateOperation<ED[T]['Schema']> : {
             action,
             data: cloneDeep(this.updateData),
@@ -718,7 +718,7 @@ class SingleNode<ED extends EntityDict,
         } as DeduceUpdateOperation<ED[T]['Schema']>;
 
         for (const attr in this.children) {
-            const subAction = await this.children[attr]!.composeOperation(undefined, realId);
+            const subAction = await this.children[attr]!.composeOperation(undefined, execute);
             if (subAction) {
                 assign(operation.data, {
                     [attr]: subAction,
@@ -1240,9 +1240,12 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
-    async testAction(path: string, action: string, realId?: boolean) {
+    async testAction(path: string, action: string, execute?: boolean) {
         const node = this.findNode(path);
-        const operation = await node.composeOperation(action, realId);
+        if (execute) {            
+            await this.beforeExecute(node, action);
+        }
+        const operation = await node.composeOperation(action, execute);
         // 先在cache中尝试能否执行，如果权限上否决了在这里就失败
         if (operation instanceof Array) {
             for (const oper of operation) {
@@ -1290,7 +1293,6 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     async execute(path: string, action: string) {
         const { node, operation } = await this.testAction(path, action, true);
 
-        await this.beforeExecute(node, action);
         await this.getAspectProxy().operate({
             entity: node.getEntity() as string,
             operation,
