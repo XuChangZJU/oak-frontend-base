@@ -348,7 +348,7 @@ class ListNode<ED extends EntityDict,
         }
     }
 
-    getFreshValue() {
+    getFreshValue(): Array<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined> {
         const value = this.children.map(
             ele => ele.getFreshValue()
         ).concat(this.newBorn.map(

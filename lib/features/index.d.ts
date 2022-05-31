@@ -1,7 +1,6 @@
 import { Aspect, Checker, Context, EntityDict, RowStore } from 'oak-domain/lib/types';
 import { Cache } from './cache';
 import { Location } from './location';
-import { RunningNode } from './node';
 import { Upload } from './upload';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { RunningTree } from './runningTree';
@@ -9,7 +8,6 @@ export declare function initialize<ED extends EntityDict, Cxt extends Context<ED
 export declare type BasicFeatures<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> = {
     cache: Cache<ED, Cxt, AD>;
     location: Location;
-    runningNode: RunningNode<ED, Cxt, AD>;
     runningTree: RunningTree<ED, Cxt, AD>;
     upload: Upload;
 };

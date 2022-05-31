@@ -50,7 +50,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     getChildren(): SingleNode<ED, T, Cxt, AD>[];
     getNewBorn(): SingleNode<ED, T, Cxt, AD>[];
     removeChild(path: string): void;
-    setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[]): void;
+    setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined): void;
     getNamedFilters(): NamedFilterItem<ED, T>[];
     getNamedFilterByName(name: string): NamedFilterItem<ED, T> | undefined;
     setNamedFilters(filters: NamedFilterItem<ED, T>[]): void;
@@ -63,7 +63,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     addNamedSorter(sorter: NamedSorterItem<ED, T>): void;
     removeNamedSorter(sorter: NamedSorterItem<ED, T>): void;
     removeNamedSorterByName(name: string): void;
-    getFreshValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[];
+    getFreshValue(): Array<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined>;
     getAction(): "update" | ED[T]["Action"];
     composeOperation(action?: string, realId?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
     refresh(scene: string): Promise<void>;
@@ -84,12 +84,12 @@ declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends 
     };
     removeChild(path: string): void;
     refreshValue(): void;
-    setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>): void;
-    getFreshValue(): SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
+    setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']> | undefined): void;
+    getFreshValue(): SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]> | undefined;
     getAction(): "create" | "update" | ED[T]["Action"];
     composeOperation(action2?: string, realId?: boolean): Promise<import("oak-domain/lib/types").DeduceCreateMultipleOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | undefined>;
     refresh(scene: string): Promise<void>;
-    resetUpdateData(): void;
+    resetUpdateData(attrs?: string[]): void;
     setForeignKey(attr: string, id: string): Promise<void>;
 }
 export declare type CreateNodeOptions<ED extends EntityDict, T extends keyof ED> = {
@@ -119,7 +119,7 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     destroyNode(path: string): void;
     setStorageSchema(schema: StorageSchema<ED>): void;
     private applyOperation;
-    getFreshValue(path: string): Promise<SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]>[]>;
+    getFreshValue(path: string): SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | (SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | undefined)[] | undefined;
     isDirty(path: string): boolean;
     private setUpdateDataInner;
     setUpdateData(path: string, attr: string, value: any): Promise<void>;
@@ -143,8 +143,9 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
         operation: DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[];
     }>;
     private beforeExecute;
-    execute(path: string, action: string): Promise<void>;
+    execute(path: string, action: string): Promise<DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[]>;
     pushNode<T extends keyof ED>(path: string, options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): void;
     removeNode(parent: string, path: string): Promise<void>;
+    resetUpdateData(path: string): void;
 }
 export {};
