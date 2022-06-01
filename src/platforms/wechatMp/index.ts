@@ -677,14 +677,14 @@ function createPageOptions<ED extends EntityDict,
             },
 
             attached() {
-                const i18nInstance = getI18nInstance();
-                if (i18nInstance) {
-                    (this as any).setData({
-                        [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
-                        [CURRENT_LOCALE_DATA]: i18nInstance.translations,
-                    });
-                }
                 this.subscribe();
+                // const i18nInstance = getI18nInstance();
+                // if (i18nInstance) {
+                //     (this as any).setData({
+                //         [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
+                //         [CURRENT_LOCALE_DATA]: i18nInstance.translations,
+                //     });
+                // }
             },
 
             ready() {
@@ -784,14 +784,14 @@ function createComponentOptions<ED extends EntityDict,
             },
 
             async attached() {
-                const i18nInstance = getI18nInstance();
-                if (i18nInstance) {
-                    (this as any).setData({
-                        [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
-                        [CURRENT_LOCALE_DATA]: i18nInstance.translations,
-                    });
-                }
                 this.subscribe();
+                // const i18nInstance = getI18nInstance();
+                // if (i18nInstance) {
+                //     (this as any).setData({
+                //         [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
+                //         [CURRENT_LOCALE_DATA]: i18nInstance.translations,
+                //     });
+                // }
             },
 
 
