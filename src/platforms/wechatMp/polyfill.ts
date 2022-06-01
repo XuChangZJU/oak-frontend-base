@@ -13,5 +13,8 @@ Object.assign(global, {
     setInterval: setInterval,
     clearInterval: clearInterval,
     process: {},
+    OakI18n: {
+        i18nInstance: null,
+    },
 });
 export {}

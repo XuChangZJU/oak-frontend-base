@@ -5,3 +5,4 @@ export * from './types/ExceptionRoute';
 export { BasicFeatures } from './features';
 export * from './features/cache';
 export * from './features/upload';
+export { I18n, initI18n, getI18nInstance, I18nRuntimeBase, } from './platforms/wechatMp/i18n';
