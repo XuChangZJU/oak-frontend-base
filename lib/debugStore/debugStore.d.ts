@@ -17,9 +17,9 @@ export declare class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> 
         remove: number;
         commit: number;
     });
-    protected cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, params?: OperateParams): Promise<void>;
+    protected cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, params?: OperateParams): Promise<OperationResult<ED>>;
     protected cascadeSelect<T extends keyof ED>(entity: T, selection: ED[T]["Selection"], context: Cxt, params?: OperateParams): Promise<ED[T]["Schema"][]>;
-    operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, params?: DebugStoreOperationParams): Promise<OperationResult>;
+    operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, params?: DebugStoreOperationParams): Promise<OperationResult<ED>>;
     select<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, context: Cxt, params?: DebugStoreOperationParams): Promise<SelectionResult<ED[T]["Schema"], S["data"]>>;
     registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>): void;
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>): void;

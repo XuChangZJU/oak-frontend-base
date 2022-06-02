@@ -465,14 +465,13 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
                     if (e === this.entity) {
                         const { id } = d;
                         const filter = combineFilters([{ id } as any, ...(this.filters).map(ele => ele.filter)]);
-                        const { ids } = await this.cache.operate(e, {
+                        const rows = await this.cache.get(e, {
                             data: {
                                 id: 1,
                             } as any,
                             filter,
-                            action: 'select',
                         }, 'onRecordSynchoronized', { obscure: true });
-                        if (ids!.length > 0) {
+                        if (rows.length > 0) {
                             // todo 这里更严格应该还要考虑sorter，但前端可能没有完整的供sort用的cache数据
                             this.ids.push(id);
                             needReGetValue = true;
@@ -500,14 +499,13 @@ class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED
                                 }
                                 else {
                                     const filter = combineFilters([{ id } as any, ...(this.filters.map(ele => ele.filter))]);
-                                    const { ids } = await this.cache.operate(e, {
+                                    const rows = await this.cache.get(e, {
                                         data: {
                                             id: 1,
                                         } as any,
                                         filter,
-                                        action: 'select',
                                     }, 'onRecordSynchoronized', { obscure: true });
-                                    if (ids!.length > 0) {
+                                    if (rows!.length > 0) {
                                         // todo 这里更严格应该还要考虑sorter，但前端可能没有完整的供sort用的cache数据
                                         this.ids.push(id);
                                         needReGetValue = true;

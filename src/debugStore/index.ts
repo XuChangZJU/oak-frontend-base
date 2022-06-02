@@ -124,7 +124,7 @@ function initializeWatchers<ED extends EntityDict, Cxt extends Context<ED>>(
         const duration = Date.now() - start;
         console.log(`第${count}次执行watchers，共执行${totalWatchers.length}个，耗时${duration}毫秒`);
 
-        setTimeout(() => doWatchers(), 2000);
+        setTimeout(() => doWatchers(), 120000);
     }
 
     doWatchers();
