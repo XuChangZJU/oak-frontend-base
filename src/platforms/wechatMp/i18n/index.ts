@@ -17,7 +17,7 @@ export type Locales = {
     fallbackLocale?: string;
 };
 
-export class I18nRuntimeBase implements CommonI18nInterface {
+export class I18nWechatMpRuntimeBase implements CommonI18nInterface {
     constructor(
         public translations: Record<string, any> = {},
         public currentLocale: string = Locale.default,
@@ -25,7 +25,7 @@ export class I18nRuntimeBase implements CommonI18nInterface {
     ) {
         if (!this.translations) {
             throw new Error(
-                '[i18n] translations should be specified before using I18n'
+                '[i18n] translations should be specified before using I18nWechatMp'
             );
         }
     }
@@ -67,13 +67,13 @@ export class I18nRuntimeBase implements CommonI18nInterface {
     }
 }
 
-export function initI18n(options: {
+export function initI18nWechatMp(options: {
     locales: Locales;
     defaultLocale?: string;
     fallbackLocale?: string;
 }) {
     const { locales, defaultLocale, fallbackLocale } = options;
-    const i18nInstance = new I18nRuntimeBase(
+    const i18nInstance = new I18nWechatMpRuntimeBase(
         locales.translations,
         defaultLocale || locales.defaultLocale,
         fallbackLocale || locales.fallbackLocale
@@ -86,8 +86,9 @@ export function initI18n(options: {
     return i18nInstance;
 }
 
-export function getI18nInstance() {
-    return OakI18n.i18nInstance;
+export function getI18nInstanceWechatMp() {
+    //@ts-ignore
+    return global.OakI18n?.i18nInstance;
 }
 
 export const CURRENT_LOCALE_KEY = '$_locale';
@@ -97,7 +98,7 @@ export const CURRENT_LOCALE_DATA = '$_translations';
 
 type Func = (...args: any[]) => any;
 
-export const I18n = Behavior(
+export const I18nWechatMp = Behavior(
     (() => {
         const behaviorHooks: Record<
             string,
@@ -117,7 +118,7 @@ export const I18n = Behavior(
                 attached() {
                     if (!OakI18n.i18nInstance) {
                         throw new Error(
-                            '[i18n] ensure run initI18n() in app.js before using I18n library'
+                            '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
                         );
                     }
 
@@ -136,7 +137,7 @@ export const I18n = Behavior(
                 t(key: string, params: object) {
                     if (!OakI18n.i18nInstance) {
                         throw new Error(
-                            '[i18n] ensure run initI18n() in app.js before using I18n library'
+                            '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
                         );
                     }
                     return OakI18n.i18nInstance.getString(key, params);
@@ -145,7 +146,7 @@ export const I18n = Behavior(
                 setLocale(locale: string) {
                     if (!OakI18n.i18nInstance) {
                         throw new Error(
-                            '[i18n] ensure run initI18n() in app.js before using I18n library'
+                            '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
                         );
                     }
                     return OakI18n.i18nInstance.setLocale(locale);
@@ -154,7 +155,7 @@ export const I18n = Behavior(
                 getLocale() {
                     if (!OakI18n.i18nInstance) {
                         throw new Error(
-                            '[i18n] ensure run initI18n() in app.js before using I18n library'
+                            '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
                         );
                     }
                     return OakI18n.i18nInstance.getLocale();

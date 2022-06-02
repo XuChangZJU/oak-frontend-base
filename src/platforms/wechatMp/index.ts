@@ -9,7 +9,7 @@ import { assign, union } from "lodash";
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
 import { CreateNodeOptions } from '../../features/node';
-import { getI18nInstance, CURRENT_LOCALE_KEY, CURRENT_LOCALE_DATA } from './i18n/index';
+import { getI18nInstanceWechatMp, CURRENT_LOCALE_KEY, CURRENT_LOCALE_DATA } from './i18n/index';
 
 type RowSelected<
     ED extends EntityDict,
@@ -220,9 +220,9 @@ function makeComponentMethods<ED extends EntityDict,
     > {
     return {
         t(key: string, params?: object) {
-                const i18nInstance = getI18nInstance();
+                const i18nInstance = getI18nInstanceWechatMp();
                 if (!i18nInstance) {
-                    throw new Error('[i18n] ensure run initI18n() in app.js before using I18n library')
+                    throw new Error('[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library')
                 }
                 return i18nInstance.getString(key, params);
         },
@@ -678,13 +678,13 @@ function createPageOptions<ED extends EntityDict,
 
             attached() {
                 this.subscribe();
-                // const i18nInstance = getI18nInstance();
-                // if (i18nInstance) {
-                //     (this as any).setData({
-                //         [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
-                //         [CURRENT_LOCALE_DATA]: i18nInstance.translations,
-                //     });
-                // }
+                const i18nInstance = getI18nInstanceWechatMp();
+                if (i18nInstance) {
+                    (this as any).setData({
+                        [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
+                        [CURRENT_LOCALE_DATA]: i18nInstance.translations,
+                    });
+                }
             },
 
             ready() {
@@ -785,13 +785,13 @@ function createComponentOptions<ED extends EntityDict,
 
             async attached() {
                 this.subscribe();
-                // const i18nInstance = getI18nInstance();
-                // if (i18nInstance) {
-                //     (this as any).setData({
-                //         [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
-                //         [CURRENT_LOCALE_DATA]: i18nInstance.translations,
-                //     });
-                // }
+                const i18nInstance = getI18nInstanceWechatMp();
+                if (i18nInstance) {
+                    (this as any).setData({
+                        [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
+                        [CURRENT_LOCALE_DATA]: i18nInstance.translations,
+                    });
+                }
             },
 
 
