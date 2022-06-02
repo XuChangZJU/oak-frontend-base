@@ -65,7 +65,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     removeNamedSorterByName(name: string): void;
     getFreshValue(): Array<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined>;
     getAction(): "update" | ED[T]["Action"];
-    composeOperation(action?: string, realId?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
+    composeOperation(action?: string, execute?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
     refresh(scene: string): Promise<void>;
     resetUpdateData(): void;
     pushNode(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): void;
@@ -87,7 +87,7 @@ declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends 
     setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']> | undefined): void;
     getFreshValue(): SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]> | undefined;
     getAction(): "create" | "update" | ED[T]["Action"];
-    composeOperation(action2?: string, realId?: boolean): Promise<import("oak-domain/lib/types").DeduceCreateMultipleOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | undefined>;
+    composeOperation(action2?: string, execute?: boolean): Promise<import("oak-domain/lib/types").DeduceCreateMultipleOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | undefined>;
     refresh(scene: string): Promise<void>;
     resetUpdateData(attrs?: string[]): void;
     setForeignKey(attr: string, id: string): Promise<void>;
@@ -138,7 +138,7 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     addNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
     removeNamedSorterByName<T extends keyof ED>(path: string, name: string, refresh?: boolean): Promise<void>;
-    testAction(path: string, action: string, realId?: boolean): Promise<{
+    testAction(path: string, action: string, execute?: boolean): Promise<{
         node: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
         operation: DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[];
     }>;

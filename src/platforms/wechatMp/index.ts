@@ -9,6 +9,7 @@ import { assign, union } from "lodash";
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
 import { CreateNodeOptions } from '../../features/node';
+import { getI18nInstance, CURRENT_LOCALE_KEY, CURRENT_LOCALE_DATA } from './i18n/index';
 
 type RowSelected<
     ED extends EntityDict,
@@ -137,6 +138,7 @@ type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
     resetUpdateData: () => void;
     execute: (action: ED[T]['Action'], legalExceptions?: Array<string>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
+    t(key: string, params?: object): string;
 };
 
 type ComponentOnPropsChangeOption = {
@@ -217,6 +219,13 @@ function makeComponentMethods<ED extends EntityDict,
         >
     > {
     return {
+        t(key: string, params?: object) {
+                const i18nInstance = getI18nInstance();
+                if (!i18nInstance) {
+                    throw new Error('[i18n] ensure run initI18n() in app.js before using I18n library')
+                }
+                return i18nInstance.getString(key, params);
+        },
         subscribe() {
             if (!this.subscribed) {
                 this.subscribed = doSubscribe(
@@ -669,6 +678,13 @@ function createPageOptions<ED extends EntityDict,
 
             attached() {
                 this.subscribe();
+                // const i18nInstance = getI18nInstance();
+                // if (i18nInstance) {
+                //     (this as any).setData({
+                //         [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
+                //         [CURRENT_LOCALE_DATA]: i18nInstance.translations,
+                //     });
+                // }
             },
 
             ready() {
@@ -769,6 +785,13 @@ function createComponentOptions<ED extends EntityDict,
 
             async attached() {
                 this.subscribe();
+                // const i18nInstance = getI18nInstance();
+                // if (i18nInstance) {
+                //     (this as any).setData({
+                //         [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
+                //         [CURRENT_LOCALE_DATA]: i18nInstance.translations,
+                //     });
+                // }
             },
 
 

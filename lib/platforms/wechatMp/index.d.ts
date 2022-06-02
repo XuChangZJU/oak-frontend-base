@@ -21,16 +21,28 @@ interface OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends C
     entity: T;
     path: string;
     isList: IsList;
-    projection?: Proj | ((features: BasicFeatures<ED, Cxt, AD> & FD, rest: Record<string, any>) => Promise<Proj>);
+    projection?: Proj | ((options: {
+        features: BasicFeatures<ED, Cxt, AD> & FD;
+        rest: Record<string, any>;
+        onLoadOptions: Record<string, string | undefined>;
+    }) => Promise<Proj>);
     parent?: string;
     append?: boolean;
     pagination?: Pagination;
     filters?: Array<{
-        filter: ED[T]['Selection']['filter'] | ((features: BasicFeatures<ED, Cxt, AD> & FD, rest: Record<string, any>) => Promise<ED[T]['Selection']['filter']>);
+        filter: ED[T]['Selection']['filter'] | ((options: {
+            features: BasicFeatures<ED, Cxt, AD> & FD;
+            rest: Record<string, any>;
+            onLoadOptions: Record<string, string | undefined>;
+        }) => Promise<ED[T]['Selection']['filter']>);
         '#name'?: string;
     }>;
     sorters?: Array<{
-        sorter: DeduceSorterItem<ED[T]['Schema']> | ((features: BasicFeatures<ED, Cxt, AD> & FD, rest: Record<string, any>) => Promise<DeduceSorterItem<ED[T]['Schema']>>);
+        sorter: DeduceSorterItem<ED[T]['Schema']> | ((options: {
+            features: BasicFeatures<ED, Cxt, AD> & FD;
+            rest: Record<string, any>;
+            onLoadOptions: Record<string, string | undefined>;
+        }) => Promise<DeduceSorterItem<ED[T]['Schema']>>);
         '#name'?: string;
     }>;
     actions?: ED[T]['Action'][];
@@ -95,11 +107,12 @@ declare type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
     resetUpdateData: () => void;
     execute: (action: ED[T]['Action'], legalExceptions?: Array<string>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
+    t(key: string, params?: object): string;
 };
 declare type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
-    onLoad: () => Promise<void>;
+    onLoad: (options: Record<string, string | undefined>) => Promise<void>;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
     onForeignKeyPicked: (touch: WechatMiniprogram.Touch) => void;
 };
