@@ -21,7 +21,7 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         operation: ED[T]['Operation'],
         context: Cxt,
         params?: Object
-    ): Promise<OperationResult> {
+    ): Promise<OperationResult<ED>> {
         const autoCommit = !context.getCurrentTxnId();
         let result;
         if (autoCommit) {

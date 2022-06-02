@@ -21,7 +21,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         this.rwLock = new RWLock();
     }
 
-    protected async cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, params?: OperateParams): Promise<void> {
+    protected async cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, params?: OperateParams) {
         await this.executor.preOperation(entity, operation, context, params);
         const result = super.cascadeUpdate(entity, operation, context, params);
         await this.executor.postOperation(entity, operation, context, params);
@@ -44,7 +44,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         operation: ED[T]['Operation'],
         context: Cxt,
         params?: DebugStoreOperationParams
-    ): Promise<OperationResult> {
+    ) {
         if (!params || !params.noLock) {
             await this.rwLock.acquire('S');
         }

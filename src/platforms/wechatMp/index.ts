@@ -1,5 +1,5 @@
 import './polyfill';
-import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation, DeduceOperation, SelectRowShape } from "oak-domain/lib/types";
+import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation, DeduceOperation, SelectRowShape, Watcher } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize';
 import { Pagination } from "../../types/Pagination";
@@ -894,13 +894,14 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     exceptionRouters: ExceptionRouters = [],
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
+    watchers?: Array<Watcher<ED, keyof ED, Cxt>>,
     aspectDict?: AD,
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
-    const { subscribe, features } = init<ED, Cxt, AD, FD>(storageSchema, createFeatures, createContext, triggers, checkers, aspectDict, initialData, actionDict);
+    const { subscribe, features } = init<ED, Cxt, AD, FD>(storageSchema, createFeatures, createContext, triggers, checkers, watchers, aspectDict, initialData, actionDict);
     const exceptionRouterDict: Record<string, ExceptionHandler> = {};
     for (const router of exceptionRouters) {
         assign(exceptionRouterDict, {

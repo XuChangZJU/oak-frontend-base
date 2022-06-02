@@ -1,6 +1,8 @@
 import { DebugStore } from './debugStore';
-import { Checker, Trigger, StorageSchema, FormCreateData, Context, EntityDict, RowStore, ActionDictOfEntityDict } from "oak-domain/lib/types";
+import { Checker, Trigger, StorageSchema, FormCreateData, Context, EntityDict, RowStore,
+    ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, OperationResult } from "oak-domain/lib/types";
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
+import { makeIntrinsicWatchers } from 'oak-domain/lib/store/watchers';
 
 async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
     store: DebugStore<ED, Cxt>,
@@ -69,11 +71,71 @@ function materializeData(data: any, stat: { create: number, update: number, remo
     }
 }
 
+/**
+ * 在debug环境上创建watcher
+ * @param store 
+ * @param watchers 
+ */
+function initializeWatchers<ED extends EntityDict, Cxt extends Context<ED>>(
+    store: DebugStore<ED, Cxt>, createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt, watchers: Array<Watcher<ED, keyof ED, Cxt>>) {    
+    const schema = store.getSchema();
+    const intrinsicWatchers = makeIntrinsicWatchers(schema);
+    const totalWatchers = watchers.concat(intrinsicWatchers);
+
+    let count = 0;
+    async function doWatchers() {
+        count ++;
+        const start = Date.now();
+        const context = createContext(store, 'doWatchers');
+        for (const w of totalWatchers) {
+            await context.begin();
+            try {
+                if (w.hasOwnProperty('actionData')) {
+                    const { entity, action, filter, actionData } = <BBWatcher<ED, keyof ED>>w;
+                    const filter2 = typeof filter === 'function' ? await filter() : filter;
+                    const data = typeof actionData === 'function' ? await (actionData as any)(): actionData;        // 这里有个奇怪的编译错误，不理解 by Xc
+                    const result = await store.operate(entity, {
+                        action,
+                        data,
+                        filter: filter2
+                    }, context);
+
+                    console.log(`执行了watcher【${w.name}】，结果是：`, result);
+                }
+                else {
+                    const { entity, projection, fn, filter } = <WBWatcher<ED, keyof ED, Cxt>>w;
+                    const filter2 = typeof filter === 'function' ? await filter() : filter;
+                    const projection2 = typeof projection === 'function' ? await projection() : projection;
+                    const { result: rows } = await store.select(entity, {
+                        data: projection2 as any,
+                        filter: filter2,
+                    }, context);
+
+                    const result = fn(context, rows);                    
+                    console.log(`执行了watcher【${w.name}】，结果是：`, result);
+                }
+                await context.commit();
+            }
+            catch (err) {
+                await context.rollback();
+                console.error(`执行了watcher【${w.name}】，发生错误：`, err);
+            }
+        }
+        const duration = Date.now() - start;
+        console.log(`第${count}次执行watchers，共执行${totalWatchers.length}个，耗时${duration}毫秒`);
+
+        setTimeout(() => doWatchers(), 2000);
+    }
+
+    doWatchers();
+}
+
 export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>(
     storageSchema: StorageSchema<ED>,
     createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt,
-    triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
-    checkers?: Array<Checker<ED, keyof ED, Cxt>>,
+    triggers: Array<Trigger<ED, keyof ED, Cxt>>,
+    checkers: Array<Checker<ED, keyof ED, Cxt>>,
+    watchers: Array<Watcher<ED, keyof ED, Cxt>>,
     initialData?: {
         [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
     },
@@ -118,6 +180,9 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
         const data = store.getCurrentData();
         materializeData(data, stat);
     }, 10000);
+
+    // 启动watcher
+    initializeWatchers(store, createContext, watchers!);
     return store;
 }
 

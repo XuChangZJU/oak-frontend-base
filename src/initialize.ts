@@ -1,4 +1,4 @@
-import { Aspect, Checker, Trigger, StorageSchema, Context, RowStore, OakRowInconsistencyException } from "oak-domain/lib/types";
+import { Aspect, Checker, Trigger, StorageSchema, Context, RowStore, OakRowInconsistencyException, Watcher } from "oak-domain/lib/types";
 import { EntityDict, FormCreateData } from 'oak-domain/lib/types/Entity';
 
 import { Feature, subscribe } from './types/Feature';
@@ -18,6 +18,7 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
         createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt,
         triggers: Array<Trigger<ED, keyof ED, Cxt>>,
         checkers: Array<Checker<ED, keyof ED, Cxt>>,
+        watchers: Array<Watcher<ED, keyof ED, Cxt>>,
         features: BasicFeatures<ED, Cxt, AD> & FD,
         aspectDict?: AD,
         initialData?: {
@@ -30,7 +31,7 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
     }
     else {
         // todo initialData
-        const debugStore = createDebugStore(storageSchema, createContext, triggers, checkers, initialData, actionDict);       
+        const debugStore = createDebugStore(storageSchema, createContext, triggers, checkers, watchers, initialData, actionDict);       
 
         const connectAspectToDebugStore = (aspect: Aspect<ED, Cxt>): (p: Parameters<typeof aspect>[0], scene: string) => ReturnType<typeof aspect> => {
             return async (params: Parameters<typeof aspect>[0], scene: string) => {
@@ -71,6 +72,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt,
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
+    watchers?: Array<Watcher<ED, keyof ED, Cxt>>,
     aspectDict?: AD,
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
@@ -96,7 +98,8 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
 
 
     // todo default triggers
-    const aspectProxy = createAspectProxy<ED, Cxt, AD, FD>(storageSchema, createContext, triggers || [], checkers || [],
+    const aspectProxy = createAspectProxy<ED, Cxt, AD, FD>(storageSchema, createContext,
+        triggers || [], checkers || [], watchers || [],
         features, aspectDict, initialData, actionDict);
 
 
