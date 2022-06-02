@@ -518,7 +518,9 @@ type OakPageData = {
         type: 'warning' | 'error' | 'success' | 'primary';
         msg: string;
     };
-    oakLegalActions: string[],
+    oakLegalActions: string[];
+    oakLoading: boolean;
+    oakMoreLoading: boolean;
 };
 
 type OakComponentData = {
@@ -561,13 +563,33 @@ function createPageOptions<ED extends EntityDict,
         methods: {
             async refresh() {
                 if (options.projection && this.data.oakFullpath) {
-                    await features.runningTree.refresh(this.data.oakFullpath);
+                    this.setData({
+                        oakLoading: true,
+                    });
+                    try {
+                        await features.runningTree.refresh(this.data.oakFullpath);
+                         this.setData({
+                             oakLoading: false,
+                         });
+                    }
+                    catch(err) {
+                        this.setData({
+                            oakLoading: false,
+                            oakError: {
+                                type: 'error',
+                                msg: (err as Error).message,
+                            },
+                        });
+                    };
                 }
             },
 
             async onPullDownRefresh() {
                 if (options.projection) {
                     await this.refresh();
+                    if (!this.data.oakLoading) {
+                        await wx.stopPullDownRefresh();
+                    }
                 }
             },
 

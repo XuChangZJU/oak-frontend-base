@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "oak框架中前端与平台无关的逻辑部分",
     "dependencies": {
+        "format-message-parse": "^6.2.4",
         "lodash": "^4.17.21",
         "uuid": "^8.3.2"
     },
