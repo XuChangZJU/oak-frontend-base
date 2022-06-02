@@ -6,7 +6,7 @@ import { Pagination } from "../../types/Pagination";
 import { BasicFeatures } from "../../features";
 import { ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
-import { CreateNodeOptions } from '../../features/node';
+import { CreateNodeOptions } from '../../features/runningTree';
 declare type RowSelected<ED extends EntityDict, T extends keyof ED, Proj extends ED[T]['Selection']['data'] = Required<ED[T]['Selection']['data']>> = SelectRowShape<ED[T]['Schema'], Proj> | undefined;
 declare type OakComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean> = {
     entity: T;
@@ -112,6 +112,7 @@ declare type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
 declare type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
+    onReachBottom: () => Promise<void>;
     onLoad: (options: Record<string, string | undefined>) => Promise<void>;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
     onForeignKeyPicked: (touch: WechatMiniprogram.Touch) => void;
@@ -131,6 +132,8 @@ declare type OakPageData = {
         msg: string;
     };
     oakLegalActions: string[];
+    oakLoading: boolean;
+    oakMoreLoading: boolean;
 };
 declare type OakComponentData = {} & OakPageData;
 export declare function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(storageSchema: StorageSchema<ED>, createFeatures: (basicFeatures: BasicFeatures<ED, Cxt, AD>) => FD, createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt, exceptionRouters?: ExceptionRouters, triggers?: Array<Trigger<ED, keyof ED, Cxt>>, checkers?: Array<Checker<ED, keyof ED, Cxt>>, watchers?: Array<Watcher<ED, keyof ED, Cxt>>, aspectDict?: AD, initialData?: {

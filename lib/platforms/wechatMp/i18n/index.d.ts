@@ -4,14 +4,14 @@ export interface CommonI18nInterface {
     setLocale(locale: string): void;
 }
 export declare const enum Locale {
-    default = "zh-CN"
+    default = "zh_CN"
 }
 export declare type Locales = {
     translations: object;
     defaultLocale?: string;
     fallbackLocale?: string;
 };
-export declare class I18nRuntimeBase implements CommonI18nInterface {
+export declare class I18nWechatMpRuntimeBase implements CommonI18nInterface {
     translations: Record<string, any>;
     currentLocale: string;
     fallbackLocale: string;
@@ -20,18 +20,20 @@ export declare class I18nRuntimeBase implements CommonI18nInterface {
     getString(key: string, options?: object): string;
     setLocale(locale: string): void;
     getLocale(): string;
-    loadTranslations(locales: object): void;
+    replaceTranslations(translations: object): void;
+    appendTranslations(namespace: string, translations: object): void;
+    parseTranslations(namespace: string, translations: object): any;
     t(key: string, options?: object): string;
     getFallbackLocale(): string;
 }
-export declare function initI18n(options: {
+export declare function initI18nWechatMp(options: {
     locales: Locales;
     defaultLocale?: string;
     fallbackLocale?: string;
-}): I18nRuntimeBase;
-export declare function getI18nInstance(): I18nRuntimeBase | null;
+}): I18nWechatMpRuntimeBase;
+export declare function getI18nInstanceWechatMp(): any;
 export declare const CURRENT_LOCALE_KEY = "$_locale";
 export declare const LOCALE_CHANGE_HANDLER_NAME = "$_localeChange";
 export declare const COMMON_LOCALE_DATA = "$_common_translations";
 export declare const CURRENT_LOCALE_DATA = "$_translations";
-export declare const I18n: string;
+export declare const I18nWechatMp: string;

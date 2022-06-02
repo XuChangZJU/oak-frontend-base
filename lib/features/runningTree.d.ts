@@ -51,6 +51,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     getNewBorn(): SingleNode<ED, T, Cxt, AD>[];
     removeChild(path: string): void;
     setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined): void;
+    appendValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined): void;
     getNamedFilters(): NamedFilterItem<ED, T>[];
     getNamedFilterByName(name: string): NamedFilterItem<ED, T> | undefined;
     setNamedFilters(filters: NamedFilterItem<ED, T>[]): void;
@@ -67,6 +68,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     getAction(): "update" | ED[T]["Action"];
     composeOperation(action?: string, execute?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
     refresh(scene: string): Promise<void>;
+    loadMore(scene: string): Promise<void>;
     resetUpdateData(): void;
     pushNode(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): void;
     popNode(path: string): void;
@@ -126,6 +128,7 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     setAction<T extends keyof ED>(path: string, action: ED[T]['Action']): Promise<void>;
     setForeignKey(parent: string, attr: string, id: string): Promise<void>;
     refresh(path: string): Promise<void>;
+    loadMore(path: string): Promise<void>;
     getNamedFilters<T extends keyof ED>(path: string): NamedFilterItem<ED, keyof ED>[];
     getNamedFilterByName<T extends keyof ED>(path: string, name: string): NamedFilterItem<ED, keyof ED> | undefined;
     setNamedFilters<T extends keyof ED>(path: string, filters: NamedFilterItem<ED, T>[], refresh?: boolean): Promise<void>;
