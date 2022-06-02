@@ -125,7 +125,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
 }
 
 const DEFAULT_PAGINATION: Pagination = {
-    step: 20,
+    step: 5,
     append: true,
     indexFrom: 0,
     more: true,
@@ -265,6 +265,17 @@ class ListNode<ED extends EntityDict,
             (ele, idx) => {
                 const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this);
                 this.children[idx] = node;
+                node.setValue(ele);
+            }
+        );
+    }
+
+
+    appendValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined) {
+        value && value.forEach(
+            (ele, idx) => {
+                const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this);
+                this.children[this.children.length + idx] = node;
                 node.setValue(ele);
             }
         );
@@ -483,7 +494,7 @@ class ListNode<ED extends EntityDict,
         this.pagination.more = result.length === step;
         this.refreshing = false;
 
-        this.setValue(result as any);
+        this.appendValue(result as any);
     }
 
     resetUpdateData() {
