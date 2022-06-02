@@ -9,7 +9,7 @@ export interface CommonI18nInterface {
 }
 
 export const enum Locale {
-    default = 'zh-CN',
+    default = 'zh_CN',
 }
 
 export type Locales = {
