@@ -8,7 +8,7 @@ import assert from "assert";
 import { assign, union } from "lodash";
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
-import { CreateNodeOptions } from '../../features/node';
+import { CreateNodeOptions } from '../../features/runningTree';
 import { getI18nInstanceWechatMp, CURRENT_LOCALE_KEY, CURRENT_LOCALE_DATA } from './i18n/index';
 
 type RowSelected<
@@ -153,6 +153,7 @@ type OakComponentOnlyMethods = {
 type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
+    onReachBottom: () => Promise<void>;
     onLoad: (options: Record<string, string | undefined>) => Promise<void>;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
     onForeignKeyPicked: (touch: WechatMiniprogram.Touch) => void;
@@ -539,7 +540,7 @@ function createPageOptions<ED extends EntityDict,
         doSubscribe: ReturnType<typeof init>['subscribe'],
         features: BasicFeatures<ED, Cxt, AD> & FD,
         exceptionRouterDict: Record<string, ExceptionHandler>) {
-    const { formData, isList, pagination } = options;
+    const { formData, isList, pagination, append = true } = options;
     const componentOptions: WechatMiniprogram.Component.Options<
         OakPageData,
         OakPageProperties,
@@ -568,9 +569,9 @@ function createPageOptions<ED extends EntityDict,
                     });
                     try {
                         await features.runningTree.refresh(this.data.oakFullpath);
-                         this.setData({
-                             oakLoading: false,
-                         });
+                        this.setData({
+                            oakLoading: false,
+                        });
                     }
                     catch(err) {
                         this.setData({
@@ -589,6 +590,29 @@ function createPageOptions<ED extends EntityDict,
                     await this.refresh();
                     if (!this.data.oakLoading) {
                         await wx.stopPullDownRefresh();
+                    }
+                }
+            },
+
+            async onReachBottom() {
+                if (isList && append && options.projection) {
+                    this.setData({
+                        oakMoreLoading: true,
+                    });
+                    try {
+                        await features.runningTree.loadMore(this.data.oakFullpath);
+                        this.setData({
+                            oakMoreLoading: false,
+                        });
+                    }
+                    catch (err) {
+                        this.setData({
+                            oakMoreLoading: false,
+                            oakError: {
+                                type: 'error',
+                                msg: (err as Error).message,
+                            },
+                        });
                     }
                 }
             },
@@ -614,7 +638,7 @@ function createPageOptions<ED extends EntityDict,
             },
 
             async onLoad(options2) {
-                console.log('onLoad1111');
+                console.log('oak:onLoad');
                 const { oakId, oakEntity, oakPath, oakProjection, oakParent,
                     oakSorters, oakFilters, oakIsPicker, oakFrom, oakActions, ...rest } = this.data;
                 assert(!(isList && oakId));

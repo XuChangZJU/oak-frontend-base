@@ -443,6 +443,49 @@ class ListNode<ED extends EntityDict,
         this.setValue(result as any);
     }
 
+    async loadMore(scene: string) {
+        const { filters, sorters, pagination, entity } = this;
+        const { step, more } = pagination;
+        if (!more) {
+            return;
+        }
+        const proj = await this.getProjection();
+        assert(proj);
+        const sorterss = await Promise.all(sorters.map(
+            async (ele) => {
+                const { sorter } = ele;
+                if (typeof sorter === 'function') {
+                    return await sorter();
+                }
+                else {
+                    return sorter;
+                }
+            }
+        ));
+        const filterss = await Promise.all(filters.map(
+            async (ele) => {
+                const { filter } = ele;
+                if (typeof filter === 'function') {
+                    return await filter();
+                }
+                return filter;
+            }
+        ));
+        this.refreshing = true;
+        const { result } = await this.cache.refresh(entity, {
+            data: proj as any,
+            filter: filterss.length > 0 ? combineFilters(filterss) : undefined,
+            sorter: sorterss,
+            indexFrom: this.pagination.indexFrom + step,
+            count: step,
+        }, scene);
+        this.pagination.indexFrom = this.pagination.indexFrom + step;
+        this.pagination.more = result.length === step;
+        this.refreshing = false;
+
+        this.setValue(result as any);
+    }
+
     resetUpdateData() {
         this.updateData = {};
         // this.action = undefined;
@@ -1134,6 +1177,13 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     async refresh(path: string) {
         const node = this.findNode(path);
         await node.refresh(path);
+    }
+
+    @Action
+    async loadMore(path: string) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        await node.loadMore(path);
     }
 
     getNamedFilters<T extends keyof ED>(path: string) {
