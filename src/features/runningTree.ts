@@ -125,7 +125,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
 }
 
 const DEFAULT_PAGINATION: Pagination = {
-    step: 5,
+    step: 20,
     append: true,
     indexFrom: 0,
     more: true,
