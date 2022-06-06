@@ -97,10 +97,19 @@ export function initI18nWechatMp(options: {
     fallbackLocale?: string;
 }) {
     const { locales, defaultLocale, fallbackLocale } = options;
+    const _defaultLocale = defaultLocale || locales.defaultLocale;
+    const _fallbackLocale = fallbackLocale || locales.fallbackLocale;
+    let translations = locales.translations;
+    if (!translations[_defaultLocale as keyof typeof translations]) {
+        translations = {
+            [_defaultLocale as string]: translations,
+        };
+    }
+    const _translations = parseTranslations(translations);
     const i18nInstance = new I18nWechatMpRuntimeBase(
-        locales.translations,
-        defaultLocale || locales.defaultLocale,
-        fallbackLocale || locales.fallbackLocale
+        _translations,
+        _defaultLocale,
+        _fallbackLocale
     );
     Object.assign(global, {
         OakI18n: {

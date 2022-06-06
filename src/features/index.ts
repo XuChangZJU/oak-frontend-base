@@ -2,10 +2,10 @@ import { Aspect, Checker, Context, EntityDict, RowStore } from 'oak-domain/lib/t
 
 import { Cache } from './cache';
 import { Location } from './location';
-// import { RunningNode } from './node';
 import { Upload } from './upload';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { RunningTree } from './runningTree';
+import { Locales } from './locales';
 
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, 
     AD extends Record<string, Aspect<ED, Cxt>>> (
@@ -14,15 +14,15 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>,
         checkers?: Array<Checker<ED, keyof ED, Cxt>>): BasicFeatures<ED, Cxt, AD> {
     const cache = new Cache<ED, Cxt, AD>(storageSchema, createContext, checkers);
     const location = new Location();
-    // const runningNode = new RunningNode<ED, Cxt, AD>(cache);
     const runningTree = new RunningTree<ED, Cxt, AD>(cache);
     const upload = new Upload();
+    const locales = new Locales();
     return {
         cache,
         location,
-        // runningNode,
         runningTree,
         upload,
+        locales,
     };
 }
 
@@ -33,7 +33,7 @@ export type BasicFeatures<
 > = {
     cache: Cache<ED, Cxt, AD>;
     location: Location;
-    // runningNode: RunningNode<ED, Cxt, AD>;
     runningTree: RunningTree<ED, Cxt, AD>;
     upload: Upload;
+    locales: Locales;
 };

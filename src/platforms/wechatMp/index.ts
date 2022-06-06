@@ -77,7 +77,8 @@ interface OakPageOption<
         data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
         features: BasicFeatures<ED, Cxt, AD> & FD;
         params?: Record<string, any>;
-    }) => Promise<FormedData>
+    }) => Promise<FormedData>;
+    ns?: T | T[];
 };
 
 type OakComponentProperties = {
