@@ -1,6 +1,7 @@
 import { interpret } from './interpreter';
 import { lookUpAST } from './common';
 import { parseTranslations } from './compile/translation-parser';
+import merge from 'lodash/merge';
 
 export interface CommonI18nInterface {
     t(key: string, params?: object): string;
@@ -55,30 +56,29 @@ export class I18nWechatMpRuntimeBase implements CommonI18nInterface {
     }
 
     replaceTranslations(translations: object) {
-        if (translations && typeof translations === 'object')
-            this.translations = translations;
-    }
-
-    appendTranslations(
-        namespace: string,
-        translations: object,
-    ) {
+        const { currentLocale } = this;
         if (translations && typeof translations === 'object') {
-            const _translations = this.parseTranslations(
-                namespace,
-                translations,
-            );
+            if (!translations[currentLocale as keyof typeof translations]) {
+                translations = {
+                    [currentLocale]: translations,
+                };
+            }
+            const _translations = parseTranslations(translations);
             this.translations = _translations;
         }
     }
 
-    parseTranslations(
-        namespace: string,
-        translations: object,
-    ) {
-        // todo 规定格式再支持转化
-        const _translations = parseTranslations(translations);
-        return _translations;
+    appendTranslations(translations: object) {
+        const { currentLocale, translations: currentTranslations } = this;
+        if (translations && typeof translations === 'object') {
+            if (!translations[currentLocale as keyof typeof translations]) {
+                translations = {
+                    [currentLocale]: translations,
+                };
+            }
+            const _translations = parseTranslations(translations);
+            this.translations = merge(currentTranslations, _translations);
+        }
     }
 
     // method shortcut
