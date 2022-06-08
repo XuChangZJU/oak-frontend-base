@@ -1,4 +1,10 @@
 /// <reference types="wechat-miniprogram" />
+/// <reference types="wechat-miniprogram" />
+/// <reference types="wechat-miniprogram" />
+/// <reference types="wechat-miniprogram" />
+/// <reference types="wechat-miniprogram" />
+/// <reference types="wechat-miniprogram" />
+/// <reference types="wechat-miniprogram" />
 import './polyfill';
 import { Aspect, Checker, Context, EntityDict, RowStore, StorageSchema, Trigger, ActionDictOfEntityDict, DeduceSorterItem, DeduceOperation, SelectRowShape, Watcher } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';

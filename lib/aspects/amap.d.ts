@@ -1,4 +1,4 @@
-import { AmapInstance } from 'oak-wechat-sdk';
+import { AmapInstance } from 'oak-external-sdk';
 export declare function amap<T extends 'getDrivingPath' | 'regeo' | 'ipLoc' | 'getDistrict' | 'geocode'>(options: {
     key: string;
     method: T;

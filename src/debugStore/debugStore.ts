@@ -1,4 +1,4 @@
-import { EntityDict, OperationResult, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateParams, SelectionResult } from "oak-domain/lib/types";
+import { EntityDict, OperationResult, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateParams, SelectionResult, SelectRowShape } from "oak-domain/lib/types";
 import { TreeStore } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
@@ -28,7 +28,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         return result;
     }
 
-    protected async cascadeSelect<T extends keyof ED>(entity: T, selection: ED[T]["Selection"], context: Cxt, params?: OperateParams): Promise<ED[T]["Schema"][]> {
+    protected async cascadeSelect<T extends keyof ED, S extends ED[T]["Selection"]>(entity: T, selection: S, context: Cxt, params?: OperateParams): Promise<SelectRowShape<ED[T]['Schema'], S['data']>[]> {
         const selection2 = Object.assign({
             action: 'select',
         }, selection) as ED[T]['Operation'];

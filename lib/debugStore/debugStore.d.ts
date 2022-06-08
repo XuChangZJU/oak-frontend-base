@@ -1,4 +1,4 @@
-import { EntityDict, OperationResult, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateParams, SelectionResult } from "oak-domain/lib/types";
+import { EntityDict, OperationResult, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateParams, SelectionResult, SelectRowShape } from "oak-domain/lib/types";
 import { TreeStore } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 interface DebugStoreOperationParams extends OperateParams {
@@ -18,7 +18,7 @@ export declare class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> 
         commit: number;
     });
     protected cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, params?: OperateParams): Promise<OperationResult<ED>>;
-    protected cascadeSelect<T extends keyof ED>(entity: T, selection: ED[T]["Selection"], context: Cxt, params?: OperateParams): Promise<ED[T]["Schema"][]>;
+    protected cascadeSelect<T extends keyof ED, S extends ED[T]["Selection"]>(entity: T, selection: S, context: Cxt, params?: OperateParams): Promise<SelectRowShape<ED[T]['Schema'], S['data']>[]>;
     operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, params?: DebugStoreOperationParams): Promise<OperationResult<ED>>;
     select<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, context: Cxt, params?: DebugStoreOperationParams): Promise<SelectionResult<ED[T]["Schema"], S["data"]>>;
     registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>): void;

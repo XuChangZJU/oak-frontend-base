@@ -192,7 +192,7 @@ function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends R
         assert(typeof relation === 'string');
         subEntity = relation;
     }
-    let url = `/pages/pickers/${subEntity}/index?oakIsPicker=true&oakParentEntity=${entity}&oakParent=${parent}&oakPath=${attr}`;
+    let url = `/pages/pickers/${subEntity}/index?oakIsPicker=true&oakParentEntity=${entity as string}&oakParent=${parent}&oakPath=${attr}`;
     for (const k in params) {
         url += `&${k}=${JSON.stringify(params[k])}`;
     }
