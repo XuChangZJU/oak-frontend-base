@@ -32,6 +32,7 @@ type OakComponentOption<
             data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
             features: BasicFeatures<ED, Cxt, AD> & FD;
             params?: Record<string, any>;
+            legalActions?: string[],
         }) => Promise<FormedData>;
     };
 
@@ -61,7 +62,7 @@ interface OakPageOption<
             features: BasicFeatures<ED, Cxt, AD> & FD;
             rest: Record<string, any>;
             onLoadOptions: Record<string, string | undefined>;
-        }) => Promise<ED[T]['Selection']['filter']>)
+        }) => Promise<ED[T]['Selection']['filter']> | undefined)
         '#name'?: string;
     }>;
     sorters?: Array<{
@@ -77,6 +78,7 @@ interface OakPageOption<
         data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
         features: BasicFeatures<ED, Cxt, AD> & FD;
         params?: Record<string, any>;
+        legalActions?: string[],
     }) => Promise<FormedData>;
     ns?: T | T[];
 };
@@ -157,7 +159,7 @@ type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMet
     onReachBottom: () => Promise<void>;
     onLoad: (options: Record<string, string | undefined>) => Promise<void>;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
-    onForeignKeyPicked: (touch: WechatMiniprogram.Touch) => void;
+    setSubItems: (ids: string[], goBackDelta?: number) => Promise<void>;
 };
 
 type OakComponentInstanceProperties<
@@ -222,11 +224,11 @@ function makeComponentMethods<ED extends EntityDict,
     > {
     return {
         t(key: string, params?: object) {
-                const i18nInstance = getI18nInstanceWechatMp();
-                if (!i18nInstance) {
-                    throw new Error('[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library')
-                }
-                return i18nInstance.getString(key, params);
+            const i18nInstance = getI18nInstanceWechatMp();
+            if (!i18nInstance) {
+                throw new Error('[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library')
+            }
+            return i18nInstance.getString(key, params);
         },
         subscribe() {
             if (!this.subscribed) {
@@ -246,23 +248,11 @@ function makeComponentMethods<ED extends EntityDict,
         async reRender(extra) {
             if (this.data.oakFullpath) {
                 const rows = await features.runningTree.getFreshValue(this.data.oakFullpath);
-                const data = await formData.call(this, {
-                    data: rows as any,
-                    features,
-                    params: this.data,
-                });
-                for (const k in data) {
-                    if (data[k] === undefined) {
-                        assign(data, {
-                            [k]: null,
-                        })
-                    }
-                }
+                
                 const dirty = features.runningTree.isDirty(this.data.oakFullpath);
-                assign(data, { oakDirty: dirty });
 
+                const oakLegalActions = [];
                 if (this.data.newOakActions) {
-                    const oakLegalActions = [];
                     for (const action of this.data.newOakActions) {
                         try {
                             await features.runningTree.testAction(this.data.oakFullpath, action);
@@ -274,15 +264,30 @@ function makeComponentMethods<ED extends EntityDict,
                             }
                         }
                     }
-                    assign(data, {
-                        oakLegalActions,
-                    });
                 }
+
+                const data = await formData.call(this, {
+                    data: rows as any,
+                    features,
+                    params: this.data,
+                    legalActions: oakLegalActions,
+                });
+                for (const k in data) {
+                    if (data[k] === undefined) {
+                        assign(data, {
+                            [k]: null,
+                        })
+                    }
+                }
+                assign(data, { oakDirty: dirty });
 
                 if (extra) {
                     assign(data, extra);
                 }
 
+                assign(data, {
+                    oakLegalActions,
+                });
                 this.setData(data);
             }
         },
@@ -340,7 +345,7 @@ function makeComponentMethods<ED extends EntityDict,
 
         async getSorters() {
             const namedSorters = features.runningTree.getNamedSorters(this.data.oakFullpath);
-            const sorters = await Promise.all(
+            const sorters = (await Promise.all(
                 namedSorters.map(
                     ({ sorter }) => {
                         if (typeof sorter === 'function') {
@@ -349,7 +354,7 @@ function makeComponentMethods<ED extends EntityDict,
                         return sorter;
                     }
                 )
-            );
+            )).filter(ele => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
             return sorters;
         },
 
@@ -391,14 +396,30 @@ function makeComponentMethods<ED extends EntityDict,
             if (this.data.oakExecuting) {
                 return;
             }
-            return callPicker(features, attr, params, this.data.oakEntity, this.data.oakFullpath);
+
+            const relation = features.cache.judgeRelation(this.data.oakEntity, attr);
+            let subEntity: string;
+            if (relation === 2) {
+                subEntity = attr;
+            }
+            else {
+                assert(typeof relation === 'string');
+                subEntity = relation;
+            }
+            let url = `/pages/pickers/${subEntity}/index?oakIsPicker=true&oakParentEntity=${this.data.oakEntity}&oakParent=${this.data.oakFullpath}&oakPath=${attr}`;
+            for (const k in params) {
+                url += `&${k}=${JSON.stringify(params[k])}`;
+            }
+            wx.navigateTo({
+                url,
+            });
         },
 
         setFilters(filters) {
             return features.runningTree.setNamedFilters(this.data.oakFullpath, filters);
         },
 
-        navigateTo(options) {            
+        navigateTo(options) {
             const { url, events, fail, complete, success, ...rest } = options;
             let url2 = url.includes('?') ? url.concat(`&oakFrom=${this.data.oakFullpath}`) : url.concat(`?oakFrom=${this.data.oakFullpath}`);
 
@@ -574,7 +595,7 @@ function createPageOptions<ED extends EntityDict,
                             oakLoading: false,
                         });
                     }
-                    catch(err) {
+                    catch (err) {
                         this.setData({
                             oakLoading: false,
                             oakError: {
@@ -633,9 +654,19 @@ function createPageOptions<ED extends EntityDict,
                 }
             },
 
-            onForeignKeyPicked(input) {
-                const { id } = input.currentTarget.dataset;
-                this.setForeignKey(id);
+            async setSubItems(ids: string[], goBackDelta: number = -1) {
+                if (this.data.oakExecuting) {
+                    return;
+                }
+                const { oakIsPicker, oakParent, oakPath } = this.data;
+                assert(oakIsPicker);
+                await features.runningTree.setSubItems(oakParent, oakPath, ids);
+
+                if (goBackDelta !== 0) {
+                    wx.navigateBack({
+                        delta: goBackDelta,
+                    });
+                }
             },
 
             async onLoad(options2) {
@@ -772,7 +803,7 @@ function createComponentOptions<ED extends EntityDict,
         features: BasicFeatures<ED, Cxt, AD> & FD,
         doSubscribe: ReturnType<typeof init>['subscribe'],
         exceptionRouterDict: Record<string, ExceptionHandler>) {
-    const { formData } = options;
+    const { formData, entity } = options;
 
     const componentOptions: WechatMiniprogram.Component.Options<
         OakComponentData,
@@ -806,7 +837,8 @@ function createComponentOptions<ED extends EntityDict,
                     if (oakFullpath2 !== this.data.oakFullpath) {
                         this.setData({
                             oakFullpath: oakFullpath2,
-                        })
+                            oakEntity: entity,
+                        });
                         this.reRender();
                     }
                 }
@@ -825,6 +857,7 @@ function createComponentOptions<ED extends EntityDict,
                     const oakFullpath = `${oakParent}.${oakPath}`;
                     this.setData({
                         oakFullpath,
+                        oakEntity: entity,
                     });
                     this.reRender();
                 }

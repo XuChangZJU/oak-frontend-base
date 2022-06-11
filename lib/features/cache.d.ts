@@ -10,6 +10,7 @@ export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD ex
         operate: typeof import("../aspects/crud").operate;
         select: typeof import("../aspects/crud").select;
         amap: typeof import("../aspects/amap").amap;
+        getTranslations: typeof import("../aspects/locales").getTranslations;
     })["select"]>;
     sync(records: OpRecord<ED>[]): Promise<void>;
     /**

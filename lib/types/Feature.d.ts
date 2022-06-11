@@ -7,6 +7,7 @@ export declare abstract class Feature<ED extends EntityDict, Cxt extends Context
         operate: typeof import("../aspects/crud").operate;
         select: typeof import("../aspects/crud").select;
         amap: typeof import("../aspects/amap").amap;
+        getTranslations: typeof import("../aspects/locales").getTranslations;
     }>>;
     setAspectProxy(aspectProxy: AspectProxy<ED, Cxt, AD & typeof baseAspectDict>): void;
 }

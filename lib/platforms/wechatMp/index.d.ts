@@ -21,6 +21,7 @@ declare type OakComponentOption<ED extends EntityDict, T extends keyof ED, Cxt e
         data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
         features: BasicFeatures<ED, Cxt, AD> & FD;
         params?: Record<string, any>;
+        legalActions?: string[];
     }) => Promise<FormedData>;
 };
 interface OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean> {
@@ -40,7 +41,7 @@ interface OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends C
             features: BasicFeatures<ED, Cxt, AD> & FD;
             rest: Record<string, any>;
             onLoadOptions: Record<string, string | undefined>;
-        }) => Promise<ED[T]['Selection']['filter']>);
+        }) => Promise<ED[T]['Selection']['filter']> | undefined);
         '#name'?: string;
     }>;
     sorters?: Array<{
@@ -56,7 +57,9 @@ interface OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends C
         data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
         features: BasicFeatures<ED, Cxt, AD> & FD;
         params?: Record<string, any>;
+        legalActions?: string[];
     }) => Promise<FormedData>;
+    ns?: T | T[];
 }
 declare type OakComponentProperties = {
     oakEntity: StringConstructor;
@@ -121,7 +124,7 @@ declare type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComp
     onReachBottom: () => Promise<void>;
     onLoad: (options: Record<string, string | undefined>) => Promise<void>;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
-    onForeignKeyPicked: (touch: WechatMiniprogram.Touch) => void;
+    setSubItems: (ids: string[], goBackDelta?: number) => Promise<void>;
 };
 declare type OakComponentInstanceProperties<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> = {
     features: BasicFeatures<ED, Cxt, AD> & FD;

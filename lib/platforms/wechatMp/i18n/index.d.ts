@@ -21,8 +21,7 @@ export declare class I18nWechatMpRuntimeBase implements CommonI18nInterface {
     setLocale(locale: string): void;
     getLocale(): string;
     replaceTranslations(translations: object): void;
-    appendTranslations(namespace: string, translations: object): void;
-    parseTranslations(namespace: string, translations: object): any;
+    appendTranslations(translations: object): void;
     t(key: string, options?: object): string;
     getFallbackLocale(): string;
 }
