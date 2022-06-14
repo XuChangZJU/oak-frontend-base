@@ -159,7 +159,7 @@ type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMet
     onReachBottom: () => Promise<void>;
     onLoad: (options: Record<string, string | undefined>) => Promise<void>;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
-    setSubItems: (ids: string[], goBackDelta?: number) => Promise<void>;
+    setForeignKeys: (ids: string[], goBackDelta?: number) => Promise<void>;
 };
 
 type OakComponentInstanceProperties<
@@ -654,13 +654,13 @@ function createPageOptions<ED extends EntityDict,
                 }
             },
 
-            async setSubItems(ids: string[], goBackDelta: number = -1) {
+            async setForeignKeys(ids: string[], goBackDelta: number = -1) {
                 if (this.data.oakExecuting) {
                     return;
                 }
                 const { oakIsPicker, oakParent, oakPath } = this.data;
                 assert(oakIsPicker);
-                await features.runningTree.setSubItems(oakParent, oakPath, ids);
+                await features.runningTree.setForeignKeys(oakParent, oakPath, ids);
 
                 if (goBackDelta !== 0) {
                     wx.navigateBack({

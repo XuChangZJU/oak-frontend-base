@@ -1198,7 +1198,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async setSubItems(parent: string, attr: string, ids: string[]) {
+    async setForeignKeys(parent: string, attr: string, ids: string[]) {
         const parentNode = this.findNode(parent);
         assert(parentNode instanceof ListNode);
 
