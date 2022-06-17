@@ -426,7 +426,9 @@ class ListNode<ED extends EntityDict,
             ele => ele.getFreshValue()
         ).concat(this.newBorn.map(
             ele => ele.getFreshValue()
-        ));
+        )).filter(
+            ele => !!ele
+        );
         if (this.isDirty()) {
             const action = this.action || 'update';
 
