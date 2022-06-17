@@ -1,5 +1,5 @@
 import assert from "assert";
-import { assign, cloneDeep, keys, omit, pick, pull, set, unset } from "lodash";
+import { assign, at, cloneDeep, keys, omit, pick, pull, set, unset } from "lodash";
 import { combineFilters, contains, repel } from "oak-domain/lib/store/filter";
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult, CreateOpResult, RemoveOpResult, DeduceSorterItem } from "oak-domain/lib/types";
@@ -604,6 +604,31 @@ class ListNode<ED extends EntityDict,
 
     // 将本结点的freshValue更正成data的要求，其中updateData要和现有的数据去重
     setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]) {
+        const convertForeignKey = (origin: ED[T]['Update']['data']): ED[T]['Update']['data']  => {
+            const result: ED[T]['Update']['data']  = {};
+            for (const attr in origin) {
+                const rel = this.judgeRelation(attr);
+                if (rel === 2) {
+                    assign(result, {
+                        entity: attr,
+                        entityId: origin[attr],
+                    });
+                }
+                else if (typeof rel === 'string') {
+                    assign(result, {
+                        [`${attr}Id`]: origin[attr],
+                    });
+                }
+                else {
+                    assert (rel === 1);
+                    assign(result, {
+                        [attr]: origin[attr],
+                    });
+                }
+            }
+            
+            return result;
+        };
         const same = (from: ED[T]['Update']['data'] | undefined, to : ED[T]['Update']['data']) => {
             if (!from) {
                 return false;
@@ -615,11 +640,14 @@ class ListNode<ED extends EntityDict,
             }
             return true;
         };
+        const uds = [];
         for (const dt of data) {
             let existed = false;
             const { updateData } = dt;
+            const ud2 = convertForeignKey(updateData!);
+            uds.push(ud2);
             for (const child of this.children) {
-                if (same(child.getFreshValue(true), updateData!)) {
+                if (same(child.getFreshValue(true), ud2)) {
                     if (child.getAction() === 'remove') {
                         // 这里把updateData全干掉了，如果本身是先update再remove或许会有问题 by Xc
                         child.resetUpdateData();
@@ -629,7 +657,7 @@ class ListNode<ED extends EntityDict,
                 }
             }
             for (const child of this.newBorn) {
-                if (same(child.getFreshValue(true), updateData!)) {
+                if (same(child.getFreshValue(true), ud2)) {
                     existed = true;
                     break;
                 }
@@ -642,8 +670,8 @@ class ListNode<ED extends EntityDict,
 
         for (const child of this.children) {
             let included = false;
-            for (const dt of data) {
-                if (same(child, dt)) {
+            for (const ud of uds) {
+                if (same(child, ud)) {
                     included = true;
                     break;
                 }
@@ -655,8 +683,8 @@ class ListNode<ED extends EntityDict,
 
         const newBorn2: SingleNode<ED, T, Cxt, AD>[] = [];
         for (const child of this.newBorn) {
-            for (const dt of data) {
-                if (same(child, dt)) {
+            for (const ud of uds) {
+                if (same(child, ud)) {
                     newBorn2.push(child);
                     break;
                 }
