@@ -70,7 +70,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     refresh(scene: string): Promise<void>;
     loadMore(scene: string): Promise<void>;
     resetUpdateData(): void;
-    pushNode(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): void;
+    pushNode(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): SingleNode<ED, T, Cxt, AD>;
     popNode(path: string): void;
 }
 declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Node<ED, T, Cxt, AD> {
@@ -127,6 +127,7 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     setUpdateData(path: string, attr: string, value: any): Promise<void>;
     setAction<T extends keyof ED>(path: string, action: ED[T]['Action']): Promise<void>;
     setForeignKey(parent: string, attr: string, id: string): Promise<void>;
+    setSubItems(parent: string, attr: string, ids: string[]): Promise<void>;
     refresh(path: string): Promise<void>;
     loadMore(path: string): Promise<void>;
     getNamedFilters<T extends keyof ED>(path: string): NamedFilterItem<ED, keyof ED>[];

@@ -2,7 +2,7 @@ import assert from "assert";
 import { assign, cloneDeep, keys, omit, pick, pull, set, unset } from "lodash";
 import { combineFilters, contains, repel } from "oak-domain/lib/store/filter";
 import { judgeRelation } from "oak-domain/lib/store/relation";
-import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult, CreateOpResult, RemoveOpResult } from "oak-domain/lib/types";
+import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult, CreateOpResult, RemoveOpResult, DeduceSorterItem } from "oak-domain/lib/types";
 
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
 import { generateMockId } from "../utils/mockId";
@@ -194,7 +194,7 @@ class ListNode<ED extends EntityDict,
                 }
             }, ...(this.filters).map(ele => ele.filter)]);
 
-            const sorterss = await Promise.all(
+            const sorterss = (await Promise.all(
                 this.sorters.map(
                     async (ele) => {
                         const { sorter } = ele;
@@ -206,7 +206,7 @@ class ListNode<ED extends EntityDict,
                         }
                     }
                 )
-            );
+            )).filter(ele => !!ele)  as DeduceSorterItem<ED[T]['Schema']>[];
             const projection = typeof this.projection === 'function' ? await this.projection() : this.projection;
             const value = await this.cache.get(this.entity, {
                 data: projection as any,
@@ -218,7 +218,7 @@ class ListNode<ED extends EntityDict,
     }
 
     refreshValue(): void {
-        
+
     }
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
@@ -397,6 +397,13 @@ class ListNode<ED extends EntityDict,
 
     async composeOperation(action?: string, execute?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined> {
         if (!this.isDirty()) {
+            if (action) {
+                assert(action === 'create');   // 在list页面测试create是否允许？
+                return {
+                    action,
+                    data: {},
+                };
+            }
             return;
         }
 
@@ -429,7 +436,7 @@ class ListNode<ED extends EntityDict,
         const { step } = pagination;
         const proj = await this.getProjection();
         assert(proj);
-        const sorterss = await Promise.all(sorters.map(
+        const sorterss = (await Promise.all(sorters.map(
             async (ele) => {
                 const { sorter } = ele;
                 if (typeof sorter === 'function') {
@@ -439,7 +446,7 @@ class ListNode<ED extends EntityDict,
                     return sorter;
                 }
             }
-        ));
+        ))).filter(ele => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
         const filterss = await Promise.all(filters.map(
             async (ele) => {
                 const { filter } = ele;
@@ -452,7 +459,7 @@ class ListNode<ED extends EntityDict,
         this.refreshing = true;
         const { result } = await this.cache.refresh(entity, {
             data: proj as any,
-            filter: filterss.length > 0 ? combineFilters(filterss) : undefined,
+            filter: filterss.length > 0 ? combineFilters(filterss.filter(ele => !!ele)) : undefined,
             sorter: sorterss,
             indexFrom: 0,
             count: step,
@@ -472,7 +479,7 @@ class ListNode<ED extends EntityDict,
         }
         const proj = await this.getProjection();
         assert(proj);
-        const sorterss = await Promise.all(sorters.map(
+        const sorterss = (await Promise.all(sorters.map(
             async (ele) => {
                 const { sorter } = ele;
                 if (typeof sorter === 'function') {
@@ -482,7 +489,7 @@ class ListNode<ED extends EntityDict,
                     return sorter;
                 }
             }
-        ));
+        ))).filter(ele => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
         const filterss = await Promise.all(filters.map(
             async (ele) => {
                 const { filter } = ele;
@@ -495,7 +502,7 @@ class ListNode<ED extends EntityDict,
         this.refreshing = true;
         const { result } = await this.cache.refresh(entity, {
             data: proj as any,
-            filter: filterss.length > 0 ? combineFilters(filterss) : undefined,
+            filter: filterss.length > 0 ? combineFilters(filterss.filter(ele => !!ele)) : undefined,
             sorter: sorterss,
             indexFrom: this.pagination.indexFrom + step,
             count: step,
@@ -532,6 +539,7 @@ class ListNode<ED extends EntityDict,
             node.setAfterExecute(afterExecute);
         }
         this.newBorn.push(node);
+        return node;
     }
 
     popNode(path: string) {
@@ -828,7 +836,7 @@ class SingleNode<ED extends EntityDict,
                     this.children[attr].setValue(undefined);
                 }
             }
-            else if (typeof rel === 'string') {                
+            else if (typeof rel === 'string') {
                 if (attrsReset.includes(`${attr}Id`)) {
                     (<SingleNode<ED, keyof ED, Cxt, AD>>this.children[attr]).setValue(this.value && this.value[attr] as any);
                 }
@@ -877,6 +885,8 @@ class SingleNode<ED extends EntityDict,
                     id,
                 } as any,
             }, 'SingleNode:setForeignKey');
+            console.log('ddd', subProj);
+            console.log('data', this.cache);
             (<SingleNode<ED, keyof ED, Cxt, AD>>this.children[attr]).setValue(value);
         }
     }
@@ -966,6 +976,9 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     private findNode(path: string) {
+        if (this.root[path]) {
+            return this.root[path];
+        }
         const paths = path.split('.');
         let node = this.root[paths[0]];
         let iter = 1;
@@ -989,7 +1002,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                 parent.removeChild(childPath);
             }
             else if (!parent) {
-                assert(childPath === path);
+                assert(this.root.hasOwnProperty(path));
                 unset(this.root, path);
             }
         }
@@ -1198,9 +1211,25 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     @Action
     async setForeignKey(parent: string, attr: string, id: string) {
         const parentNode = this.findNode(parent);
-        assert (parentNode instanceof SingleNode);
+        assert(parentNode instanceof SingleNode);
 
         parentNode.setForeignKey(attr, id);
+    }
+
+    @Action
+    async setForeignKeys(parent: string, attr: string, ids: string[]) {
+        const parentNode = this.findNode(parent);
+        assert(parentNode instanceof ListNode);
+
+        await Promise.all(
+            ids.map(
+                async (id) => {
+                    const node = parentNode.pushNode({
+                    });
+                    await node.setForeignKey(attr, id);
+                }
+            )
+        );
     }
 
     @Action
@@ -1322,7 +1351,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
 
     async testAction(path: string, action: string, execute?: boolean) {
         const node = this.findNode(path);
-        if (execute) {            
+        if (execute) {
             await this.beforeExecute(node, action);
         }
         const operation = await node.composeOperation(action, execute);
