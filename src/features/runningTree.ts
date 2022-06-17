@@ -48,8 +48,54 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
         return this.entity;
     }
 
+    protected abstract setForeignKey(attr: string, entity: keyof ED, id: string | undefined): void;
+    
+    private setLocalUpdateData(attr: string, value: any) {
+        const rel = this.judgeRelation(attr);
+
+        let subEntity: string | undefined = undefined;
+        if (rel === 2) {
+            if (value) {
+                assign(this.updateData, {
+                    entity: attr,
+                    entityId: value,
+                });
+            }
+            else {
+                assign(this.updateData, {
+                    entity: undefined,
+                    entityId: undefined,
+                });
+            }
+            subEntity = attr;
+        }
+        else if (typeof rel === 'string'){
+            if (value) {
+                assign(this.updateData, {
+                    [`${attr}Id`]: value,
+                });
+            }
+            else {
+                assign(this.updateData, {
+                    [`${attr}Id`]: undefined,
+                });
+            }
+            subEntity = rel;
+        }
+        else {
+            assert(rel === 1);
+            assign(this.updateData, {
+                [attr]: value,
+            });
+        }
+        if (subEntity) {
+            // 说明是更新了外键
+            this.setForeignKey(attr, subEntity, value);
+        }
+    }
+
     setUpdateData(attr: string, value: any) {
-        set(this.updateData, attr, value);
+        this.setLocalUpdateData(attr, value);
         this.setDirty();
         this.refreshValue();
     }
@@ -59,7 +105,9 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
     }
 
     setMultiUpdateData(updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data']) {
-        assign(this.updateData, updateData);
+        for (const k in updateData) {
+            this.setLocalUpdateData(k, updateData[k]);
+        }
         this.setDirty();
         this.refreshValue();
     }
@@ -217,6 +265,10 @@ class ListNode<ED extends EntityDict,
         }
     }
 
+    async setForeignKey(attr: string, entity: keyof ED, id: string | undefined) {
+        // todo 对list的update外键的情况等遇到了再写 by Xc
+    }
+
     refreshValue(): void {
 
     }
@@ -281,7 +333,7 @@ class ListNode<ED extends EntityDict,
     }
 
 
-    appendValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined) {
+    private appendValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined) {
         value && value.forEach(
             (ele, idx) => {
                 const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this);
@@ -516,7 +568,7 @@ class ListNode<ED extends EntityDict,
 
     resetUpdateData() {
         this.updateData = {};
-        // this.action = undefined;
+        this.action = undefined;
         this.dirty = false;
 
         this.children.forEach(
@@ -525,7 +577,7 @@ class ListNode<ED extends EntityDict,
         this.newBorn = [];
     }
 
-    pushNode(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>) {
+    pushNewBorn(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>) {
         const { updateData, beforeExecute, afterExecute } = options;
         const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this, 'create');
 
@@ -542,12 +594,75 @@ class ListNode<ED extends EntityDict,
         return node;
     }
 
-    popNode(path: string) {
+    popNewBorn(path: string) {
         const index = parseInt(path, 10);
         assert(typeof index === 'number' && index >= this.children.length);
         const index2 = index - this.children.length;
         assert(index2 < this.newBorn.length);
         this.newBorn.splice(index2, 1);
+    }
+
+    // 将本结点的freshValue更正成data的要求，其中updateData要和现有的数据去重
+    setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]) {
+        const same = (from: ED[T]['Update']['data'] | undefined, to : ED[T]['Update']['data']) => {
+            if (!from) {
+                return false;
+            }
+            for (const attr in to) {
+                if (from[attr] !== to[attr]) {
+                    return false;
+                }
+            }
+            return true;
+        };
+        for (const dt of data) {
+            let existed = false;
+            const { updateData } = dt;
+            for (const child of this.children) {
+                if (same(child.getFreshValue(true), updateData!)) {
+                    if (child.getAction() === 'remove') {
+                        // 这里把updateData全干掉了，如果本身是先update再remove或许会有问题 by Xc
+                        child.resetUpdateData();
+                    }
+                    existed = true;
+                    break;
+                }
+            }
+            for (const child of this.newBorn) {
+                if (same(child.getFreshValue(true), updateData!)) {
+                    existed = true;
+                    break;
+                }
+            }
+            if (!existed) {
+                // 如果不存在，就生成newBorn
+                this.pushNewBorn(dt);
+            }
+        }
+
+        for (const child of this.children) {
+            let included = false;
+            for (const dt of data) {
+                if (same(child, dt)) {
+                    included = true;
+                    break;
+                }
+            }
+            if (!included) {
+                child.setAction('remove');
+            }
+        }
+
+        const newBorn2: SingleNode<ED, T, Cxt, AD>[] = [];
+        for (const child of this.newBorn) {
+            for (const dt of data) {
+                if (same(child, dt)) {
+                    newBorn2.push(child);
+                    break;
+                }
+            }
+        }
+        this.newBorn = newBorn2;
     }
 }
 
@@ -764,7 +879,10 @@ class SingleNode<ED extends EntityDict,
         this.refreshValue();
     }
 
-    getFreshValue() {
+    getFreshValue(ignoreRemoved?: boolean) {
+        if (ignoreRemoved) {
+            return assign({}, this.value, this.updateData);
+        }
         const freshValue = this.freshValue && cloneDeep(this.freshValue) as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
         if (freshValue) {
             for (const k in this.children) {
@@ -853,40 +971,24 @@ class SingleNode<ED extends EntityDict,
         // this.action = undefined;
         if (!attrs) {
             this.dirty = false;
+            this.action = undefined;
         }
 
         this.refreshValue();
     }
 
-    async setForeignKey(attr: string, id: string) {
-        const rel = this.judgeRelation(attr);
-
-        let subEntity: string;
-        if (rel === 2) {
-            this.setMultiUpdateData({
-                entity: attr,
-                entityId: id,
-            } as any);
-            subEntity = attr;
-        }
-        else {
-            assert(typeof rel === 'string');
-            this.setUpdateData(`${attr}Id`, id);
-            subEntity = rel;
-        }
-
+    async setForeignKey(attr: string, entity: keyof ED, id: string | undefined) {
         // 如果修改了外键且对应的外键上有子结点，在这里把子结点的value更新掉
         if (this.children[attr]) {
             const proj = typeof this.projection === 'function' ? await this.projection() : this.projection;
             const subProj = proj[attr];
-            const [value] = await this.cache.get(subEntity, {
+            const newId = id || this.value?.id;
+            const [value] =  newId ? await this.cache.get(entity, {
                 data: subProj,
                 filter: {
-                    id,
+                    id: newId,
                 } as any,
-            }, 'SingleNode:setForeignKey');
-            console.log('ddd', subProj);
-            console.log('data', this.cache);
+            }, 'SingleNode:setForeignKey') : [undefined];
             (<SingleNode<ED, keyof ED, Cxt, AD>>this.children[attr]).setValue(value);
         }
     }
@@ -1209,27 +1311,39 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async setForeignKey(parent: string, attr: string, id: string) {
+    setForeignKey(parent: string, attr: string, id: string | undefined) {
         const parentNode = this.findNode(parent);
         assert(parentNode instanceof SingleNode);
 
-        parentNode.setForeignKey(attr, id);
+        parentNode.setUpdateData(attr, id);
     }
 
     @Action
-    async setForeignKeys(parent: string, attr: string, ids: string[]) {
+    addForeignKeys(parent: string, attr: string, ids: string[]) {
         const parentNode = this.findNode(parent);
         assert(parentNode instanceof ListNode);
 
-        await Promise.all(
-            ids.map(
-                async (id) => {
-                    const node = parentNode.pushNode({
-                    });
-                    await node.setForeignKey(attr, id);
-                }
-            )
-        );
+        ids.forEach(
+            (id) => {
+                const node = parentNode.pushNewBorn({
+                });
+                node.setUpdateData(attr, id);
+            }
+        )
+    }
+
+    @Action
+    setUniqueForeignKeys(parent: string, attr: string, ids: string[]) {
+        const parentNode = this.findNode(parent);
+        assert(parentNode instanceof ListNode);
+
+        parentNode.setUniqueChildren(ids.map(
+            (id) => ({
+                updateData: {
+                    [attr]: id,
+                } as any
+            })
+        ));
     }
 
     @Action
@@ -1417,7 +1531,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         const parent = this.findNode(path);
         assert(parent instanceof ListNode);
 
-        parent.pushNode(options);
+        parent.pushNewBorn(options);
     }
     @Action
     async removeNode(parent: string, path: string) {
@@ -1440,7 +1554,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
         else {
             // 删除子结点
-            parentNode.popNode(path);
+            parentNode.popNewBorn(path);
         }
     }
 

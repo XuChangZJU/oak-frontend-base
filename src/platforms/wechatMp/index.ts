@@ -158,8 +158,9 @@ type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMet
     onPullDownRefresh: () => Promise<void>;
     onReachBottom: () => Promise<void>;
     onLoad: (options: Record<string, string | undefined>) => Promise<void>;
-    setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
-    setForeignKeys: (ids: string[], goBackDelta?: number) => Promise<void>;
+    setForeignKey: (id: string, goBackDelta?: number) => void;
+    addForeignKeys: (ids: string[], goBackDelta?: number) => void;
+    setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => void;
 };
 
 type OakComponentInstanceProperties<
@@ -639,13 +640,13 @@ function createPageOptions<ED extends EntityDict,
                 }
             },
 
-            async setForeignKey(id: string, goBackDelta: number = -1) {
+            setForeignKey(id: string, goBackDelta: number = -1) {
                 if (this.data.oakExecuting) {
                     return;
                 }
                 const { oakIsPicker, oakParent, oakPath } = this.data;
                 assert(oakIsPicker);
-                await features.runningTree.setForeignKey(oakParent, oakPath, id);
+                features.runningTree.setForeignKey(oakParent, oakPath, id);
 
                 if (goBackDelta !== 0) {
                     wx.navigateBack({
@@ -654,13 +655,28 @@ function createPageOptions<ED extends EntityDict,
                 }
             },
 
-            async setForeignKeys(ids: string[], goBackDelta: number = -1) {
+            addForeignKeys(ids: string[], goBackDelta: number = -1) {
                 if (this.data.oakExecuting) {
                     return;
                 }
                 const { oakIsPicker, oakParent, oakPath } = this.data;
                 assert(oakIsPicker);
-                await features.runningTree.setForeignKeys(oakParent, oakPath, ids);
+                features.runningTree.addForeignKeys(oakParent, oakPath, ids);
+
+                if (goBackDelta !== 0) {
+                    wx.navigateBack({
+                        delta: goBackDelta,
+                    });
+                }
+            },
+
+            setUniqueForeignKeys(ids: string[], goBackDelta: number = -1) {
+                if (this.data.oakExecuting) {
+                    return;
+                }
+                const { oakIsPicker, oakParent, oakPath } = this.data;
+                assert(oakIsPicker);
+                features.runningTree.setUniqueForeignKeys(oakParent, oakPath, ids);
 
                 if (goBackDelta !== 0) {
                     wx.navigateBack({

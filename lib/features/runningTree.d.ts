@@ -19,6 +19,8 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     abstract refreshValue(): void;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data']);
     getEntity(): T;
+    protected abstract setForeignKey(attr: string, entity: keyof ED, id: string | undefined): void;
+    private setLocalUpdateData;
     setUpdateData(attr: string, value: any): void;
     getUpdateData(): import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>;
     setMultiUpdateData(updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data']): void;
@@ -44,6 +46,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     private pagination;
     private projectionShape;
     onCachSync(records: OpRecord<ED>[]): Promise<void>;
+    setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
     refreshValue(): void;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), projectionShape: ED[T]['Selection']['data'], parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], pagination?: Pagination);
     getChild(path: string): SingleNode<ED, T, Cxt, AD>;
@@ -51,7 +54,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     getNewBorn(): SingleNode<ED, T, Cxt, AD>[];
     removeChild(path: string): void;
     setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined): void;
-    appendValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined): void;
+    private appendValue;
     getNamedFilters(): NamedFilterItem<ED, T>[];
     getNamedFilterByName(name: string): NamedFilterItem<ED, T> | undefined;
     setNamedFilters(filters: NamedFilterItem<ED, T>[]): void;
@@ -70,8 +73,9 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     refresh(scene: string): Promise<void>;
     loadMore(scene: string): Promise<void>;
     resetUpdateData(): void;
-    pushNode(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): SingleNode<ED, T, Cxt, AD>;
-    popNode(path: string): void;
+    pushNewBorn(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): SingleNode<ED, T, Cxt, AD>;
+    popNewBorn(path: string): void;
+    setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]): void;
 }
 declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Node<ED, T, Cxt, AD> {
     private id?;
@@ -87,12 +91,14 @@ declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends 
     removeChild(path: string): void;
     refreshValue(): void;
     setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']> | undefined): void;
-    getFreshValue(): SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]> | undefined;
+    getFreshValue(ignoreRemoved?: boolean): (SelectRowShape<ED[T]["OpSchema"], ED[T]["Selection"]["data"]> & Partial<Omit<ED[T]["OpSchema"], import("oak-domain/lib/types").InstinctiveAttributes>> & {
+        [k: string]: any;
+    }) | SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]> | undefined;
     getAction(): "create" | "update" | ED[T]["Action"];
     composeOperation(action2?: string, execute?: boolean): Promise<import("oak-domain/lib/types").DeduceCreateMultipleOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | undefined>;
     refresh(scene: string): Promise<void>;
     resetUpdateData(attrs?: string[]): void;
-    setForeignKey(attr: string, id: string): Promise<void>;
+    setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
 }
 export declare type CreateNodeOptions<ED extends EntityDict, T extends keyof ED> = {
     path: string;
@@ -121,13 +127,16 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     destroyNode(path: string): void;
     setStorageSchema(schema: StorageSchema<ED>): void;
     private applyOperation;
-    getFreshValue(path: string): SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | (SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | undefined)[] | undefined;
+    getFreshValue(path: string): (SelectRowShape<ED[keyof ED]["OpSchema"], ED[keyof ED]["Selection"]["data"]> & Partial<Omit<ED[keyof ED]["OpSchema"], import("oak-domain/lib/types").InstinctiveAttributes>> & {
+        [k: string]: any;
+    }) | SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | (SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | undefined)[] | undefined;
     isDirty(path: string): boolean;
     private setUpdateDataInner;
     setUpdateData(path: string, attr: string, value: any): Promise<void>;
     setAction<T extends keyof ED>(path: string, action: ED[T]['Action']): Promise<void>;
-    setForeignKey(parent: string, attr: string, id: string): Promise<void>;
-    setSubItems(parent: string, attr: string, ids: string[]): Promise<void>;
+    setForeignKey(parent: string, attr: string, id: string | undefined): void;
+    addForeignKeys(parent: string, attr: string, ids: string[]): void;
+    setUniqueForeignKeys(parent: string, attr: string, ids: string[]): void;
     refresh(path: string): Promise<void>;
     loadMore(path: string): Promise<void>;
     getNamedFilters<T extends keyof ED>(path: string): NamedFilterItem<ED, keyof ED>[];

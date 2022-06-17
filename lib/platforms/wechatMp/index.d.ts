@@ -123,8 +123,9 @@ declare type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComp
     onPullDownRefresh: () => Promise<void>;
     onReachBottom: () => Promise<void>;
     onLoad: (options: Record<string, string | undefined>) => Promise<void>;
-    setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
-    setSubItems: (ids: string[], goBackDelta?: number) => Promise<void>;
+    setForeignKey: (id: string, goBackDelta?: number) => void;
+    addForeignKeys: (ids: string[], goBackDelta?: number) => void;
+    setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => void;
 };
 declare type OakComponentInstanceProperties<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>> = {
     features: BasicFeatures<ED, Cxt, AD> & FD;
