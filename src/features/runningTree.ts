@@ -671,7 +671,7 @@ class ListNode<ED extends EntityDict,
         for (const child of this.children) {
             let included = false;
             for (const ud of uds) {
-                if (same(child, ud)) {
+                if (same(child.getFreshValue(true), ud)) {
                     included = true;
                     break;
                 }
@@ -684,7 +684,7 @@ class ListNode<ED extends EntityDict,
         const newBorn2: SingleNode<ED, T, Cxt, AD>[] = [];
         for (const child of this.newBorn) {
             for (const ud of uds) {
-                if (same(child, ud)) {
+                if (same(child.getFreshValue(true), ud)) {
                     newBorn2.push(child);
                     break;
                 }
