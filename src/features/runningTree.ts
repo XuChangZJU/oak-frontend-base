@@ -980,16 +980,10 @@ class SingleNode<ED extends EntityDict,
                 if (attrsReset.includes('entityId')) {
                     (<SingleNode<ED, keyof ED, Cxt, AD>>this.children[attr]).setValue(this.value && this.value[attr] as any);
                 }
-                else {
-                    this.children[attr].setValue(undefined);
-                }
             }
             else if (typeof rel === 'string') {
                 if (attrsReset.includes(`${attr}Id`)) {
                     (<SingleNode<ED, keyof ED, Cxt, AD>>this.children[attr]).setValue(this.value && this.value[attr] as any);
-                }
-                else {
-                    this.children[attr].setValue(undefined);
                 }
             }
             else if (typeof rel === 'object') {
