@@ -155,8 +155,18 @@ class ListNode<ED extends EntityDict,
                 case 'c': {
                     const { e, d } = record as CreateOpResult<ED, T>;
                     if (e === this.entity) {
-                        const { id } = d;
-                        createdIds.push(id);
+                        if (d instanceof Array) {
+                            d.forEach(
+                                (dd) => {
+                                    const { id } = dd;
+                                    createdIds.push(id);
+                                }
+                            )
+                        }
+                        else {
+                            const { id } = d;
+                            createdIds.push(id);
+                        }
                     }
                     break;
                 }
@@ -558,9 +568,18 @@ class SingleNode<ED extends EntityDict,
             switch (a) {
                 case 'c': {
                     const { e, d } = record as CreateOpResult<ED, T>;
-                    if (e === this.entity && d.id === this.id) {
-                        // this.id应该是通过父结点来设置到子结点上
-                        needReGetValue = true;
+                    if (e === this.entity) {
+                        if (d instanceof Array) {
+                            if (d.find(
+                                dd => dd.id === this.id
+                            )) {
+                                needReGetValue = true;                     
+                            }
+                        }
+                        else if (d.id === this.id){
+                            // this.id应该是通过父结点来设置到子结点上
+                            needReGetValue = true;                            
+                        }
                     }
                     break;
                 }

@@ -57,6 +57,7 @@ interface OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends C
         features: BasicFeatures<ED, Cxt, AD> & FD;
         params?: Record<string, any>;
     }) => Promise<FormedData>;
+    ns?: T | T[];
 }
 declare type OakComponentProperties = {
     oakEntity: StringConstructor;
