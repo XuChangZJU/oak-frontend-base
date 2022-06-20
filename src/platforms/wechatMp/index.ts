@@ -9,7 +9,19 @@ import { assign, union } from "lodash";
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
 import { CreateNodeOptions } from '../../features/runningTree';
-import { getI18nInstanceWechatMp, CURRENT_LOCALE_KEY, CURRENT_LOCALE_DATA } from './i18n/index';
+import {
+    initI18nWechatMp,
+    I18nWechatMpRuntimeBase,
+    getI18nInstanceWechatMp,
+    CURRENT_LOCALE_KEY,
+    CURRENT_LOCALE_DATA,
+} from './i18n/index';
+
+export {
+    initI18nWechatMp,
+    getI18nInstanceWechatMp,
+    I18nWechatMpRuntimeBase,
+};
 
 type RowSelected<
     ED extends EntityDict,
@@ -750,15 +762,23 @@ function createPageOptions<ED extends EntityDict,
                     id: oakId,
                 });
                 // const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
-                this.setData({
-                    oakEntity: node.getEntity(),
-                    oakFullpath: path2,
-                    oakFrom,
-                    newOakActions: oakActions && JSON.parse(oakActions).length > 0 ? JSON.parse(oakActions) : options.actions || [],
-                });
-                if (this.isReady) {
-                    this.refresh();
-                }
+                this.setData(
+                    {
+                        oakEntity: node.getEntity(),
+                        oakFullpath: path2,
+                        oakFrom,
+                        newOakActions:
+                            oakActions && JSON.parse(oakActions).length > 0
+                                ? JSON.parse(oakActions)
+                                : options.actions || [],
+                    },
+                    () => {
+                        this.isReady = true;
+                        if (this.isReady) {
+                            this.refresh();
+                        }
+                    }
+                );
             },
 
             ...makeComponentMethods(features, doSubscribe, formData as any, exceptionRouterDict),
@@ -808,17 +828,20 @@ function createPageOptions<ED extends EntityDict,
 }
 
 
-function createComponentOptions<ED extends EntityDict,
+function createComponentOptions<
+    ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD>>,
     IsList extends boolean,
-    FormedData extends WechatMiniprogram.Component.DataOption>(
-        options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList>,
-        features: BasicFeatures<ED, Cxt, AD> & FD,
-        doSubscribe: ReturnType<typeof init>['subscribe'],
-        exceptionRouterDict: Record<string, ExceptionHandler>) {
+    FormedData extends WechatMiniprogram.Component.DataOption
+>(
+    options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList>,
+    doSubscribe: ReturnType<typeof init>['subscribe'],
+    features: BasicFeatures<ED, Cxt, AD> & FD,
+    exceptionRouterDict: Record<string, ExceptionHandler>
+) {
     const { formData, entity } = options;
 
     const componentOptions: WechatMiniprogram.Component.Options<
@@ -833,21 +856,25 @@ function createComponentOptions<ED extends EntityDict,
             oakParent: String,
         },
         observers: {
-            "oakPath": function (path) {
+            oakPath: function (path) {
                 return this.onPropsChanged({
                     path,
-                })
+                });
             },
-            "oakParent": function (parent) {
+            oakParent: function (parent) {
                 return this.onPropsChanged({
                     parent,
-                })
-            }
+                });
+            },
         },
         methods: {
             async onPropsChanged(options) {
-                const path2 = options.hasOwnProperty('path') ? options.path! : this.data.oakPath;
-                const parent2 = options.hasOwnProperty('parent') ? options.parent! : this.data.oakParent;
+                const path2 = options.hasOwnProperty('path')
+                    ? options.path!
+                    : this.data.oakPath;
+                const parent2 = options.hasOwnProperty('parent')
+                    ? options.parent!
+                    : this.data.oakParent;
                 if (path2 && parent2) {
                     const oakFullpath2 = `${parent2}.${path2}`;
                     if (oakFullpath2 !== this.data.oakFullpath) {
@@ -859,7 +886,12 @@ function createComponentOptions<ED extends EntityDict,
                     }
                 }
             },
-            ...makeComponentMethods(features, doSubscribe, formData, exceptionRouterDict)
+            ...makeComponentMethods(
+                features,
+                doSubscribe,
+                formData,
+                exceptionRouterDict
+            ),
         },
 
         lifetimes: {
@@ -890,7 +922,6 @@ function createComponentOptions<ED extends EntityDict,
                 }
             },
 
-
             async detached() {
                 this.unsubscribe();
                 // await context.rollback();
@@ -904,7 +935,7 @@ function createComponentOptions<ED extends EntityDict,
             },
             hide() {
                 this.unsubscribe();
-            }
+            },
         },
     };
 
@@ -1088,7 +1119,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
                     IS,
                     true
                 > = {}) => {
-            const oakOptions = createComponentOptions(options, features, subscribe, exceptionRouterDict);
+            const oakOptions = createComponentOptions(options, subscribe, features, exceptionRouterDict);
             const { properties, pageLifetimes, lifetimes, methods, data, observers } = oakOptions;
             const { properties: p2, pageLifetimes: pl2, lifetimes: l2, methods: m2, data: d2, observers: o2, ...restOptions } = componentOptions;
 

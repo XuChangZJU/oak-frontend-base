@@ -26,11 +26,11 @@ async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
         }
         await context.commit();
     }
-    store.endInitalizing();
+    store.endInitializing();
 }
 
 function getMaterializedData() {
-    if (/* process.env.OAK_PLATFORM === 'weChatMp' */true) {
+    if (process.env.OAK_PLATFORM === 'weChatMp') {
         try {
             const data = wx.getStorageSync('debugStore');
             const stat = wx.getStorageSync('debugStoreStat');
@@ -46,12 +46,31 @@ function getMaterializedData() {
             return;
         }
     }
+    else if (process.env.OAK_PLATFORM === 'web') {
+          try {
+              const data = JSON.parse(
+                  window.localStorage.getItem('debugStore') as string
+              );
+              const stat = JSON.parse(
+                  window.localStorage.getItem('debugStoreStat') as string
+              );
+              if (data && stat) {
+                  return {
+                      data,
+                      stat,
+                  };
+              }
+              return;
+          } catch (e) {
+              return;
+          }
+    }
 }
 
 let lastMaterializedVersion = 0;
 
 function materializeData(data: any, stat: { create: number, update: number, remove: number, commit: number }) {
-    if (/* process.env.OAK_PLATFORM === 'weChatMp' */true) {
+    if (process.env.OAK_PLATFORM === 'weChatMp') {
         try {
             wx.setStorageSync('debugStore', data);
             wx.setStorageSync('debugStoreStat', stat);
@@ -68,6 +87,17 @@ function materializeData(data: any, stat: { create: number, update: number, remo
                 icon: 'error',
             });
         }
+    }
+    else if (process.env.OAK_PLATFORM === 'web') {
+         try {
+             window.localStorage.setItem('debugStore', typeof data === 'string' ? data : JSON.stringify(data));
+             window.localStorage.setItem('debugStoreStat', JSON.stringify(stat));
+             lastMaterializedVersion = stat.commit;
+             alert('数据已物化');
+         } catch (e) {
+             console.error(e);
+             alert('物化数据失败');
+         }
     }
 }
 

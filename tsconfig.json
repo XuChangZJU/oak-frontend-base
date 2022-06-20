@@ -70,7 +70,9 @@
     "node",
     "miniprogram-api-typings"
   ],
-  "include": [   "src/**/*.ts" ],
+  "include": [
+    "src/**/*.ts",
+  ],
   "exclude": [
     "node_modules",
     "**/*.spec.ts",

@@ -24,6 +24,6 @@ export declare class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> 
     registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>): void;
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>): void;
     startInitializing(): void;
-    endInitalizing(): void;
+    endInitializing(): void;
 }
 export {};

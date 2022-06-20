@@ -36,18 +36,18 @@ function createAspectProxy<ED extends EntityDict, Cxt extends Context<ED>,
             return async (params: Parameters<typeof aspect>[0], scene: string) => {
                 const runningContext = createContext(debugStore, scene);
                 await runningContext.begin();
-                let aspectCompeleted = false;
+                let aspectCompleted = false;
                 try {
                     const result = await aspect(params, runningContext);
                     await runningContext.commit();
-                    aspectCompeleted = true;
+                    aspectCompleted = true;
     
                     await features.cache.sync(runningContext.opRecords);
                     return result;
                 }
                 catch(err) {
-                    if (!aspectCompeleted) {
-                        await runningContext.rollback();                        
+                    if (!aspectCompleted) {
+                        await runningContext.rollback();
                     }
                     if (err instanceof OakRowInconsistencyException) {
                         // 在这里可以同步相应的数据 todo
