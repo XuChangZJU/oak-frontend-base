@@ -1,6 +1,5 @@
 import { pull } from 'lodash';
-import { EntityDict, Aspect, Context } from 'oak-domain/lib/types';
-import { AspectProxy } from './AspectProxy';
+import { EntityDict, Aspect, AspectProxy, Context } from 'oak-domain/lib/types';
 import baseAspectDict from '../aspects';
 
 

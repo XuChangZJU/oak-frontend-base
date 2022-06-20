@@ -11,13 +11,13 @@ interface DebugStoreOperationParams extends OperateParams {
 export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;
     private rwLock: RWLock;
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (store: RowStore<ED, Cxt>, scene: string) => Cxt, initialData?: {
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (store: RowStore<ED, Cxt>, cxtString: string) => Cxt, initialData?: {
         [T in keyof ED]?: {
             [ID: string]: ED[T]['OpSchema'];
         };
     }, initialStat?: { create: number, update: number, remove: number, commit: number }) {
         super(storageSchema, initialData, initialStat);
-        this.executor = new TriggerExecutor((scene) => contextBuilder(this, scene));
+        this.executor = new TriggerExecutor((cxtString) => contextBuilder(this, cxtString));
         this.rwLock = new RWLock();
     }
 

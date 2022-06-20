@@ -1,5 +1,4 @@
-import { EntityDict, Aspect, Context } from 'oak-domain/lib/types';
-import { AspectProxy } from './AspectProxy';
+import { EntityDict, Aspect, AspectProxy, Context } from 'oak-domain/lib/types';
 import baseAspectDict from '../aspects';
 export declare abstract class Feature<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {
     private aspectProxy?;

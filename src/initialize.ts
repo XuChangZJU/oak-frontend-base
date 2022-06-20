@@ -1,4 +1,4 @@
-import { Aspect, Checker, Trigger, StorageSchema, Context, RowStore, OakRowInconsistencyException, Watcher } from "oak-domain/lib/types";
+import { Aspect, AspectProxy, Checker, Trigger, StorageSchema, Context, RowStore, OakRowInconsistencyException, Watcher } from "oak-domain/lib/types";
 import { EntityDict, FormCreateData } from 'oak-domain/lib/types/Entity';
 
 import { Feature, subscribe } from './types/Feature';
@@ -6,7 +6,6 @@ import { createDebugStore } from './debugStore';
 
 import { initialize as createBasicFeatures, BasicFeatures } from './features';
 import { assign, intersection, keys, mapValues } from 'lodash';
-import { AspectProxy } from './types/AspectProxy';
 import baseAspectDict from './aspects';
 import { ActionDictOfEntityDict } from "oak-domain/lib/types/Action";
 import { analyzeActionDefDict } from "oak-domain/lib/store/actionDef";

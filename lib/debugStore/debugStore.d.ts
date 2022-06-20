@@ -7,7 +7,7 @@ interface DebugStoreOperationParams extends OperateParams {
 export declare class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
     private executor;
     private rwLock;
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (store: RowStore<ED, Cxt>, scene: string) => Cxt, initialData?: {
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (store: RowStore<ED, Cxt>, cxtString: string) => Cxt, initialData?: {
         [T in keyof ED]?: {
             [ID: string]: ED[T]['OpSchema'];
         };
