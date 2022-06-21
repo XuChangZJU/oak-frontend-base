@@ -1,3 +1,4 @@
+import './polyfill';
 import { Aspect, Checker, Context, EntityDict, RowStore, StorageSchema, Trigger, ActionDictOfEntityDict, Watcher, AspectWrapper } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize.dev';

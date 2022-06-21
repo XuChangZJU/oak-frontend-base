@@ -5,7 +5,6 @@
 /// <reference types="wechat-miniprogram" />
 /// <reference types="wechat-miniprogram" />
 /// <reference types="wechat-miniprogram" />
-import './polyfill';
 import { Aspect, Context, EntityDict, DeduceSorterItem, DeduceOperation, SelectRowShape } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize.dev';

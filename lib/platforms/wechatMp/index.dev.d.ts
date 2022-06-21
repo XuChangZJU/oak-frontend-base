@@ -5,6 +5,7 @@
 /// <reference types="wechat-miniprogram" />
 /// <reference types="wechat-miniprogram" />
 /// <reference types="wechat-miniprogram" />
+import './polyfill';
 import { Aspect, Checker, Context, EntityDict, RowStore, StorageSchema, Trigger, ActionDictOfEntityDict, Watcher, AspectWrapper } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { BasicFeatures } from "../../features";

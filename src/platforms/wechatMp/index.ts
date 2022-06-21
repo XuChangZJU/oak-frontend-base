@@ -1,4 +1,3 @@
-import './polyfill';
 import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation, DeduceOperation, SelectRowShape, Watcher } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize.dev';
