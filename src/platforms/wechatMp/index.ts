@@ -1,7 +1,7 @@
 import './polyfill';
 import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation, DeduceOperation, SelectRowShape, Watcher } from "oak-domain/lib/types";
 import { Feature } from '../../types/Feature';
-import { initialize as init } from '../../initialize';
+import { initialize as init } from '../../initialize.dev';
 import { Pagination } from "../../types/Pagination";
 import { BasicFeatures } from "../../features";
 import assert from "assert";
@@ -16,12 +16,8 @@ import {
     CURRENT_LOCALE_KEY,
     CURRENT_LOCALE_DATA,
 } from './i18n/index';
+import { AspectDict } from 'oak-common-aspect/src/aspectDict';
 
-export {
-    initI18nWechatMp,
-    getI18nInstanceWechatMp,
-    I18nWechatMpRuntimeBase,
-};
 
 type RowSelected<
     ED extends EntityDict,
@@ -29,12 +25,12 @@ type RowSelected<
     Proj extends ED[T]['Selection']['data'] = Required<ED[T]['Selection']['data']>
     > = SelectRowShape<ED[T]['Schema'], Proj> | undefined;
 
-type OakComponentOption<
+export type OakComponentOption<
     ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean
     > = {
@@ -42,18 +38,18 @@ type OakComponentOption<
         isList: IsList;
         formData: (options: {
             data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
-            features: BasicFeatures<ED, Cxt, AD> & FD;
+            features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
             params?: Record<string, any>;
             legalActions?: string[],
         }) => Promise<FormedData>;
     };
 
-interface OakPageOption<
+export interface OakPageOption<
     ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean,
@@ -62,7 +58,7 @@ interface OakPageOption<
     path: string;
     isList: IsList;
     projection?: Proj | ((options: {
-        features: BasicFeatures<ED, Cxt, AD> & FD;
+        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
         rest: Record<string, any>;
         onLoadOptions: Record<string, string | undefined>;
     }) => Promise<Proj>);
@@ -71,7 +67,7 @@ interface OakPageOption<
     pagination?: Pagination;
     filters?: Array<{
         filter: ED[T]['Selection']['filter'] | ((options: {
-            features: BasicFeatures<ED, Cxt, AD> & FD;
+            features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
             rest: Record<string, any>;
             onLoadOptions: Record<string, string | undefined>;
         }) => Promise<ED[T]['Selection']['filter']> | undefined)
@@ -79,7 +75,7 @@ interface OakPageOption<
     }>;
     sorters?: Array<{
         sorter: DeduceSorterItem<ED[T]['Schema']> | ((options: {
-            features: BasicFeatures<ED, Cxt, AD> & FD;
+            features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
             rest: Record<string, any>;
             onLoadOptions: Record<string, string | undefined>;
         }) => Promise<DeduceSorterItem<ED[T]['Schema']>>)
@@ -88,20 +84,20 @@ interface OakPageOption<
     actions?: ED[T]['Action'][];
     formData: (options: {
         data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
-        features: BasicFeatures<ED, Cxt, AD> & FD;
+        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
         params?: Record<string, any>;
         legalActions?: string[],
     }) => Promise<FormedData>;
     ns?: T | T[];
 };
 
-type OakComponentProperties = {
+export type OakComponentProperties = {
     oakEntity: StringConstructor;
     oakPath: StringConstructor;
     oakParent: StringConstructor;
 };
 
-type OakPageProperties = {
+export type OakPageProperties = {
     oakEntity: StringConstructor;
     oakPath: StringConstructor;
     oakParent: StringConstructor;
@@ -129,7 +125,7 @@ type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
     [k: string]: any;
 };
 
-type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
+export type OakComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     subscribed?: () => void;
     subscribe: () => void;
     unsubscribe: () => void;
@@ -165,7 +161,7 @@ type OakComponentOnlyMethods = {
     onPropsChanged: (options: ComponentOnPropsChangeOption) => Promise<void>;
 };
 
-type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
+export type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMethods<ED, T> & {
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
     onReachBottom: () => Promise<void>;
@@ -175,24 +171,24 @@ type OakPageMethods<ED extends EntityDict, T extends keyof ED> = OakComponentMet
     setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => void;
 };
 
-type OakComponentInstanceProperties<
+export type OakComponentInstanceProperties<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD>>> = {
-        features: BasicFeatures<ED, Cxt, AD> & FD;
+    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>> = {
+        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
         isReady: boolean;
     };
 
-type OakPageInstanceProperties<
+export type OakPageInstanceProperties<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD>>
+    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
     > = OakComponentInstanceProperties<ED, Cxt, AD, FD>;
 
-function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
-    features: BasicFeatures<ED, Cxt, AD> & FD,
+function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>>(
+    features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
     attr: string,
     params: Record<string, any>,
     entity: keyof ED,
@@ -219,10 +215,10 @@ function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends R
 function makeComponentMethods<ED extends EntityDict,
     T extends keyof ED, Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean>(
-        features: BasicFeatures<ED, Cxt, AD> & FD,
+        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
         doSubscribe: ReturnType<typeof init>['subscribe'],
         formData: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList>['formData'],
         exceptionRouterDict: Record<string, ExceptionHandler>
@@ -545,7 +541,7 @@ function makeComponentMethods<ED extends EntityDict,
     }
 }
 
-type OakPageData = {
+export type OakPageData = {
     oakFullpath: string;
     oakExecuting: boolean;
     oakFocused: object;
@@ -559,21 +555,21 @@ type OakPageData = {
     oakMoreLoading: boolean;
 };
 
-type OakComponentData = {
+export type OakComponentData = {
     // entity: keyof EntityDict;
 } & OakPageData;
 
-function createPageOptions<ED extends EntityDict,
+export function createPageOptions<ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean>(
         options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList>,
         doSubscribe: ReturnType<typeof init>['subscribe'],
-        features: BasicFeatures<ED, Cxt, AD> & FD,
+        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
         exceptionRouterDict: Record<string, ExceptionHandler>) {
     const { formData, isList, pagination, append = true } = options;
     const componentOptions: WechatMiniprogram.Component.Options<
@@ -828,18 +824,18 @@ function createPageOptions<ED extends EntityDict,
 }
 
 
-function createComponentOptions<
+export function createComponentOptions<
     ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
     IsList extends boolean,
     FormedData extends WechatMiniprogram.Component.DataOption
 >(
     options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList>,
     doSubscribe: ReturnType<typeof init>['subscribe'],
-    features: BasicFeatures<ED, Cxt, AD> & FD,
+    features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
     exceptionRouterDict: Record<string, ExceptionHandler>
 ) {
     const { formData, entity } = options;
@@ -942,7 +938,7 @@ function createComponentOptions<
     return componentOptions;
 }
 
-function mergeLifetimes(lifetimes: Array<Partial<WechatMiniprogram.Component.Lifetimes['lifetimes']>>) {
+export function mergeLifetimes(lifetimes: Array<Partial<WechatMiniprogram.Component.Lifetimes['lifetimes']>>) {
     return {
         async created() {
             for (const ele of lifetimes) {
@@ -989,7 +985,7 @@ function mergeLifetimes(lifetimes: Array<Partial<WechatMiniprogram.Component.Lif
     };
 }
 
-function mergePageLifetimes(lifetimes: Array<Partial<WechatMiniprogram.Component.PageLifetimes>>) {
+export function mergePageLifetimes(lifetimes: Array<Partial<WechatMiniprogram.Component.PageLifetimes>>) {
     return {
         async show() {
             for (const ele of lifetimes) {
@@ -1015,7 +1011,7 @@ function mergePageLifetimes(lifetimes: Array<Partial<WechatMiniprogram.Component
     };
 }
 
-function mergeMethods(methods: Array<Record<string, Function>>) {
+export function mergeMethods(methods: Array<Record<string, Function>>) {
     const merged: Record<string, Function> = {};
     const names = union(...(methods.map(
         ele => Object.keys(ele)
@@ -1037,118 +1033,10 @@ function mergeMethods(methods: Array<Record<string, Function>>) {
     return merged;
 }
 
-export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
-    storageSchema: StorageSchema<ED>,
-    createFeatures: (basicFeatures: BasicFeatures<ED, Cxt, AD>) => FD,
-    createContext: (store: RowStore<ED, Cxt>, cxtString: string) => Cxt,
-    exceptionRouters: ExceptionRouters = [],
-    triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
-    checkers?: Array<Checker<ED, keyof ED, Cxt>>,
-    watchers?: Array<Watcher<ED, keyof ED, Cxt>>,
-    aspectDict?: AD,
-    initialData?: {
-        [T in keyof ED]?: Array<ED[T]['OpSchema']>;
-    },
-    actionDict?: ActionDictOfEntityDict<ED>
-) {
-    const { subscribe, features } = init<ED, Cxt, AD, FD>(storageSchema, createFeatures, createContext, triggers, checkers, watchers, aspectDict, initialData, actionDict);
-    const exceptionRouterDict: Record<string, ExceptionHandler> = {};
-    for (const router of exceptionRouters) {
-        assign(exceptionRouterDict, {
-            [router[0].name]: router[1],
-        });
-    }
-
-    return {
-        OakPage: <
-            T extends keyof ED,
-            D extends WechatMiniprogram.Component.DataOption,
-            P extends WechatMiniprogram.Component.PropertyOption,
-            M extends WechatMiniprogram.Component.MethodOption,
-            IsList extends boolean,
-            Proj extends ED[T]['Selection']['data'],
-            IS extends WechatMiniprogram.IAnyObject = {},
-            FormedData extends WechatMiniprogram.Component.DataOption = {}>(
-                options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList>,
-                componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS & OakPageInstanceProperties<ED, Cxt, AD, FD>, true> = {}) => {
-            const oakOptions = createPageOptions(options, subscribe, features, exceptionRouterDict);
-            const { properties, pageLifetimes, lifetimes, methods, data, observers } = oakOptions;
-            const { properties: p2, pageLifetimes: pl2, lifetimes: l2, methods: m2, data: d2, observers: o2, ...restOptions } = componentOptions;
-
-            const pls = [pageLifetimes!];
-            if (pl2) {
-                pls.push(pl2);
-            }
-
-            const ls = [lifetimes!];
-            if (l2) {
-                ls.push(l2);
-            }
-            return Component<
-                D & OakPageData,
-                P & OakPageProperties,
-                M & OakComponentMethods<ED, T>,
-                IS & OakComponentInstanceProperties<ED, Cxt, AD, FD>, true>({
-                    data: assign({}, d2, data),
-                    properties: assign({}, p2, properties),
-                    observers: assign({}, o2, observers),
-                    methods: (m2 ? mergeMethods([methods!, m2]) : methods!) as any,
-                    pageLifetimes: mergePageLifetimes(pls),
-                    lifetimes: mergeLifetimes(ls),
-                    ...restOptions,
-                });
-        },
-
-        OakComponent: <
-            T extends keyof EntityDict,
-            D extends WechatMiniprogram.Component.DataOption,
-            P extends WechatMiniprogram.Component.PropertyOption,
-            M extends WechatMiniprogram.Component.MethodOption,
-            IsList extends boolean,
-            IS extends WechatMiniprogram.IAnyObject = {},
-            FormedData extends WechatMiniprogram.Component.DataOption = {}>(
-                options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList>,
-                componentOptions: OakWechatMpOptions<
-                    D,
-                    P,
-                    M,
-                    OakPageProperties,
-                    OakPageMethods<ED, T>,
-                    OakPageData,
-                    OakPageInstanceProperties<ED, Cxt, AD, FD>,
-                    IS,
-                    true
-                > = {}) => {
-            const oakOptions = createComponentOptions(options, subscribe, features, exceptionRouterDict);
-            const { properties, pageLifetimes, lifetimes, methods, data, observers } = oakOptions;
-            const { properties: p2, pageLifetimes: pl2, lifetimes: l2, methods: m2, data: d2, observers: o2, ...restOptions } = componentOptions;
-
-            const pls = [pageLifetimes, pl2].filter(ele => !!ele) as Array<Partial<WechatMiniprogram.Component.PageLifetimes>>;
-            const ls = [lifetimes, l2].filter(ele => !!ele) as Array<Partial<WechatMiniprogram.Component.Lifetimes>>;
-
-            return Component<
-                D & OakComponentData,
-                P & OakComponentProperties,
-                M & OakComponentMethods<ED, T>,
-                IS & OakComponentInstanceProperties<ED, Cxt, AD, FD>, false>({
-                    data: assign({}, d2, data),
-                    properties: assign({}, p2, properties),
-                    observers: assign({}, o2, observers),
-                    methods: (m2 ? mergeMethods([methods!, m2]) : methods!) as any,
-                    pageLifetimes: mergePageLifetimes(pls),
-                    lifetimes: mergeLifetimes(ls),
-                    ...restOptions,
-                });
-        },
-
-        features,
-    };
-}
-
 /**
  * 根据WechatMiniprogram.Component.Options写的，规定OakPage和OakComponent中第二个参数的定义
  */
-type OakWechatMpOptions<
+export type OakWechatMpOptions<
     TData extends WechatMiniprogram.Component.DataOption,
     TProperty extends WechatMiniprogram.Component.PropertyOption,
     TMethod extends WechatMiniprogram.Component.MethodOption,
@@ -1177,7 +1065,7 @@ export type MakeOakPage<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD>>
+    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
     > = <
         T extends keyof ED,
         D extends WechatMiniprogram.Component.DataOption,
@@ -1215,7 +1103,7 @@ export type MakeOakComponent<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD>>
+    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
     > = <
         T extends keyof ED,
         D extends WechatMiniprogram.Component.DataOption,

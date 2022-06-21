@@ -1,17 +1,16 @@
 import { pull } from 'lodash';
-import { EntityDict, Aspect, AspectProxy, Context } from 'oak-domain/lib/types';
-import baseAspectDict from 'oak-common-aspect';
+import { EntityDict, Aspect, AspectWrapper, Context } from 'oak-domain/lib/types';
+import { AspectDict } from 'oak-common-aspect/src/aspectDict';
 
 
-export abstract class Feature<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {
-    private aspectProxy?: AspectProxy<ED, Cxt, AD & typeof baseAspectDict>;
-
-    protected getAspectProxy() {
-        return this.aspectProxy!;
+export abstract class Feature<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> {
+    private aspectWrapper: AspectWrapper<ED, Cxt, AD>;
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>) {
+        this.aspectWrapper = aspectWrapper;
     }
 
-    setAspectProxy(aspectProxy: AspectProxy<ED, Cxt, AD & typeof baseAspectDict>) {
-        this.aspectProxy = aspectProxy;
+    protected getAspectWrapper() {
+        return this.aspectWrapper!;
     }
 }
 

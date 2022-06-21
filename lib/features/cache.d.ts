@@ -1,18 +1,14 @@
-import { StorageSchema, EntityDict, OperateParams, OpRecord, Aspect, Checker, RowStore, Context, OperationResult } from 'oak-domain/lib/types';
+import { EntityDict, OperateParams, OpRecord, Context, AspectWrapper } from 'oak-domain/lib/types';
+import { AspectDict } from 'oak-common-aspect/src/aspectDict';
 import { Feature } from '../types/Feature';
 import { CacheStore } from '../cacheStore/CacheStore';
-export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Feature<ED, Cxt, AD> {
+export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     cacheStore: CacheStore<ED, Cxt>;
-    createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt;
+    context: Cxt;
     private syncEventsCallbacks;
-    constructor(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt, checkers?: Array<Checker<ED, keyof ED, Cxt>>);
-    refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], scene: string, params?: object): ReturnType<(AD & {
-        operate: typeof import("oak-common-aspect/src/crud").operate;
-        select: typeof import("oak-common-aspect/src/crud").select;
-        amap: typeof import("oak-common-aspect/src/amap").amap;
-        getTranslations: typeof import("oak-common-aspect/src/locales").getTranslations;
-    })["select"]>;
-    sync(records: OpRecord<ED>[]): Promise<void>;
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, context: Cxt, cacheStore: CacheStore<ED, Cxt>);
+    refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): Promise<import("oak-domain/lib/types").SelectionResult<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]>>;
+    private sync;
     /**
      * 前端缓存做operation只可能是测试权限，必然回滚
      * @param entity
@@ -22,10 +18,9 @@ export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD ex
      * @param params
      * @returns
      */
-    operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], scene: string, params?: OperateParams): Promise<OperationResult<ED>>;
-    get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], scene: string, params?: object): Promise<import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]>[]>;
-    judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | 2 | string[];
+    operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], params?: OperateParams): Promise<import("oak-domain/lib/types").OperationResult<ED>>;
+    get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): Promise<import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]>[]>;
+    judgeRelation(entity: keyof ED, attr: string): string | 0 | 2 | string[] | 1;
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
-    registerCheckers(checkers: Array<Checker<ED, keyof ED, Cxt>>): void;
 }

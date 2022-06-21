@@ -1,47 +1,53 @@
-import { StorageSchema, DeduceSelection, EntityDict, OperateParams, OpRecord, Aspect, Checker, RowStore, Context, OperationResult, Trigger, SelectOpResult, UpdateOpResult } from 'oak-domain/lib/types';
+import { StorageSchema, EntityDict, OperateParams, OpRecord, Aspect, Checker, RowStore, Context, AspectWrapper } from 'oak-domain/lib/types';
+import { AspectDict } from 'oak-common-aspect/src/aspectDict';
 import { Action, Feature } from '../types/Feature';
-import { assign, pull, uniq } from 'lodash';
+import { assign, pull } from 'lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 
-export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Feature<ED, Cxt, AD> {
+export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     cacheStore: CacheStore<ED, Cxt>;
-    createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt;
+    context: Cxt;
     private syncEventsCallbacks: Array<(opRecords: OpRecord<ED>[]) => Promise<void>>;
 
-    constructor(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt, checkers?: Array<Checker<ED, keyof ED, Cxt>>) {
-        const cacheStore = new CacheStore(storageSchema, (scene) => createContext(this.cacheStore, scene));
-        if (checkers) {
-            checkers.forEach(
-                (checker) => cacheStore.registerChecker(checker)
-            );
-        }
-        super();
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, context: Cxt, cacheStore: CacheStore<ED, Cxt>) {
+        super(aspectWrapper);
         this.cacheStore = cacheStore;
-        this.createContext = createContext;
+        this.context = context;
         this.syncEventsCallbacks = [];
+
+        // 在这里把wrapper的返回opRecords截取到并同步到cache中
+        const { exec } = aspectWrapper;
+        aspectWrapper.exec = async <T extends keyof AD>(name: T, params: any) => {
+            const { result, opRecords } = await exec(name, params);
+            this.sync(opRecords);
+            return {
+                result,
+                opRecords,
+            };
+        };
     }
 
 
     @Action
-    refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], scene: string, params?: object) {
-        return this.getAspectProxy().select({
-            entity: entity as string, 
+    async refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object) {
+        const { result } = await this.getAspectWrapper().exec('select', {
+            entity, 
             selection,
             params,
-        }, scene);
+        });
+        return result;
     }
 
-    @Action
-    async sync(records: OpRecord<ED>[]) {
-        const context = this.createContext(this.cacheStore, 'sync');
+    private async sync(records: OpRecord<ED>[]) {
+        await this.context.begin();
         try {
-            await this.cacheStore.sync(records, context);
+            await this.cacheStore.sync(records, this.context);
         }
         catch (err) {
-            await context.rollback();
+            await this.context.rollback();
             throw err;
         }
-        await context.commit();
+        await this.context.commit();
 
         // 唤起同步注册的回调
         const result = this.syncEventsCallbacks.map(
@@ -59,26 +65,24 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
      * @param params 
      * @returns 
      */
-    async operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], scene: string, params?: OperateParams) {
-        const context = this.createContext(this.cacheStore, scene);
+    async operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], params?: OperateParams) {
         let result: Awaited<ReturnType<typeof this.cacheStore.operate>>;
-        await context.begin();
+        await this.context.begin();
         try {
-            result = await this.cacheStore.operate(entity, operation, context, params);
+            result = await this.cacheStore.operate(entity, operation, this.context, params);
             
-            await context.rollback();
+            await this.context.rollback();
         }
         catch(err) {
-            await context.rollback();
+            await this.context.rollback();
             throw err;
         }
         return result;        
     }
 
 
-    async get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], scene: string, params?: object) {        
-        const context = this.createContext(this.cacheStore, scene);
-        const { result } = await this.cacheStore.select(entity, selection, context, params);
+    async get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object) {                
+        const { result } = await this.cacheStore.select(entity, selection, this.context, params);
         return result;
     }
 
@@ -94,11 +98,5 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Re
     
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>) {
         pull(this.syncEventsCallbacks, callback);
-    }
-
-    registerCheckers(checkers: Array<Checker<ED, keyof ED, Cxt>>) {
-        checkers.forEach(
-            (checker) => this.cacheStore.registerChecker(checker)
-        );
     }
 }

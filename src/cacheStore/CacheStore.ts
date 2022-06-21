@@ -7,13 +7,9 @@ import { TreeStore } from 'oak-memory-tree-store';
 export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;
 
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (scene: string) => Cxt, initialData?: {
-        [T in keyof ED]?: {
-            [ID: string]: ED[T]['OpSchema'];
-        };
-    }) {
-        super(storageSchema, initialData);
-        this.executor = new TriggerExecutor(contextBuilder);
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString: string) => (store: CacheStore<ED, Cxt>) => Cxt) {
+        super(storageSchema);
+        this.executor = new TriggerExecutor((cxtStr) => contextBuilder(cxtStr)(this));
     }
 
     async operate<T extends keyof ED>(

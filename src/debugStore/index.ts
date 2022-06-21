@@ -1,20 +1,23 @@
 import { DebugStore } from './debugStore';
-import { Checker, Trigger, StorageSchema, FormCreateData, Context, EntityDict, RowStore,
-    ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, OperationResult } from "oak-domain/lib/types";
+import {
+    Checker, Trigger, StorageSchema, FormCreateData, Context, EntityDict, RowStore,
+    ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, OperationResult
+} from "oak-domain/lib/types";
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { makeIntrinsicWatchers } from 'oak-domain/lib/store/watchers';
 
 async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
     store: DebugStore<ED, Cxt>,
-    createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt, initialData?: {
-    [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
-}) {
+    contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
+    initialData?: {
+        [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
+    }) {
     store.startInitializing();
     if (false) {
         // todo 在不同环境下读取相应的store数据并初始化
     }
     else {
-        const context = createContext(store, 'initDataInStore');
+        const context = contextBuilder()(store);
         await context.begin();
         if (initialData) {
             for (const entity in initialData) {
@@ -30,7 +33,7 @@ async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
 }
 
 function getMaterializedData() {
-    if (process.env.OAK_PLATFORM === 'weChatMp') {
+    if (/* process.env.OAK_PLATFORM === 'weChatMp' */true) {
         try {
             const data = wx.getStorageSync('debugStore');
             const stat = wx.getStorageSync('debugStoreStat');
@@ -46,31 +49,12 @@ function getMaterializedData() {
             return;
         }
     }
-    else if (process.env.OAK_PLATFORM === 'web') {
-          try {
-              const data = JSON.parse(
-                  window.localStorage.getItem('debugStore') as string
-              );
-              const stat = JSON.parse(
-                  window.localStorage.getItem('debugStoreStat') as string
-              );
-              if (data && stat) {
-                  return {
-                      data,
-                      stat,
-                  };
-              }
-              return;
-          } catch (e) {
-              return;
-          }
-    }
 }
 
 let lastMaterializedVersion = 0;
 
 function materializeData(data: any, stat: { create: number, update: number, remove: number, commit: number }) {
-    if (process.env.OAK_PLATFORM === 'weChatMp') {
+    if (/* process.env.OAK_PLATFORM === 'weChatMp' */true) {
         try {
             wx.setStorageSync('debugStore', data);
             wx.setStorageSync('debugStoreStat', stat);
@@ -88,17 +72,6 @@ function materializeData(data: any, stat: { create: number, update: number, remo
             });
         }
     }
-    else if (process.env.OAK_PLATFORM === 'web') {
-         try {
-             window.localStorage.setItem('debugStore', typeof data === 'string' ? data : JSON.stringify(data));
-             window.localStorage.setItem('debugStoreStat', JSON.stringify(stat));
-             lastMaterializedVersion = stat.commit;
-             alert('数据已物化');
-         } catch (e) {
-             console.error(e);
-             alert('物化数据失败');
-         }
-    }
 }
 
 /**
@@ -107,23 +80,23 @@ function materializeData(data: any, stat: { create: number, update: number, remo
  * @param watchers 
  */
 function initializeWatchers<ED extends EntityDict, Cxt extends Context<ED>>(
-    store: DebugStore<ED, Cxt>, createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt, watchers: Array<Watcher<ED, keyof ED, Cxt>>) {    
+    store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt, watchers: Array<Watcher<ED, keyof ED, Cxt>>) {
     const schema = store.getSchema();
     const intrinsicWatchers = makeIntrinsicWatchers(schema);
     const totalWatchers = watchers.concat(intrinsicWatchers);
 
     let count = 0;
     async function doWatchers() {
-        count ++;
+        count++;
         const start = Date.now();
-        const context = createContext(store, 'doWatchers');
+        const context = contextBuilder()(store);
         for (const w of totalWatchers) {
             await context.begin();
             try {
                 if (w.hasOwnProperty('actionData')) {
                     const { entity, action, filter, actionData } = <BBWatcher<ED, keyof ED>>w;
                     const filter2 = typeof filter === 'function' ? await filter() : filter;
-                    const data = typeof actionData === 'function' ? await (actionData as any)(): actionData;        // 这里有个奇怪的编译错误，不理解 by Xc
+                    const data = typeof actionData === 'function' ? await (actionData as any)() : actionData;        // 这里有个奇怪的编译错误，不理解 by Xc
                     const result = await store.operate(entity, {
                         action,
                         data,
@@ -141,7 +114,7 @@ function initializeWatchers<ED extends EntityDict, Cxt extends Context<ED>>(
                         filter: filter2,
                     }, context);
 
-                    const result = fn(context, rows);                    
+                    const result = fn(context, rows);
                     console.log(`执行了watcher【${w.name}】，结果是：`, result);
                 }
                 await context.commit();
@@ -162,7 +135,7 @@ function initializeWatchers<ED extends EntityDict, Cxt extends Context<ED>>(
 
 export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>(
     storageSchema: StorageSchema<ED>,
-    createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt,
+    contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
     triggers: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers: Array<Checker<ED, keyof ED, Cxt>>,
     watchers: Array<Watcher<ED, keyof ED, Cxt>>,
@@ -171,13 +144,13 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
     },
     actionDict?: ActionDictOfEntityDict<ED>) {
     const data = getMaterializedData();
-    const store = new DebugStore<ED, Cxt>(storageSchema, createContext, data && data.data, data && data.stat);
+    const store = new DebugStore<ED, Cxt>(storageSchema, contextBuilder, data && data.data, data && data.stat);
 
-    triggers?.forEach(
+    triggers.forEach(
         ele => store.registerTrigger(ele)
     );
 
-    checkers?.forEach(
+    checkers.forEach(
         ele => store.registerChecker(ele)
     );
 
@@ -187,14 +160,14 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
             ele => store.registerTrigger(ele)
         );
         adCheckers.forEach(
-            ele => store.registerChecker(ele)            
+            ele => store.registerChecker(ele)
         );
     }
 
     // 如果没有物化数据则使用initialData初始化debugStore
     if (!data) {
         console.log('使用初始化数据建立debugStore');
-        initDataInStore(store, createContext, initialData);
+        initDataInStore(store, contextBuilder, initialData);
     }
     else {
         console.log('使用物化数据建立debugStore');
@@ -212,7 +185,7 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
     }, 10000);
 
     // 启动watcher
-    initializeWatchers(store, createContext, watchers!);
+    initializeWatchers(store, contextBuilder, watchers!);
     return store;
 }
 

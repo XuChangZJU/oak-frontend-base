@@ -1,32 +1,9 @@
-import { EntityDict, Aspect, Context } from 'oak-domain/lib/types';
-import { Action, Feature } from '../types/Feature';
-import { promisify } from '../utils/promisify';
-
-type QiniuUploadInfo = {
-    key: string;
-    uploadToken: string;
-    uploadHost: string;
-    bucket: string;
-    domain: string;
-};
-
-type AliyunUploadInfo = {
-    key: string;
-    signature: string;
-    policy: string;
-    uploadHost: string;
-    bucket: string;
-    domain: string;
-    accessKey: string;
-};
+import { QiniuUploadInfo, AliyunUploadInfo } from '../types/Upload';
+import { promisify } from './promisify';
 
 type UploadInfo = QiniuUploadInfo | AliyunUploadInfo;
 
-export class Upload extends Feature<
-    EntityDict,
-    Context<EntityDict>,
-    Record<string, Aspect<EntityDict, Context<EntityDict>>>
-> {
+export class Upload {
     async uploadFile(
         origin: 'qiniu' | 'aliyun' | 'unknown',
         filePath: string,

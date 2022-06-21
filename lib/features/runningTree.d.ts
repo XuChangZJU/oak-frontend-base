@@ -1,9 +1,10 @@
-import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceOperation } from "oak-domain/lib/types";
+import { EntityDict, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceOperation, AspectWrapper } from "oak-domain/lib/types";
+import { AspectDict } from 'oak-common-aspect/src/aspectDict';
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
 import { Cache } from './cache';
 import { Pagination } from '../types/Pagination';
 import { Feature } from '../types/Feature';
-declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {
+declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> {
     protected entity: T;
     protected schema: StorageSchema<ED>;
     protected projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>);
@@ -34,11 +35,11 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     getBeforeExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     getAfterExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     destroy(): void;
-    protected judgeRelation(attr: string): string | 0 | 1 | 2 | string[];
+    protected judgeRelation(attr: string): string | 0 | 2 | string[] | 1;
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }
-declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Node<ED, T, Cxt, AD> {
+declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private children;
     private newBorn;
     private filters;
@@ -70,14 +71,14 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     getFreshValue(): Array<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined>;
     getAction(): "update" | ED[T]["Action"];
     composeOperation(action?: string, execute?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
-    refresh(scene: string): Promise<void>;
-    loadMore(scene: string): Promise<void>;
+    refresh(): Promise<void>;
+    loadMore(): Promise<void>;
     resetUpdateData(): void;
     pushNewBorn(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): SingleNode<ED, T, Cxt, AD>;
     popNewBorn(path: string): void;
     setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]): void;
 }
-declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Node<ED, T, Cxt, AD> {
+declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private id?;
     private value?;
     private freshValue?;
@@ -117,15 +118,14 @@ export declare type CreateNodeOptions<ED extends EntityDict, T extends keyof ED>
     beforeExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
     afterExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
 };
-export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Feature<ED, Cxt, AD> {
+export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     private cache;
-    private schema?;
+    private schema;
     private root;
-    constructor(cache: Cache<ED, Cxt, AD>);
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, AD>, schema: StorageSchema<ED>);
     createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>): Promise<ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>>;
     private findNode;
     destroyNode(path: string): void;
-    setStorageSchema(schema: StorageSchema<ED>): void;
     private applyOperation;
     getFreshValue(path: string): (SelectRowShape<ED[keyof ED]["OpSchema"], ED[keyof ED]["Selection"]["data"]> & Partial<Omit<ED[keyof ED]["OpSchema"], import("oak-domain/lib/types").InstinctiveAttributes>> & {
         [k: string]: any;

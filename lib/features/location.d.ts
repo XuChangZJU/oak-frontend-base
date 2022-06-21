@@ -1,6 +1,7 @@
-import { EntityDict, Aspect, Context } from 'oak-domain/lib/types';
+import { EntityDict, Context } from 'oak-domain/lib/types';
 import { Feature } from '../types/Feature';
-export declare class Location extends Feature<EntityDict, Context<EntityDict>, Record<string, Aspect<EntityDict, Context<EntityDict>>>> {
+import { AspectDict } from 'oak-common-aspect/src/aspectDict';
+export declare class Location<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     private latitude?;
     private longitude?;
     private lastTimestamp?;

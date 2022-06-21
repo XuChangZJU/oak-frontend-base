@@ -2,7 +2,8 @@ import assert from "assert";
 import { assign, at, cloneDeep, keys, omit, pick, pull, set, unset } from "lodash";
 import { combineFilters, contains, repel } from "oak-domain/lib/store/filter";
 import { judgeRelation } from "oak-domain/lib/store/relation";
-import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult, CreateOpResult, RemoveOpResult, DeduceSorterItem } from "oak-domain/lib/types";
+import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult, CreateOpResult, RemoveOpResult, DeduceSorterItem, AspectWrapper } from "oak-domain/lib/types";
+import { AspectDict } from 'oak-common-aspect/src/aspectDict';
 
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
 import { generateMockId } from "../utils/mockId";
@@ -10,7 +11,7 @@ import { Cache } from './cache';
 import { Pagination } from '../types/Pagination';
 import { Action, Feature } from '../types/Feature';
 
-abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {
+abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> {
     protected entity: T;
     // protected fullPath: string;
     protected schema: StorageSchema<ED>;
@@ -182,7 +183,7 @@ const DEFAULT_PAGINATION: Pagination = {
 class ListNode<ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
-    AD extends Record<string, Aspect<ED, Cxt>>> extends Node<ED, T, Cxt, AD> {
+    AD extends AspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private children: SingleNode<ED, T, Cxt, AD>[];
     private newBorn: SingleNode<ED, T, Cxt, AD>[];    // 新插入的结点
 
@@ -260,7 +261,7 @@ class ListNode<ED extends EntityDict,
                 data: projection as any,
                 filter,
                 sorter: sorterss,
-            }, 'listNode:onCachSync', { obscure: true });
+            }, { obscure: true });
             this.setValue(value);
         }
     }
@@ -485,7 +486,7 @@ class ListNode<ED extends EntityDict,
         return actions;
     }
 
-    async refresh(scene: string) {
+    async refresh() {
         const { filters, sorters, pagination, entity } = this;
         const { step } = pagination;
         const proj = await this.getProjection();
@@ -517,7 +518,7 @@ class ListNode<ED extends EntityDict,
             sorter: sorterss,
             indexFrom: 0,
             count: step,
-        }, scene);
+        });
         this.pagination.indexFrom = 0;
         this.pagination.more = result.length === step;
         this.refreshing = false;
@@ -525,7 +526,7 @@ class ListNode<ED extends EntityDict,
         this.setValue(result as any);
     }
 
-    async loadMore(scene: string) {
+    async loadMore() {
         const { filters, sorters, pagination, entity } = this;
         const { step, more } = pagination;
         if (!more) {
@@ -560,7 +561,7 @@ class ListNode<ED extends EntityDict,
             sorter: sorterss,
             indexFrom: this.pagination.indexFrom + step,
             count: step,
-        }, scene);
+        });
         this.pagination.indexFrom = this.pagination.indexFrom + step;
         this.pagination.more = result.length === step;
         this.refreshing = false;
@@ -699,7 +700,7 @@ class ListNode<ED extends EntityDict,
 class SingleNode<ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
-    AD extends Record<string, Aspect<ED, Cxt>>> extends Node<ED, T, Cxt, AD> {
+    AD extends AspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private id?: string;
     private value?: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>;
     private freshValue?: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>;
@@ -775,7 +776,7 @@ class SingleNode<ED extends EntityDict,
                 filter: {
                     id: this.id,
                 }
-            } as any, 'onCacheSync');
+            } as any);
             this.setValue(value);
         }
     }
@@ -966,7 +967,7 @@ class SingleNode<ED extends EntityDict,
                 filter: {
                     id: this.id,
                 },
-            } as any, scene);
+            } as any);
             this.refreshing = false;
             this.setValue(value as any);
         }
@@ -1012,7 +1013,7 @@ class SingleNode<ED extends EntityDict,
                 filter: {
                     id: newId,
                 } as any,
-            }, 'SingleNode:setForeignKey') : [undefined];
+            }) : [undefined];
             (<SingleNode<ED, keyof ED, Cxt, AD>>this.children[attr]).setValue(value);
         }
     }
@@ -1036,15 +1037,16 @@ export type CreateNodeOptions<ED extends EntityDict, T extends keyof ED> = {
     afterExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
 };
 
-export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> extends Feature<ED, Cxt, AD> {
+export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     private cache: Cache<ED, Cxt, AD>;
-    private schema?: StorageSchema<ED>;
+    private schema: StorageSchema<ED>;
     private root: Record<string, SingleNode<ED,
         keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>>;
 
-    constructor(cache: Cache<ED, Cxt, AD>) {
-        super();
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, AD>, schema: StorageSchema<ED>) {
+        super(aspectWrapper);
         this.cache = cache;
+        this.schema = schema;
         this.root = {};
     }
 
@@ -1132,10 +1134,6 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                 unset(this.root, path);
             }
         }
-    }
-
-    setStorageSchema(schema: StorageSchema<ED>) {
-        this.schema = schema;
     }
 
     private async applyOperation<T extends keyof ED>(
@@ -1259,7 +1257,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                                     filter: {
                                         id: entityId,
                                     } as any,
-                                }, scene);
+                                });
                                 set(row, attr, entityRow);
                             }
                             else if (typeof relation === 'string' && actionData.hasOwnProperty(`${attr}Id`)) {
@@ -1268,7 +1266,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                                     filter: {
                                         id: actionData[`${attr}Id`],
                                     } as any,
-                                }, scene);
+                                });
                                 set(row, attr, entityRow);
                             }
                         }
@@ -1380,7 +1378,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     async loadMore(path: string) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        await node.loadMore(path);
+        await node.loadMore();
     }
 
     getNamedFilters<T extends keyof ED>(path: string) {
@@ -1401,7 +1399,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         assert(node instanceof ListNode);
         node.setNamedFilters(filters);
         if (refresh) {
-            await node.refresh(path);
+            await node.refresh();
         }
     }
 
@@ -1411,7 +1409,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         assert(node instanceof ListNode);
         node.addNamedFilter(filter);
         if (refresh) {
-            await node.refresh(path);
+            await node.refresh();
         }
     }
 
@@ -1421,7 +1419,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         assert(node instanceof ListNode);
         node.removeNamedFilter(filter);
         if (refresh) {
-            await node.refresh(path);
+            await node.refresh();
         }
     }
 
@@ -1431,7 +1429,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         assert(node instanceof ListNode);
         node.removeNamedFilterByName(name);
         if (refresh) {
-            await node.refresh(path);
+            await node.refresh();
         }
     }
 
@@ -1453,7 +1451,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         assert(node instanceof ListNode);
         node.setNamedSorters(sorters);
         if (refresh) {
-            await node.refresh(path);
+            await node.refresh();
         }
     }
 
@@ -1463,7 +1461,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         assert(node instanceof ListNode);
         node.addNamedSorter(sorter);
         if (refresh) {
-            await node.refresh(path);
+            await node.refresh();
         }
     }
 
@@ -1473,7 +1471,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         assert(node instanceof ListNode);
         node.removeNamedSorter(sorter);
         if (refresh) {
-            await node.refresh(path);
+            await node.refresh();
         }
     }
 
@@ -1483,7 +1481,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         assert(node instanceof ListNode);
         node.removeNamedSorterByName(name);
         if (refresh) {
-            await node.refresh(path);
+            await node.refresh();
         }
     }
 
@@ -1496,11 +1494,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         // 先在cache中尝试能否执行，如果权限上否决了在这里就失败
         if (operation instanceof Array) {
             for (const oper of operation) {
-                await this.cache.operate(node.getEntity(), oper, path);
+                await this.cache.operate(node.getEntity(), oper);
             }
         }
         else if (operation) {
-            await this.cache.operate(node.getEntity(), operation, path);
+            await this.cache.operate(node.getEntity(), operation);
         }
         else {
             assert(false);
@@ -1540,10 +1538,10 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     async execute(path: string, action: string) {
         const { node, operation } = await this.testAction(path, action, true);
 
-        await this.getAspectProxy().operate({
+        await this.getAspectWrapper().exec('operate', {
             entity: node.getEntity() as string,
             operation,
-        }, path);
+        })
 
         // 清空缓存
         node.resetUpdateData();
@@ -1565,7 +1563,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         assert(parentNode instanceof ListNode && node instanceof SingleNode);        // 现在应该不可能remove一个list吧，未来对list的处理还要细化
         if (node.getAction() !== 'create') {
             // 不是增加，说明是删除数据
-            await this.getAspectProxy().operate({
+            await this.getAspectWrapper().exec('operate', {
                 entity: node.getEntity() as string,
                 operation: {
                     action: 'remove',
@@ -1573,8 +1571,8 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                     filter: {
                         id: node.getFreshValue()!.id,
                     },
-                }
-            }, parent);
+                } as ED[keyof ED]['Remove']
+            });
         }
         else {
             // 删除子结点

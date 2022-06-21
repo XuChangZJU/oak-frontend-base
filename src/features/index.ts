@@ -1,27 +1,26 @@
-import { Aspect, Checker, Context, EntityDict, RowStore } from 'oak-domain/lib/types';
+import { AspectWrapper, Checker, Context, EntityDict, RowStore } from 'oak-domain/lib/types';
 
+import { AspectDict } from 'oak-common-aspect/src/aspectDict';
 import { Cache } from './cache';
 import { Location } from './location';
-import { Upload } from './upload';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { RunningTree } from './runningTree';
 import { Locales } from './locales';
+import { CacheStore } from '../cacheStore/CacheStore';
 
-export function initialize<ED extends EntityDict, Cxt extends Context<ED>, 
-    AD extends Record<string, Aspect<ED, Cxt>>> (
+export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> (
+        aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         storageSchema: StorageSchema<ED>,
-        createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt,
-        checkers?: Array<Checker<ED, keyof ED, Cxt>>): BasicFeatures<ED, Cxt, AD> {
-    const cache = new Cache<ED, Cxt, AD>(storageSchema, createContext, checkers);
-    const location = new Location();
-    const runningTree = new RunningTree<ED, Cxt, AD>(cache);
-    const upload = new Upload();
-    const locales = new Locales();
+        context: Cxt,
+        cacheStore: CacheStore<ED, Cxt>): BasicFeatures<ED, Cxt, AD> {
+    const cache = new Cache<ED, Cxt, AD>(aspectWrapper, context, cacheStore);
+    const location = new Location(aspectWrapper);
+    const runningTree = new RunningTree<ED, Cxt, AD>(aspectWrapper, cache, storageSchema);
+    const locales = new Locales(aspectWrapper);
     return {
         cache,
         location,
         runningTree,
-        upload,
         locales,
     };
 }
@@ -29,11 +28,10 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>,
 export type BasicFeatures<
     ED extends EntityDict,
     Cxt extends Context<ED>,
-    AD extends Record<string, Aspect<ED, Cxt>>
+    AD extends AspectDict<ED, Cxt>
 > = {
     cache: Cache<ED, Cxt, AD>;
-    location: Location;
+    location: Location<ED, Cxt, AD>;
     runningTree: RunningTree<ED, Cxt, AD>;
-    upload: Upload;
-    locales: Locales;
+    locales: Locales<ED, Cxt, AD>;
 };
