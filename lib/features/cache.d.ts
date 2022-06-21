@@ -7,10 +7,10 @@ export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     private syncEventsCallbacks;
     constructor(storageSchema: StorageSchema<ED>, createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt, checkers?: Array<Checker<ED, keyof ED, Cxt>>);
     refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], scene: string, params?: object): ReturnType<(AD & {
-        operate: typeof import("../aspects/crud").operate;
-        select: typeof import("../aspects/crud").select;
-        amap: typeof import("../aspects/amap").amap;
-        getTranslations: typeof import("../aspects/locales").getTranslations;
+        operate: typeof import("oak-common-aspect/src/crud").operate;
+        select: typeof import("oak-common-aspect/src/crud").select;
+        amap: typeof import("oak-common-aspect/src/amap").amap;
+        getTranslations: typeof import("oak-common-aspect/src/locales").getTranslations;
     })["select"]>;
     sync(records: OpRecord<ED>[]): Promise<void>;
     /**

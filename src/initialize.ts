@@ -6,7 +6,7 @@ import { createDebugStore } from './debugStore';
 
 import { initialize as createBasicFeatures, BasicFeatures } from './features';
 import { assign, intersection, keys, mapValues } from 'lodash';
-import baseAspectDict from './aspects';
+import baseAspectDict from 'oak-common-aspect';
 import { ActionDictOfEntityDict } from "oak-domain/lib/types/Action";
 import { analyzeActionDefDict } from "oak-domain/lib/store/actionDef";
 

@@ -1,6 +1,6 @@
 import { pull } from 'lodash';
 import { EntityDict, Aspect, AspectProxy, Context } from 'oak-domain/lib/types';
-import baseAspectDict from '../aspects';
+import baseAspectDict from 'oak-common-aspect';
 
 
 export abstract class Feature<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {

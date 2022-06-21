@@ -1,12 +1,12 @@
 import { EntityDict, Aspect, AspectProxy, Context } from 'oak-domain/lib/types';
-import baseAspectDict from '../aspects';
+import baseAspectDict from 'oak-common-aspect';
 export declare abstract class Feature<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>> {
     private aspectProxy?;
     protected getAspectProxy(): NonNullable<AspectProxy<ED, Cxt, AD & {
-        operate: typeof import("../aspects/crud").operate;
-        select: typeof import("../aspects/crud").select;
-        amap: typeof import("../aspects/amap").amap;
-        getTranslations: typeof import("../aspects/locales").getTranslations;
+        operate: typeof import("oak-common-aspect/src/crud").operate;
+        select: typeof import("oak-common-aspect/src/crud").select;
+        amap: typeof import("oak-common-aspect/src/amap").amap;
+        getTranslations: typeof import("oak-common-aspect/src/locales").getTranslations;
     }>>;
     setAspectProxy(aspectProxy: AspectProxy<ED, Cxt, AD & typeof baseAspectDict>): void;
 }

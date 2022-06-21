@@ -1009,7 +1009,7 @@ function mergeMethods(methods: Array<Record<string, Function>>) {
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD>>>(
     storageSchema: StorageSchema<ED>,
     createFeatures: (basicFeatures: BasicFeatures<ED, Cxt, AD>) => FD,
-    createContext: (store: RowStore<ED, Cxt>, scene: string) => Cxt,
+    createContext: (store: RowStore<ED, Cxt>, cxtString: string) => Cxt,
     exceptionRouters: ExceptionRouters = [],
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,

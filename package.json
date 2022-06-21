@@ -5,9 +5,9 @@
     "dependencies": {
         "format-message-parse": "^6.2.4",
         "lodash": "^4.17.21",
+        "oak-common-aspect": "file:../oak-common-aspect",
         "oak-domain": "file:../oak-domain",
         "oak-memory-tree-store": "file:../oak-memory-tree-store",
-        "oak-external-sdk": "file:../oak-external-sdk",
         "uuid": "^8.3.2"
     },
     "devDependencies": {
