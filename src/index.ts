@@ -11,9 +11,4 @@ export * from './types/ExceptionRoute';
 export { BasicFeatures } from  './features';
 export * from './features/cache';
 export * from './features/upload';
-/* export {
-    initI18nWechatMp,
-    getI18nInstanceWechatMp,
-    I18nWechatMpRuntimeBase,
-    I18nWechatMp,
-} from './platforms/wechatMp/i18n'; */
+

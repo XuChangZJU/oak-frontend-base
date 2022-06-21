@@ -113,7 +113,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         this.rwLock.acquire('X');
     }
 
-    endInitalizing() {
+    endInitializing() {
         this.rwLock.release();
     }
 }

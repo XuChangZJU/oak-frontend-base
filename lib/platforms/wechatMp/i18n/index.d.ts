@@ -25,6 +25,11 @@ export declare class I18nWechatMpRuntimeBase implements CommonI18nInterface {
     t(key: string, options?: object): string;
     getFallbackLocale(): string;
 }
+declare global {
+    const OakI18n: {
+        i18nInstance: I18nWechatMpRuntimeBase | null;
+    };
+}
 export declare function initI18nWechatMp(options: {
     locales: Locales;
     defaultLocale?: string;
