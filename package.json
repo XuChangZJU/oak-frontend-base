@@ -7,7 +7,12 @@
         "lodash": "^4.17.21",
         "oak-common-aspect": "file:../oak-common-aspect",
         "oak-domain": "file:../oak-domain",
+        "oak-external-sdk": "file:../oak-external-sdk",
         "oak-memory-tree-store": "file:../oak-memory-tree-store",
+        "react": "^18.1.0",
+        "react-dom": "^18.1.0",
+        "react-router-dom": "^6.3.0",
+        "rmc-pull-to-refresh": "^1.0.13",
         "uuid": "^8.3.2"
     },
     "devDependencies": {
@@ -22,7 +27,8 @@
         "@types/luxon": "^2.0.9",
         "@types/mocha": "^8.2.0",
         "@types/node": "^14.14.25",
-        "@types/react": "^17.0.2",
+        "@types/react": "^18.0.12",
+        "@types/react-dom": "^18.0.5",
         "@types/uuid": "^8.3.0",
         "@types/wechat-miniprogram": "^3.4.1",
         "assert": "^2.0.0",
