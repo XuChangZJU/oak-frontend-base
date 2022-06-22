@@ -6,6 +6,7 @@ import { RWLock } from 'oak-domain/lib/utils/concurrent';
 
 interface DebugStoreOperationParams extends OperateParams {
     noLock?: true,
+    omitTrigger?: true,
 };
 
 export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
@@ -21,21 +22,25 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         this.rwLock = new RWLock();
     }
 
-    protected async cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, params?: OperateParams) {
+    protected async cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, params?: DebugStoreOperationParams) {        
         await this.executor.preOperation(entity, operation, context, params);
         const result = super.cascadeUpdate(entity, operation, context, params);
         await this.executor.postOperation(entity, operation, context, params);
         return result;
     }
 
-    protected async cascadeSelect<T extends keyof ED, S extends ED[T]["Selection"]>(entity: T, selection: S, context: Cxt, params?: OperateParams): Promise<SelectRowShape<ED[T]['Schema'], S['data']>[]> {
+    protected async cascadeSelect<T extends keyof ED, S extends ED[T]["Selection"]>(entity: T, selection: S, context: Cxt, params?: DebugStoreOperationParams): Promise<SelectRowShape<ED[T]['Schema'], S['data']>[]> {
         const selection2 = Object.assign({
             action: 'select',
         }, selection) as ED[T]['Operation'];
 
-        await this.executor.preOperation(entity, selection2, context, params);
+        if (!params?.omitTrigger) {
+            await this.executor.preOperation(entity, selection2, context, params);
+        }
         const result = await super.cascadeSelect(entity, selection2 as any, context, params);
-        await this.executor.postOperation(entity, selection2, context, params, result);
+        if (!params?.omitTrigger) {
+            await this.executor.postOperation(entity, selection2, context, params, result);
+        }
         return result;
     }
 

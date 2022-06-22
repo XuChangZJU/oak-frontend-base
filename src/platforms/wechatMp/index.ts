@@ -569,7 +569,8 @@ export function createPageOptions<ED extends EntityDict,
         options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList>,
         doSubscribe: ReturnType<typeof init>['subscribe'],
         features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
-        exceptionRouterDict: Record<string, ExceptionHandler>) {
+        exceptionRouterDict: Record<string, ExceptionHandler>,
+        context: Cxt) {
     const { formData, isList, pagination, append = true } = options;
     const componentOptions: WechatMiniprogram.Component.Options<
         OakPageData,
@@ -783,6 +784,7 @@ export function createPageOptions<ED extends EntityDict,
             created() {
                 this.features = features;
                 this.isReady = false;
+                context.setScene(options.path);
             },
 
             attached() {
@@ -810,6 +812,7 @@ export function createPageOptions<ED extends EntityDict,
 
         pageLifetimes: {
             show() {
+                context.setScene(options.path);
                 this.reRender();
                 this.subscribe();
             },

@@ -24,7 +24,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     },
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
-    const { subscribe, features } = init<ED, Cxt, AD, FD>(storageSchema, createFeatures, contextBuilder, contextCreator, aspectDict, triggers, checkers, watchers, initialData, actionDict);
+    const { subscribe, features, context } = init<ED, Cxt, AD, FD>(storageSchema, createFeatures, contextBuilder, contextCreator, aspectDict, triggers, checkers, watchers, initialData, actionDict);
     const exceptionRouterDict: Record<string, ExceptionHandler> = {};
     for (const router of exceptionRouters) {
         assign(exceptionRouterDict, {
@@ -44,7 +44,12 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             FormedData extends WechatMiniprogram.Component.DataOption = {}>(
                 options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList>,
                 componentOptions: WechatMiniprogram.Component.Options<D, P, M, IS & OakPageInstanceProperties<ED, Cxt, AD, FD>, true> = {}) => {
-            const oakOptions = createPageOptions<ED, T, Cxt, AD, FD, Proj, FormedData, IsList>(options, subscribe, features, exceptionRouterDict);
+            const oakOptions = createPageOptions<ED, T, Cxt, AD, FD, Proj, FormedData, IsList>(
+                options,
+                subscribe,
+                features,
+                exceptionRouterDict,
+                context);
             const { properties, pageLifetimes, lifetimes, methods, data, observers } = oakOptions;
             const { properties: p2, pageLifetimes: pl2, lifetimes: l2, methods: m2, data: d2, observers: o2, ...restOptions } = componentOptions;
 

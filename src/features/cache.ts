@@ -39,15 +39,7 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends As
     }
 
     private async sync(records: OpRecord<ED>[]) {
-        await this.context.begin();
-        try {
-            await this.cacheStore.sync(records, this.context);
-        }
-        catch (err) {
-            await this.context.rollback();
-            throw err;
-        }
-        await this.context.commit();
+        await this.cacheStore.sync(records, this.context);
 
         // 唤起同步注册的回调
         const result = this.syncEventsCallbacks.map(

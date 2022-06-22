@@ -97,5 +97,6 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     return {
         subscribe,
         features,
+        context,
     };
 }
