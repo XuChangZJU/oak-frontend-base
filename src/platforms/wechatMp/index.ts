@@ -9,12 +9,10 @@ import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from '../../types/NamedCondition';
 import { CreateNodeOptions } from '../../features/runningTree';
 import {
-    initI18nWechatMp,
-    I18nWechatMpRuntimeBase,
     getI18nInstanceWechatMp,
     CURRENT_LOCALE_KEY,
     CURRENT_LOCALE_DATA,
-} from './i18n/index';
+} from './i18n';
 import { AspectDict } from 'oak-common-aspect/src/aspectDict';
 
 
