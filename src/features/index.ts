@@ -1,6 +1,6 @@
 import { AspectWrapper, Checker, Context, EntityDict, RowStore } from 'oak-domain/lib/types';
 
-import { AspectDict } from 'oak-common-aspect/src/aspectDict';
+import { CommonAspectDict } from 'oak-common-aspect';
 import { Cache } from './cache';
 import { Location } from './location';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
@@ -8,7 +8,7 @@ import { RunningTree } from './runningTree';
 import { Locales } from './locales';
 import { CacheStore } from '../cacheStore/CacheStore';
 
-export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> (
+export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> (
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         storageSchema: StorageSchema<ED>,
         context: Cxt,
@@ -28,7 +28,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
 export type BasicFeatures<
     ED extends EntityDict,
     Cxt extends Context<ED>,
-    AD extends AspectDict<ED, Cxt>
+    AD extends CommonAspectDict<ED, Cxt>
 > = {
     cache: Cache<ED, Cxt, AD>;
     location: Location<ED, Cxt, AD>;

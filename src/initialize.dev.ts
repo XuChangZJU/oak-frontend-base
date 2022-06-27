@@ -1,15 +1,15 @@
 import { Aspect, AspectWrapper, Checker, Trigger, StorageSchema, Context, RowStore, OakRowInconsistencyException, Watcher } from "oak-domain/lib/types";
-import { EntityDict, FormCreateData } from 'oak-domain/lib/types/Entity';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
 
-import { Feature, subscribe } from './types/Feature';
+import { Feature } from './types/Feature';
 import { createDebugStore } from './debugStore';
 
 import { initialize as createBasicFeatures, BasicFeatures } from './features';
-import { assign, intersection, keys, mapValues } from 'lodash';
+import { assign, intersection, keys } from 'lodash';
 import commonAspectDict from 'oak-common-aspect';
 import { ActionDictOfEntityDict } from "oak-domain/lib/types/Action";
 import { analyzeActionDefDict } from "oak-domain/lib/store/actionDef";
-import { AspectDict } from "oak-common-aspect/src/aspectDict";
+import { CommonAspectDict } from "oak-common-aspect";
 import { CacheStore } from "./cacheStore/CacheStore";
 
 /**
@@ -26,11 +26,10 @@ import { CacheStore } from "./cacheStore/CacheStore";
  * @param actionDict 
  * @returns 
  */
-export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>>(
+export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>>(
     storageSchema: StorageSchema<ED>,
-    createFeatures: (aspectWrapper: AspectWrapper<ED, Cxt, AD> ,basicFeatures: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>>, context: Cxt) => FD,
+    createFeatures: (aspectWrapper: AspectWrapper<ED, Cxt, AD>, basicFeatures: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>, context: Cxt) => FD,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
-    contextCreator: (store: RowStore<ED, Cxt>) => Cxt,
     aspectDict: AD,
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
@@ -95,7 +94,6 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     const features = assign(basicFeatures, userDefinedfeatures);
 
     return {
-        subscribe,
         features,
         context,
     };

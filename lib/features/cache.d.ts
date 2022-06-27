@@ -1,8 +1,8 @@
 import { EntityDict, OperateParams, OpRecord, Context, AspectWrapper } from 'oak-domain/lib/types';
-import { AspectDict } from 'oak-common-aspect/src/aspectDict';
+import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
 import { CacheStore } from '../cacheStore/CacheStore';
-export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
+export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     cacheStore: CacheStore<ED, Cxt>;
     context: Cxt;
     private syncEventsCallbacks;
@@ -20,7 +20,7 @@ export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD ex
      */
     operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], params?: OperateParams): Promise<import("oak-domain/lib/types").OperationResult<ED>>;
     get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object): Promise<import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]>[]>;
-    judgeRelation(entity: keyof ED, attr: string): string | 0 | 2 | string[] | 1;
+    judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | 2 | string[];
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
 }

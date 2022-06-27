@@ -1,9 +1,9 @@
 import { pull } from 'lodash';
 import { EntityDict, Aspect, AspectWrapper, Context } from 'oak-domain/lib/types';
-import { AspectDict } from 'oak-common-aspect/src/aspectDict';
+import { CommonAspectDict } from 'oak-common-aspect';
 
 
-export abstract class Feature<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> {
+export abstract class Feature<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> {
     private aspectWrapper: AspectWrapper<ED, Cxt, AD>;
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>) {
         this.aspectWrapper = aspectWrapper;

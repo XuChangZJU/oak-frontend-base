@@ -3,7 +3,7 @@ import { assign, at, cloneDeep, keys, omit, pick, pull, set, unset } from "lodas
 import { combineFilters, contains, repel } from "oak-domain/lib/store/filter";
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult, CreateOpResult, RemoveOpResult, DeduceSorterItem, AspectWrapper } from "oak-domain/lib/types";
-import { AspectDict } from 'oak-common-aspect/src/aspectDict';
+import { CommonAspectDict } from 'oak-common-aspect';
 
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
 import { generateMockId } from "../utils/mockId";
@@ -11,7 +11,7 @@ import { Cache } from './cache';
 import { Pagination } from '../types/Pagination';
 import { Action, Feature } from '../types/Feature';
 
-abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> {
+abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> {
     protected entity: T;
     // protected fullPath: string;
     protected schema: StorageSchema<ED>;
@@ -183,7 +183,7 @@ const DEFAULT_PAGINATION: Pagination = {
 class ListNode<ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
-    AD extends AspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
+    AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private children: SingleNode<ED, T, Cxt, AD>[];
     private newBorn: SingleNode<ED, T, Cxt, AD>[];    // 新插入的结点
 
@@ -700,7 +700,7 @@ class ListNode<ED extends EntityDict,
 class SingleNode<ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
-    AD extends AspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
+    AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private id?: string;
     private value?: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>;
     private freshValue?: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>;
@@ -1037,7 +1037,7 @@ export type CreateNodeOptions<ED extends EntityDict, T extends keyof ED> = {
     afterExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
 };
 
-export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
+export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     private cache: Cache<ED, Cxt, AD>;
     private schema: StorageSchema<ED>;
     private root: Record<string, SingleNode<ED,

@@ -1,6 +1,6 @@
 import { EntityDict, AspectWrapper, Context } from 'oak-domain/lib/types';
-import { AspectDict } from 'oak-common-aspect/src/aspectDict';
-export declare abstract class Feature<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> {
+import { CommonAspectDict } from 'oak-common-aspect';
+export declare abstract class Feature<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> {
     private aspectWrapper;
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>);
     protected getAspectWrapper(): AspectWrapper<ED, Cxt, AD>;

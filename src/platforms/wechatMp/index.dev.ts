@@ -16,7 +16,7 @@ import { initialize as init } from '../../initialize.dev';
 import { BasicFeatures } from '../../features';
 import { assign } from 'lodash';
 import { ExceptionHandler, ExceptionRouters } from '../../types/ExceptionRoute';
-import { AspectDict } from 'oak-common-aspect/src/aspectDict';
+import { CommonAspectDict } from 'oak-common-aspect';
 import {
     createComponentOptions,
     createPageOptions,
@@ -45,12 +45,12 @@ export function initialize<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
 >(
     storageSchema: StorageSchema<ED>,
     createFeatures: (
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
-        basicFeatures: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>>,
+        basicFeatures: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>,
         context: Cxt
     ) => FD,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
@@ -65,11 +65,10 @@ export function initialize<
     },
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
-    const { subscribe, features, context } = init<ED, Cxt, AD, FD>(
+    const { features, context } = init<ED, Cxt, AD, FD>(
         storageSchema,
         createFeatures,
         contextBuilder,
-        contextCreator,
         aspectDict,
         triggers,
         checkers,
@@ -122,7 +121,7 @@ export function initialize<
                 Proj,
                 FormedData,
                 IsList
-            >(options, subscribe, features, exceptionRouterDict, context);
+            >(options, features, exceptionRouterDict, context);
             const {
                 properties,
                 pageLifetimes,
@@ -197,7 +196,7 @@ export function initialize<
                 FD,
                 IsList,
                 FormedData
-            >(options, subscribe, features, exceptionRouterDict);
+            >(options, features, exceptionRouterDict);
             const {
                 properties,
                 pageLifetimes,

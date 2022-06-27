@@ -1,5 +1,5 @@
 import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation, DeduceOperation, SelectRowShape, Watcher } from "oak-domain/lib/types";
-import { Feature } from '../../types/Feature';
+import { Feature, subscribe } from '../../types/Feature';
 import { initialize as init } from '../../initialize.dev';
 import { Pagination } from "../../types/Pagination";
 import { BasicFeatures } from "../../features";
@@ -13,7 +13,7 @@ import {
     CURRENT_LOCALE_KEY,
     CURRENT_LOCALE_DATA,
 } from './i18n';
-import { AspectDict } from 'oak-common-aspect/src/aspectDict';
+import { CommonAspectDict } from 'oak-common-aspect';
 
 
 type RowSelected<
@@ -27,7 +27,7 @@ export type OakComponentOption<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean
     > = {
@@ -35,7 +35,7 @@ export type OakComponentOption<
         isList: IsList;
         formData: (options: {
             data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
-            features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
+            features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
             params?: Record<string, any>;
             legalActions?: string[],
         }) => Promise<FormedData>;
@@ -46,7 +46,7 @@ export interface OakPageOption<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean,
@@ -55,7 +55,7 @@ export interface OakPageOption<
     path: string;
     isList: IsList;
     projection?: Proj | ((options: {
-        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
+        features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         rest: Record<string, any>;
         onLoadOptions: Record<string, string | undefined>;
     }) => Promise<Proj>);
@@ -64,7 +64,7 @@ export interface OakPageOption<
     pagination?: Pagination;
     filters?: Array<{
         filter: ED[T]['Selection']['filter'] | ((options: {
-            features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
+            features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
             rest: Record<string, any>;
             onLoadOptions: Record<string, string | undefined>;
         }) => Promise<ED[T]['Selection']['filter']> | undefined)
@@ -72,7 +72,7 @@ export interface OakPageOption<
     }>;
     sorters?: Array<{
         sorter: DeduceSorterItem<ED[T]['Schema']> | ((options: {
-            features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
+            features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
             rest: Record<string, any>;
             onLoadOptions: Record<string, string | undefined>;
         }) => Promise<DeduceSorterItem<ED[T]['Schema']>>)
@@ -81,7 +81,7 @@ export interface OakPageOption<
     actions?: ED[T]['Action'][];
     formData: (options: {
         data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
-        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
+        features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         params?: Record<string, any>;
         legalActions?: string[],
     }) => Promise<FormedData>;
@@ -172,8 +172,8 @@ export type OakComponentInstanceProperties<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>> = {
-        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>> = {
+        features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         isReady: boolean;
     };
 
@@ -181,11 +181,11 @@ export type OakPageInstanceProperties<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
     > = OakComponentInstanceProperties<ED, Cxt, AD, FD>;
 
-function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>>(
-    features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
+function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>>(
+    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
     attr: string,
     params: Record<string, any>,
     entity: keyof ED,
@@ -212,11 +212,10 @@ function callPicker<ED extends EntityDict, Cxt extends Context<ED>, AD extends R
 function makeComponentMethods<ED extends EntityDict,
     T extends keyof ED, Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean>(
-        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
-        doSubscribe: ReturnType<typeof init>['subscribe'],
+        features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
         formData: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList>['formData'],
         exceptionRouterDict: Record<string, ExceptionHandler>
     ): OakComponentMethods<ED, T> & ThisType<
@@ -238,7 +237,7 @@ function makeComponentMethods<ED extends EntityDict,
         },
         subscribe() {
             if (!this.subscribed) {
-                this.subscribed = doSubscribe(
+                this.subscribed = subscribe(
                     () => this.reRender()
                 );
             }
@@ -560,13 +559,12 @@ export function createPageOptions<ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean>(
         options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList>,
-        doSubscribe: ReturnType<typeof init>['subscribe'],
-        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
+        features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
         exceptionRouterDict: Record<string, ExceptionHandler>,
         context: Cxt) {
     const { formData, isList, pagination, append = true } = options;
@@ -775,7 +773,7 @@ export function createPageOptions<ED extends EntityDict,
                 );
             },
 
-            ...makeComponentMethods(features, doSubscribe, formData as any, exceptionRouterDict),
+            ...makeComponentMethods(features, formData as any, exceptionRouterDict),
         },
 
         lifetimes: {
@@ -829,13 +827,12 @@ export function createComponentOptions<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     IsList extends boolean,
     FormedData extends WechatMiniprogram.Component.DataOption
 >(
     options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList>,
-    doSubscribe: ReturnType<typeof init>['subscribe'],
-    features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
+    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
     exceptionRouterDict: Record<string, ExceptionHandler>
 ) {
     const { formData, entity } = options;
@@ -884,7 +881,6 @@ export function createComponentOptions<
             },
             ...makeComponentMethods(
                 features,
-                doSubscribe,
                 formData,
                 exceptionRouterDict
             ),
@@ -1065,7 +1061,7 @@ export type MakeOakPage<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
     > = <
         T extends keyof ED,
         D extends WechatMiniprogram.Component.DataOption,
@@ -1103,7 +1099,7 @@ export type MakeOakComponent<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
     > = <
         T extends keyof ED,
         D extends WechatMiniprogram.Component.DataOption,

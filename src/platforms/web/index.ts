@@ -8,8 +8,8 @@ import {
     DeduceOperation,
     SelectRowShape,
 } from 'oak-domain/lib/types';
-import { AspectDict } from 'oak-common-aspect/src/aspectDict';
-import { Feature } from '../../types/Feature';
+import { CommonAspectDict } from 'oak-common-aspect';
+import { Feature, subscribe } from '../../types/Feature';
 import { initialize as init } from '../../initialize.dev';
 import { Pagination } from '../../types/Pagination';
 import { BasicFeatures } from '../../features';
@@ -36,7 +36,7 @@ export type OakComponentOption<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     FormedData extends React.ComponentState,
     IsList extends boolean
 > = {
@@ -44,7 +44,7 @@ export type OakComponentOption<
     isList: IsList;
     formData: (options: {
         data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
-        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
+        features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         params?: Record<string, any>;
         legalActions?: string[];
     }) => Promise<FormedData>;
@@ -56,7 +56,7 @@ export interface OakPageOption<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends React.ComponentState,
     IsList extends boolean
@@ -67,7 +67,7 @@ export interface OakPageOption<
     projection?:
         | Proj
         | ((options: {
-              features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
+              features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
               rest: Record<string, any>;
               onLoadOptions: Record<string, string | undefined>;
           }) => Promise<Proj>);
@@ -78,7 +78,7 @@ export interface OakPageOption<
         filter:
             | ED[T]['Selection']['filter']
             | ((options: {
-                  features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> &
+                  features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> &
                       FD;
                   rest: Record<string, any>;
                   onLoadOptions: Record<string, string | undefined>;
@@ -89,7 +89,7 @@ export interface OakPageOption<
         sorter:
             | DeduceSorterItem<ED[T]['Schema']>
             | ((options: {
-                  features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> &
+                  features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> &
                       FD;
                   rest: Record<string, any>;
                   onLoadOptions: Record<string, string | undefined>;
@@ -101,7 +101,7 @@ export interface OakPageOption<
         data: IsList extends true
             ? RowSelected<ED, T, Proj>[]
             : RowSelected<ED, T, Proj>;
-        features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
+        features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         params?: Record<string, any>;
     }) => Promise<FormedData>;
     ns?: T | T[];
@@ -249,9 +249,9 @@ export type OakComponentInstanceProperties<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
 > = {
-    features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD;
+    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
     isReady: boolean;
 };
 
@@ -259,7 +259,7 @@ export type OakPageInstanceProperties<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
 > = OakComponentInstanceProperties<ED, Cxt, AD, FD>;
 
 export type DataOption = Record<string, any>;
@@ -315,7 +315,7 @@ export type MakeOakPage<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
 > = <
     T extends keyof ED,
     P extends DataOption, //props
@@ -352,7 +352,7 @@ export type MakeOakComponent<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
 > = <
     T extends keyof ED,
     P extends DataOption,
@@ -393,12 +393,11 @@ export function makeComponentMethods<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     FormedData extends React.ComponentState,
     IsList extends boolean
 >(
-    features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
-    doSubscribe: ReturnType<typeof init>['subscribe'],
+    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
     formData: OakComponentOption<
         ED,
         T,
@@ -422,7 +421,7 @@ export function makeComponentMethods<
     return {
         subscribe() {
             if (!this.subscribed) {
-                this.subscribed = doSubscribe(() => this.reRender());
+                this.subscribed = subscribe(() => this.reRender());
             }
         },
 
@@ -482,7 +481,7 @@ export function makeComponentMethods<
                 assign(data, {
                     oakLegalActions,
                 });
-                this.setState(data);
+                this.setData(data);
             }
         },
 
@@ -647,7 +646,7 @@ export function makeComponentMethods<
             for (const k in params) {
                 url += `&${k}=${JSON.stringify(params[k])}`;
             }
-            return this.props.navigate(url);
+            return this.data.navigate(url);
         },
 
         setFilters(filters) {
@@ -671,7 +670,7 @@ export function makeComponentMethods<
                         : JSON.stringify(props[param2])
                 }`;
             }
-            return this.props.navigate(url2, {
+            return this.data.navigate(url2, {
                 state,
             });
         },
@@ -680,7 +679,7 @@ export function makeComponentMethods<
             if (this.state.oakExecuting) {
                 return;
             }
-            this.setState({
+            this.setData({
                 oakExecuting: true,
                 oakFocused: {},
             });
@@ -689,8 +688,8 @@ export function makeComponentMethods<
                     this.state.oakFullpath,
                     action
                 );
-                this.setState({ oakExecuting: false });
-                this.setState({
+                this.setData({ oakExecuting: false });
+                this.setData({
                     oakError: {
                         type: 'success',
                         msg: '操作成功',
@@ -701,7 +700,7 @@ export function makeComponentMethods<
                 if (err instanceof OakException) {
                     if (err instanceof OakInputIllegalException) {
                         const attr = err.getAttributes()[0];
-                        this.setState({
+                        this.setData({
                             oakFocused: {
                                 [attr]: true,
                             },
@@ -716,7 +715,7 @@ export function makeComponentMethods<
                         const handler = exceptionRouterDict[name];
                         if (legalExceptions && legalExceptions.includes(name)) {
                             // 如果调用时就知道有异常，直接抛出
-                            this.setState({
+                            this.setData({
                                 oakExecuting: false,
                             });
                             throw err;
@@ -728,7 +727,7 @@ export function makeComponentMethods<
                                 router,
                             } = handler;
                             if (!hidden) {
-                                this.setState({
+                                this.setData({
                                     oakExecuting: false,
                                     oakError: {
                                         type: level!,
@@ -736,7 +735,7 @@ export function makeComponentMethods<
                                     },
                                 });
                             } else {
-                                this.setState({
+                                this.setData({
                                     oakExecuting: false,
                                 });
                             }
@@ -744,7 +743,7 @@ export function makeComponentMethods<
                                 fn(err);
                                 return;
                             } else if (router) {
-                                this.setState({
+                                this.setData({
                                     oakExecuting: false,
                                 });
                                 this.navigateTo({
@@ -752,7 +751,7 @@ export function makeComponentMethods<
                                 });
                             }
                         } else {
-                            this.setState({
+                            this.setData({
                                 oakExecuting: false,
                                 oakError: {
                                     type: 'warning',
@@ -762,7 +761,7 @@ export function makeComponentMethods<
                         }
                     }
                 } else {
-                    this.setState({
+                    this.setData({
                         oakExecuting: false,
                         oakError: {
                             type: 'error',
@@ -781,14 +780,14 @@ export function createPageOptions<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends React.ComponentState,
     IsList extends boolean
 >(
     options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList>,
     doSubscribe: ReturnType<typeof init>['subscribe'],
-    features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
+    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
     exceptionRouterDict: Record<string, ExceptionHandler>
 ) {
     const { formData, isList, pagination, append = true, render } = options;
@@ -798,18 +797,18 @@ export function createPageOptions<
         methods: {
             async refresh() {
                 if (options.projection && this.state.oakFullpath) {
-                    this.setState({
+                    this.setData({
                         oakLoading: true,
                     });
                     try {
                         await features.runningTree.refresh(
                             this.state.oakFullpath
                         );
-                        this.setState({
+                        this.setData({
                             oakLoading: false,
                         });
                     } catch (err) {
-                        this.setState({
+                        this.setData({
                             oakLoading: false,
                             oakError: {
                                 type: 'error',
@@ -829,18 +828,18 @@ export function createPageOptions<
 
             async onReachBottom() {
                 if (isList && append && options.projection) {
-                    this.setState({
+                    this.setData({
                         oakMoreLoading: true,
                     });
                     try {
                         await features.runningTree.loadMore(
                             this.state.oakFullpath
                         );
-                        this.setState({
+                        this.setData({
                             oakMoreLoading: false,
                         });
                     } catch (err) {
-                        this.setState({
+                        this.setData({
                             oakMoreLoading: false,
                             oakError: {
                                 type: 'error',
@@ -870,7 +869,7 @@ export function createPageOptions<
                     oakFrom,
                     oakActions,
                     ...rest
-                } = this.props;
+                } = this.data;
                 assert(!(isList && oakId));
                 const filters: NamedFilterItem<ED, T>[] = [];
                 if (oakFilters?.length > 0) {
@@ -886,7 +885,7 @@ export function createPageOptions<
                                     ? await filter({
                                           features,
                                           rest,
-                                          onLoadOptions: this.props,
+                                          onLoadOptions: this.data,
                                       })
                                     : filter,
                             ['#name']: name,
@@ -902,7 +901,7 @@ export function createPageOptions<
                                   projection({
                                       features,
                                       rest,
-                                      onLoadOptions: this.props,
+                                      onLoadOptions: this.data,
                                   })
                             : projection;
                 }
@@ -920,7 +919,7 @@ export function createPageOptions<
                                     ? await sorter({
                                           features,
                                           rest,
-                                          onLoadOptions: this.props,
+                                          onLoadOptions: this.data,
                                       })
                                     : sorter,
                             ['#name']: name,
@@ -942,7 +941,7 @@ export function createPageOptions<
                     id: oakId,
                 });
                 // const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
-                this.setState(
+                this.setData(
                     {
                         oakEntity: node.getEntity(),
                         oakFullpath: path2,
@@ -982,13 +981,12 @@ export function createComponentOptions<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     IsList extends boolean,
     FormedData extends React.ComponentState
 >(
     options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList>,
-    doSubscribe: ReturnType<typeof init>['subscribe'],
-    features: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>> & FD,
+    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
     exceptionRouterDict: Record<string, ExceptionHandler>
 ) {
     const { formData, entity, render } = options;
@@ -997,14 +995,15 @@ export function createComponentOptions<
         render,
         methods: {
             async ready() {
-                const { oakPath, oakParent } = this.props;
+                const { oakPath, oakParent } = this.data;
                 if (oakParent && oakPath) {
                     const oakFullpath = `${oakParent}.${oakPath}`;
-                    this.setState({
+                    this.setData({
                         oakFullpath,
                         oakEntity: entity,
+                    }, () => {
+                        this.reRender();
                     });
-                    this.reRender();
                 }
             },
             async attached() {

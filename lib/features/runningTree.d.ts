@@ -1,10 +1,10 @@
 import { EntityDict, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceOperation, AspectWrapper } from "oak-domain/lib/types";
-import { AspectDict } from 'oak-common-aspect/src/aspectDict';
+import { CommonAspectDict } from 'oak-common-aspect';
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
 import { Cache } from './cache';
 import { Pagination } from '../types/Pagination';
 import { Feature } from '../types/Feature';
-declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> {
+declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> {
     protected entity: T;
     protected schema: StorageSchema<ED>;
     protected projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>);
@@ -35,11 +35,11 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     getBeforeExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     getAfterExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     destroy(): void;
-    protected judgeRelation(attr: string): string | 0 | 2 | string[] | 1;
+    protected judgeRelation(attr: string): string | 0 | 1 | 2 | string[];
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }
-declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
+declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private children;
     private newBorn;
     private filters;
@@ -78,7 +78,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     popNewBorn(path: string): void;
     setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]): void;
 }
-declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
+declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private id?;
     private value?;
     private freshValue?;
@@ -118,7 +118,7 @@ export declare type CreateNodeOptions<ED extends EntityDict, T extends keyof ED>
     beforeExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
     afterExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
 };
-export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD extends AspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
+export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     private cache;
     private schema;
     private root;

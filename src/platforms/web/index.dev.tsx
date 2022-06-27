@@ -10,7 +10,7 @@ import {
     Watcher,
     AspectWrapper,
 } from 'oak-domain/lib/types';
-import { AspectDict } from 'oak-common-aspect/src/aspectDict';
+import { CommonAspectDict } from 'oak-common-aspect/src/aspectDict';
 import { Feature } from '../../types/Feature';
 import { initialize as init } from '../../initialize.dev';
 import { BasicFeatures } from '../../features';
@@ -41,12 +41,12 @@ export function initialize<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & AspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
 >(
     storageSchema: StorageSchema<ED>,
     createFeatures: (
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
-        basicFeatures: BasicFeatures<ED, Cxt, AD & AspectDict<ED, Cxt>>,
+        basicFeatures: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>,
         context: Cxt
     ) => FD,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
