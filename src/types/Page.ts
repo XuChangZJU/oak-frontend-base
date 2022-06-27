@@ -105,8 +105,9 @@ export type OakPageOption<
         pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes> | undefined;
     }> &
     ThisType<{
+        features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
         state: TData & FormedData & OakPageData<ED, T>;
-        props: OakPageProperties & WechatMiniprogram.Component.PropertyOptionToData<TProperty>;
+        props: WechatMiniprogram.Component.PropertyOptionToData<OakPageProperties & TProperty>;
         setState: (
             data: Partial<TData>,
             callback?: () => void,
@@ -138,11 +139,13 @@ export type OakComponentOption<
     Partial<{
         lifetimes: WechatMiniprogram.Component.Lifetimes['lifetimes'];
         observers: Record<string, (...args: any[]) => any>;
-        pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes> | undefined;
+        pageLifetimes: Partial<WechatMiniprogram.Component.PageLifetimes> | undefined;
+        externalClasses: string[];
     }> &
     ThisType<{
+        features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
         state: TData & FormedData & OakComponentData<ED, T>;
-        props: OakComponentProperties & WechatMiniprogram.Component.PropertyOptionToData<TProperty>;
+        props: WechatMiniprogram.Component.PropertyOptionToData<OakComponentProperties & TProperty>;
         setState: (
             data: Partial<TData>,
             callback?: () => void,
@@ -197,15 +200,22 @@ export type OakHiddenComponentMethods = {
     subscribed?: () => void;
     subscribe: () => void;
     unsubscribe: () => void;
-    reRender: (extra?: Record<string, any>) => Promise<void>;
 };
 
 export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED> = {
+    resolveInput: <K extends string>(input: any, keys?: K[]) => { dataset?: Record<string, any>, value?: string } & {
+        [k in K]?: any;
+    };
+    reRender: (extra?: Record<string, any>) => Promise<void>;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
+    navigateBack: (option?: { delta: number }) => void;
     resetUpdateData: () => void;
     setUpdateData: (attr: string, input: any) => void;
     t(key: string, params?: object): string;
     callPicker: (attr: string, params: Record<string, any>) => void;
+    setForeignKey: (id: string, goBackDelta?: number) => void;
+    addForeignKeys: (ids: string[], goBackDelta?: number) => void;
+    setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => void;
     execute: (action: ED[T]['Action'], legalExceptions?: Array<string>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
 };
 
@@ -240,9 +250,6 @@ export type OakPageMethods = {
     onPullDownRefresh: () => Promise<void>;
     onReachBottom: () => Promise<void>;
     onLoad: (options: Record<string, string | undefined>) => Promise<void>;
-    setForeignKey: (id: string, goBackDelta?: number) => void;
-    addForeignKeys: (ids: string[], goBackDelta?: number) => void;
-    setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => void;
 };
 
 export type OakComponentInstanceProperties<
