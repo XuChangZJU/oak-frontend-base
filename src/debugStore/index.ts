@@ -33,7 +33,7 @@ async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
 }
 
 function getMaterializedData() {
-    if (process.env.OAK_PLATFORM === 'weChatMp') {
+    if (process.env.OAK_PLATFORM === 'wechatMp') {
         try {
             const data = wx.getStorageSync('debugStore');
             const stat = wx.getStorageSync('debugStoreStat');

@@ -16,7 +16,7 @@ export type ComponentThisType<ED extends EntityDict,
     TProperty extends WechatMiniprogram.Component.PropertyOption = {},
     TMethod extends WechatMiniprogram.Component.MethodOption = {}> = ThisType<{
         state: TData & FormedData & OakComponentData<ED, T>;
-        props: OakComponentProperties & WechatMiniprogram.Component.PropertyOptionToData<TProperty>;
+        props: WechatMiniprogram.Component.PropertyOptionToData<OakComponentProperties & TProperty>;
         setState: (
             data: any,
             callback?: () => void,
@@ -496,7 +496,7 @@ export function makePageMethods<ED extends EntityDict,
                 for (const ele of options.filters) {
                     const { filter, "#name": name } = ele;
                     filters.push({
-                        filter: typeof filter === 'function' ? await filter({
+                        filter: typeof filter === 'function' ? () => filter({
                             features,
                             rest,
                             onLoadOptions: pageOption,
@@ -524,14 +524,14 @@ export function makePageMethods<ED extends EntityDict,
                 for (const ele of options.sorters) {
                     const { sorter, "#name": name } = ele;
                     sorters.push({
-                        sorter: typeof sorter === 'function' ? await sorter({
+                        sorter: typeof sorter === 'function' ? () => sorter({
                             features,
                             rest,
                             onLoadOptions: pageOption,
                         }) : sorter,
                         ['#name']: name,
                     });
-                }
+                }              
             }
             const path2 = oakParent ? `${oakParent}:${oakPath || options.path}` : oakPath || options.path;
             const node = await features.runningTree.createNode({

@@ -24,8 +24,8 @@ function makeCommonComponentMethods<ED extends EntityDict,
 ): OakCommonComponentMethods<ED, T> & ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
         resolveInput: (input: WechatMiniprogram.CustomEvent, keys) => {
-            const { target, detail } = input;
-            const { dataset } = target;
+            const { currentTarget, detail } = input;
+            const { dataset } = currentTarget;
             const { value } = detail;
             const result = {
                 dataset,
