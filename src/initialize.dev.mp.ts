@@ -1,3 +1,4 @@
+import './utils/wx.polyfill';
 import { Aspect, AspectWrapper, Checker, Trigger, StorageSchema, Context, RowStore, OakRowInconsistencyException, Watcher } from "oak-domain/lib/types";
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 
@@ -10,7 +11,7 @@ import { CommonAspectDict } from "oak-common-aspect";
 import { ExceptionHandler, ExceptionRouters } from "./types/ExceptionRoute";
 import { OakComponentOption, OakPageOption } from "./types/Page";
 import { createComponent, createPage } from "./page.mp";
-import { initialize as initDev } from './initialize.dev';
+import { initialize as initDev } from './initialize-dev';
 
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>>(
     storageSchema: StorageSchema<ED>,

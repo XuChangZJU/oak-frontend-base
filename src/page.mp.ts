@@ -76,7 +76,7 @@ function makePageMethods<ED extends EntityDict,
     const { onPullDownRefresh, ...rest } = makePage(features, options);
     return {
         async onPullDownRefresh() {
-            await onPullDownRefresh();
+            await onPullDownRefresh.call(this);
             if (!this.state.oakLoading) {
                 await wx.stopPullDownRefresh();
             }
@@ -133,21 +133,21 @@ export function createPage<
                 this.setData(data, () => {
                     (this as any).state = this.data;
                     (this as any).props = this.data;
-                    callback && callback();
+                    callback && callback.call(this);
                 });
             },
             async onLoad(pageOption: Record<string, string | undefined>) {
                 (this as any).props = this.data;
-                await onLoad(pageOption);
-                methods?.onLoad && methods?.onLoad(pageOption);
+                await onLoad.call(this, pageOption);
+                methods?.onLoad && methods?.onLoad.call(this, pageOption);
             },
             async onPullDownRefresh() {
-                await onPullDownRefresh();
-                methods?.onPullDownRefresh && methods?.onPullDownRefresh();
+                await onPullDownRefresh.call(this);
+                methods?.onPullDownRefresh && methods?.onPullDownRefresh.call(this);
             },
             async onReachBottom() {
-                await onReachBottom();
-                methods?.onReachBottom && methods?.onReachBottom();
+                await onReachBottom.call(this);
+                methods?.onReachBottom && methods?.onReachBottom.call(this);
             },
             ...hiddenMethods,
             ...commonMethods,
@@ -158,16 +158,18 @@ export function createPage<
         lifetimes: {
             created() {
                 const { setData } = this;
+                (this as any).state = this.data;
+                (this as any).props = this.data;
                 (this as any).features = features;
                 this.setData = (data, callback) => {
                     setData.call(this, data, () => {
                         (this as any).state = this.data;
                         (this as any).props = this.data;
-                        callback && callback();
+                        callback && callback.call(this);
                     });
                 }
                 context.setScene(options.path);
-                lifetimes?.created && lifetimes.created();
+                lifetimes?.created && lifetimes.created.call(this);
             },
 
             attached() {
@@ -179,25 +181,25 @@ export function createPage<
                         [CURRENT_LOCALE_DATA]: i18nInstance.translations,
                     });
                 } */
-                lifetimes?.attached && lifetimes.attached();
+                lifetimes?.attached && lifetimes.attached.call(this);
             },
 
             ready() {
-                lifetimes?.ready && lifetimes.ready();
+                lifetimes?.ready && lifetimes.ready.call(this);
             },
 
             detached() {
                 features.runningTree.destroyNode(this.data.oakFullpath);
                 this.unsubscribe();
-                lifetimes?.detached && lifetimes.detached();
+                lifetimes?.detached && lifetimes.detached.call(this);
             },
 
             error(err: Error) {
-                lifetimes?.error && lifetimes.error(err);
+                lifetimes?.error && lifetimes.error.call(this, err);
             },
 
             moved() {
-                lifetimes?.moved && lifetimes.moved();
+                lifetimes?.moved && lifetimes.moved.call(this);
             }
         },
 
@@ -206,14 +208,14 @@ export function createPage<
                 context.setScene(options.path);
                 this.reRender();
                 this.subscribe();
-                pageLifetimes?.show && pageLifetimes.show();
+                pageLifetimes?.show && pageLifetimes.show.call(this);
             },
             hide() {
                 this.unsubscribe();
-                pageLifetimes?.hide && pageLifetimes.hide();
+                pageLifetimes?.hide && pageLifetimes.hide.call(this);
             },
             resize(size) {
-                pageLifetimes?.resize && pageLifetimes.resize(size);
+                pageLifetimes?.resize && pageLifetimes.resize.call(this, size);
             }
         },
     });
@@ -302,20 +304,21 @@ export function createComponent<
 
         lifetimes: {
             async created() {
+                (this as any).state = this.data;
+                (this as any).props = this.data;
                 (this as any).features = features;
                 const { setData } = this;
                 this.setData = (data, callback) => {
                     setData.call(this, data, () => {
                         (this as any).state = this.data;
                         (this as any).props = this.data;
-                        callback && callback();
+                        callback && callback.call(this);
                     });
                 }
-                lifetimes?.created && lifetimes.created();
+                lifetimes?.created && lifetimes.created.call(this);
             },
 
             async ready() {
-                (this as any).props = this.data;
                 const { oakPath, oakParent } = this.data;
                 if (oakParent && oakPath) {
                     const oakFullpath = `${oakParent}.${oakPath}`;
@@ -325,7 +328,7 @@ export function createComponent<
                     });
                     this.reRender();
                 }
-                lifetimes?.ready && lifetimes.ready();
+                lifetimes?.ready && lifetimes.ready.call(this);
             },
 
             async attached() {
@@ -337,20 +340,20 @@ export function createComponent<
                         [CURRENT_LOCALE_DATA]: i18nInstance.translations,
                     });
                 } */
-                lifetimes?.attached && lifetimes.attached();
+                lifetimes?.attached && lifetimes.attached.call(this);
             },
 
             async detached() {
                 this.unsubscribe();
-                lifetimes?.detached && lifetimes.detached();
+                lifetimes?.detached && lifetimes.detached.call(this);
             },
 
             error(err: Error) {
-                lifetimes?.error && lifetimes.error(err);
+                lifetimes?.error && lifetimes.error.call(this, err);
             },
 
             moved() {
-                lifetimes?.moved && lifetimes.moved();
+                lifetimes?.moved && lifetimes.moved.call(this);
             }
         },
 
@@ -358,14 +361,14 @@ export function createComponent<
             show() {
                 this.reRender();
                 this.subscribe();
-                pageLifetimes?.show && pageLifetimes.show();
+                pageLifetimes?.show && pageLifetimes.show.call(this);
             },
             hide() {
                 this.unsubscribe();
-                pageLifetimes?.hide && pageLifetimes.hide();
+                pageLifetimes?.hide && pageLifetimes.hide.call(this);
             },
             resize(size) {
-                pageLifetimes?.resize && pageLifetimes.resize(size);
+                pageLifetimes?.resize && pageLifetimes.resize.call(this, size);
             }
         },
 

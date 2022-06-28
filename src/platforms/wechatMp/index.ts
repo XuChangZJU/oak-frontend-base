@@ -1,6 +1,6 @@
 import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation, DeduceOperation, SelectRowShape, Watcher } from "oak-domain/lib/types";
 import { Feature, subscribe } from '../../types/Feature';
-import { initialize as init } from '../../initialize.dev';
+import { initialize as init } from '../../initialize-dev';
 import { Pagination } from "../../types/Pagination";
 import { BasicFeatures } from "../../features";
 import assert from "assert";
