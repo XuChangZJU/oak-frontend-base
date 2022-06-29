@@ -8,15 +8,22 @@ import { Feature, subscribe } from "./types/Feature";
 import { NamedFilterItem, NamedSorterItem } from "./types/NamedCondition";
 import { OakCommonComponentMethods, OakComponentData, OakComponentOption, OakComponentProperties, OakHiddenComponentMethods, OakListComponentMethods, OakPageMethods, OakPageOption } from "./types/Page";
 
+export type ComponentProps<TProperty extends WechatMiniprogram.Component.PropertyOption> = WechatMiniprogram.Component.PropertyOptionToData<OakComponentProperties & TProperty>;
+
+export type ComponentData<ED extends EntityDict,
+    T extends keyof ED,
+    FormedData extends WechatMiniprogram.Component.DataOption,
+    TData extends WechatMiniprogram.Component.DataOption> = TData & FormedData & OakComponentData<ED, T>;
+
 export type ComponentThisType<ED extends EntityDict,
     T extends keyof ED,
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean,
-    TData extends WechatMiniprogram.Component.DataOption = {},
-    TProperty extends WechatMiniprogram.Component.PropertyOption = {},
-    TMethod extends WechatMiniprogram.Component.MethodOption = {}> = ThisType<{
-        state: TData & FormedData & OakComponentData<ED, T>;
-        props: WechatMiniprogram.Component.PropertyOptionToData<OakComponentProperties & TProperty>;
+    TData extends WechatMiniprogram.Component.DataOption,
+    TProperty extends WechatMiniprogram.Component.PropertyOption,
+    TMethod extends WechatMiniprogram.Component.MethodOption> = ThisType<{
+        state: ComponentData<ED, T, FormedData, TData>;
+        props: ComponentProps<TProperty>;
         setState: (
             data: any,
             callback?: () => void,
@@ -37,9 +44,9 @@ export function makeHiddenComponentMethods<ED extends EntityDict,
     T extends keyof ED,
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean,
-    TData extends WechatMiniprogram.Component.DataOption = {},
-    TProperty extends WechatMiniprogram.Component.PropertyOption = {},
-    TMethod extends WechatMiniprogram.Component.MethodOption = {}>(): OakHiddenComponentMethods & ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
+    TData extends WechatMiniprogram.Component.DataOption,
+    TProperty extends WechatMiniprogram.Component.PropertyOption,
+    TMethod extends WechatMiniprogram.Component.MethodOption>(): OakHiddenComponentMethods & ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
 
     return {
         subscribe() {
@@ -74,12 +81,12 @@ export function makeCommonComponentMethods<ED extends EntityDict,
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
         exceptionRouterDict: Record<string, ExceptionHandler>,
         formData: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod>['formData']
-): Omit<OakCommonComponentMethods<ED, T>, 'navigateTo' | 'navigateBack' | 'resolveInput'> & ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
+    ): Omit<OakCommonComponentMethods<ED, T>, 'navigateTo' | 'navigateBack' | 'resolveInput'> & ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
         t(key: string, params?: object) {
             return 'not implemented';
         },
-        
+
         async reRender(extra) {
             if (this.state.oakFullpath) {
                 const rows = features.runningTree.getFreshValue(this.state.oakFullpath);
@@ -149,7 +156,7 @@ export function makeCommonComponentMethods<ED extends EntityDict,
                 url,
             });
         },
-        
+
         setForeignKey(id: string, goBackDelta: number = -1) {
             if (this.state.oakExecuting) {
                 return;
@@ -305,9 +312,7 @@ export function makeCommonComponentMethods<ED extends EntityDict,
     };
 }
 
-export
-
-    function makeListComponentMethods<ED extends EntityDict,
+export function makeListComponentMethods<ED extends EntityDict,
         T extends keyof ED,
         Cxt extends Context<ED>,
         AD extends Record<string, Aspect<ED, Cxt>>,
@@ -531,7 +536,7 @@ export function makePageMethods<ED extends EntityDict,
                         }) : sorter,
                         ['#name']: name,
                     });
-                }              
+                }
             }
             const path2 = oakParent ? `${oakParent}:${oakPath || options.path}` : oakPath || options.path;
             const node = await features.runningTree.createNode({
