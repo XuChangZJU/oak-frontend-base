@@ -1,3 +1,4 @@
+import './utils/wx.polyfill';
 import { Aspect, AspectWrapper, Checker, Trigger, StorageSchema, Context, RowStore, Watcher } from "oak-domain/lib/types";
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { Feature } from './types/Feature';

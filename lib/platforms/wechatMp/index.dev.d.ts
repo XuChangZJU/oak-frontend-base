@@ -18,10 +18,5 @@ export declare function initialize<ED extends EntityDict, Cxt extends Context<ED
 }, actionDict?: ActionDictOfEntityDict<ED>): {
     OakPage: <T extends keyof ED, D extends WechatMiniprogram.Component.DataOption, P extends WechatMiniprogram.Component.PropertyOption, M extends WechatMiniprogram.Component.MethodOption, IsList extends boolean, Proj extends ED[T]["Selection"]["data"], IS extends WechatMiniprogram.IAnyObject = {}, FormedData extends WechatMiniprogram.Component.DataOption = {}>(options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList>, componentOptions?: WechatMiniprogram.Component.Options<D, P, M, IS & OakPageInstanceProperties<ED, Cxt, AD, FD>, true>) => string;
     OakComponent: <T_1 extends string | number, D_1 extends WechatMiniprogram.Component.DataOption, P_1 extends WechatMiniprogram.Component.PropertyOption, M_1 extends WechatMiniprogram.Component.MethodOption, IsList_1 extends boolean, IS_1 extends WechatMiniprogram.IAnyObject = {}, FormedData_1 extends WechatMiniprogram.Component.DataOption = {}>(options: OakComponentOption<ED, T_1, Cxt, AD, FD, FormedData_1, IsList_1>, componentOptions?: OakWechatMpOptions<D_1, P_1, M_1, OakPageProperties, OakPageMethods<ED, T_1>, OakPageData, OakPageInstanceProperties<ED, Cxt, AD, FD>, IS_1, true>) => string;
-    features: BasicFeatures<ED, Cxt, {
-        operate: typeof import("oak-common-aspect/src/crud").operate;
-        select: typeof import("oak-common-aspect/src/crud").select;
-        amap: typeof import("oak-common-aspect/src/amap").amap;
-        getTranslations: typeof import("oak-common-aspect/src/locales").getTranslations;
-    } & AD> & FD;
+    features: any;
 };
