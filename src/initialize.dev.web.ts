@@ -1,21 +1,40 @@
 import './utils/wx.polyfill';
-import { Aspect, AspectWrapper, Checker, Trigger, StorageSchema, Context, RowStore, OakRowInconsistencyException, Watcher } from "oak-domain/lib/types";
+import {
+    Aspect,
+    AspectWrapper,
+    Checker,
+    Trigger,
+    StorageSchema,
+    Context,
+    RowStore,
+    OakRowInconsistencyException,
+    Watcher,
+} from 'oak-domain/lib/types';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 
 import { Feature } from './types/Feature';
 
 import { BasicFeatures } from './features';
 import { assign } from 'lodash';
-import { ActionDictOfEntityDict } from "oak-domain/lib/types/Action";
-import { CommonAspectDict } from "oak-common-aspect";
-import { ExceptionHandler, ExceptionRouters } from "./types/ExceptionRoute";
-import { OakComponentOption, OakPageOption } from "./types/Page";
-import { createComponent, createPage } from "./page.web";
+import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
+import { CommonAspectDict } from 'oak-common-aspect';
+import { ExceptionHandler, ExceptionRouters } from './types/ExceptionRoute';
+import { OakComponentOption, OakPageOption } from './types/Page';
+import { createComponent, createPage } from './page.web';
 import { initialize as initDev } from './initialize-dev';
 
-export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>>(
+export function initialize<
+    ED extends EntityDict,
+    Cxt extends Context<ED>,
+    AD extends Record<string, Aspect<ED, Cxt>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
+>(
     storageSchema: StorageSchema<ED>,
-    createFeatures: (aspectWrapper: AspectWrapper<ED, Cxt, AD>, basicFeatures: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>, context: Cxt) => FD,
+    createFeatures: (
+        aspectWrapper: AspectWrapper<ED, Cxt, AD>,
+        basicFeatures: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>,
+        context: Cxt
+    ) => FD,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
     aspectDict: AD,
     translations: Record<string, any>,
@@ -56,11 +75,34 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             TData extends WechatMiniprogram.Component.DataOption = {},
             TProperty extends WechatMiniprogram.Component.PropertyOption = {},
             TMethod extends WechatMiniprogram.Component.MethodOption = {}
-        >(options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod>) => createPage<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod>(
-            options,
-            features,
-            exceptionRouterDict,
-            context),
+        >(
+            options: OakPageOption<
+                ED,
+                T,
+                Cxt,
+                AD,
+                FD,
+                Proj,
+                FormedData,
+                IsList,
+                TData,
+                TProperty,
+                TMethod
+            >
+        ) =>
+            createPage<
+                ED,
+                T,
+                Cxt,
+                AD,
+                FD,
+                Proj,
+                FormedData,
+                IsList,
+                TData,
+                TProperty,
+                TMethod
+            >(options, features, exceptionRouterDict, context),
         OakComponent: <
             T extends keyof ED,
             FormedData extends WechatMiniprogram.Component.DataOption,
@@ -68,10 +110,31 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
             TData extends WechatMiniprogram.Component.DataOption = {},
             TProperty extends WechatMiniprogram.Component.PropertyOption = {},
             TMethod extends WechatMiniprogram.Component.MethodOption = {}
-        >(options: OakComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => createComponent<ED, T, Cxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>(
-            options,
-            features,
-            exceptionRouterDict,
-            context),
+        >(
+            options: OakComponentOption<
+                ED,
+                T,
+                Cxt,
+                AD,
+                FD,
+                FormedData,
+                IsList,
+                TData,
+                TProperty,
+                TMethod
+            >
+        ) =>
+            createComponent<
+                ED,
+                T,
+                Cxt,
+                AD,
+                FD,
+                FormedData,
+                IsList,
+                TData,
+                TProperty,
+                TMethod
+            >(options, features, exceptionRouterDict, context),
     });
 }

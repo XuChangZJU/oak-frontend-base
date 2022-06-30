@@ -71,7 +71,8 @@
     "miniprogram-api-typings"
   ],
   "include": [
-    "src/**/*.ts", "src/page.web.tsx",
+    "src/**/*.ts",
+    "src/page.web.tsx",
   ],
   "exclude": [
     "node_modules",

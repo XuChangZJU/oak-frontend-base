@@ -1,9 +1,9 @@
-import { Aspect, AspectWrapper, Checker, Trigger, StorageSchema, Context, RowStore, Watcher } from "oak-domain/lib/types";
+import { Aspect, AspectWrapper, Checker, Trigger, StorageSchema, Context, RowStore, Watcher } from 'oak-domain/lib/types';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { Feature } from './types/Feature';
 import { BasicFeatures } from './features';
-import { ActionDictOfEntityDict } from "oak-domain/lib/types/Action";
-import { CommonAspectDict } from "oak-common-aspect";
+import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
+import { CommonAspectDict } from 'oak-common-aspect';
 /**
  * dev模式下，前后端可以使用同一个Cxt，内部自己区分
  * @param storageSchema

@@ -1,59 +1,80 @@
-import assert from "assert";
-import { assign, omit } from "lodash";
-import { CommonAspectDict } from "oak-common-aspect";
-import { Aspect, Context, DeduceSorterItem, EntityDict, OakException, OakInputIllegalException } from "oak-domain/lib/types";
-import { BasicFeatures } from "./features";
-import { ExceptionHandler } from "./types/ExceptionRoute";
-import { Feature, subscribe } from "./types/Feature";
-import { NamedFilterItem, NamedSorterItem } from "./types/NamedCondition";
-import { OakCommonComponentMethods, OakComponentData, OakComponentOption, OakComponentProperties, OakHiddenComponentMethods, OakListComponentMethods, OakPageMethods, OakPageOption } from "./types/Page";
+import assert from 'assert';
+import { assign, omit } from 'lodash';
+import { CommonAspectDict } from 'oak-common-aspect';
+import {
+    Aspect,
+    Context,
+    DeduceSorterItem,
+    EntityDict,
+    OakException,
+    OakInputIllegalException,
+} from 'oak-domain/lib/types';
+import { BasicFeatures } from './features';
+import { ExceptionHandler } from './types/ExceptionRoute';
+import { Feature, subscribe } from './types/Feature';
+import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
+import {
+    OakCommonComponentMethods,
+    OakComponentData,
+    OakComponentOption,
+    OakComponentProperties,
+    OakHiddenComponentMethods,
+    OakListComponentMethods,
+    OakPageMethods,
+    OakPageOption,
+} from './types/Page';
 
-export type ComponentProps<TProperty extends WechatMiniprogram.Component.PropertyOption> = WechatMiniprogram.Component.PropertyOptionToData<OakComponentProperties & TProperty>;
+export type ComponentProps<
+    TProperty extends WechatMiniprogram.Component.PropertyOption
+> = WechatMiniprogram.Component.PropertyOptionToData<
+    OakComponentProperties & TProperty
+>;
 
-export type ComponentData<ED extends EntityDict,
+export type ComponentData<
+    ED extends EntityDict,
     T extends keyof ED,
     FormedData extends WechatMiniprogram.Component.DataOption,
-    TData extends WechatMiniprogram.Component.DataOption> = TData & FormedData & OakComponentData<ED, T>;
+    TData extends WechatMiniprogram.Component.DataOption
+> = TData & FormedData & OakComponentData<ED, T>;
 
-export type ComponentThisType<ED extends EntityDict,
+export type ComponentThisType<
+    ED extends EntityDict,
     T extends keyof ED,
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean,
     TData extends WechatMiniprogram.Component.DataOption,
     TProperty extends WechatMiniprogram.Component.PropertyOption,
-    TMethod extends WechatMiniprogram.Component.MethodOption> = ThisType<{
+    TMethod extends WechatMiniprogram.Component.MethodOption
+> = ThisType<
+    {
         state: ComponentData<ED, T, FormedData, TData>;
         props: ComponentProps<TProperty>;
-        setState: (
-            data: any,
-            callback?: () => void,
-        ) => Promise<void>;
+        setState: (data: any, callback?: () => void) => Promise<void>;
         triggerEvent: <DetailType = any>(
             name: string,
             detail?: DetailType,
             options?: WechatMiniprogram.Component.TriggerEventOption
-        ) => void
-    } &
-        TMethod &
+        ) => void;
+    } & TMethod &
         OakCommonComponentMethods<ED, T> &
         OakHiddenComponentMethods &
         (IsList extends true ? OakListComponentMethods<ED, T> : {})
-    >;
+>;
 
-export function makeHiddenComponentMethods<ED extends EntityDict,
+export function makeHiddenComponentMethods<
+    ED extends EntityDict,
     T extends keyof ED,
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean,
     TData extends WechatMiniprogram.Component.DataOption,
     TProperty extends WechatMiniprogram.Component.PropertyOption,
-    TMethod extends WechatMiniprogram.Component.MethodOption>(): OakHiddenComponentMethods & ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
-
+    TMethod extends WechatMiniprogram.Component.MethodOption
+>(): OakHiddenComponentMethods &
+    ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
         subscribe() {
             if (!this.subscribed) {
-                this.subscribed = subscribe(
-                    () => this.reRender()
-                );
+                this.subscribed = subscribe(() => this.reRender());
             }
         },
 
@@ -66,8 +87,8 @@ export function makeHiddenComponentMethods<ED extends EntityDict,
     };
 }
 
-
-export function makeCommonComponentMethods<ED extends EntityDict,
+export function makeCommonComponentMethods<
+    ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -77,11 +98,28 @@ export function makeCommonComponentMethods<ED extends EntityDict,
     IsList extends boolean,
     TData extends WechatMiniprogram.Component.DataOption = {},
     TProperty extends WechatMiniprogram.Component.PropertyOption = {},
-    TMethod extends WechatMiniprogram.Component.MethodOption = {}>(
-        features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
-        exceptionRouterDict: Record<string, ExceptionHandler>,
-        formData: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod>['formData']
-    ): Omit<OakCommonComponentMethods<ED, T>, 'navigateTo' | 'navigateBack' | 'resolveInput'> & ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
+    TMethod extends WechatMiniprogram.Component.MethodOption = {}
+>(
+    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
+    exceptionRouterDict: Record<string, ExceptionHandler>,
+    formData: OakPageOption<
+        ED,
+        T,
+        Cxt,
+        AD,
+        FD,
+        Proj,
+        FormedData,
+        IsList,
+        TData,
+        TProperty,
+        TMethod
+    >['formData']
+): Omit<
+    OakCommonComponentMethods<ED, T>,
+    'navigateTo' | 'navigateBack' | 'resolveInput'
+> &
+    ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
         t(key: string, params?: object) {
             return 'not implemented';
@@ -89,18 +127,24 @@ export function makeCommonComponentMethods<ED extends EntityDict,
 
         async reRender(extra) {
             if (this.state.oakFullpath) {
-                const rows = features.runningTree.getFreshValue(this.state.oakFullpath);
+                const rows = features.runningTree.getFreshValue(
+                    this.state.oakFullpath
+                );
 
-                const dirty = features.runningTree.isDirty(this.state.oakFullpath);
+                const dirty = features.runningTree.isDirty(
+                    this.state.oakFullpath
+                );
 
                 const oakLegalActions = [];
                 if (this.state.newOakActions) {
                     for (const action of this.state.newOakActions) {
                         try {
-                            await features.runningTree.testAction(this.state.oakFullpath, action);
+                            await features.runningTree.testAction(
+                                this.state.oakFullpath,
+                                action
+                            );
                             oakLegalActions.push(action);
-                        }
-                        catch (e) {
+                        } catch (e) {
                             if (e instanceof OakInputIllegalException) {
                                 oakLegalActions.push(action);
                             }
@@ -118,7 +162,7 @@ export function makeCommonComponentMethods<ED extends EntityDict,
                     if (data[k] === undefined) {
                         assign(data, {
                             [k]: null,
-                        })
+                        });
                     }
                 }
                 assign(data, { oakDirty: dirty });
@@ -139,12 +183,14 @@ export function makeCommonComponentMethods<ED extends EntityDict,
                 return;
             }
 
-            const relation = features.cache.judgeRelation(this.state.oakEntity, attr);
+            const relation = features.cache.judgeRelation(
+                this.state.oakEntity,
+                attr
+            );
             let subEntity: string;
             if (relation === 2) {
                 subEntity = attr;
-            }
-            else {
+            } else {
                 assert(typeof relation === 'string');
                 subEntity = relation;
             }
@@ -211,7 +257,10 @@ export function makeCommonComponentMethods<ED extends EntityDict,
                 oakFocused: {},
             });
             try {
-                const result = await features.runningTree.execute(this.state.oakFullpath, action);
+                const result = await features.runningTree.execute(
+                    this.state.oakFullpath,
+                    action
+                );
                 this.setState({ oakExecuting: false });
                 this.setState({
                     oakError: {
@@ -220,8 +269,7 @@ export function makeCommonComponentMethods<ED extends EntityDict,
                     },
                 });
                 return result;
-            }
-            catch (err) {
+            } catch (err) {
                 if (err instanceof OakException) {
                     if (err instanceof OakInputIllegalException) {
                         const attr = err.getAttributes()[0];
@@ -235,8 +283,7 @@ export function makeCommonComponentMethods<ED extends EntityDict,
                                 msg: err.message,
                             },
                         });
-                    }
-                    else {
+                    } else {
                         const { name } = err.constructor;
                         const handler = exceptionRouterDict[name];
                         if (legalExceptions && legalExceptions.includes(name)) {
@@ -245,9 +292,13 @@ export function makeCommonComponentMethods<ED extends EntityDict,
                                 oakExecuting: false,
                             });
                             throw err;
-                        }
-                        else if (handler) {
-                            const { hidden, level, handler: fn, router } = handler;
+                        } else if (handler) {
+                            const {
+                                hidden,
+                                level,
+                                handler: fn,
+                                router,
+                            } = handler;
                             if (!hidden) {
                                 this.setState({
                                     oakExecuting: false,
@@ -256,8 +307,7 @@ export function makeCommonComponentMethods<ED extends EntityDict,
                                         msg: err.message,
                                     },
                                 });
-                            }
-                            else {
+                            } else {
                                 this.setState({
                                     oakExecuting: false,
                                 });
@@ -265,8 +315,7 @@ export function makeCommonComponentMethods<ED extends EntityDict,
                             if (fn) {
                                 fn(err);
                                 return;
-                            }
-                            else if (router) {
+                            } else if (router) {
                                 this.setState({
                                     oakExecuting: false,
                                 });
@@ -274,8 +323,7 @@ export function makeCommonComponentMethods<ED extends EntityDict,
                                     url: router,
                                 });
                             }
-                        }
-                        else {
+                        } else {
                             this.setState({
                                 oakExecuting: false,
                                 oakError: {
@@ -285,8 +333,7 @@ export function makeCommonComponentMethods<ED extends EntityDict,
                             });
                         }
                     }
-                }
-                else {
+                } else {
                     this.setState({
                         oakExecuting: false,
                         oakError: {
@@ -307,26 +354,35 @@ export function makeCommonComponentMethods<ED extends EntityDict,
             if (this.state.oakExecuting) {
                 return;
             }
-            return features.runningTree.setUpdateData(this.state.oakFullpath, attr, value);
+            return features.runningTree.setUpdateData(
+                this.state.oakFullpath,
+                attr,
+                value
+            );
         },
     };
 }
 
-export function makeListComponentMethods<ED extends EntityDict,
-        T extends keyof ED,
-        Cxt extends Context<ED>,
-        AD extends Record<string, Aspect<ED, Cxt>>,
-        FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
-        FormedData extends WechatMiniprogram.Component.DataOption,
-        IsList extends boolean,
-        TData extends WechatMiniprogram.Component.DataOption = {},
-        TProperty extends WechatMiniprogram.Component.PropertyOption = {},
-        TMethod extends WechatMiniprogram.Component.MethodOption = {}>(
-            features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD
-        ): OakListComponentMethods<ED, T> & ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
+export function makeListComponentMethods<
+    ED extends EntityDict,
+    T extends keyof ED,
+    Cxt extends Context<ED>,
+    AD extends Record<string, Aspect<ED, Cxt>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
+    FormedData extends WechatMiniprogram.Component.DataOption,
+    IsList extends boolean,
+    TData extends WechatMiniprogram.Component.DataOption = {},
+    TProperty extends WechatMiniprogram.Component.PropertyOption = {},
+    TMethod extends WechatMiniprogram.Component.MethodOption = {}
+>(
+    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD
+): OakListComponentMethods<ED, T> &
+    ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
         pushNode(path, options) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             features.runningTree.pushNode(path2, options || {});
         },
 
@@ -335,22 +391,25 @@ export function makeListComponentMethods<ED extends EntityDict,
         },
 
         async getFilters() {
-            const namedFilters = features.runningTree.getNamedFilters(this.state.oakFullpath);
+            const namedFilters = features.runningTree.getNamedFilters(
+                this.state.oakFullpath
+            );
             const filters = await Promise.all(
-                namedFilters.map(
-                    ({ filter }) => {
-                        if (typeof filter === 'function') {
-                            return filter();
-                        }
-                        return filter;
+                namedFilters.map(({ filter }) => {
+                    if (typeof filter === 'function') {
+                        return filter();
                     }
-                )
+                    return filter;
+                })
             );
             return filters;
         },
 
         async getFilterByName(name) {
-            const filter = features.runningTree.getNamedFilterByName(this.state.oakFullpath, name);
+            const filter = features.runningTree.getNamedFilterByName(
+                this.state.oakFullpath,
+                name
+            );
             if (filter?.filter) {
                 if (typeof filter.filter === 'function') {
                     return filter.filter();
@@ -361,38 +420,58 @@ export function makeListComponentMethods<ED extends EntityDict,
         },
 
         addNamedFilter(namedFilter, refresh = false) {
-            return features.runningTree.addNamedFilter(this.state.oakFullpath, namedFilter, refresh);
+            return features.runningTree.addNamedFilter(
+                this.state.oakFullpath,
+                namedFilter,
+                refresh
+            );
         },
 
         removeNamedFilter(namedFilter, refresh = false) {
-            return features.runningTree.removeNamedFilter(this.state.oakFullpath, namedFilter, refresh);
+            return features.runningTree.removeNamedFilter(
+                this.state.oakFullpath,
+                namedFilter,
+                refresh
+            );
         },
 
         removeNamedFilterByName(name, refresh = false) {
-            return features.runningTree.removeNamedFilterByName(this.state.oakFullpath, name, refresh);
+            return features.runningTree.removeNamedFilterByName(
+                this.state.oakFullpath,
+                name,
+                refresh
+            );
         },
 
         setNamedSorters(namedSorters) {
-            return features.runningTree.setNamedSorters(this.state.oakFullpath, namedSorters);
+            return features.runningTree.setNamedSorters(
+                this.state.oakFullpath,
+                namedSorters
+            );
         },
 
         async getSorters() {
-            const namedSorters = features.runningTree.getNamedSorters(this.state.oakFullpath);
-            const sorters = (await Promise.all(
-                namedSorters.map(
-                    ({ sorter }) => {
+            const namedSorters = features.runningTree.getNamedSorters(
+                this.state.oakFullpath
+            );
+            const sorters = (
+                await Promise.all(
+                    namedSorters.map(({ sorter }) => {
                         if (typeof sorter === 'function') {
                             return sorter();
                         }
                         return sorter;
-                    }
+                    })
                 )
-            )).filter(ele => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
+            ).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
             return sorters;
         },
 
         async getSorterByName(name) {
-            const sorter = features.runningTree.getNamedSorterByName(this.state.oakFullpath, name);
+            const sorter = features.runningTree.getNamedSorterByName(
+                this.state.oakFullpath,
+                name
+            );
             if (sorter?.sorter) {
                 if (typeof sorter.sorter === 'function') {
                     return sorter.sorter();
@@ -403,24 +482,40 @@ export function makeListComponentMethods<ED extends EntityDict,
         },
 
         addNamedSorter(namedSorter, refresh = false) {
-            return features.runningTree.addNamedSorter(this.state.oakFullpath, namedSorter, refresh);
+            return features.runningTree.addNamedSorter(
+                this.state.oakFullpath,
+                namedSorter,
+                refresh
+            );
         },
 
         removeNamedSorter(namedSorter, refresh = false) {
-            return features.runningTree.removeNamedSorter(this.state.oakFullpath, namedSorter, refresh);
+            return features.runningTree.removeNamedSorter(
+                this.state.oakFullpath,
+                namedSorter,
+                refresh
+            );
         },
 
         removeNamedSorterByName(name, refresh = false) {
-            return features.runningTree.removeNamedSorterByName(this.state.oakFullpath, name, refresh);
+            return features.runningTree.removeNamedSorterByName(
+                this.state.oakFullpath,
+                name,
+                refresh
+            );
         },
 
         setFilters(filters) {
-            return features.runningTree.setNamedFilters(this.state.oakFullpath, filters);
+            return features.runningTree.setNamedFilters(
+                this.state.oakFullpath,
+                filters
+            );
         },
     };
 }
 
-export function makePageMethods<ED extends EntityDict,
+export function makePageMethods<
+    ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -430,10 +525,24 @@ export function makePageMethods<ED extends EntityDict,
     IsList extends boolean,
     TData extends WechatMiniprogram.Component.DataOption = {},
     TProperty extends WechatMiniprogram.Component.PropertyOption = {},
-    TMethod extends WechatMiniprogram.Component.MethodOption = {}>(
-        features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
-        options: OakPageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod>
-    ): OakPageMethods & ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
+    TMethod extends WechatMiniprogram.Component.MethodOption = {}
+>(
+    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
+    options: OakPageOption<
+        ED,
+        T,
+        Cxt,
+        AD,
+        FD,
+        Proj,
+        FormedData,
+        IsList,
+        TData,
+        TProperty,
+        TMethod
+    >
+): OakPageMethods &
+    ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
         async refresh() {
             if (options.projection && this.state.oakFullpath) {
@@ -445,8 +554,7 @@ export function makePageMethods<ED extends EntityDict,
                     this.setState({
                         oakLoading: false,
                     });
-                }
-                catch (err) {
+                } catch (err) {
                     this.setState({
                         oakLoading: false,
                         oakError: {
@@ -454,7 +562,7 @@ export function makePageMethods<ED extends EntityDict,
                             msg: (err as Error).message,
                         },
                     });
-                };
+                }
             }
         },
 
@@ -474,8 +582,7 @@ export function makePageMethods<ED extends EntityDict,
                     this.setState({
                         oakMoreLoading: false,
                     });
-                }
-                catch (err) {
+                } catch (err) {
                     this.setState({
                         oakMoreLoading: false,
                         oakError: {
@@ -488,24 +595,38 @@ export function makePageMethods<ED extends EntityDict,
         },
 
         async onLoad(pageOption) {
-            const { oakId, oakEntity, oakPath, oakProjection, oakParent,
-                oakSorters, oakFilters, oakIsPicker, oakFrom, oakActions, ...rest } = this.props;
+            const {
+                oakId,
+                oakEntity,
+                oakPath,
+                oakProjection,
+                oakParent,
+                oakSorters,
+                oakFilters,
+                oakIsPicker,
+                oakFrom,
+                oakActions,
+                ...rest
+            } = this.props;
             assert(!(options.isList && oakId));
             const filters: NamedFilterItem<ED, T>[] = [];
             if (oakFilters?.length > 0) {
                 // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
                 const oakFilters2 = JSON.parse(oakFilters);
                 filters.push(...oakFilters2);
-            }
-            else if (options.filters) {
+            } else if (options.filters) {
                 for (const ele of options.filters) {
-                    const { filter, "#name": name } = ele;
+                    const { filter, '#name': name } = ele;
                     filters.push({
-                        filter: typeof filter === 'function' ? () => filter({
-                            features,
-                            rest,
-                            onLoadOptions: pageOption,
-                        }) : filter,
+                        filter:
+                            typeof filter === 'function'
+                                ? () =>
+                                      filter({
+                                          features,
+                                          rest,
+                                          onLoadOptions: pageOption,
+                                      })
+                                : filter,
                         ['#name']: name,
                     });
                 }
@@ -513,32 +634,41 @@ export function makePageMethods<ED extends EntityDict,
             let proj = oakProjection && JSON.parse(oakProjection);
             if (!proj && options.projection) {
                 const { projection } = options;
-                proj = typeof projection === 'function' ? () => projection({
-                    features,
-                    rest,
-                    onLoadOptions: pageOption,
-                }) : projection;
+                proj =
+                    typeof projection === 'function'
+                        ? () =>
+                              projection({
+                                  features,
+                                  rest,
+                                  onLoadOptions: pageOption,
+                              })
+                        : projection;
             }
             let sorters: NamedSorterItem<ED, T>[] = [];
             if (oakSorters?.length > 0) {
                 // 这里在跳页面的时候用this.navigate应该可以限制传过来的sorter的格式
                 const oakSorters2 = JSON.parse(oakSorters);
                 sorters.push(...oakSorters2);
-            }
-            else if (options.sorters) {
+            } else if (options.sorters) {
                 for (const ele of options.sorters) {
-                    const { sorter, "#name": name } = ele;
+                    const { sorter, '#name': name } = ele;
                     sorters.push({
-                        sorter: typeof sorter === 'function' ? () => sorter({
-                            features,
-                            rest,
-                            onLoadOptions: pageOption,
-                        }) : sorter,
+                        sorter:
+                            typeof sorter === 'function'
+                                ? () =>
+                                      sorter({
+                                          features,
+                                          rest,
+                                          onLoadOptions: pageOption,
+                                      })
+                                : sorter,
                         ['#name']: name,
                     });
                 }
             }
-            const path2 = oakParent ? `${oakParent}:${oakPath || options.path}` : oakPath || options.path;
+            const path2 = oakParent
+                ? `${oakParent}:${oakPath || options.path}`
+                : oakPath || options.path;
             const node = await features.runningTree.createNode({
                 path: path2,
                 entity: (oakEntity || options.entity) as T,

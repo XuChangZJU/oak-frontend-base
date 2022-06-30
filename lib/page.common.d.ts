@@ -1,10 +1,10 @@
 /// <reference types="wechat-miniprogram" />
-import { CommonAspectDict } from "oak-common-aspect";
-import { Aspect, Context, EntityDict } from "oak-domain/lib/types";
-import { BasicFeatures } from "./features";
-import { ExceptionHandler } from "./types/ExceptionRoute";
-import { Feature } from "./types/Feature";
-import { OakCommonComponentMethods, OakComponentData, OakComponentProperties, OakHiddenComponentMethods, OakListComponentMethods, OakPageMethods, OakPageOption } from "./types/Page";
+import { CommonAspectDict } from 'oak-common-aspect';
+import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
+import { BasicFeatures } from './features';
+import { ExceptionHandler } from './types/ExceptionRoute';
+import { Feature } from './types/Feature';
+import { OakCommonComponentMethods, OakComponentData, OakComponentProperties, OakHiddenComponentMethods, OakListComponentMethods, OakPageMethods, OakPageOption } from './types/Page';
 export declare type ComponentProps<TProperty extends WechatMiniprogram.Component.PropertyOption> = WechatMiniprogram.Component.PropertyOptionToData<OakComponentProperties & TProperty>;
 export declare type ComponentData<ED extends EntityDict, T extends keyof ED, FormedData extends WechatMiniprogram.Component.DataOption, TData extends WechatMiniprogram.Component.DataOption> = TData & FormedData & OakComponentData<ED, T>;
 export declare type ComponentThisType<ED extends EntityDict, T extends keyof ED, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = ThisType<{

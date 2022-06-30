@@ -27,7 +27,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createComponent = exports.createPage = void 0;
-const react_1 = __importStar(require("react"));
+const React = __importStar(require("react"));
 const PullToRefresh_1 = __importDefault(require("./platforms/web/PullToRefresh"));
 const Wrapper_1 = __importDefault(require("./platforms/web/Wrapper"));
 const lodash_1 = require("lodash");
@@ -44,7 +44,7 @@ function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
             };
             if (keys) {
                 keys.forEach((k) => (0, lodash_1.assign)(result, {
-                    [k]: detail[k]
+                    [k]: detail[k],
                 }));
             }
             return result;
@@ -52,13 +52,17 @@ function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
         navigateBack: (option) => wx.navigateBack(option),
         navigateTo(options) {
             const { url, events, fail, complete, success, ...rest } = options;
-            let url2 = url.includes('?') ? url.concat(`&oakFrom=${this.state.oakFullpath}`) : url.concat(`?oakFrom=${this.state.oakFullpath}`);
+            let url2 = url.includes('?')
+                ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
+                : url.concat(`?oakFrom=${this.state.oakFullpath}`);
             for (const param in rest) {
                 const param2 = param;
-                url2 += `&${param}=${typeof rest[param2] === 'string' ? rest[param2] : JSON.stringify(rest[param2])}`;
+                url2 += `&${param}=${typeof rest[param2] === 'string'
+                    ? rest[param2]
+                    : JSON.stringify(rest[param2])}`;
             }
             (0, lodash_1.assign)(options, {
-                url: url2
+                url: url2,
             });
             return wx.navigateTo(options);
         },
@@ -85,7 +89,7 @@ function createPage(options, features, exceptionRouterDict, context) {
     const listMethods = isList ? (0, page_common_1.makeListComponentMethods)(features) : {};
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } = makePageMethods(features, options);
     const { methods, lifetimes, pageLifetimes, data } = options;
-    class OakPageWrapper extends react_1.PureComponent {
+    class OakPageWrapper extends React.PureComponent {
         constructor(props) {
             super(props);
             this.state = (data || {});
@@ -132,14 +136,13 @@ function createPage(options, features, exceptionRouterDict, context) {
         registerPageScroll() {
             window.addEventListener('scroll', this.scrollEvent);
         }
-        ;
         unregisterPageScroll() {
             window.removeEventListener('scroll', this.scrollEvent);
         }
-        ;
         checkReachBottom() {
             const isCurrentReachBottom = document.body.scrollHeight -
-                (window.innerHeight + window.scrollY) <= DEFAULT_REACH_BOTTOM_DISTANCE;
+                (window.innerHeight + window.scrollY) <=
+                DEFAULT_REACH_BOTTOM_DISTANCE;
             if (!this.isReachBottom && isCurrentReachBottom) {
                 this.isReachBottom = true;
                 // 执行触底事件
@@ -149,7 +152,6 @@ function createPage(options, features, exceptionRouterDict, context) {
             }
             this.isReachBottom = isCurrentReachBottom;
         }
-        ;
         componentDidMount() {
             methods?.onReady && methods.onReady.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
@@ -163,25 +165,24 @@ function createPage(options, features, exceptionRouterDict, context) {
             pageLifetimes?.show && pageLifetimes.show();
             const Render = render.call(this);
             const { oakLoading } = this.state;
-            return react_1.default.cloneElement(<PullToRefresh_1.default onRefresh={() => {
+            return React.cloneElement(<PullToRefresh_1.default onRefresh={() => {
                     onPullDownRefresh.call(this);
-                    methods?.onPullDownRefresh && methods.onPullDownRefresh.call(this);
+                    methods?.onPullDownRefresh &&
+                        methods.onPullDownRefresh.call(this);
                 }} refreshing={oakLoading} distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE} getScrollContainer={() => {
                     document.body;
                 }}/>, {}, Render);
         }
     }
-    ;
     return () => <Wrapper_1.default PageWrapper={OakPageWrapper}/>;
 }
 exports.createPage = createPage;
 function createComponent(options, features, exceptionRouterDict, context) {
-    const { formData, isList, entity, methods, lifetimes, pageLifetimes, data, properties, actions, observers, render } = options;
-    ;
+    const { formData, isList, entity, methods, lifetimes, pageLifetimes, data, properties, actions, observers, render, } = options;
     const hiddenMethods = (0, page_common_1.makeHiddenComponentMethods)();
     const commonMethods = makeCommonComponentMethods(features, exceptionRouterDict, formData);
     const listMethods = isList ? (0, page_common_1.makeListComponentMethods)(features) : {};
-    class OakPageWrapper extends react_1.PureComponent {
+    class OakPageWrapper extends React.PureComponent {
         constructor(props) {
             super(props);
             this.state = (data || {});
@@ -226,7 +227,6 @@ function createComponent(options, features, exceptionRouterDict, context) {
             return Render;
         }
     }
-    ;
     return () => <Wrapper_1.default PageWrapper={OakPageWrapper}/>;
 }
 exports.createComponent = createComponent;
