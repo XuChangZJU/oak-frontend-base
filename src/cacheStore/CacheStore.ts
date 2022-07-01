@@ -67,7 +67,6 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         const autoCommit = !context.getCurrentTxnId();
         if (autoCommit) {
             await context.begin();
-            console.log('cache begin', (context as any).id, context.getCurrentTxnId());
         }
         let result;
 
@@ -75,12 +74,10 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
             result = await super.select(entity, selection, context, params);
         }
         catch (err) {
-            console.log('cache rollback', (context as any).id, context.getCurrentTxnId());
             await context.rollback();
             throw err;
         }
         if (autoCommit) {
-            console.log('cache commit', (context as any).id, context.getCurrentTxnId());
             await context.commit();
         }
         return result;

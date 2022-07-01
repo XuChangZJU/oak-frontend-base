@@ -71,7 +71,7 @@ function getMaterializedData() {
 let lastMaterializedVersion = 0;
 
 function materializeData(data: any, stat: { create: number, update: number, remove: number, commit: number }) {
-    if (process.env.OAK_PLATFORM === 'weChatMp') {
+    if (process.env.OAK_PLATFORM === 'wechatMp') {
         try {
             wx.setStorageSync('debugStore', data);
             wx.setStorageSync('debugStoreStat', stat);

@@ -266,6 +266,7 @@ export function createPage<
             },
 
             error(err: Error) {
+                console.error(err);
                 lifetimes?.error && lifetimes.error.call(this, err);
             },
 

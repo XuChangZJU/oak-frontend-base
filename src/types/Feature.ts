@@ -40,6 +40,7 @@ export function subscribe(callback: () => any) {
             result = await method.apply(this, arguments);
         }
         catch (err) {
+            console.error(err, method.name);
             mActionStackDepth--;
             throw err;
         }

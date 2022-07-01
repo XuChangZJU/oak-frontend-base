@@ -19,7 +19,7 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Co
         const { exec } = aspectWrapper;
         aspectWrapper.exec = async <T extends keyof AD>(name: T, params: any) => {
             const { result, opRecords } = await exec(name, params);
-            this.sync(opRecords);
+            await this.sync(opRecords);
             return {
                 result,
                 opRecords,
@@ -73,8 +73,8 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Co
     }
 
 
-    async get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object) {                
-        const { result } = await this.cacheStore.select(entity, selection, this.context, params);
+    async get<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, params?: object) {                
+        const { result } = await this.cacheStore.select<T, S>(entity, selection, this.context, params);
         return result;
     }
 
