@@ -30,12 +30,5 @@ function getQuery(url: string) {
 
 export default function Wrapper(props: { PageWrapper: any }) {
     const { PageWrapper } = props;
-    // const navigate = useNavigate();
-    // const location = useLocation();
-    // const params = getParams(location);
-    const navigate = {};
-    const location = {};
-    const params = {}
-
-    return <PageWrapper navigate={navigate} location={location} {...params} />;
+    return <PageWrapper />;
 }
