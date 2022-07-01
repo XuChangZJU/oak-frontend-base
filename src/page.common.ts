@@ -155,7 +155,7 @@ export function makeCommonComponentMethods<
                 const data = await formData.call(this, {
                     data: rows as any,
                     features,
-                    params: this.state,
+                    props: this.props,
                     legalActions: oakLegalActions,
                 });
                 for (const k in data) {
@@ -606,7 +606,7 @@ export function makePageMethods<
                 oakIsPicker,
                 oakFrom,
                 oakActions,
-                ...rest
+                ...props
             } = this.props;
             assert(!(options.isList && oakId));
             const filters: NamedFilterItem<ED, T>[] = [];
@@ -623,7 +623,7 @@ export function makePageMethods<
                                 ? () =>
                                       filter({
                                           features,
-                                          rest,
+                                          props: this.props,
                                           onLoadOptions: pageOption,
                                       })
                                 : filter,
@@ -639,7 +639,7 @@ export function makePageMethods<
                         ? () =>
                               projection({
                                   features,
-                                  rest,
+                                  props: this.props,
                                   onLoadOptions: pageOption,
                               })
                         : projection;
@@ -658,7 +658,7 @@ export function makePageMethods<
                                 ? () =>
                                       sorter({
                                           features,
-                                          rest,
+                                          props: this.props,
                                           onLoadOptions: pageOption,
                                       })
                                 : sorter,

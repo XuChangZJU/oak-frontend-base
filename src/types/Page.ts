@@ -21,14 +21,15 @@ interface ComponentOption<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     FormedData extends WechatMiniprogram.Component.DataOption,
-    IsList extends boolean
+    IsList extends boolean,
+    TProperty extends WechatMiniprogram.Component.PropertyOption,
     > {
     entity: T;
     isList: IsList;
     formData: (options: {
         data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-        params?: Record<string, any>;
+        props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
         legalActions?: string[],
     }) => Promise<FormedData>;
     actions?: ED[T]['Action'][];
@@ -43,13 +44,14 @@ interface PageOption<
     Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean,
+    TProperty extends WechatMiniprogram.Component.PropertyOption,
     > {
     entity: T;
     path: string;
     isList: IsList;
     projection?: Proj | ((options: {
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-        rest: Record<string, any>;
+        props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
         onLoadOptions: Record<string, string | undefined>;
     }) => Promise<Proj>);
     append?: boolean;
@@ -57,7 +59,7 @@ interface PageOption<
     filters?: Array<{
         filter: ED[T]['Selection']['filter'] | ((options: {
             features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-            rest: Record<string, any>;
+            props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
             onLoadOptions: Record<string, string | undefined>;
         }) => Promise<ED[T]['Selection']['filter']> | undefined)
         '#name'?: string;
@@ -65,7 +67,7 @@ interface PageOption<
     sorters?: Array<{
         sorter: DeduceSorterItem<ED[T]['Schema']> | ((options: {
             features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-            rest: Record<string, any>;
+            props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
             onLoadOptions: Record<string, string | undefined>;
         }) => Promise<DeduceSorterItem<ED[T]['Schema']>>)
         '#name'?: string;
@@ -74,7 +76,7 @@ interface PageOption<
     formData: (options: {
         data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-        params?: Record<string, any>;
+        props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
         legalActions?: string[],
     }) => Promise<FormedData>;
     ns?: T | T[];
@@ -96,7 +98,7 @@ export type OakPageOption<
     TData extends WechatMiniprogram.Component.DataOption,
     TProperty extends WechatMiniprogram.Component.PropertyOption,
     TMethod extends WechatMiniprogram.Component.MethodOption
-    > = PageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList> &
+    > = PageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TProperty> &
     Partial<WechatMiniprogram.Component.Data<TData>> &
     Partial<WechatMiniprogram.Component.Property<TProperty>> &
     Partial<WechatMiniprogram.Component.Method<TMethod, true>> &
@@ -132,7 +134,7 @@ export type OakComponentOption<
     TData extends WechatMiniprogram.Component.DataOption,
     TProperty extends WechatMiniprogram.Component.PropertyOption,
     TMethod extends WechatMiniprogram.Component.MethodOption
-    > = ComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList> &
+    > = ComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList, TProperty> &
     Partial<WechatMiniprogram.Component.Data<TData>> &
     Partial<WechatMiniprogram.Component.Property<TProperty>> &
     Partial<WechatMiniprogram.Component.Method<TMethod, false>> &

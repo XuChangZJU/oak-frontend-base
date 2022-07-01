@@ -8,24 +8,24 @@ import { BasicFeatures } from "../features";
 import { NamedFilterItem, NamedSorterItem } from './NamedCondition';
 import { CreateNodeOptions } from '../features/runningTree';
 declare type RowSelected<ED extends EntityDict, T extends keyof ED, Proj extends ED[T]['Selection']['data'] = Required<ED[T]['Selection']['data']>> = SelectRowShape<ED[T]['Schema'], Proj> | undefined;
-interface ComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean> {
+interface ComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> {
     entity: T;
     isList: IsList;
     formData: (options: {
         data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-        params?: Record<string, any>;
+        props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
         legalActions?: string[];
     }) => Promise<FormedData>;
     actions?: ED[T]['Action'][];
 }
-interface PageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean> {
+interface PageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> {
     entity: T;
     path: string;
     isList: IsList;
     projection?: Proj | ((options: {
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-        rest: Record<string, any>;
+        props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
         onLoadOptions: Record<string, string | undefined>;
     }) => Promise<Proj>);
     append?: boolean;
@@ -33,7 +33,7 @@ interface PageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Cont
     filters?: Array<{
         filter: ED[T]['Selection']['filter'] | ((options: {
             features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-            rest: Record<string, any>;
+            props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
             onLoadOptions: Record<string, string | undefined>;
         }) => Promise<ED[T]['Selection']['filter']> | undefined);
         '#name'?: string;
@@ -41,7 +41,7 @@ interface PageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Cont
     sorters?: Array<{
         sorter: DeduceSorterItem<ED[T]['Schema']> | ((options: {
             features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-            rest: Record<string, any>;
+            props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
             onLoadOptions: Record<string, string | undefined>;
         }) => Promise<DeduceSorterItem<ED[T]['Schema']>>);
         '#name'?: string;
@@ -50,7 +50,7 @@ interface PageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Cont
     formData: (options: {
         data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-        params?: Record<string, any>;
+        props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
         legalActions?: string[];
     }) => Promise<FormedData>;
     ns?: T | T[];
@@ -59,7 +59,7 @@ interface PageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Cont
  * 这里对微信小程序中一些常用的字段进行了封装，维持住在各个平台下的通用性
  * 更多的字段未来再加入
  */
-export declare type OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = PageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, true>> & Partial<{
+export declare type OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = PageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TProperty> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, true>> & Partial<{
     lifetimes: WechatMiniprogram.Component.Lifetimes['lifetimes'];
     pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes> | undefined;
 }> & ThisType<{
@@ -68,7 +68,7 @@ export declare type OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt
     props: WechatMiniprogram.Component.PropertyOptionToData<OakPageProperties & TProperty>;
     setState: (data: Partial<TData>, callback?: () => void) => Promise<void>;
 } & TMethod & WechatMiniprogram.Page.ILifetime & OakCommonComponentMethods<ED, T> & (IsList extends true ? OakListComponentMethods<ED, T> : {}) & OakPageMethods & OakPageInstanceProperties<ED, Cxt, AD, FD>>;
-export declare type OakComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = ComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, false>> & Partial<{
+export declare type OakComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = ComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList, TProperty> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, false>> & Partial<{
     lifetimes: WechatMiniprogram.Component.Lifetimes['lifetimes'];
     observers: Record<string, (...args: any[]) => any>;
     pageLifetimes: Partial<WechatMiniprogram.Component.PageLifetimes> | undefined;
