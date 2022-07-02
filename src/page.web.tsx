@@ -242,7 +242,6 @@ export function createPage<
             }
             if (methods) {
                 const {
-                    onLoad,
                     onPullDownRefresh,
                     onReachBottom,
                     ...restMethods
@@ -259,7 +258,6 @@ export function createPage<
             lifetimes?.created && lifetimes.created.call(this);
             hiddenMethods.subscribe.call(this);
             lifetimes?.attached && lifetimes.attached.call(this);
-            onLoad.call(this, this.props);
         }
 
         features = features;
@@ -297,8 +295,10 @@ export function createPage<
         }
 
         componentDidMount() {
+            methods?.onLoad && methods.onLoad.call(this, this.props);
             methods?.onReady && methods.onReady.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
+            pageLifetimes?.show && pageLifetimes.show.call(this);
         }
 
         componentWillUnmount() {
@@ -308,7 +308,6 @@ export function createPage<
         }
 
         render(): React.ReactNode {
-            pageLifetimes?.show && pageLifetimes.show();
             const Render = render.call(this);
             const { oakLoading } = this.state;
 
@@ -330,9 +329,10 @@ export function createPage<
             );
         }
     }
-
     return () => <Wrapper PageWrapper={OakPageWrapper} />;
 }
+
+
 
 export function createComponent<
     ED extends EntityDict,
@@ -448,6 +448,7 @@ export function createComponent<
 
         componentDidMount() {
             lifetimes?.ready && lifetimes.ready.call(this);
+            pageLifetimes?.show && pageLifetimes.show.call(this);
         }
 
         componentWillUnmount() {
@@ -456,12 +457,10 @@ export function createComponent<
         }
 
         render(): React.ReactNode {
-            pageLifetimes?.show && pageLifetimes.show();
             const Render = render.call(this);
             return Render;
         }
     }
-
     return () => <Wrapper PageWrapper={OakPageWrapper} />;
 }
 
