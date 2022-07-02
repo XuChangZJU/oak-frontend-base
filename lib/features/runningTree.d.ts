@@ -76,7 +76,15 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     resetUpdateData(): void;
     pushNewBorn(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): SingleNode<ED, T, Cxt, AD>;
     popNewBorn(path: string): void;
+    /**
+     * 判断传入的updateData和当前的某项是否相等
+     * @param from 当前项
+     * @param to 传入项
+     * @returns
+     */
+    private judgeTheSame;
     setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]): void;
+    toggleChild(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>, checked: boolean): void;
 }
 declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private id?;
@@ -151,14 +159,15 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     addNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
     removeNamedSorterByName<T extends keyof ED>(path: string, name: string, refresh?: boolean): Promise<void>;
-    testAction(path: string, action: string, execute?: boolean): Promise<{
+    testAction(path: string, action?: string, execute?: boolean): Promise<{
         node: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
         operation: DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[];
     }>;
     private beforeExecute;
-    execute(path: string, action: string): Promise<DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[]>;
+    execute(path: string, action?: string): Promise<DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[]>;
     pushNode<T extends keyof ED>(path: string, options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): void;
     removeNode(parent: string, path: string): Promise<void>;
     resetUpdateData(path: string): void;
+    toggleNode(path: string, nodeData: Record<string, any>, checked: boolean): void;
 }
 export {};
