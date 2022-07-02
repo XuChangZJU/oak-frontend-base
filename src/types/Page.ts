@@ -218,7 +218,8 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
     setForeignKey: (id: string, goBackDelta?: number) => void;
     addForeignKeys: (ids: string[], goBackDelta?: number) => void;
     setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => void;
-    execute: (action: ED[T]['Action'], legalExceptions?: Array<string>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
+    toggleNode: (nodeData: Record<string, any>, checked: boolean, path?: string) => void;
+    execute: (action?: ED[T]['Action'], legalExceptions?: Array<string>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
 };
 
 export type OakListComponentMethods<ED extends EntityDict, T extends keyof ED> = {

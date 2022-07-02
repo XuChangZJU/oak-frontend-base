@@ -248,6 +248,11 @@ export function makeCommonComponentMethods<
             }
         },
 
+        toggleNode(nodeData: Record<string, any>, checked: boolean, path?: string) {
+            const fullpath = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            features.runningTree.toggleNode(fullpath, nodeData, checked);
+        },
+
         async execute(action, legalExceptions) {
             if (this.state.oakExecuting) {
                 return;
@@ -695,6 +700,7 @@ export function makePageMethods<
                     this.refresh();
                 }
             );
+            options.methods?.onLoad && options.methods.onLoad.call(this, pageOption);
         },
     };
 }

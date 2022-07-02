@@ -605,6 +605,24 @@ class ListNode<ED extends EntityDict,
         this.newBorn.splice(index2, 1);
     }
 
+    /**
+     * 判断传入的updateData和当前的某项是否相等
+     * @param from 当前项
+     * @param to 传入项
+     * @returns 
+     */
+    private judgeTheSame(from: ED[T]['Update']['data'] | undefined, to : ED[T]['Update']['data']) {
+        if (!from) {
+            return false;
+        }
+        for (const attr in to) {
+            if (from[attr] !== to[attr]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // 将本结点的freshValue更正成data的要求，其中updateData要和现有的数据去重
     setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]) {
         const convertForeignKey = (origin: ED[T]['Update']['data']): ED[T]['Update']['data']  => {
@@ -632,17 +650,6 @@ class ListNode<ED extends EntityDict,
             
             return result;
         };
-        const same = (from: ED[T]['Update']['data'] | undefined, to : ED[T]['Update']['data']) => {
-            if (!from) {
-                return false;
-            }
-            for (const attr in to) {
-                if (from[attr] !== to[attr]) {
-                    return false;
-                }
-            }
-            return true;
-        };
         const uds = [];
         for (const dt of data) {
             let existed = false;
@@ -650,7 +657,7 @@ class ListNode<ED extends EntityDict,
             const ud2 = convertForeignKey(updateData!);
             uds.push(ud2);
             for (const child of this.children) {
-                if (same(child.getFreshValue(true), ud2)) {
+                if (this.judgeTheSame(child.getFreshValue(true), ud2)) {
                     if (child.getAction() === 'remove') {
                         // 这里把updateData全干掉了，如果本身是先update再remove或许会有问题 by Xc
                         child.resetUpdateData();
@@ -660,7 +667,7 @@ class ListNode<ED extends EntityDict,
                 }
             }
             for (const child of this.newBorn) {
-                if (same(child.getFreshValue(true), ud2)) {
+                if (this.judgeTheSame(child.getFreshValue(true), ud2)) {
                     existed = true;
                     break;
                 }
@@ -674,7 +681,7 @@ class ListNode<ED extends EntityDict,
         for (const child of this.children) {
             let included = false;
             for (const ud of uds) {
-                if (same(child.getFreshValue(true), ud)) {
+                if (this.judgeTheSame(child.getFreshValue(true), ud)) {
                     included = true;
                     break;
                 }
@@ -687,13 +694,47 @@ class ListNode<ED extends EntityDict,
         const newBorn2: SingleNode<ED, T, Cxt, AD>[] = [];
         for (const child of this.newBorn) {
             for (const ud of uds) {
-                if (same(child.getFreshValue(true), ud)) {
+                if (this.judgeTheSame(child.getFreshValue(true), ud)) {
                     newBorn2.push(child);
                     break;
                 }
             }
         }
         this.newBorn = newBorn2;
+    }
+
+    toggleChild(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>, checked: boolean) {
+        const { updateData } = data;
+        if (checked) {
+            // 如果是选中，这里要处理一种例外就是之前被删除
+            for (const child of this.children) {
+                if (this.judgeTheSame(child.getFreshValue(true), updateData!)) {
+                    assert (child.getAction() === 'remove'); 
+                    // 这里把updateData全干掉了，如果本身是先update再remove或许会有问题 by Xc
+                    child.resetUpdateData();
+                    return;
+                }
+            }
+            this.pushNewBorn(data);
+        }
+        else {
+            for (const child of this.children) {
+                if (this.judgeTheSame(child.getFreshValue(true), updateData!)) {
+                    assert (child.getAction() !== 'remove'); 
+                    // 这里把updateData全干掉了，如果本身是先update再remove或许会有问题 by Xc
+                    child.setAction('remove');
+                    return;
+                }
+            }
+            for (const child of this.newBorn) {
+                if (this.judgeTheSame(child.getFreshValue(true), updateData!)) {
+                    pull(this.newBorn, child);
+                    return;
+                }
+            }
+
+            assert(false, 'toggle动作的remove对象没有找到对应的子结点');
+        }
     }
 }
 
@@ -1485,7 +1526,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         }
     }
 
-    async testAction(path: string, action: string, execute?: boolean) {
+    async testAction(path: string, action?: string, execute?: boolean) {
         const node = this.findNode(path);
         if (execute) {
             await this.beforeExecute(node, action);
@@ -1509,7 +1550,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         };
     }
 
-    private async beforeExecute(node2: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>, action: string) {
+    private async beforeExecute(node2: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>, action?: string) {
         async function beNode(node: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>, action2?: string) {
             if (node.isDirty()) {
                 const beforeExecuteFn = node.getBeforeExecute();
@@ -1535,7 +1576,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async execute(path: string, action: string) {
+    async execute(path: string, action?: string) {
         const { node, operation } = await this.testAction(path, action, true);
 
         await this.getAspectWrapper().exec('operate', {
@@ -1585,5 +1626,15 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         const node = this.findNode(path);
 
         node.resetUpdateData();
+    }
+
+    @Action
+    toggleNode(path: string, nodeData: Record<string, any>, checked: boolean) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+
+        node.toggleChild({
+            updateData: nodeData as any,
+        }, checked);
     }
 }

@@ -120,12 +120,30 @@ function makePageMethods<
     >
 ): OakPageMethods &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
-    const { onPullDownRefresh, ...rest } = makePage(features, options);
+    const { onPullDownRefresh, onLoad, ...rest } = makePage(features, options);
     return {
         async onPullDownRefresh() {
             await onPullDownRefresh.call(this);
             if (!this.state.oakLoading) {
                 await wx.stopPullDownRefresh();
+            }
+        },
+        async onLoad(pageOption) {
+            await onLoad.call(this, pageOption);
+            // 处理传递参数的格式化，小程序的缺陷只能用string传递参数
+            const data = {};
+            if (options.properties) {
+                for (const key in options.properties) {
+                    // Number和Boolean类型小程序框架能自动处理吗？实测中再改
+                    if (typeof pageOption[key] === 'string' && options.properties[key] !== String) {
+                        assign(data, {
+                            [key]: JSON.parse(pageOption[key]!),
+                        });
+                    }
+                }
+                if (Object.keys(data).length > 0) {
+                    await this.setState(data);
+                }
             }
         },
         ...rest,
