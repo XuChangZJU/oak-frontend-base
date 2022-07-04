@@ -9,11 +9,13 @@
         "oak-domain": "file:../oak-domain",
         "oak-external-sdk": "file:../oak-external-sdk",
         "oak-memory-tree-store": "file:../oak-memory-tree-store",
-        "react": "^18.1.0",
-        "react-dom": "^18.1.0",
-        "react-router-dom": "^6.3.0",
         "rmc-pull-to-refresh": "^1.0.13",
         "uuid": "^8.3.2"
+    },
+    "peerDependencies": {
+        "react": "^18.2.0",
+        "react-dom": "^18.1.0",
+        "react-router-dom": "^6.3.0"
     },
     "devDependencies": {
         "@babel/cli": "^7.12.13",

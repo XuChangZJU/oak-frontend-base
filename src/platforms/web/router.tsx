@@ -23,20 +23,20 @@ function getQuery(url: string) {
     if (!url) {
         return query;
     }
-    const parseUrl = URL.parse(url, true);
+    const parseUrl = URL.parse(url, true, false);
     if (parseUrl.query) {
         query = parseUrl.query;
     }
     return query;
 }
 
-export function withRouter(PageWrapper: React.ComponentType<any>) {
-    function ComponentWithRouter(props: any) {
+const withRouter = (Component: React.ComponentType<any>) => {
+    const ComponentWithRouterProp = (props: any) => {
         const navigate = useNavigate();
         const location = useLocation();
         const params = getParams(location as Location);
         return (
-            <PageWrapper
+            <Component
                 {...props}
                 navigate={navigate}
                 location={location}
@@ -45,5 +45,7 @@ export function withRouter(PageWrapper: React.ComponentType<any>) {
         );
     };
 
-    return ComponentWithRouter;
+    return ComponentWithRouterProp;
 }
+
+export default withRouter;

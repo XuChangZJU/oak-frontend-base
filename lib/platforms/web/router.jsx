@@ -28,6 +28,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 //react
 const React = __importStar(require("react"));
+const react_router_dom_1 = require("react-router-dom");
 const url_1 = __importDefault(require("url"));
 function getParams(location) {
     const { search, state } = location;
@@ -39,14 +40,27 @@ function getQuery(url) {
     if (!url) {
         return query;
     }
-    const parseUrl = url_1.default.parse(url, true);
+    const parseUrl = url_1.default.parse(url, true, false);
     if (parseUrl.query) {
         query = parseUrl.query;
     }
     return query;
 }
+<<<<<<< HEAD:lib/platforms/web/Wrapper.jsx
 function Wrapper(props) {
     const { PageWrapper } = props;
     return <PageWrapper />;
 }
 exports.default = Wrapper;
+=======
+const withRouter = (Component) => {
+    const ComponentWithRouterProp = (props) => {
+        const navigate = (0, react_router_dom_1.useNavigate)();
+        const location = (0, react_router_dom_1.useLocation)();
+        const params = getParams(location);
+        return (<Component {...props} navigate={navigate} location={location} {...params}/>);
+    };
+    return ComponentWithRouterProp;
+};
+exports.default = withRouter;
+>>>>>>> eb2a6cc02286238e9e23ed5a6a119550f983314b:lib/platforms/web/router.jsx

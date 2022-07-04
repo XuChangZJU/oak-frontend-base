@@ -29,22 +29,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createComponent = exports.createPage = void 0;
 const React = __importStar(require("react"));
 const PullToRefresh_1 = __importDefault(require("./platforms/web/PullToRefresh"));
-const Wrapper_1 = __importDefault(require("./platforms/web/Wrapper"));
+const router_1 = __importDefault(require("./platforms/web/router"));
 const lodash_1 = require("lodash");
 const page_common_1 = require("./page.common");
 function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
     return {
         resolveInput: (input, keys) => {
-            const { currentTarget, detail } = input;
-            const { dataset } = currentTarget;
-            const { value } = detail;
+            const { currentTarget, target } = input;
+            const { value, dataset } = target;
             const result = {
                 dataset,
                 value,
             };
             if (keys) {
                 keys.forEach((k) => (0, lodash_1.assign)(result, {
-                    [k]: detail[k],
+                    [k]: target[k],
                 }));
             }
             return result;
@@ -174,7 +173,7 @@ function createPage(options, features, exceptionRouterDict, context) {
                 }}/>, {}, Render);
         }
     }
-    return () => <Wrapper_1.default PageWrapper={OakPageWrapper}/>;
+    return (0, router_1.default)(OakPageWrapper);
 }
 exports.createPage = createPage;
 function createComponent(options, features, exceptionRouterDict, context) {
@@ -227,6 +226,6 @@ function createComponent(options, features, exceptionRouterDict, context) {
             return Render;
         }
     }
-    return () => <Wrapper_1.default PageWrapper={OakPageWrapper}/>;
+    return (0, router_1.default)(OakPageWrapper);
 }
 exports.createComponent = createComponent;
