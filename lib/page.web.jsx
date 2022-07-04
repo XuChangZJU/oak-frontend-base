@@ -29,22 +29,21 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createComponent = exports.createPage = void 0;
 const React = __importStar(require("react"));
 const PullToRefresh_1 = __importDefault(require("./platforms/web/PullToRefresh"));
-const Wrapper_1 = __importDefault(require("./platforms/web/Wrapper"));
+const router_1 = __importDefault(require("./platforms/web/router"));
 const lodash_1 = require("lodash");
 const page_common_1 = require("./page.common");
 function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
     return {
         resolveInput: (input, keys) => {
-            const { currentTarget, detail } = input;
-            const { dataset } = currentTarget;
-            const { value } = detail;
+            const { currentTarget, target } = input;
+            const { value, dataset } = target;
             const result = {
                 dataset,
                 value,
             };
             if (keys) {
                 keys.forEach((k) => (0, lodash_1.assign)(result, {
-                    [k]: detail[k],
+                    [k]: target[k],
                 }));
             }
             return result;
@@ -114,7 +113,7 @@ function createPage(options, features, exceptionRouterDict, context) {
                 });
             }
             if (methods) {
-                const { onLoad, onPullDownRefresh, onReachBottom, ...restMethods } = methods;
+                const { onPullDownRefresh, onReachBottom, ...restMethods } = methods;
                 for (const m in restMethods) {
                     (0, lodash_1.assign)(this, {
                         [m]: restMethods[m].bind(this),
@@ -125,7 +124,6 @@ function createPage(options, features, exceptionRouterDict, context) {
             lifetimes?.created && lifetimes.created.call(this);
             hiddenMethods.subscribe.call(this);
             lifetimes?.attached && lifetimes.attached.call(this);
-            onLoad.call(this, this.props);
         }
         features = features;
         isReachBottom = false;
@@ -153,8 +151,10 @@ function createPage(options, features, exceptionRouterDict, context) {
             this.isReachBottom = isCurrentReachBottom;
         }
         componentDidMount() {
+            methods?.onLoad && methods.onLoad.call(this, this.props);
             methods?.onReady && methods.onReady.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
+            pageLifetimes?.show && pageLifetimes.show.call(this);
         }
         componentWillUnmount() {
             hiddenMethods.unsubscribe.call(this);
@@ -162,7 +162,6 @@ function createPage(options, features, exceptionRouterDict, context) {
             lifetimes?.detached && lifetimes.detached.call(this);
         }
         render() {
-            pageLifetimes?.show && pageLifetimes.show();
             const Render = render.call(this);
             const { oakLoading } = this.state;
             return React.cloneElement(<PullToRefresh_1.default onRefresh={() => {
@@ -174,7 +173,7 @@ function createPage(options, features, exceptionRouterDict, context) {
                 }}/>, {}, Render);
         }
     }
-    return () => <Wrapper_1.default PageWrapper={OakPageWrapper}/>;
+    return (0, router_1.default)(OakPageWrapper);
 }
 exports.createPage = createPage;
 function createComponent(options, features, exceptionRouterDict, context) {
@@ -216,17 +215,17 @@ function createComponent(options, features, exceptionRouterDict, context) {
         isReachBottom = false;
         componentDidMount() {
             lifetimes?.ready && lifetimes.ready.call(this);
+            pageLifetimes?.show && pageLifetimes.show.call(this);
         }
         componentWillUnmount() {
             hiddenMethods.unsubscribe.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
         }
         render() {
-            pageLifetimes?.show && pageLifetimes.show();
             const Render = render.call(this);
             return Render;
         }
     }
-    return () => <Wrapper_1.default PageWrapper={OakPageWrapper}/>;
+    return (0, router_1.default)(OakPageWrapper);
 }
 exports.createComponent = createComponent;

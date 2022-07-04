@@ -28,6 +28,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 //react
 const React = __importStar(require("react"));
+const react_router_dom_1 = require("react-router-dom");
 const url_1 = __importDefault(require("url"));
 function getParams(location) {
     const { search, state } = location;
@@ -39,20 +40,19 @@ function getQuery(url) {
     if (!url) {
         return query;
     }
-    const parseUrl = url_1.default.parse(url, true);
+    const parseUrl = url_1.default.parse(url, true, false);
     if (parseUrl.query) {
         query = parseUrl.query;
     }
     return query;
 }
-function Wrapper(props) {
-    const { PageWrapper } = props;
-    // const navigate = useNavigate();
-    // const location = useLocation();
-    // const params = getParams(location);
-    const navigate = {};
-    const location = {};
-    const params = {};
-    return <PageWrapper navigate={navigate} location={location} {...params}/>;
-}
-exports.default = Wrapper;
+const withRouter = (Component) => {
+    const ComponentWithRouterProp = (props) => {
+        const navigate = (0, react_router_dom_1.useNavigate)();
+        const location = (0, react_router_dom_1.useLocation)();
+        const params = getParams(location);
+        return (<Component {...props} navigate={navigate} location={location} {...params}/>);
+    };
+    return ComponentWithRouterProp;
+};
+exports.default = withRouter;

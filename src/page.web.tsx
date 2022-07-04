@@ -1,6 +1,6 @@
 import * as React from 'react';
 import PullToRefresh from './platforms/web/PullToRefresh';
-import Wrapper from './platforms/web/Wrapper';
+import withRouter from './platforms/web/router';
 import { assign, omit } from 'lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
@@ -56,10 +56,9 @@ function makeCommonComponentMethods<
 ): OakCommonComponentMethods<ED, T> &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
-        resolveInput: (input: WechatMiniprogram.CustomEvent, keys) => {
-            const { currentTarget, detail } = input;
-            const { dataset } = currentTarget;
-            const { value } = detail;
+        resolveInput: (input: React.BaseSyntheticEvent, keys) => {
+            const { currentTarget, target } = input;
+            const { value, dataset } = target;
             const result = {
                 dataset,
                 value,
@@ -67,7 +66,7 @@ function makeCommonComponentMethods<
             if (keys) {
                 keys.forEach((k) =>
                     assign(result, {
-                        [k]: detail[k],
+                        [k]: target[k],
                     })
                 );
             }
@@ -329,7 +328,7 @@ export function createPage<
             );
         }
     }
-    return () => <Wrapper PageWrapper={OakPageWrapper} />;
+    return withRouter(OakPageWrapper);
 }
 
 
@@ -461,7 +460,7 @@ export function createComponent<
             return Render;
         }
     }
-    return () => <Wrapper PageWrapper={OakPageWrapper} />;
+    return withRouter(OakPageWrapper);
 }
 
 export type MakeOakPage<
