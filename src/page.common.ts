@@ -117,7 +117,7 @@ export function makeCommonComponentMethods<
     >['formData']
 ): Omit<
     OakCommonComponentMethods<ED, T>,
-    'navigateTo' | 'navigateBack' | 'resolveInput'
+    'navigateTo' | 'navigateBack' | 'resolveInput' | 'redirectTo'
 > &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
@@ -260,8 +260,14 @@ export function makeCommonComponentMethods<
             }
         },
 
-        toggleNode(nodeData: Record<string, any>, checked: boolean, path?: string) {
-            const fullpath = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        toggleNode(
+            nodeData: Record<string, any>,
+            checked: boolean,
+            path?: string
+        ) {
+            const fullpath = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             features.runningTree.toggleNode(fullpath, nodeData, checked);
         },
 

@@ -49,7 +49,7 @@ function makeCommonComponentMethods<
 ): OakCommonComponentMethods<ED, T> &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
-        resolveInput: (input: WechatMiniprogram.CustomEvent, keys) => {
+        resolveInput(input: WechatMiniprogram.CustomEvent, keys) {
             const { currentTarget, detail } = input;
             const { dataset } = currentTarget;
             const { value } = detail;
@@ -66,19 +66,19 @@ function makeCommonComponentMethods<
             }
             return result;
         },
-        navigateBack: (option) => {
-            return new Promise(
-                (resolve, reject) => {
-                    wx.navigateBack(assign({}, option, {
+        navigateBack(option) {
+            return new Promise((resolve, reject) => {
+                wx.navigateBack(
+                    assign({}, option, {
                         success() {
                             resolve(undefined);
                         },
                         fail(err: any) {
                             reject(err);
-                        }
-                    }));
-                }
-            );
+                        },
+                    })
+                );
+            });
         },
         navigateTo(options) {
             const { url, events, fail, complete, success, ...rest } = options;
@@ -97,20 +97,52 @@ function makeCommonComponentMethods<
             assign(options, {
                 url: url2,
             });
-            return new Promise(
-                (resolve, reject) => {
-                    wx.navigateTo(assign({}, options, {
+            return new Promise((resolve, reject) => {
+                wx.navigateTo(
+                    assign({}, options, {
                         success(res: any) {
-                            success && success (res);
+                            success && success(res);
                             resolve(undefined);
                         },
                         fail(err: any) {
                             fail && fail(err);
                             reject(err);
-                        }
-                    }))
-                }
-            );
+                        },
+                    })
+                );
+            });
+        },
+        redirectTo(options) {
+            const { url, events, fail, complete, success, ...rest } = options;
+            let url2 = url.includes('?')
+                ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
+                : url.concat(`?oakFrom=${this.state.oakFullpath}`);
+
+            for (const param in rest) {
+                const param2 = param as unknown as keyof typeof rest;
+                url2 += `&${param}=${
+                    typeof rest[param2] === 'string'
+                        ? rest[param2]
+                        : JSON.stringify(rest[param2])
+                }`;
+            }
+            assign(options, {
+                url: url2,
+            });
+            return new Promise((resolve, reject) => {
+                wx.redirectTo(
+                    assign({}, options, {
+                        success(res: any) {
+                            success && success(res);
+                            resolve(undefined);
+                        },
+                        fail(err: any) {
+                            fail && fail(err);
+                            reject(err);
+                        },
+                    })
+                );
+            });
         },
 
         ...makeCommon(features, exceptionRouterDict, formData),
