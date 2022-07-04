@@ -66,7 +66,20 @@ function makeCommonComponentMethods<
             }
             return result;
         },
-        navigateBack: (option) => wx.navigateBack(option),
+        navigateBack: (option) => {
+            return new Promise(
+                (resolve, reject) => {
+                    wx.navigateBack(assign({}, option, {
+                        success() {
+                            resolve(undefined);
+                        },
+                        fail(err: any) {
+                            reject(err);
+                        }
+                    }));
+                }
+            );
+        },
         navigateTo(options) {
             const { url, events, fail, complete, success, ...rest } = options;
             let url2 = url.includes('?')
@@ -84,7 +97,20 @@ function makeCommonComponentMethods<
             assign(options, {
                 url: url2,
             });
-            return wx.navigateTo(options);
+            return new Promise(
+                (resolve, reject) => {
+                    wx.navigateTo(assign({}, options, {
+                        success(res: any) {
+                            success && success (res);
+                            resolve(undefined);
+                        },
+                        fail(err: any) {
+                            fail && fail(err);
+                            reject(err);
+                        }
+                    }))
+                }
+            );
         },
 
         ...makeCommon(features, exceptionRouterDict, formData),

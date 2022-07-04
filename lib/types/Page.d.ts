@@ -116,6 +116,9 @@ export declare type OakHiddenComponentMethods = {
     unsubscribe: () => void;
 };
 export declare type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED> = {
+    sub: (type: string, callback: Function) => void;
+    unsub: (type: string, callback: Function) => void;
+    pub: (type: string, options?: any) => void;
     resolveInput: <K extends string>(input: any, keys?: K[]) => {
         dataset?: Record<string, any>;
         value?: string;
@@ -123,10 +126,10 @@ export declare type OakCommonComponentMethods<ED extends EntityDict, T extends k
         [k in K]?: any;
     };
     reRender: (extra?: Record<string, any>) => Promise<void>;
-    navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => ReturnType<typeof wx.navigateTo>;
+    navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => Promise<void>;
     navigateBack: (option?: {
         delta: number;
-    }) => void;
+    }) => Promise<void>;
     resetUpdateData: () => void;
     setUpdateData: (attr: string, input: any) => void;
     t(key: string, params?: object): string;

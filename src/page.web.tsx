@@ -9,6 +9,7 @@ import { ExceptionHandler } from './types/ExceptionRoute';
 import { Feature } from './types/Feature';
 import {
     OakCommonComponentMethods,
+    OakComponentData,
     OakComponentOption,
     OakPageData,
     OakPageMethods,
@@ -407,7 +408,7 @@ export function createComponent<
 
     class OakPageWrapper extends React.PureComponent<
         ComponentProps<TProperty>,
-        ComponentData<ED, T, FormedData, TData>
+        OakComponentData<ED, T>
     > {
         constructor(props: any) {
             super(props);

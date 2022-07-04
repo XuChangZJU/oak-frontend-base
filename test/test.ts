@@ -1,14 +1,15 @@
-type Result = {
-    aaa(): void;
-}
-function ttt(): Result & ThisType<{
-    state: number;
-}> {
-    return {
-        aaa() {
-            return this.state;
+import { PureComponent, ReactNode } from 'react';
+
+function create<TData extends Record<string, any> = {}> () {
+    class BB extends PureComponent<{}, {
+        a: string;
+        b: number
+    } & TData> {
+        render(): ReactNode {
+            this.setState({
+                a: 'ccc',
+            });
+            return null;
         }
-    } as Result & ThisType<{
-        state: number;
-    }>;
+    }
 }

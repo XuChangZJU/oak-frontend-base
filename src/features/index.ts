@@ -6,6 +6,7 @@ import { Location } from './location';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { RunningTree } from './runningTree';
 import { Locales } from './locales';
+import { EventBus } from './eventBus';
 import { CacheStore } from '../cacheStore/CacheStore';
 
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> (
@@ -17,11 +18,13 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     const location = new Location(aspectWrapper);
     const runningTree = new RunningTree<ED, Cxt, AD>(aspectWrapper, cache, storageSchema);
     const locales = new Locales(aspectWrapper);
+    const eventBus = new EventBus(aspectWrapper);
     return {
         cache,
         location,
         runningTree,
         locales,
+        eventBus,
     };
 }
 
@@ -34,4 +37,5 @@ export type BasicFeatures<
     location: Location<ED, Cxt, AD>;
     runningTree: RunningTree<ED, Cxt, AD>;
     locales: Locales<ED, Cxt, AD>;
+    eventBus: EventBus<ED, Cxt, AD>;
 };

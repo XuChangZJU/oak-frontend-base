@@ -114,7 +114,7 @@ function createPage(options, features, exceptionRouterDict, context) {
                 });
             }
             if (methods) {
-                const { onLoad, onPullDownRefresh, onReachBottom, ...restMethods } = methods;
+                const { onPullDownRefresh, onReachBottom, ...restMethods } = methods;
                 for (const m in restMethods) {
                     (0, lodash_1.assign)(this, {
                         [m]: restMethods[m].bind(this),
@@ -125,7 +125,6 @@ function createPage(options, features, exceptionRouterDict, context) {
             lifetimes?.created && lifetimes.created.call(this);
             hiddenMethods.subscribe.call(this);
             lifetimes?.attached && lifetimes.attached.call(this);
-            onLoad.call(this, this.props);
         }
         features = features;
         isReachBottom = false;
@@ -153,8 +152,10 @@ function createPage(options, features, exceptionRouterDict, context) {
             this.isReachBottom = isCurrentReachBottom;
         }
         componentDidMount() {
+            methods?.onLoad && methods.onLoad.call(this, this.props);
             methods?.onReady && methods.onReady.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
+            pageLifetimes?.show && pageLifetimes.show.call(this);
         }
         componentWillUnmount() {
             hiddenMethods.unsubscribe.call(this);
@@ -162,7 +163,6 @@ function createPage(options, features, exceptionRouterDict, context) {
             lifetimes?.detached && lifetimes.detached.call(this);
         }
         render() {
-            pageLifetimes?.show && pageLifetimes.show();
             const Render = render.call(this);
             const { oakLoading } = this.state;
             return React.cloneElement(<PullToRefresh_1.default onRefresh={() => {
@@ -216,13 +216,13 @@ function createComponent(options, features, exceptionRouterDict, context) {
         isReachBottom = false;
         componentDidMount() {
             lifetimes?.ready && lifetimes.ready.call(this);
+            pageLifetimes?.show && pageLifetimes.show.call(this);
         }
         componentWillUnmount() {
             hiddenMethods.unsubscribe.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
         }
         render() {
-            pageLifetimes?.show && pageLifetimes.show();
             const Render = render.call(this);
             return Render;
         }

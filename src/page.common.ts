@@ -125,6 +125,18 @@ export function makeCommonComponentMethods<
             return 'not implemented';
         },
 
+        sub(type: string, callback: Function) {
+            features.eventBus.sub(type, callback);
+        },
+
+        unsub(type: string, callback: Function) {
+            features.eventBus.unsub(type, callback);
+        },
+
+        pub(type: string, options?: any) {
+            features.eventBus.pub(type, options);
+        },
+
         async reRender(extra) {
             if (this.state.oakFullpath) {
                 const rows = features.runningTree.getFreshValue(
