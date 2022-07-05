@@ -77,7 +77,7 @@ function makeCommonComponentMethods<
             const { delta } = option || {};
             return new Promise((resolve, reject) => {
                 try {
-                    this.props.navigateBack(delta || -1);
+                    this.props.navigate(delta || -1);
                     resolve(undefined);
                 } catch (err) {
                     reject(err);
@@ -156,9 +156,6 @@ function makePageMethods<
     return {
         async onPullDownRefresh() {
             await onPullDownRefresh.call(this);
-            if (!this.state.oakLoading) {
-                await wx.stopPullDownRefresh();
-            }
         },
         ...rest,
     };
@@ -317,11 +314,12 @@ export function createPage<
         }
 
         async componentDidMount() {
-            await onLoad.call(this, this.props);
-            methods?.onLoad && await methods.onLoad.call(this, this.props);
-            methods?.onReady && await methods.onReady.call(this);
-            lifetimes?.ready && await lifetimes.ready.call(this);
-            pageLifetimes?.show && await pageLifetimes.show.call(this);
+            await onLoad.call(this, this.props, () => {
+                methods?.onLoad && methods.onLoad.call(this, this.props);
+                methods?.onReady && methods.onReady.call(this);
+                lifetimes?.ready && lifetimes.ready.call(this);
+                pageLifetimes?.show && pageLifetimes.show.call(this);
+            });
         }
 
         async componentWillUnmount() {

@@ -256,7 +256,10 @@ export type OakPageMethods = {
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
     onReachBottom: () => Promise<void>;
-    onLoad: (options: Record<string, string | undefined>) => Promise<void>;
+    onLoad: (
+        options: Record<string, string | undefined>,
+        callback?: () => void
+    ) => Promise<void>;
 };
 
 export type OakComponentInstanceProperties<

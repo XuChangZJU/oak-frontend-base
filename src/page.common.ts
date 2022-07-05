@@ -617,7 +617,7 @@ export function makePageMethods<
             }
         },
 
-        async onLoad(pageOption) {
+        async onLoad(pageOption, callback) {
             const {
                 oakId,
                 oakEntity,
@@ -704,7 +704,7 @@ export function makePageMethods<
                 id: oakId,
             });
             // const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
-            this.setState(
+            await this.setState(
                 {
                     oakEntity: node.getEntity(),
                     oakFullpath: path2,
@@ -716,6 +716,7 @@ export function makePageMethods<
                 },
                 () => {
                     this.refresh();
+                    callback && callback.call(this);
                 }
             );
             options.methods?.onLoad && options.methods.onLoad.call(this, pageOption);
