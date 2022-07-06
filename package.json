@@ -46,7 +46,7 @@
         "clean": "rimraf lib/",
         "copy-files": "copyfiles -u 1 src/**/*.css lib/",
         "build": "tsc && npm run copy-files",
-        "test": "ts-node ./test/test2.ts"
+        "test": "ts-node ./test/test.ts"
     },
     "main": "src/index"
 }
