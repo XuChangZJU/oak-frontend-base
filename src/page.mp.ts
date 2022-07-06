@@ -1,4 +1,5 @@
 import { assign, omit } from 'lodash';
+import URL from 'url';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
 import { BasicFeatures } from './features';
@@ -17,6 +18,7 @@ import {
     makeCommonComponentMethods as makeCommon,
     makePageMethods as makePage,
 } from './page.common';
+import assert from 'assert';
 
 function makeCommonComponentMethods<
     ED extends EntityDict,
@@ -82,18 +84,40 @@ function makeCommonComponentMethods<
         },
         navigateTo(options) {
             const { url, events, fail, complete, success, ...rest } = options;
-            let url2 = url.includes('?')
-                ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
-                : url.concat(`?oakFrom=${this.state.oakFullpath}`);
+
+            const urlParse = URL.parse(url, true);
+            const { pathname, search } = urlParse as {
+                pathname: string;
+                search: string;
+            };
+            if (!/^\/{1}/.test(pathname)) {
+                assert(false, 'url前面必须以/开头');
+            }
+            // 格式:/house/list 前面加上/pages 后面加上/index
+            if (
+                pathname?.indexOf('pages') !== -1 ||
+                pathname?.lastIndexOf('index') !== -1
+            ) {
+                assert(false, 'url两边不需要加上/pages和/index');
+            }
+            const pathname2 = `/pages${pathname}/index`;
+            let search2 = search || '';
+            search2 = search2.includes('?')
+                ? search2.concat(`&oakFrom=${this.state.oakFullpath}`)
+                : search2.concat(`?oakFrom=${this.state.oakFullpath}`);
 
             for (const param in rest) {
                 const param2 = param as unknown as keyof typeof rest;
-                url2 += `&${param}=${
+                search2 += `&${param}=${
                     typeof rest[param2] === 'string'
                         ? rest[param2]
                         : JSON.stringify(rest[param2])
                 }`;
             }
+            const url2 = URL.format({
+                pathname: pathname2,
+                search: search2,
+            });
             assign(options, {
                 url: url2,
             });
@@ -114,18 +138,39 @@ function makeCommonComponentMethods<
         },
         redirectTo(options) {
             const { url, events, fail, complete, success, ...rest } = options;
-            let url2 = url.includes('?')
-                ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
-                : url.concat(`?oakFrom=${this.state.oakFullpath}`);
+            const urlParse = URL.parse(url, true);
+            const { pathname, search } = urlParse as {
+                pathname: string;
+                search: string;
+            };
+            if (/^\//.test(pathname)) {
+                assert(false, 'url前面必须以/开头');
+            }
+            if (
+                pathname!.indexOf('pages') !== -1 ||
+                pathname!.lastIndexOf('index') !== -1
+            ) {
+                assert(false, 'url两边不需要加上/pages和/index');
+            }
+            // 格式:/house/list 前面加上/pages 后面加上/index
+            const pathname2 = `/pages${pathname}/index`;
+            let search2 = search || '';
+            search2 = search2.includes('?')
+                ? search2.concat(`&oakFrom=${this.state.oakFullpath}`)
+                : search2.concat(`?oakFrom=${this.state.oakFullpath}`);
 
             for (const param in rest) {
                 const param2 = param as unknown as keyof typeof rest;
-                url2 += `&${param}=${
+                search2 += `&${param}=${
                     typeof rest[param2] === 'string'
                         ? rest[param2]
                         : JSON.stringify(rest[param2])
                 }`;
             }
+            const url2 = URL.format({
+                pathname: pathname2,
+                search: search2,
+            });
             assign(options, {
                 url: url2,
             });
