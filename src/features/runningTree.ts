@@ -462,10 +462,10 @@ class ListNode<ED extends EntityDict,
             return;
         }
 
-        // todo 这里的逻辑还没有测试过
-        if (action || this.action) {
+        // todo 这里的逻辑还没有测试过，后面还有ids选择的Case
+        if (this.action) {
             return {
-                action: action || this.getAction(),
+                action: this.getAction(),
                 data: cloneDeep(this.updateData),
                 filter: combineFilters(this.filters.map(ele => ele.filter)),
             } as DeduceUpdateOperation<ED[T]['Schema']>;  // todo 这里以后再增加对选中id的过滤
@@ -474,12 +474,19 @@ class ListNode<ED extends EntityDict,
         for (const node of this.children) {
             const subAction = await node.composeOperation(undefined, execute);
             if (subAction) {
+                // 如果有action，这里用action代替默认的update。userRelation/onEntity页面可以测到
+                if (action) {
+                    assign(subAction, {
+                        action,
+                    });
+                }
                 actions.push(subAction);
             }
         }
         for (const node of this.newBorn) {
             const subAction = await node.composeOperation(undefined, execute);
             if (subAction) {
+                assert(!action || action === 'update');     // 如果还有新建，应该不会有其它类型的action
                 actions.push(subAction);
             }
         }
