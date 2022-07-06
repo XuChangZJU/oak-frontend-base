@@ -117,7 +117,7 @@ export function makeCommonComponentMethods<
     >['formData']
 ): Omit<
     OakCommonComponentMethods<ED, T>,
-    'navigateTo' | 'navigateBack' | 'resolveInput'
+    'navigateTo' | 'navigateBack' | 'resolveInput' | 'redirectTo'
 > &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
@@ -264,8 +264,14 @@ export function makeCommonComponentMethods<
             }
         },
 
-        toggleNode(nodeData: Record<string, any>, checked: boolean, path?: string) {
-            const fullpath = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        toggleNode(
+            nodeData: Record<string, any>,
+            checked: boolean,
+            path?: string
+        ) {
+            const fullpath = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             features.runningTree.toggleNode(fullpath, nodeData, checked);
         },
 
@@ -613,7 +619,7 @@ export function makePageMethods<
             }
         },
 
-        async onLoad(pageOption) {
+        async onLoad(pageOption, callback) {
             const {
                 oakId,
                 oakEntity,
@@ -700,7 +706,7 @@ export function makePageMethods<
                 id: oakId,
             });
             // const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
-            this.setState(
+            await this.setState(
                 {
                     oakEntity: node.getEntity(),
                     oakFullpath: path2,
@@ -712,6 +718,7 @@ export function makePageMethods<
                 },
                 () => {
                     this.refresh();
+                    callback && callback.call(this);
                 }
             );
             options.methods?.onLoad && options.methods.onLoad.call(this, pageOption);

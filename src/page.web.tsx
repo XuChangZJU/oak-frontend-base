@@ -57,7 +57,7 @@ function makeCommonComponentMethods<
 ): OakCommonComponentMethods<ED, T> &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
-        resolveInput: (input: React.BaseSyntheticEvent, keys) => {
+        resolveInput(input: React.BaseSyntheticEvent, keys) {
             const { currentTarget, target } = input;
             const { value, dataset } = target;
             const result = {
@@ -73,9 +73,20 @@ function makeCommonComponentMethods<
             }
             return result;
         },
-        navigateBack: (option) => wx.navigateBack(option),
+        navigateBack(option) {
+            const { delta } = option || {};
+            return new Promise((resolve, reject) => {
+                try {
+                    this.props.navigate(delta || -1);
+                    resolve(undefined);
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        },
         navigateTo(options) {
-            const { url, events, fail, complete, success, ...rest } = options;
+            const { url, events, fail, complete, success, state, ...rest } =
+                options;
             let url2 = url.includes('?')
                 ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
                 : url.concat(`?oakFrom=${this.state.oakFullpath}`);
@@ -88,10 +99,24 @@ function makeCommonComponentMethods<
                         : JSON.stringify(rest[param2])
                 }`;
             }
-            assign(options, {
-                url: url2,
-            });
-            return wx.navigateTo(options);
+            return this.props.navigate(url2, { replace: false, state });
+        },
+        redirectTo(options) {
+            const { url, events, fail, complete, success, state, ...rest } =
+                options;
+            let url2 = url.includes('?')
+                ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
+                : url.concat(`?oakFrom=${this.state.oakFullpath}`);
+
+            for (const param in rest) {
+                const param2 = param as unknown as keyof typeof rest;
+                url2 += `&${param}=${
+                    typeof rest[param2] === 'string'
+                        ? rest[param2]
+                        : JSON.stringify(rest[param2])
+                }`;
+            }
+            return this.props.navigate(url2, { replace: true, state });
         },
 
         ...makeCommon(features, exceptionRouterDict, formData),
@@ -131,9 +156,6 @@ function makePageMethods<
     return {
         async onPullDownRefresh() {
             await onPullDownRefresh.call(this);
-            if (!this.state.oakLoading) {
-                await wx.stopPullDownRefresh();
-            }
         },
         ...rest,
     };
@@ -241,11 +263,8 @@ export function createPage<
                 });
             }
             if (methods) {
-                const {
-                    onPullDownRefresh,
-                    onReachBottom,
-                    ...restMethods
-                } = methods;
+                const { onPullDownRefresh, onReachBottom, ...restMethods } =
+                    methods;
                 for (const m in restMethods) {
                     assign(this, {
                         [m]: restMethods[m as keyof typeof restMethods]!.bind(
@@ -294,14 +313,16 @@ export function createPage<
             this.isReachBottom = isCurrentReachBottom;
         }
 
-        componentDidMount() {
-            methods?.onLoad && methods.onLoad.call(this, this.props);
-            methods?.onReady && methods.onReady.call(this);
-            lifetimes?.ready && lifetimes.ready.call(this);
-            pageLifetimes?.show && pageLifetimes.show.call(this);
+        async componentDidMount() {
+            await onLoad.call(this, this.props, () => {
+                methods?.onLoad && methods.onLoad.call(this, this.props);
+                methods?.onReady && methods.onReady.call(this);
+                lifetimes?.ready && lifetimes.ready.call(this);
+                pageLifetimes?.show && pageLifetimes.show.call(this);
+            });
         }
 
-        componentWillUnmount() {
+        async componentWillUnmount() {
             hiddenMethods.unsubscribe.call(this);
             methods?.onUnload && methods.onUnload.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
@@ -446,12 +467,26 @@ export function createComponent<
         features = features;
         isReachBottom = false;
 
-        componentDidMount() {
+        async componentDidMount() {
+            const { oakPath, oakParent } = this.props;
+            if (oakParent && oakPath) {
+                const oakFullpath = `${oakParent}.${oakPath}`;
+                this.setState(
+                    {
+                        oakFullpath,
+                        oakEntity: entity as any,
+                    },
+                    () => {
+                        commonMethods.reRender.call(this);
+                    }
+                );
+            }
+            hiddenMethods.subscribe.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
             pageLifetimes?.show && pageLifetimes.show.call(this);
         }
 
-        componentWillUnmount() {
+        async componentWillUnmount() {
             hiddenMethods.unsubscribe.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
         }

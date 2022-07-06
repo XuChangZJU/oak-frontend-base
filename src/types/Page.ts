@@ -213,6 +213,7 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
         [k in K]?: any;
     };
     reRender: (extra?: Record<string, any>) => Promise<void>;
+    redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>) => Promise<void>
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => Promise<void>;
     navigateBack: (option?: { delta: number }) => Promise<void>;
     resetUpdateData: () => void;
@@ -256,7 +257,10 @@ export type OakPageMethods = {
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
     onReachBottom: () => Promise<void>;
-    onLoad: (options: Record<string, string | undefined>) => Promise<void>;
+    onLoad: (
+        options: Record<string, string | undefined>,
+        callback?: () => void
+    ) => Promise<void>;
 };
 
 export type OakComponentInstanceProperties<
@@ -288,6 +292,7 @@ export type OakPageData<ED extends EntityDict, T extends keyof ED> = {
     oakLegalActions: ED[T]['Action'][];
     oakLoading: boolean;
     oakLoadingMore: boolean;
+    oakEntity: string;
 };
 
 export type OakComponentData<ED extends EntityDict, T extends keyof ED> = {
