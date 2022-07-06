@@ -120,6 +120,9 @@ export declare type OakCommonComponentMethods<ED extends EntityDict, T extends k
     unsub: (type: string, callback: Function) => void;
     pub: (type: string, options?: any) => void;
     unsubAll: (type: string) => void;
+    save: (key: string, item: any) => void;
+    load: (key: string) => any;
+    clear: () => void;
     resolveInput: <K extends string>(input: any, keys?: K[]) => {
         dataset?: Record<string, any>;
         value?: string;

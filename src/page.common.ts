@@ -141,6 +141,18 @@ export function makeCommonComponentMethods<
             features.eventBus.unsubAll(type);
         },
 
+        save(key, item) {
+            features.localStorage.save(key, item);
+        },
+
+        load(key) {
+            return features.localStorage.load(key);
+        },
+
+        clear() {
+            features.localStorage.clear();
+        },
+        
         async reRender(extra) {
             if (this.state.oakFullpath) {
                 const rows = features.runningTree.getFreshValue(
