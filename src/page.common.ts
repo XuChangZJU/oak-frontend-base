@@ -137,6 +137,10 @@ export function makeCommonComponentMethods<
             features.eventBus.pub(type, options);
         },
 
+        unsubAll(type: string) {
+            features.eventBus.unsubAll(type);
+        },
+
         async reRender(extra) {
             if (this.state.oakFullpath) {
                 const rows = features.runningTree.getFreshValue(
@@ -562,7 +566,7 @@ export function makePageMethods<
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
         async refresh() {
-            if (options.projection && this.state.oakFullpath) {
+            if (this.state.oakFullpath) {
                 this.setState({
                     oakLoading: true,
                 });
@@ -584,9 +588,7 @@ export function makePageMethods<
         },
 
         async onPullDownRefresh() {
-            if (options.projection) {
-                await this.refresh();
-            }
+            await this.refresh();
         },
 
         async onReachBottom() {

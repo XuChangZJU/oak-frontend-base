@@ -46,7 +46,7 @@ interface PageOption<
     IsList extends boolean,
     TProperty extends WechatMiniprogram.Component.PropertyOption,
     > {
-    entity: T;
+    entity?: T;
     path: string;
     isList: IsList;
     projection?: Proj | ((options: {
@@ -208,6 +208,7 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
     sub: (type: string, callback: Function) => void;
     unsub: (type: string, callback: Function) => void;
     pub: (type: string, options?: any) => void;
+    unsubAll: (type: string) => void;
     resolveInput: <K extends string>(input: any, keys?: K[]) => { dataset?: Record<string, any>, value?: string } & {
         [k in K]?: any;
     };
