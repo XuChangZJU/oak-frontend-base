@@ -5,5 +5,6 @@ export declare class EventBus<ED extends EntityDict, Cxt extends Context<ED>, AD
     private EventTable;
     sub(type: string, callback: Function): void;
     unsub(type: string, callback: Function): void;
+    unsubAll(type: string): void;
     pub(type: string, options?: any): void;
 }

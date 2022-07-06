@@ -20,7 +20,7 @@ interface ComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends
     actions?: ED[T]['Action'][];
 }
 interface PageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> {
-    entity: T;
+    entity?: T;
     path: string;
     isList: IsList;
     projection?: Proj | ((options: {
@@ -119,6 +119,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict, T extends k
     sub: (type: string, callback: Function) => void;
     unsub: (type: string, callback: Function) => void;
     pub: (type: string, options?: any) => void;
+    unsubAll: (type: string) => void;
     resolveInput: <K extends string>(input: any, keys?: K[]) => {
         dataset?: Record<string, any>;
         value?: string;
@@ -126,6 +127,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict, T extends k
         [k in K]?: any;
     };
     reRender: (extra?: Record<string, any>) => Promise<void>;
+    redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>) => Promise<void>;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => Promise<void>;
     navigateBack: (option?: {
         delta: number;
@@ -167,7 +169,7 @@ export declare type OakPageMethods = {
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
     onReachBottom: () => Promise<void>;
-    onLoad: (options: Record<string, string | undefined>) => Promise<void>;
+    onLoad: (options: Record<string, string | undefined>, callback?: () => void) => Promise<void>;
 };
 export declare type OakComponentInstanceProperties<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>> = {
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
@@ -186,6 +188,7 @@ export declare type OakPageData<ED extends EntityDict, T extends keyof ED> = {
     oakLegalActions: ED[T]['Action'][];
     oakLoading: boolean;
     oakLoadingMore: boolean;
+    oakEntity: string;
 };
 export declare type OakComponentData<ED extends EntityDict, T extends keyof ED> = {} & OakPageData<ED, T>;
 export {};

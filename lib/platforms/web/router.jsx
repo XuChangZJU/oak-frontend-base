@@ -46,13 +46,6 @@ function getQuery(url) {
     }
     return query;
 }
-<<<<<<< HEAD:lib/platforms/web/Wrapper.jsx
-function Wrapper(props) {
-    const { PageWrapper } = props;
-    return <PageWrapper />;
-}
-exports.default = Wrapper;
-=======
 const withRouter = (Component) => {
     const ComponentWithRouterProp = (props) => {
         const navigate = (0, react_router_dom_1.useNavigate)();
@@ -63,4 +56,3 @@ const withRouter = (Component) => {
     return ComponentWithRouterProp;
 };
 exports.default = withRouter;
->>>>>>> eb2a6cc02286238e9e23ed5a6a119550f983314b:lib/platforms/web/router.jsx

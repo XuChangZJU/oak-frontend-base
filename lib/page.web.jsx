@@ -34,7 +34,7 @@ const lodash_1 = require("lodash");
 const page_common_1 = require("./page.common");
 function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
     return {
-        resolveInput: (input, keys) => {
+        resolveInput(input, keys) {
             const { currentTarget, target } = input;
             const { value, dataset } = target;
             const result = {
@@ -48,9 +48,20 @@ function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
             }
             return result;
         },
-        navigateBack: (option) => wx.navigateBack(option),
+        navigateBack(option) {
+            const { delta } = option || {};
+            return new Promise((resolve, reject) => {
+                try {
+                    this.props.navigate(delta || -1);
+                    resolve(undefined);
+                }
+                catch (err) {
+                    reject(err);
+                }
+            });
+        },
         navigateTo(options) {
-            const { url, events, fail, complete, success, ...rest } = options;
+            const { url, events, fail, complete, success, state, ...rest } = options;
             let url2 = url.includes('?')
                 ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
                 : url.concat(`?oakFrom=${this.state.oakFullpath}`);
@@ -60,10 +71,20 @@ function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
                     ? rest[param2]
                     : JSON.stringify(rest[param2])}`;
             }
-            (0, lodash_1.assign)(options, {
-                url: url2,
-            });
-            return wx.navigateTo(options);
+            return this.props.navigate(url2, { replace: false, state });
+        },
+        redirectTo(options) {
+            const { url, events, fail, complete, success, state, ...rest } = options;
+            let url2 = url.includes('?')
+                ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
+                : url.concat(`?oakFrom=${this.state.oakFullpath}`);
+            for (const param in rest) {
+                const param2 = param;
+                url2 += `&${param}=${typeof rest[param2] === 'string'
+                    ? rest[param2]
+                    : JSON.stringify(rest[param2])}`;
+            }
+            return this.props.navigate(url2, { replace: true, state });
         },
         ...(0, page_common_1.makeCommonComponentMethods)(features, exceptionRouterDict, formData),
     };
@@ -73,9 +94,6 @@ function makePageMethods(features, options) {
     return {
         async onPullDownRefresh() {
             await onPullDownRefresh.call(this);
-            if (!this.state.oakLoading) {
-                await wx.stopPullDownRefresh();
-            }
         },
         ...rest,
     };
@@ -150,13 +168,15 @@ function createPage(options, features, exceptionRouterDict, context) {
             }
             this.isReachBottom = isCurrentReachBottom;
         }
-        componentDidMount() {
-            methods?.onLoad && methods.onLoad.call(this, this.props);
-            methods?.onReady && methods.onReady.call(this);
-            lifetimes?.ready && lifetimes.ready.call(this);
-            pageLifetimes?.show && pageLifetimes.show.call(this);
+        async componentDidMount() {
+            await onLoad.call(this, this.props, () => {
+                methods?.onLoad && methods.onLoad.call(this, this.props);
+                methods?.onReady && methods.onReady.call(this);
+                lifetimes?.ready && lifetimes.ready.call(this);
+                pageLifetimes?.show && pageLifetimes.show.call(this);
+            });
         }
-        componentWillUnmount() {
+        async componentWillUnmount() {
             hiddenMethods.unsubscribe.call(this);
             methods?.onUnload && methods.onUnload.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
@@ -213,11 +233,22 @@ function createComponent(options, features, exceptionRouterDict, context) {
         }
         features = features;
         isReachBottom = false;
-        componentDidMount() {
+        async componentDidMount() {
+            const { oakPath, oakParent } = this.props;
+            if (oakParent && oakPath) {
+                const oakFullpath = `${oakParent}.${oakPath}`;
+                this.setState({
+                    oakFullpath,
+                    oakEntity: entity,
+                }, () => {
+                    commonMethods.reRender.call(this);
+                });
+            }
+            hiddenMethods.subscribe.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
             pageLifetimes?.show && pageLifetimes.show.call(this);
         }
-        componentWillUnmount() {
+        async componentWillUnmount() {
             hiddenMethods.unsubscribe.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
         }
