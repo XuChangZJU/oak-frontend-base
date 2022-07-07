@@ -323,6 +323,7 @@ export function createPage<
         }
 
         async componentWillUnmount() {
+            features.runningTree.destroyNode(this.state.oakFullpath);
             hiddenMethods.unsubscribe.call(this);
             methods?.onUnload && methods.onUnload.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
