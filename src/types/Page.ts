@@ -261,8 +261,7 @@ export type OakPageMethods = {
     onPullDownRefresh: () => Promise<void>;
     onReachBottom: () => Promise<void>;
     onLoad: (
-        options: Record<string, string | undefined>,
-        callback?: () => void
+        options: Record<string, string | undefined>
     ) => Promise<void>;
 };
 

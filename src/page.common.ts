@@ -222,7 +222,7 @@ export function makeCommonComponentMethods<
                 assert(typeof relation === 'string');
                 subEntity = relation;
             }
-            let url = `/pages/pickers/${subEntity}/index?oakIsPicker=true&oakParentEntity=${this.state.oakEntity}&oakParent=${this.state.oakFullpath}&oakPath=${attr}`;
+            let url = `pickers/${subEntity}?oakIsPicker=true&oakParentEntity=${this.state.oakEntity}&oakParent=${this.state.oakFullpath}&oakPath=${attr}`;
             for (const k in params) {
                 url += `&${k}=${JSON.stringify(params[k])}`;
             }
@@ -631,109 +631,117 @@ export function makePageMethods<
             }
         },
 
-        async onLoad(pageOption, callback) {
-            const {
-                oakId,
-                oakEntity,
-                oakPath,
-                oakProjection,
-                oakParent,
-                oakSorters,
-                oakFilters,
-                oakIsPicker,
-                oakFrom,
-                oakActions,
-                ...props
-            } = this.props;
-            assert(!(options.isList && oakId));
-            const filters: NamedFilterItem<ED, T>[] = [];
-            if (oakFilters?.length > 0) {
-                // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
-                const oakFilters2 = JSON.parse(oakFilters);
-                filters.push(...oakFilters2);
-            } else if (options.filters) {
-                for (const ele of options.filters) {
-                    const { filter, '#name': name } = ele;
-                    filters.push({
-                        filter:
-                            typeof filter === 'function'
+        async onLoad(pageOption) {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const {
+                        oakId,
+                        oakEntity,
+                        oakPath,
+                        oakProjection,
+                        oakParent,
+                        oakSorters,
+                        oakFilters,
+                        oakIsPicker,
+                        oakFrom,
+                        oakActions,
+                        ...props
+                    } = this.props;
+                    assert(!(options.isList && oakId));
+                    const filters: NamedFilterItem<ED, T>[] = [];
+                    if (oakFilters?.length > 0) {
+                        // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
+                        const oakFilters2 = JSON.parse(oakFilters);
+                        filters.push(...oakFilters2);
+                    } else if (options.filters) {
+                        for (const ele of options.filters) {
+                            const { filter, '#name': name } = ele;
+                            filters.push({
+                                filter:
+                                    typeof filter === 'function'
+                                        ? () =>
+                                              filter({
+                                                  features,
+                                                  props: this.props,
+                                                  onLoadOptions: pageOption,
+                                              })
+                                        : filter,
+                                ['#name']: name,
+                            });
+                        }
+                    }
+                    let proj = oakProjection && JSON.parse(oakProjection);
+                    if (!proj && options.projection) {
+                        const { projection } = options;
+                        proj =
+                            typeof projection === 'function'
                                 ? () =>
-                                      filter({
+                                      projection({
                                           features,
                                           props: this.props,
                                           onLoadOptions: pageOption,
                                       })
-                                : filter,
-                        ['#name']: name,
+                                : projection;
+                    }
+                    let sorters: NamedSorterItem<ED, T>[] = [];
+                    if (oakSorters?.length > 0) {
+                        // 这里在跳页面的时候用this.navigate应该可以限制传过来的sorter的格式
+                        const oakSorters2 = JSON.parse(oakSorters);
+                        sorters.push(...oakSorters2);
+                    } else if (options.sorters) {
+                        for (const ele of options.sorters) {
+                            const { sorter, '#name': name } = ele;
+                            sorters.push({
+                                sorter:
+                                    typeof sorter === 'function'
+                                        ? () =>
+                                              sorter({
+                                                  features,
+                                                  props: this.props,
+                                                  onLoadOptions: pageOption,
+                                              })
+                                        : sorter,
+                                ['#name']: name,
+                            });
+                        }
+                    }
+                    const path2 = oakParent
+                        ? `${oakParent}:${oakPath || options.path}`
+                        : oakPath || options.path;
+                    const node = await features.runningTree.createNode({
+                        path: path2,
+                        entity: (oakEntity || options.entity) as T,
+                        isList: options.isList,
+                        isPicker: oakIsPicker,
+                        projection: proj,
+                        pagination: options.pagination,
+                        filters,
+                        sorters,
+                        id: oakId,
                     });
+                    // const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
+                    await this.setState(
+                        {
+                            oakEntity: node.getEntity(),
+                            oakFullpath: path2,
+                            oakFrom,
+                            newOakActions:
+                                oakActions && JSON.parse(oakActions).length > 0
+                                    ? JSON.parse(oakActions)
+                                    : options.actions || [],
+                        },
+                        () => {
+                            this.refresh();
+                            options.methods?.onLoad &&
+                                options.methods.onLoad.call(this, pageOption);
+
+                            resolve();
+                        }
+                    );
+                } catch (e) {
+                    reject(e);
                 }
-            }
-            let proj = oakProjection && JSON.parse(oakProjection);
-            if (!proj && options.projection) {
-                const { projection } = options;
-                proj =
-                    typeof projection === 'function'
-                        ? () =>
-                              projection({
-                                  features,
-                                  props: this.props,
-                                  onLoadOptions: pageOption,
-                              })
-                        : projection;
-            }
-            let sorters: NamedSorterItem<ED, T>[] = [];
-            if (oakSorters?.length > 0) {
-                // 这里在跳页面的时候用this.navigate应该可以限制传过来的sorter的格式
-                const oakSorters2 = JSON.parse(oakSorters);
-                sorters.push(...oakSorters2);
-            } else if (options.sorters) {
-                for (const ele of options.sorters) {
-                    const { sorter, '#name': name } = ele;
-                    sorters.push({
-                        sorter:
-                            typeof sorter === 'function'
-                                ? () =>
-                                      sorter({
-                                          features,
-                                          props: this.props,
-                                          onLoadOptions: pageOption,
-                                      })
-                                : sorter,
-                        ['#name']: name,
-                    });
-                }
-            }
-            const path2 = oakParent
-                ? `${oakParent}:${oakPath || options.path}`
-                : oakPath || options.path;
-            const node = await features.runningTree.createNode({
-                path: path2,
-                entity: (oakEntity || options.entity) as T,
-                isList: options.isList,
-                isPicker: oakIsPicker,
-                projection: proj,
-                pagination: options.pagination,
-                filters,
-                sorters,
-                id: oakId,
             });
-            // const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
-            await this.setState(
-                {
-                    oakEntity: node.getEntity(),
-                    oakFullpath: path2,
-                    oakFrom,
-                    newOakActions:
-                        oakActions && JSON.parse(oakActions).length > 0
-                            ? JSON.parse(oakActions)
-                            : options.actions || [],
-                },
-                () => {
-                    this.refresh();
-                    callback && callback.call(this);
-                }
-            );
-            options.methods?.onLoad && options.methods.onLoad.call(this, pageOption);
         },
     };
 }

@@ -314,12 +314,11 @@ export function createPage<
         }
 
         async componentDidMount() {
-            await onLoad.call(this, this.props, () => {
-                methods?.onLoad && methods.onLoad.call(this, this.props);
-                methods?.onReady && methods.onReady.call(this);
-                lifetimes?.ready && lifetimes.ready.call(this);
-                pageLifetimes?.show && pageLifetimes.show.call(this);
-            });
+            await onLoad.call(this, this.props);
+            methods?.onLoad && methods.onLoad.call(this, this.props);
+            methods?.onReady && methods.onReady.call(this);
+            lifetimes?.ready && lifetimes.ready.call(this);
+            pageLifetimes?.show && pageLifetimes.show.call(this);
         }
 
         async componentWillUnmount() {
