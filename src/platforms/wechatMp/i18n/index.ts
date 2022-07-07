@@ -132,7 +132,6 @@ export function getI18nInstanceWechatMp() {
 
 export const CURRENT_LOCALE_KEY = '$_locale';
 export const LOCALE_CHANGE_HANDLER_NAME = '$_localeChange';
-export const COMMON_LOCALE_DATA = '$_common_translations';
 export const CURRENT_LOCALE_DATA = '$_translations';
 
 type Func = (...args: any[]) => any;

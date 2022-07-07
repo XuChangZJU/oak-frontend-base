@@ -1,5 +1,6 @@
 import { assign, omit } from 'lodash';
 import URL from 'url';
+import assert from 'assert';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
 import { BasicFeatures } from './features';
@@ -18,7 +19,12 @@ import {
     makeCommonComponentMethods as makeCommon,
     makePageMethods as makePage,
 } from './page.common';
-import assert from 'assert';
+import {
+    getI18nInstanceWechatMp,
+    CURRENT_LOCALE_KEY,
+    CURRENT_LOCALE_DATA,
+} from './platforms/wechatMp/i18n';
+
 
 function makeCommonComponentMethods<
     ED extends EntityDict,
@@ -366,13 +372,13 @@ export function createPage<
 
             attached() {
                 this.subscribe();
-                /* const i18nInstance = getI18nInstanceWechatMp();
+                const i18nInstance = getI18nInstanceWechatMp();
                 if (i18nInstance) {
-                    (this as any).setData({
+                    (this as any).setState({
                         [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
                         [CURRENT_LOCALE_DATA]: i18nInstance.translations,
                     });
-                } */
+                }
                 lifetimes?.attached && lifetimes.attached.call(this);
             },
 
@@ -549,13 +555,13 @@ export function createComponent<
 
             async attached() {
                 this.subscribe();
-                /* const i18nInstance = getI18nInstanceWechatMp();
+                const i18nInstance = getI18nInstanceWechatMp();
                 if (i18nInstance) {
-                    (this as any).setData({
+                    (this as any).setState({
                         [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
                         [CURRENT_LOCALE_DATA]: i18nInstance.translations,
                     });
-                } */
+                }
                 lifetimes?.attached && lifetimes.attached.call(this);
             },
 

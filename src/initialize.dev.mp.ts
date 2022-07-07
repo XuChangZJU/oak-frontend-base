@@ -22,6 +22,7 @@ import { ExceptionHandler, ExceptionRouters } from './types/ExceptionRoute';
 import { OakComponentOption, OakPageOption } from './types/Page';
 import { createComponent, createPage } from './page.mp';
 import { initialize as initDev } from './initialize-dev';
+import { initI18nWechatMp } from './platforms/wechatMp/i18n';
 
 export function initialize<
     ED extends EntityDict,
@@ -63,6 +64,22 @@ export function initialize<
     for (const router of exceptionRouters) {
         assign(exceptionRouterDict, {
             [router[0].name]: router[1],
+        });
+    }
+    // 初始化locales
+    if (translations) {
+        const systemInfo = wx.getSystemInfoSync();
+        const { language } = systemInfo; // 系统语言
+        let defaultLocale;
+        if (language === 'zh_CN') {
+            defaultLocale = language;
+        }
+        //初始化i18n
+        initI18nWechatMp({
+            locales: {
+                translations,
+            },
+            defaultLocale,
         });
     }
 
