@@ -117,14 +117,10 @@ export function makeCommonComponentMethods<
     >['formData']
 ): Omit<
     OakCommonComponentMethods<ED, T>,
-    'navigateTo' | 'navigateBack' | 'resolveInput' | 'redirectTo'
+    'navigateTo' | 'navigateBack' | 'resolveInput' | 'redirectTo' | 't'
 > &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
-        t(key: string, params?: object) {
-            return 'not implemented';
-        },
-
         sub(type: string, callback: Function) {
             features.eventBus.sub(type, callback);
         },

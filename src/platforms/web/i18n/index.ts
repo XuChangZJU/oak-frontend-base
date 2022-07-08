@@ -53,9 +53,8 @@ async function translationService(keys: [], lng: string, ns: string) {
     return result;
 }
 
-const expirationTime = process.env.NODE_ENV !== 'production' ? 120 * 1000 : 300 * 24 * 3600 * 1000;
 const i18nextInitOptions = {
-    debug: false,
+    debug: process.env.NODE_ENV !== 'production',
     fallbackLng: 'zh-CN',
     ns: ['common', 'error'],
     lng: 'zh-CN',
@@ -68,43 +67,52 @@ const i18nextInitOptions = {
 
     // react i18next special options (optional)
     react: {
-        wait: true,
+        // wait: true,
         bindI18n: 'added languageChanged',
         bindI18nStore: 'added',
         nsMode: 'default',
         useSuspense: false,
     },
-    backend: {
-        backends: [
-            LocalStorageBackend, // primary
-            HttpBackend, // fallback
-        ],
-        backendOptions: [
-            {
-                // prefix for stored languages
-                prefix: LOCAL_STORE_PREFIX,
-
-                // expiration
-                expirationTime,
-
-                defaultVersion: '2.9.0',
-            },
-            {
-                // for all available options read the backend's repository readme file
-                loadPath: `${process.env.PUBLIC_URL}/locales/{{lng}}/{{ns}}.json`,
-            },
-        ],
-    },
+    // backend: {
+    //     backends: [
+    //         LocalStorageBackend, // primary
+    //         HttpBackend, // fallback
+    //     ],
+    //     backendOptions: [
+    //         {
+    //             // prefix for stored languages
+    //             prefix: LOCAL_STORE_PREFIX,
+    //             // expiration
+    //             expirationTime: process.env.NODE_ENV !== 'production' ? 120 * 1000 : 300 * 24 * 3600 * 1000,
+    //             defaultVersion: '2.9.0',
+    //         },
+    //         {
+    //             // for all available options read the backend's repository readme file
+    //             loadPath: `${process.env.PUBLIC_URL}/locales/{{lng}}/{{ns}}.json`,
+    //         },
+    //     ],
+    // },
     returnObjects: true,
     joinArrays: true,
     saveMissing: true,
 };
 
-i18next
-    // .use(new I18nextKeysOnDemand({ translationGetter: translationService }))
-    .use(Backend)
-    .use(LanguageDetector)
-    .use(initReactI18next) // if not using I18nextProvider
-    .init(i18nextInitOptions);
+export function getI18next(translations: any) {
+    Object.assign(i18nextInitOptions, {
+        resources: {
+            'zh-CN': Object.assign(translations, {
+                common: {
+                    GREETING: 'Hello {{name}}, nice to see you.',
+                },
+            }),
+        },
+    });
+    i18next
+        // .use(new I18nextKeysOnDemand({ translationGetter: translationService }))
+        .use(Backend)
+        .use(LanguageDetector)
+        .use(initReactI18next) // if not using I18nextProvider
+        .init(i18nextInitOptions);
 
-export default i18next;
+    return i18next;
+};

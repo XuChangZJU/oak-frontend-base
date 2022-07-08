@@ -37,7 +37,7 @@ const withRouter = (Component: React.ComponentType<any>) => {
     const ComponentWithRouterProp = (props: any) => {
         const navigate = useNavigate();
         const location = useLocation();
-        const { t } = useTranslation();
+        const { t, i18n } = useTranslation();
         const width = useWidth();
         const params = getParams(location as Location);
         return (
@@ -46,6 +46,7 @@ const withRouter = (Component: React.ComponentType<any>) => {
                 navigate={navigate}
                 location={location}
                 t={t}
+                i18n={i18n}
                 width={width}
                 {...params}
             />

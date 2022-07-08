@@ -66,7 +66,8 @@ export function initialize<
             [router[0].name]: router[1],
         });
     }
-    // 初始化locales
+    // 初始化i8n配置
+    let i18n;
     if (translations) {
         const systemInfo = wx.getSystemInfoSync();
         const { language } = systemInfo; // 系统语言
@@ -74,7 +75,6 @@ export function initialize<
         if (language === 'zh_CN') {
             defaultLocale = language;
         }
-        //初始化i18n
         initI18nWechatMp({
             locales: {
                 translations,
@@ -154,4 +154,8 @@ export function initialize<
                 TMethod
             >(options, features, exceptionRouterDict, context),
     });
+
+    return {
+        i18n,
+    };
 }
