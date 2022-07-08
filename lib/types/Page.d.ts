@@ -47,7 +47,7 @@ interface PageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Cont
         '#name'?: string;
     }>;
     actions?: ED[T]['Action'][];
-    formData: (options: {
+    formData?: (options: {
         data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
@@ -172,7 +172,7 @@ export declare type OakPageMethods = {
     refresh: (extra?: any) => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
     onReachBottom: () => Promise<void>;
-    onLoad: (options: Record<string, string | undefined>, callback?: () => void) => Promise<void>;
+    onLoad: (options: Record<string, string | undefined>) => Promise<void>;
 };
 export declare type OakComponentInstanceProperties<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>> = {
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;

@@ -180,12 +180,12 @@ export function makeCommonComponentMethods<
                     }
                 }
 
-                const data = await formData.call(this, {
+                const data: Record<string, any> = formData ? await formData.call(this, {
                     data: rows as any,
                     features,
                     props: this.props,
                     legalActions: oakLegalActions,
-                });
+                }) : {};
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {
