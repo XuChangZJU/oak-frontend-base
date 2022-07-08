@@ -22,6 +22,7 @@ import { ExceptionHandler, ExceptionRouters } from './types/ExceptionRoute';
 import { OakComponentOption, OakPageOption } from './types/Page';
 import { createComponent, createPage } from './page.web';
 import { initialize as initDev } from './initialize-dev';
+import { getI18next } from './platforms/web/i18n';
 
 export function initialize<
     ED extends EntityDict,
@@ -64,6 +65,12 @@ export function initialize<
         assign(exceptionRouterDict, {
             [router[0].name]: router[1],
         });
+    }
+
+    // 初始化i8n配置
+    let i18n;
+    if (translations) {
+        i18n = getI18next(translations);
     }
 
     assign(global, {
@@ -137,4 +144,8 @@ export function initialize<
                 TMethod
             >(options, features, exceptionRouterDict, context),
     });
+
+    return {
+        i18n,
+    };
 }
