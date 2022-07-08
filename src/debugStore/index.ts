@@ -5,6 +5,7 @@ import {
 } from "oak-domain/lib/types";
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { makeIntrinsicWatchers } from 'oak-domain/lib/store/watchers';
+import assert from 'assert';
 
 async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
     store: DebugStore<ED, Cxt>,
@@ -80,6 +81,7 @@ function materializeData(data: any, stat: { create: number, update: number, remo
                 title: '数据已物化',
                 icon: 'success',
             });
+            console.log('物化数据', data);
         } catch (e) {
             console.error(e);
             wx.showToast({
@@ -96,10 +98,11 @@ function materializeData(data: any, stat: { create: number, update: number, remo
             );
             window.localStorage.setItem('debugStoreStat', JSON.stringify(stat));
             lastMaterializedVersion = stat.commit;
-            alert('数据已物化');
+            console.log('物化数据', data);
+            // alert('数据已物化');
         } catch (e) {
             console.error(e);
-            alert('物化数据失败');
+            // alert('物化数据失败');
         }
     }
 }
@@ -111,16 +114,13 @@ function materializeData(data: any, stat: { create: number, update: number, remo
  */
 function initializeWatchers<ED extends EntityDict, Cxt extends Context<ED>>(
     store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt, watchers: Array<Watcher<ED, keyof ED, Cxt>>) {
-    const schema = store.getSchema();
-    const intrinsicWatchers = makeIntrinsicWatchers(schema);
-    const totalWatchers = watchers.concat(intrinsicWatchers);
-
+    
     let count = 0;
     async function doWatchers() {
         count++;
         const start = Date.now();
         const context = contextBuilder()(store);
-        for (const w of totalWatchers) {
+        for (const w of watchers) {
             await context.begin();
             try {
                 if (w.hasOwnProperty('actionData')) {
@@ -155,7 +155,7 @@ function initializeWatchers<ED extends EntityDict, Cxt extends Context<ED>>(
             }
         }
         const duration = Date.now() - start;
-        console.log(`第${count}次执行watchers，共执行${totalWatchers.length}个，耗时${duration}毫秒`);
+        console.log(`第${count}次执行watchers，共执行${watchers.length}个，耗时${duration}毫秒`);
 
         setTimeout(() => doWatchers(), 120000);
     }
@@ -184,15 +184,14 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
         ele => store.registerChecker(ele)
     );
 
-    if (actionDict) {
-        const { triggers: adTriggers, checkers: adCheckers } = analyzeActionDefDict(storageSchema, actionDict);
-        adTriggers.forEach(
-            ele => store.registerTrigger(ele)
-        );
-        adCheckers.forEach(
-            ele => store.registerChecker(ele)
-        );
-    }
+    assert(actionDict);
+    const { triggers: adTriggers, checkers: adCheckers, watchers: adWatchers } = analyzeActionDefDict(storageSchema, actionDict!);
+    adTriggers.forEach(
+        ele => store.registerTrigger(ele)
+    );
+    adCheckers.forEach(
+        ele => store.registerChecker(ele)
+    );
 
     // 如果没有物化数据则使用initialData初始化debugStore
     if (!data) {
@@ -200,7 +199,7 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
         initDataInStore(store, contextBuilder, initialData);
     }
     else {
-        console.log('使用物化数据建立debugStore');
+        console.log('使用物化数据建立debugStore', data);
     }
     lastMaterializedVersion = store.getStat().commit;
 
@@ -215,7 +214,7 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
     }, 10000);
 
     // 启动watcher
-    initializeWatchers(store, contextBuilder, watchers!);
+    initializeWatchers(store, contextBuilder, watchers.concat(adWatchers));
     return store;
 }
 
