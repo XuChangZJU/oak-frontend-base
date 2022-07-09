@@ -29,6 +29,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 //react
 const React = __importStar(require("react"));
 const react_router_dom_1 = require("react-router-dom");
+const react_i18next_1 = require("react-i18next");
+const responsive_1 = require("./responsive");
 const url_1 = __importDefault(require("url"));
 function getParams(location) {
     const { search, state } = location;
@@ -40,7 +42,7 @@ function getQuery(url) {
     if (!url) {
         return query;
     }
-    const parseUrl = url_1.default.parse(url, true, false);
+    const parseUrl = url_1.default.parse(url, true);
     if (parseUrl.query) {
         query = parseUrl.query;
     }
@@ -50,8 +52,10 @@ const withRouter = (Component) => {
     const ComponentWithRouterProp = (props) => {
         const navigate = (0, react_router_dom_1.useNavigate)();
         const location = (0, react_router_dom_1.useLocation)();
+        const { t, i18n } = (0, react_i18next_1.useTranslation)();
+        const width = (0, responsive_1.useWidth)();
         const params = getParams(location);
-        return (<Component {...props} navigate={navigate} location={location} {...params}/>);
+        return (<Component {...props} navigate={navigate} location={location} t={t} i18n={i18n} width={width} {...params}/>);
     };
     return ComponentWithRouterProp;
 };

@@ -34,6 +34,13 @@ const lodash_1 = require("lodash");
 const page_common_1 = require("./page.common");
 function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
     return {
+        t(key, params) {
+            //  common: {
+            //        GREETING: 'Hello {{name}}, nice to see you.',
+            //   },
+            // t('common:GREETING', {name: "John Doe" })
+            return this.props.t(key, params);
+        },
         resolveInput(input, keys) {
             const { currentTarget, target } = input;
             const { value, dataset } = target;
