@@ -73,6 +73,7 @@ export declare type OakComponentOption<ED extends EntityDict, T extends keyof ED
     observers: Record<string, (...args: any[]) => any>;
     pageLifetimes: Partial<WechatMiniprogram.Component.PageLifetimes> | undefined;
     externalClasses: string[];
+    options: Partial<WechatMiniprogram.Component.ComponentOptions> | undefined;
 }> & ThisType<{
     features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
     state: TData & FormedData & OakComponentData<ED, T>;
