@@ -6,7 +6,7 @@ import {
     Context,
     RowStore,
 } from 'oak-domain/lib/types';
-import { OakExternalException } from 'oak-domain/lib/types/Exception';
+import { OakException, OakExternalException } from 'oak-domain/lib/types/Exception';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 
 import { Feature } from './types/Feature';
@@ -52,6 +52,7 @@ export function initialize<
     ) => FD,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
     serverUrl: string,
+    makeException: (str: string) => OakException,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
@@ -86,16 +87,22 @@ export function initialize<
                 const err = new OakExternalException(`网络请求返回异常，status是${response.status}`);
                 throw err;
             }
-            // todo 处理各种异常
+            
             const {
+                error,
                 result,
                 opRecords
             } = await response.json();
 
-            return {
-                result,
-                opRecords,
-            };
+            if (error) {
+                throw makeException(error);
+            }
+            else {
+                return {
+                    result,
+                    opRecords,
+                };
+            }
         },
     };
 

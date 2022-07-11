@@ -1,15 +1,5 @@
-import { PureComponent, ReactNode } from 'react';
+import { OakException } from 'oak-domain/lib/types/Exception';
 
-function create<TData extends Record<string, any> = {}> () {
-    class BB extends PureComponent<{}, {
-        a: string;
-        b: number
-    } & TData> {
-        render(): ReactNode {
-            this.setState({
-                a: 'ccc',
-            });
-            return null;
-        }
-    }
-}
+const e = new OakException('ddddd');
+
+console.log(e.constructor.name);
