@@ -283,7 +283,6 @@ export function createPage<
             context.setScene(options.path);
             lifetimes?.created && lifetimes.created.call(this);
             hiddenMethods.subscribe.call(this);
-            lifetimes?.attached && lifetimes.attached.call(this);
         }
 
         features = features;
@@ -324,6 +323,7 @@ export function createPage<
             await onLoad.call(this, this.props);
             methods?.onLoad && methods.onLoad.call(this, this.props);
             methods?.onReady && methods.onReady.call(this);
+            lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
             pageLifetimes?.show && pageLifetimes.show.call(this);
         }
@@ -468,7 +468,6 @@ export function createComponent<
             }
             lifetimes?.created && lifetimes.created.call(this);
             hiddenMethods.subscribe.call(this);
-            lifetimes?.attached && lifetimes.attached.call(this);
         }
 
         features = features;
@@ -489,6 +488,7 @@ export function createComponent<
                 );
             }
             hiddenMethods.subscribe.call(this);
+            lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
             pageLifetimes?.show && pageLifetimes.show.call(this);
         }
