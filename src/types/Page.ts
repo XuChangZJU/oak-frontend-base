@@ -73,7 +73,7 @@ interface PageOption<
         '#name'?: string;
     }>;
     actions?: ED[T]['Action'][];
-    formData: (options: {
+    formData?: (options: {
         data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;

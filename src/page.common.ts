@@ -117,14 +117,10 @@ export function makeCommonComponentMethods<
     >['formData']
 ): Omit<
     OakCommonComponentMethods<ED, T>,
-    'navigateTo' | 'navigateBack' | 'resolveInput' | 'redirectTo'
+    'navigateTo' | 'navigateBack' | 'resolveInput' | 'redirectTo' | 't'
 > &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
-        t(key: string, params?: object) {
-            return 'not implemented';
-        },
-
         sub(type: string, callback: Function) {
             features.eventBus.sub(type, callback);
         },
@@ -180,12 +176,12 @@ export function makeCommonComponentMethods<
                     }
                 }
 
-                const data = await formData.call(this, {
+                const data: Record<string, any> = formData ? await formData.call(this, {
                     data: rows as any,
                     features,
                     props: this.props,
                     legalActions: oakLegalActions,
-                });
+                }) : {};
                 for (const k in data) {
                     if (data[k] === undefined) {
                         assign(data, {

@@ -34,6 +34,13 @@ const lodash_1 = require("lodash");
 const page_common_1 = require("./page.common");
 function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
     return {
+        t(key, params) {
+            //  common: {
+            //        GREETING: 'Hello {{name}}, nice to see you.',
+            //   },
+            // t('common:GREETING', {name: "John Doe" })
+            return this.props.t(key, params);
+        },
         resolveInput(input, keys) {
             const { currentTarget, target } = input;
             const { value, dataset } = target;
@@ -169,14 +176,14 @@ function createPage(options, features, exceptionRouterDict, context) {
             this.isReachBottom = isCurrentReachBottom;
         }
         async componentDidMount() {
-            await onLoad.call(this, this.props, () => {
-                methods?.onLoad && methods.onLoad.call(this, this.props);
-                methods?.onReady && methods.onReady.call(this);
-                lifetimes?.ready && lifetimes.ready.call(this);
-                pageLifetimes?.show && pageLifetimes.show.call(this);
-            });
+            await onLoad.call(this, this.props);
+            methods?.onLoad && methods.onLoad.call(this, this.props);
+            methods?.onReady && methods.onReady.call(this);
+            lifetimes?.ready && lifetimes.ready.call(this);
+            pageLifetimes?.show && pageLifetimes.show.call(this);
         }
         async componentWillUnmount() {
+            features.runningTree.destroyNode(this.state.oakFullpath);
             hiddenMethods.unsubscribe.call(this);
             methods?.onUnload && methods.onUnload.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);

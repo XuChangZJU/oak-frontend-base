@@ -57,6 +57,19 @@ function makeCommonComponentMethods<
 ): OakCommonComponentMethods<ED, T> &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
+        t(key: string, params?: object) {
+            //  common: {
+            //        GREETING: 'Hello {{name}}, nice to see you.',
+            //   },
+            // t('common:GREETING', {name: "John Doe" })
+            const i18nInstance = getI18nInstanceWechatMp();
+            if (!i18nInstance) {
+                throw new Error(
+                    '[i18n] ensure run initI18nWechatMp() in app.js before using I18n library'
+                );
+            }
+            return i18nInstance.getString(key, params);
+        },
         resolveInput(input: WechatMiniprogram.CustomEvent, keys) {
             const { currentTarget, detail } = input;
             const { dataset } = currentTarget;

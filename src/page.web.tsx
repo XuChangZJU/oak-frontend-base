@@ -57,6 +57,13 @@ function makeCommonComponentMethods<
 ): OakCommonComponentMethods<ED, T> &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
+        t(key: string, params?: object) {
+            //  common: {
+            //        GREETING: 'Hello {{name}}, nice to see you.',
+            //   },
+            // t('common:GREETING', {name: "John Doe" })
+            return this.props.t(key, params);
+        },
         resolveInput(input: React.BaseSyntheticEvent, keys) {
             const { currentTarget, target } = input;
             const { value, dataset } = target;
