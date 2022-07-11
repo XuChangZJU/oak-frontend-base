@@ -65,10 +65,25 @@ function makeCommonComponentMethods<
             return this.props.t(key, params);
         },
         resolveInput(input: React.BaseSyntheticEvent, keys) {
-            const { currentTarget, target } = input;
+            const { currentTarget, target, nativeEvent } = input;
             const { value, dataset } = target;
+            const newDataset = Object.assign({}, dataset);
+            if (!target.dataset || Object.keys(target.dataset).length === 0) {
+                const { parentNode } = (nativeEvent as React.BaseSyntheticEvent)
+                    .target;
+                const getDataset = (parentNode: any) => {
+                    const { dataset: dataset2, parentNode: parentNode2 } =
+                        parentNode;
+                    if (!dataset2 || Object.keys(dataset2).length === 0) {
+                        getDataset(parentNode2);
+                    } else {
+                        Object.assign(newDataset, dataset2);
+                    }
+                };
+                getDataset(parentNode);
+            }
             const result = {
-                dataset,
+                dataset: newDataset,
                 value,
             };
             if (keys) {
@@ -283,7 +298,6 @@ export function createPage<
             context.setScene(options.path);
             lifetimes?.created && lifetimes.created.call(this);
             hiddenMethods.subscribe.call(this);
-            lifetimes?.attached && lifetimes.attached.call(this);
         }
 
         features = features;
@@ -324,6 +338,7 @@ export function createPage<
             await onLoad.call(this, this.props);
             methods?.onLoad && methods.onLoad.call(this, this.props);
             methods?.onReady && methods.onReady.call(this);
+            lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
             pageLifetimes?.show && pageLifetimes.show.call(this);
         }
@@ -468,7 +483,6 @@ export function createComponent<
             }
             lifetimes?.created && lifetimes.created.call(this);
             hiddenMethods.subscribe.call(this);
-            lifetimes?.attached && lifetimes.attached.call(this);
         }
 
         features = features;
@@ -489,6 +503,7 @@ export function createComponent<
                 );
             }
             hiddenMethods.subscribe.call(this);
+            lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
             pageLifetimes?.show && pageLifetimes.show.call(this);
         }

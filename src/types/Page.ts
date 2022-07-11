@@ -143,6 +143,7 @@ export type OakComponentOption<
         observers: Record<string, (...args: any[]) => any>;
         pageLifetimes: Partial<WechatMiniprogram.Component.PageLifetimes> | undefined;
         externalClasses: string[];
+        options: Partial<WechatMiniprogram.Component.ComponentOptions> | undefined;
     }> &
     ThisType<{
         features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
