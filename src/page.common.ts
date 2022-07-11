@@ -218,7 +218,7 @@ export function makeCommonComponentMethods<
                 assert(typeof relation === 'string');
                 subEntity = relation;
             }
-            let url = `pickers/${subEntity}?oakIsPicker=true&oakParentEntity=${this.state.oakEntity}&oakParent=${this.state.oakFullpath}&oakPath=${attr}`;
+            let url = `/pickers/${subEntity}?oakIsPicker=true&oakParentEntity=${this.state.oakEntity}&oakParent=${this.state.oakFullpath}&oakPath=${attr}`;
             for (const k in params) {
                 url += `&${k}=${JSON.stringify(params[k])}`;
             }
