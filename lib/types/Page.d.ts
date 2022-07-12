@@ -131,8 +131,8 @@ export declare type OakCommonComponentMethods<ED extends EntityDict, T extends k
         [k in K]?: any;
     };
     reRender: (extra?: Record<string, any>) => Promise<void>;
-    redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>) => Promise<void>;
-    navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => Promise<void>;
+    redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>) => Promise<void>;
+    navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>) => Promise<void>;
     navigateBack: (option?: {
         delta: number;
     }) => Promise<void>;

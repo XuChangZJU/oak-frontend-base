@@ -106,9 +106,8 @@ function makeCommonComponentMethods<
                 }
             });
         },
-        navigateTo(options) {
-            const { url, events, fail, complete, success, state, ...rest } =
-                options;
+        navigateTo(options, state) {
+            const { url, events, fail, complete, success, ...rest } = options;
             let url2 = url.includes('?')
                 ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
                 : url.concat(`?oakFrom=${this.state.oakFullpath}`);
@@ -123,8 +122,8 @@ function makeCommonComponentMethods<
             }
             return this.props.navigate(url2, { replace: false, state });
         },
-        redirectTo(options) {
-            const { url, events, fail, complete, success, state, ...rest } =
+        redirectTo(options, state) {
+            const { url, events, fail, complete, success, ...rest } =
                 options;
             let url2 = url.includes('?')
                 ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
