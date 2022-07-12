@@ -27,7 +27,7 @@ interface ComponentOption<
     entity?: T;
     isList: IsList;
     formData?: (options: {
-        data?: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
+        data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
         legalActions?: string[],
@@ -74,7 +74,7 @@ interface PageOption<
     }>;
     actions?: ED[T]['Action'][];
     formData?: (options: {
-        data?: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
+        data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
         legalActions?: string[],

@@ -201,11 +201,14 @@ export function makeCommonComponentMethods<
                 this.setState(data);
             }
             else {
+                /**
+                 * 这里的data属性为undefined，但声明不太好写，很难精准的判断这种情况
+                 * 即使oakpage的entity属性为空也不行，有可能动态传入
+                 */
                 const data: Record<string, any> = formData ? await formData.call(this, {
-                    data: undefined,
                     features,
                     props: this.props,
-                }) : {};
+                } as any) : {};
                 if (extra) {
                     assign(data, extra);
                 }
