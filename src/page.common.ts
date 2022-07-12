@@ -26,16 +26,16 @@ import {
 
 export type ComponentProps<
     TProperty extends WechatMiniprogram.Component.PropertyOption
-> = WechatMiniprogram.Component.PropertyOptionToData<
-    OakComponentProperties & TProperty
->;
+    > = WechatMiniprogram.Component.PropertyOptionToData<
+        OakComponentProperties & TProperty
+    >;
 
 export type ComponentData<
     ED extends EntityDict,
     T extends keyof ED,
     FormedData extends WechatMiniprogram.Component.DataOption,
     TData extends WechatMiniprogram.Component.DataOption
-> = TData & FormedData & OakComponentData<ED, T>;
+    > = TData & FormedData & OakComponentData<ED, T>;
 
 export type ComponentThisType<
     ED extends EntityDict,
@@ -45,21 +45,21 @@ export type ComponentThisType<
     TData extends WechatMiniprogram.Component.DataOption,
     TProperty extends WechatMiniprogram.Component.PropertyOption,
     TMethod extends WechatMiniprogram.Component.MethodOption
-> = ThisType<
-    {
-        state: ComponentData<ED, T, FormedData, TData>;
-        props: ComponentProps<TProperty>;
-        setState: (data: any, callback?: () => void) => Promise<void>;
-        triggerEvent: <DetailType = any>(
-            name: string,
-            detail?: DetailType,
-            options?: WechatMiniprogram.Component.TriggerEventOption
-        ) => void;
-    } & TMethod &
+    > = ThisType<
+        {
+            state: ComponentData<ED, T, FormedData, TData>;
+            props: ComponentProps<TProperty>;
+            setState: (data: any, callback?: () => void) => Promise<void>;
+            triggerEvent: <DetailType = any>(
+                name: string,
+                detail?: DetailType,
+                options?: WechatMiniprogram.Component.TriggerEventOption
+            ) => void;
+        } & TMethod &
         OakCommonComponentMethods<ED, T> &
         OakHiddenComponentMethods &
         (IsList extends true ? OakListComponentMethods<ED, T> : {})
->;
+    >;
 
 export function makeHiddenComponentMethods<
     ED extends EntityDict,
@@ -148,9 +148,9 @@ export function makeCommonComponentMethods<
         clear() {
             features.localStorage.clear();
         },
-        
+
         async reRender(extra) {
-            if (this.state.oakFullpath) {
+            if (this.state.oakEntity && this.state.oakFullpath) {
                 const rows = features.runningTree.getFreshValue(
                     this.state.oakFullpath
                 );
@@ -198,6 +198,17 @@ export function makeCommonComponentMethods<
                 assign(data, {
                     oakLegalActions,
                 });
+                this.setState(data);
+            }
+            else {
+                const data: Record<string, any> = formData ? await formData.call(this, {
+                    data: undefined,
+                    features,
+                    props: this.props,
+                }) : {};
+                if (extra) {
+                    assign(data, extra);
+                }
                 this.setState(data);
             }
         },
@@ -580,7 +591,7 @@ export function makePageMethods<
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
         async refresh() {
-            if (this.state.oakFullpath) {
+            if (this.state.oakEntity && this.state.oakFullpath) {
                 this.setState({
                     oakLoading: true,
                 });
@@ -606,7 +617,7 @@ export function makePageMethods<
         },
 
         async onReachBottom() {
-            if (options.isList && options.append && options.projection) {
+            if (this.state.oakEntity && options.isList) {
                 this.setState({
                     oakMoreLoading: true,
                 });
@@ -643,97 +654,105 @@ export function makePageMethods<
                         oakActions,
                         ...props
                     } = this.props;
-                    assert(!(options.isList && oakId));
-                    const filters: NamedFilterItem<ED, T>[] = [];
-                    if (oakFilters?.length > 0) {
-                        // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
-                        const oakFilters2 = JSON.parse(oakFilters);
-                        filters.push(...oakFilters2);
-                    } else if (options.filters) {
-                        for (const ele of options.filters) {
-                            const { filter, '#name': name } = ele;
-                            filters.push({
-                                filter:
-                                    typeof filter === 'function'
-                                        ? () =>
-                                              filter({
-                                                  features,
-                                                  props: this.props,
-                                                  onLoadOptions: pageOption,
-                                              })
-                                        : filter,
-                                ['#name']: name,
-                            });
+                    if (oakEntity || options.entity) {
+                        assert(!(options.isList && oakId));
+                        const filters: NamedFilterItem<ED, T>[] = [];
+                        if (oakFilters?.length > 0) {
+                            // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
+                            const oakFilters2 = JSON.parse(oakFilters);
+                            filters.push(...oakFilters2);
+                        } else if (options.filters) {
+                            for (const ele of options.filters) {
+                                const { filter, '#name': name } = ele;
+                                filters.push({
+                                    filter:
+                                        typeof filter === 'function'
+                                            ? () =>
+                                                filter({
+                                                    features,
+                                                    props: this.props,
+                                                    onLoadOptions: pageOption,
+                                                })
+                                            : filter,
+                                    ['#name']: name,
+                                });
+                            }
                         }
-                    }
-                    let proj = oakProjection && JSON.parse(oakProjection);
-                    if (!proj && options.projection) {
-                        const { projection } = options;
-                        proj =
-                            typeof projection === 'function'
-                                ? () =>
-                                      projection({
-                                          features,
-                                          props: this.props,
-                                          onLoadOptions: pageOption,
-                                      })
-                                : projection;
-                    }
-                    let sorters: NamedSorterItem<ED, T>[] = [];
-                    if (oakSorters?.length > 0) {
-                        // 这里在跳页面的时候用this.navigate应该可以限制传过来的sorter的格式
-                        const oakSorters2 = JSON.parse(oakSorters);
-                        sorters.push(...oakSorters2);
-                    } else if (options.sorters) {
-                        for (const ele of options.sorters) {
-                            const { sorter, '#name': name } = ele;
-                            sorters.push({
-                                sorter:
-                                    typeof sorter === 'function'
-                                        ? () =>
-                                              sorter({
-                                                  features,
-                                                  props: this.props,
-                                                  onLoadOptions: pageOption,
-                                              })
-                                        : sorter,
-                                ['#name']: name,
-                            });
+                        let proj = oakProjection && JSON.parse(oakProjection);
+                        if (!proj && options.projection) {
+                            const { projection } = options;
+                            proj =
+                                typeof projection === 'function'
+                                    ? () =>
+                                        projection({
+                                            features,
+                                            props: this.props,
+                                            onLoadOptions: pageOption,
+                                        })
+                                    : projection;
                         }
-                    }
-                    const path2 = oakParent
-                        ? `${oakParent}:${oakPath || options.path}`
-                        : oakPath || options.path;
-                    const node = await features.runningTree.createNode({
-                        path: path2,
-                        entity: (oakEntity || options.entity) as T,
-                        isList: options.isList,
-                        isPicker: oakIsPicker,
-                        projection: proj,
-                        pagination: options.pagination,
-                        filters,
-                        sorters,
-                        id: oakId,
-                    });
-                    // const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
-                    await this.setState(
-                        {
-                            oakEntity: node.getEntity(),
-                            oakFullpath: path2,
-                            oakFrom,
-                            newOakActions:
-                                oakActions && JSON.parse(oakActions).length > 0
-                                    ? JSON.parse(oakActions)
-                                    : options.actions || [],
-                        },
-                        () => {
-                            this.refresh();
-                            options.methods?.onLoad &&
-                                options.methods.onLoad.call(this, pageOption);
+                        let sorters: NamedSorterItem<ED, T>[] = [];
+                        if (oakSorters?.length > 0) {
+                            // 这里在跳页面的时候用this.navigate应该可以限制传过来的sorter的格式
+                            const oakSorters2 = JSON.parse(oakSorters);
+                            sorters.push(...oakSorters2);
+                        } else if (options.sorters) {
+                            for (const ele of options.sorters) {
+                                const { sorter, '#name': name } = ele;
+                                sorters.push({
+                                    sorter:
+                                        typeof sorter === 'function'
+                                            ? () =>
+                                                sorter({
+                                                    features,
+                                                    props: this.props,
+                                                    onLoadOptions: pageOption,
+                                                })
+                                            : sorter,
+                                    ['#name']: name,
+                                });
+                            }
+                        }
+                        const path2 = oakParent
+                            ? `${oakParent}:${oakPath || options.path}`
+                            : oakPath || options.path;
+                        const node = await features.runningTree.createNode({
+                            path: path2,
+                            entity: (oakEntity || options.entity) as T,
+                            isList: options.isList,
+                            isPicker: oakIsPicker,
+                            projection: proj,
+                            pagination: options.pagination,
+                            filters,
+                            sorters,
+                            id: oakId,
+                        });
+                        // const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
+                        await this.setState(
+                            {
+                                oakEntity: node.getEntity(),
+                                oakFullpath: path2,
+                                oakFrom,
+                                newOakActions:
+                                    oakActions && JSON.parse(oakActions).length > 0
+                                        ? JSON.parse(oakActions)
+                                        : options.actions || [],
+                            },
+                            async () => {
+                                this.refresh();
+                                options.methods?.onLoad &&
+                                    await options.methods.onLoad.call(this, pageOption);
 
-                            resolve();
-                        }
-                    );
+                                resolve();
+                            }
+                        );
+                    }
+                    else {
+                        options.methods?.onLoad &&
+                            await options.methods.onLoad.call(this, pageOption);
+
+                        resolve();
+                    }
                 } catch (e) {
                     reject(e);
                 }
