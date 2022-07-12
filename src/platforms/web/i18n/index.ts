@@ -2,7 +2,7 @@
  * Created by Administrator on 2018/3/24.
  */
 import assert from 'assert';
-import i18next from 'i18next';
+import i18next, { InitOptions } from 'i18next';
 import HttpBackend from 'i18next-http-backend';
 import Backend from 'i18next-chained-backend';
 import LocalStorageBackend from 'i18next-localstorage-backend'; // primary use cache
@@ -112,7 +112,7 @@ export function getI18next(translations: any) {
         .use(Backend)
         .use(LanguageDetector)
         .use(initReactI18next) // if not using I18nextProvider
-        .init(i18nextInitOptions);
+        .init(i18nextInitOptions as InitOptions);
 
     return i18next;
 };
