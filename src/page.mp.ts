@@ -101,7 +101,7 @@ function makeCommonComponentMethods<
                 );
             });
         },
-        navigateTo(options) {
+        navigateTo(options, state) {
             const { url, events, fail, complete, success, ...rest } = options;
 
             const urlParse = URL.parse(url, true);
@@ -133,6 +133,16 @@ function makeCommonComponentMethods<
                         : JSON.stringify(rest[param2])
                 }`;
             }
+            if (state) {
+                for (const param in state) {
+                    const param2 = param as unknown as keyof typeof state;
+                    search2 += `&${param}=${
+                        typeof state[param2] === 'string'
+                            ? state[param2]
+                            : JSON.stringify(state[param2])
+                    }`;
+                }
+            }
             const url2 = URL.format({
                 pathname: pathname2,
                 search: search2,
@@ -155,7 +165,7 @@ function makeCommonComponentMethods<
                 );
             });
         },
-        redirectTo(options) {
+        redirectTo(options, state) {
             const { url, events, fail, complete, success, ...rest } = options;
             const urlParse = URL.parse(url, true);
             const { pathname, search } = urlParse as {
@@ -185,6 +195,16 @@ function makeCommonComponentMethods<
                         ? rest[param2]
                         : JSON.stringify(rest[param2])
                 }`;
+            }
+            if (state) {
+                for (const param in state) {
+                    const param2 = param as unknown as keyof typeof state;
+                    search2 += `&${param}=${
+                        typeof state[param2] === 'string'
+                            ? state[param2]
+                            : JSON.stringify(state[param2])
+                    }`;
+                }
             }
             const url2 = URL.format({
                 pathname: pathname2,

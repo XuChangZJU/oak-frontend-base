@@ -213,12 +213,23 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
     save: (key: string, item: any) => void;
     load: (key: string) => any;
     clear: () => void;
-    resolveInput: <K extends string>(input: any, keys?: K[]) => { dataset?: Record<string, any>, value?: string } & {
+    resolveInput: <K extends string>(
+        input: any,
+        keys?: K[]
+    ) => { dataset?: Record<string, any>; value?: string } & {
         [k in K]?: any;
     };
     reRender: (extra?: Record<string, any>) => Promise<void>;
-    redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>) => Promise<void>
-    navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>) => Promise<void>;
+    redirectTo: <T2 extends keyof ED>(
+        options: Parameters<typeof wx.redirectTo>[0] &
+            OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>
+    ) => Promise<void>;
+    navigateTo: <T2 extends keyof ED>(
+        options: Parameters<typeof wx.navigateTo>[0] &
+            OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>
+    ) => Promise<void>;
     navigateBack: (option?: { delta: number }) => Promise<void>;
     resetUpdateData: () => void;
     setUpdateData: (attr: string, input: any) => void;
@@ -227,8 +238,19 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
     setForeignKey: (id: string, goBackDelta?: number) => void;
     addForeignKeys: (ids: string[], goBackDelta?: number) => void;
     setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => void;
-    toggleNode: (nodeData: Record<string, any>, checked: boolean, path?: string) => void;
-    execute: (action?: ED[T]['Action'], legalExceptions?: Array<string>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
+    toggleNode: (
+        nodeData: Record<string, any>,
+        checked: boolean,
+        path?: string
+    ) => void;
+    execute: (
+        action?: ED[T]['Action'],
+        legalExceptions?: Array<string>
+    ) => Promise<
+        | DeduceOperation<ED[T]['Schema']>
+        | DeduceOperation<ED[T]['Schema']>[]
+        | undefined
+    >;
 };
 
 export type OakListComponentMethods<ED extends EntityDict, T extends keyof ED> = {
