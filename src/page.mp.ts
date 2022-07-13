@@ -271,7 +271,6 @@ function makePageMethods<
             }
         },
         async onLoad(pageOption) {
-            await onLoad.call(this, pageOption);
             // 处理传递参数的格式化，小程序的缺陷只能用string传递参数
             const data = {};
             if (options.properties) {
@@ -287,6 +286,7 @@ function makePageMethods<
                     await this.setState(data);
                 }
             }
+            await onLoad.call(this, pageOption);
         },
         ...rest,
     };
@@ -438,8 +438,10 @@ export function createPage<
         pageLifetimes: {
             show() {
                 context.setScene(options.path);
-                this.reRender();
                 this.subscribe();
+                if (this.data.oakFullpath) {
+                    this.reRender();
+                }
                 pageLifetimes?.show && pageLifetimes.show.call(this);
             },
             hide() {
@@ -614,8 +616,10 @@ export function createComponent<
 
         pageLifetimes: {
             show() {
-                this.reRender();
                 this.subscribe();
+                if (this.data.oakFullpath) {
+                    this.reRender();
+                }
                 pageLifetimes?.show && pageLifetimes.show.call(this);
             },
             hide() {
