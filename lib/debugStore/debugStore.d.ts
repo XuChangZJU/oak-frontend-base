@@ -9,9 +9,7 @@ export declare class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> 
     private executor;
     private rwLock;
     constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt, initialData?: {
-        [T in keyof ED]?: {
-            [ID: string]: ED[T]['OpSchema'];
-        };
+        [T in keyof ED]?: ED[T]['OpSchema'][];
     }, initialStat?: {
         create: number;
         update: number;

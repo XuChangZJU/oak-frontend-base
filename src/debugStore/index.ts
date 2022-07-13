@@ -11,7 +11,7 @@ async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
     store: DebugStore<ED, Cxt>,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
     initialData?: {
-        [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
+        [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     }) {
     store.startInitializing();
     if (false) {
@@ -21,12 +21,7 @@ async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
         const context = contextBuilder()(store);
         await context.begin();
         if (initialData) {
-            for (const entity in initialData) {
-                await store.operate(entity, {
-                    action: 'create',
-                    data: initialData[entity]!,
-                }, context, { noLock: true });
-            }
+            store.setInitialData(initialData);
         }
         await context.commit();
     }
@@ -170,7 +165,7 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
     checkers: Array<Checker<ED, keyof ED, Cxt>>,
     watchers: Array<Watcher<ED, keyof ED, Cxt>>,
     initialData?: {
-        [T in keyof ED]?: Array<FormCreateData<ED[T]['OpSchema']>>;
+        [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
     actionDict?: ActionDictOfEntityDict<ED>) {
     const data = getMaterializedData();

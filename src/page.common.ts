@@ -370,6 +370,7 @@ export function makeCommonComponentMethods<
                                 });
                                 this.navigateTo({
                                     url: router,
+                                    exception: err.toString(),
                                 });
                             }
                         } else {
