@@ -1354,18 +1354,26 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         const attrSplit = attr.split('.');
         let idx = 0;
         for (const split of attrSplit) {
-            const entity = node.getEntity();
-            const relation = judgeRelation(this.schema!, entity, split);
-            if (relation === 1) {
-                // todo transform data format
-                const attrName = attrSplit.slice(idx).join('.');
-                node.setUpdateData(attrName, value);
-                return;
+            if (node instanceof ListNode) {
+                const idx2 = parseInt(split);
+                assert(typeof idx2 === 'number');
+                node = node.getChild(split);
+                idx++;
             }
             else {
-                // node.setDirty();
-                node = node.getChild(split)!;
-                idx++;
+                const entity = node.getEntity();
+                const relation = judgeRelation(this.schema!, entity, split);
+                if (relation === 1) {
+                    // todo transform data format
+                    const attrName = attrSplit.slice(idx).join('.');
+                    node.setUpdateData(attrName, value);
+                    return;
+                }
+                else {
+                    // node.setDirty();
+                    node = node.getChild(split)!;
+                    idx++;
+                }
             }
         }
     }
@@ -1375,6 +1383,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         await this.setUpdateDataInner(path, attr, value);
     }
 
+    @Action
     async setAction<T extends keyof ED>(path: string, action: ED[T]['Action']) {
         const node = this.findNode(path);
         node.setAction(action);

@@ -25,7 +25,7 @@ interface ComponentOption<
     TProperty extends WechatMiniprogram.Component.PropertyOption,
     > {
     entity?: T;
-    isList: IsList;
+    isList?: IsList;
     formData?: (options: {
         data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
@@ -47,8 +47,8 @@ interface PageOption<
     TProperty extends WechatMiniprogram.Component.PropertyOption,
     > {
     entity?: T;
-    path: string;
-    isList: IsList;
+    path?: string;
+    isList?: IsList;
     projection?: Proj | ((options: {
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
@@ -111,7 +111,7 @@ export type OakPageOption<
         state: TData & FormedData & OakPageData<ED, T>;
         props: WechatMiniprogram.Component.PropertyOptionToData<OakPageProperties & TProperty>;
         setState: (
-            data: Partial<TData>,
+            data: Partial<TData & Pick<OakPageData<ED, T>, 'oakError'>>,
             callback?: () => void,
         ) => Promise<void>;
     } &
@@ -238,6 +238,7 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
     setForeignKey: (id: string, goBackDelta?: number) => void;
     addForeignKeys: (ids: string[], goBackDelta?: number) => void;
     setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => void;
+    setAction: (action: ED[T]['Action'], path?: string) => void;
     toggleNode: (
         nodeData: Record<string, any>,
         checked: boolean,
@@ -245,7 +246,8 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
     ) => void;
     execute: (
         action?: ED[T]['Action'],
-        legalExceptions?: Array<string>
+        legalExceptions?: Array<string>,
+        path?: string
     ) => Promise<
         | DeduceOperation<ED[T]['Schema']>
         | DeduceOperation<ED[T]['Schema']>[]

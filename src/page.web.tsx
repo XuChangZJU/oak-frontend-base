@@ -170,10 +170,11 @@ function makePageMethods<
         TData,
         TProperty,
         TMethod
-    >
+    >,
+    context: Cxt,
 ): OakPageMethods &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
-    const { onPullDownRefresh, ...rest } = makePage(features, options);
+    const { onPullDownRefresh, ...rest } = makePage(features, options, context);
     return {
         async onPullDownRefresh() {
             await onPullDownRefresh.call(this);
@@ -246,7 +247,7 @@ export function createPage<
     );
     const listMethods = isList ? makeListComponentMethods(features) : {};
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } =
-        makePageMethods(features, options);
+        makePageMethods(features, options, context);
 
     const { methods, lifetimes, pageLifetimes, data } = options;
 

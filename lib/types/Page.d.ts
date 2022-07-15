@@ -10,7 +10,7 @@ import { CreateNodeOptions } from '../features/runningTree';
 declare type RowSelected<ED extends EntityDict, T extends keyof ED, Proj extends ED[T]['Selection']['data'] = Required<ED[T]['Selection']['data']>> = SelectRowShape<ED[T]['Schema'], Proj> | undefined;
 interface ComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> {
     entity?: T;
-    isList: IsList;
+    isList?: IsList;
     formData?: (options: {
         data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
@@ -21,8 +21,8 @@ interface ComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends
 }
 interface PageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> {
     entity?: T;
-    path: string;
-    isList: IsList;
+    path?: string;
+    isList?: IsList;
     projection?: Proj | ((options: {
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
@@ -66,7 +66,7 @@ export declare type OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt
     features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
     state: TData & FormedData & OakPageData<ED, T>;
     props: WechatMiniprogram.Component.PropertyOptionToData<OakPageProperties & TProperty>;
-    setState: (data: Partial<TData>, callback?: () => void) => Promise<void>;
+    setState: (data: Partial<TData & Pick<OakPageData<ED, T>, 'oakError'>>, callback?: () => void) => Promise<void>;
 } & TMethod & WechatMiniprogram.Page.ILifetime & OakCommonComponentMethods<ED, T> & (IsList extends true ? OakListComponentMethods<ED, T> : {}) & OakPageMethods & OakPageInstanceProperties<ED, Cxt, AD, FD>>;
 export declare type OakComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = ComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList, TProperty> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, false>> & Partial<{
     lifetimes: WechatMiniprogram.Component.Lifetimes['lifetimes'];
@@ -143,8 +143,9 @@ export declare type OakCommonComponentMethods<ED extends EntityDict, T extends k
     setForeignKey: (id: string, goBackDelta?: number) => void;
     addForeignKeys: (ids: string[], goBackDelta?: number) => void;
     setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => void;
+    setAction: (action: ED[T]['Action'], path?: string) => void;
     toggleNode: (nodeData: Record<string, any>, checked: boolean, path?: string) => void;
-    execute: (action?: ED[T]['Action'], legalExceptions?: Array<string>) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
+    execute: (action?: ED[T]['Action'], legalExceptions?: Array<string>, path?: string) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
 };
 export declare type OakListComponentMethods<ED extends EntityDict, T extends keyof ED> = {
     pushNode: (path?: string, options?: Pick<CreateNodeOptions<ED, keyof ED>, 'updateData' | 'beforeExecute' | 'afterExecute'>) => void;

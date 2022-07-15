@@ -52,4 +52,20 @@ export class LocalStorage<ED extends EntityDict, Cxt extends Context<ED>, AD ext
             }
         }
     }
+
+    remove(key: string) {
+        switch (process.env.OAK_PLATFORM) {
+            case 'wechatMp': {
+                wx.removeStorageSync(key);
+                break;
+            }
+            case 'web': {
+                localStorage.removeItem(key);
+                break;
+            }
+            default: {
+                throw new Error('尚未支持');
+            }
+        }
+    }
 }

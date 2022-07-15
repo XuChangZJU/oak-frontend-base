@@ -259,10 +259,11 @@ function makePageMethods<
         TData,
         TProperty,
         TMethod
-    >
+    >,
+    context: Cxt,
 ): OakPageMethods &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
-    const { onPullDownRefresh, onLoad, ...rest } = makePage(features, options);
+    const { onPullDownRefresh, onLoad, ...rest } = makePage(features, options, context);
     return {
         async onPullDownRefresh() {
             await onPullDownRefresh.call(this);
@@ -331,7 +332,7 @@ export function createPage<
     );
     const listMethods = isList ? makeListComponentMethods(features) : {};
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } =
-        makePageMethods(features, options);
+        makePageMethods(features, options, context);
 
     const { methods, lifetimes, pageLifetimes } = options;
     return Component({
@@ -399,7 +400,6 @@ export function createPage<
                         callback && callback.call(this);
                     });
                 };
-                context.setScene(options.path);
                 lifetimes?.created && lifetimes.created.call(this);
             },
 
@@ -437,9 +437,9 @@ export function createPage<
 
         pageLifetimes: {
             show() {
-                context.setScene(options.path);
                 this.subscribe();
                 if (this.data.oakFullpath) {
+                    context.setScene(this.data.oakFullpath);
                     this.reRender();
                 }
                 pageLifetimes?.show && pageLifetimes.show.call(this);

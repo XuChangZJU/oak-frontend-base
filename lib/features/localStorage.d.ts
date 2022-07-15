@@ -5,4 +5,5 @@ export declare class LocalStorage<ED extends EntityDict, Cxt extends Context<ED>
     save(key: string, item: any): void;
     load(key: string): any;
     clear(): void;
+    remove(key: string): void;
 }

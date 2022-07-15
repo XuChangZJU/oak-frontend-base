@@ -111,8 +111,8 @@ function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
         ...(0, page_common_1.makeCommonComponentMethods)(features, exceptionRouterDict, formData),
     };
 }
-function makePageMethods(features, options) {
-    const { onPullDownRefresh, ...rest } = (0, page_common_1.makePageMethods)(features, options);
+function makePageMethods(features, options, context) {
+    const { onPullDownRefresh, ...rest } = (0, page_common_1.makePageMethods)(features, options, context);
     return {
         async onPullDownRefresh() {
             await onPullDownRefresh.call(this);
@@ -126,7 +126,7 @@ function createPage(options, features, exceptionRouterDict, context) {
     const hiddenMethods = (0, page_common_1.makeHiddenComponentMethods)();
     const commonMethods = makeCommonComponentMethods(features, exceptionRouterDict, formData);
     const listMethods = isList ? (0, page_common_1.makeListComponentMethods)(features) : {};
-    const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } = makePageMethods(features, options);
+    const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } = makePageMethods(features, options, context);
     const { methods, lifetimes, pageLifetimes, data } = options;
     class OakPageWrapper extends React.PureComponent {
         constructor(props) {

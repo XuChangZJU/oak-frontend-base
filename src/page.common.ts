@@ -297,7 +297,7 @@ export function makeCommonComponentMethods<
             features.runningTree.toggleNode(fullpath, nodeData, checked);
         },
 
-        async execute(action, legalExceptions) {
+        async execute(action, legalExceptions, path) {
             if (this.state.oakExecuting) {
                 return;
             }
@@ -306,8 +306,9 @@ export function makeCommonComponentMethods<
                 oakFocused: {},
             });
             try {
+                const fullpath = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 const result = await features.runningTree.execute(
-                    this.state.oakFullpath,
+                    fullpath,
                     action
                 );
                 this.setState({ oakExecuting: false });
@@ -398,6 +399,11 @@ export function makeCommonComponentMethods<
 
         resetUpdateData() {
             return features.runningTree.resetUpdateData(this.state.oakFullpath);
+        },
+
+        setAction(action, path) {
+            const fullpath = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            return features.runningTree.setAction(fullpath, action);
         },
 
         setUpdateData(attr, value) {
@@ -590,7 +596,8 @@ export function makePageMethods<
         TData,
         TProperty,
         TMethod
-    >
+    >,
+    context: Cxt,
 ): OakPageMethods &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
@@ -717,9 +724,11 @@ export function makePageMethods<
                                 });
                             }
                         }
+                        const oakPath2 = oakPath || options.path;
+                        assert(oakPath2);
                         const path2 = oakParent
-                            ? `${oakParent}:${oakPath || options.path}`
-                            : oakPath || options.path;
+                            ? `${oakParent}:${oakPath2}`
+                            : oakPath2;
                         const node = await features.runningTree.createNode({
                             path: path2,
                             entity: (oakEntity || options.entity) as T,
@@ -743,10 +752,10 @@ export function makePageMethods<
                                         : options.actions || [],
                             },
                             async () => {
+                                context.setScene(path2);
                                 this.refresh();
                                 options.methods?.onLoad &&
                                     await options.methods.onLoad.call(this, pageOption);
-
                                 resolve();
                             }
                         );
