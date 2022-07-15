@@ -5,4 +5,5 @@ export { BasicFeatures } from  './features';
 export * from './features/cache';
 export * from './features/localStorage';
 export * from './utils/upload';
+export * from './types/Notification';
 

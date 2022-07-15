@@ -1,7 +1,7 @@
 import * as React from 'react';
 import PullToRefresh from './platforms/web/PullToRefresh';
 import withRouter from './platforms/web/router';
-import { assign, omit } from 'lodash';
+import { assign, get, omit } from 'lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
 import { BasicFeatures } from './features';
@@ -65,25 +65,11 @@ function makeCommonComponentMethods<
             return this.props.t(key, params);
         },
         resolveInput(input: React.BaseSyntheticEvent, keys) {
-            const { currentTarget, target, nativeEvent } = input;
-            const { value, dataset } = target;
-            const newDataset = Object.assign({}, dataset);
-            if (!target.dataset || Object.keys(target.dataset).length === 0) {
-                const { parentNode } = (nativeEvent as React.BaseSyntheticEvent)
-                    .target;
-                const getDataset = (parentNode: any) => {
-                    const { dataset: dataset2, parentNode: parentNode2 } =
-                        parentNode;
-                    if (!dataset2 || Object.keys(dataset2).length === 0) {
-                        getDataset(parentNode2);
-                    } else {
-                        Object.assign(newDataset, dataset2);
-                    }
-                };
-                getDataset(parentNode);
-            }
+            const { currentTarget, target } = input;
+            const { value } = Object.assign({}, currentTarget, target);
+            const { dataset } = currentTarget;
             const result = {
-                dataset: newDataset,
+                dataset,
                 value,
             };
             if (keys) {
@@ -114,11 +100,10 @@ function makeCommonComponentMethods<
 
             for (const param in rest) {
                 const param2 = param as unknown as keyof typeof rest;
-                url2 += `&${param}=${
-                    typeof rest[param2] === 'string'
+                url2 += `&${param}=${typeof rest[param2] === 'string'
                         ? rest[param2]
                         : JSON.stringify(rest[param2])
-                }`;
+                    }`;
             }
             return this.props.navigate(url2, { replace: false, state });
         },
@@ -131,11 +116,10 @@ function makeCommonComponentMethods<
 
             for (const param in rest) {
                 const param2 = param as unknown as keyof typeof rest;
-                url2 += `&${param}=${
-                    typeof rest[param2] === 'string'
+                url2 += `&${param}=${typeof rest[param2] === 'string'
                         ? rest[param2]
                         : JSON.stringify(rest[param2])
-                }`;
+                    }`;
             }
             return this.props.navigate(url2, { replace: true, state });
         },
@@ -180,6 +164,35 @@ function makePageMethods<
             await onPullDownRefresh.call(this);
         },
         ...rest,
+    };
+}
+
+function translateObservers(observers?: Record<string, (...args: any[]) => any>): { fn: React.Component['componentDidUpdate'] } & ThisType<React.Component> {
+    return {
+        fn(prevProps, prevState) {
+            const { state, props } = this;
+            for (const obs in observers) {
+                const keys = obs.split(',').map(ele => ele.trim());
+                let changed = false;
+                for (const k of keys) {
+                    if (k.includes('*')) {
+                        throw new Error('web模式下带*的observer通配符暂不支持');
+                    }
+                    if (get(props, k) !== get(prevProps, k) || get(state, k) !== get(prevState, k)) {
+                        changed = true;
+                        break;
+                    }
+                }
+
+                const args = [];
+                if (changed) {
+                    for (const k of keys) {
+                        args.push(get(props, k) === undefined ? get(state, k) : get(props, k));
+                    }
+                    observers[obs].apply(this, args);
+                }
+            }
+        }
     };
 }
 
@@ -249,8 +262,9 @@ export function createPage<
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } =
         makePageMethods(features, options, context);
 
-    const { methods, lifetimes, pageLifetimes, data } = options;
+    const { methods, lifetimes, pageLifetimes, data, observers } = options;
 
+    const { fn } = translateObservers(observers);
     class OakPageWrapper extends React.PureComponent<
         ComponentProps<TProperty>,
         ComponentData<ED, T, FormedData, TData>
@@ -302,6 +316,7 @@ export function createPage<
 
         features = features;
         isReachBottom = false;
+        componentDidUpdate = fn;
 
         scrollEvent = () => {
             this.checkReachBottom();
@@ -320,7 +335,7 @@ export function createPage<
         checkReachBottom() {
             const isCurrentReachBottom =
                 document.body.scrollHeight -
-                    (window.innerHeight + window.scrollY) <=
+                (window.innerHeight + window.scrollY) <=
                 DEFAULT_REACH_BOTTOM_DISTANCE;
 
             if (!this.isReachBottom && isCurrentReachBottom) {
@@ -375,8 +390,6 @@ export function createPage<
     return withRouter(OakPageWrapper);
 }
 
-
-
 export function createComponent<
     ED extends EntityDict,
     T extends keyof ED,
@@ -414,7 +427,6 @@ export function createComponent<
         pageLifetimes,
         data,
         properties,
-        actions,
         observers,
         render,
     } = options as OakComponentOption<
@@ -448,6 +460,7 @@ export function createComponent<
     );
     const listMethods = isList ? makeListComponentMethods(features) : {};
 
+    const { fn } = translateObservers(observers);
     class OakPageWrapper extends React.PureComponent<
         ComponentProps<TProperty>,
         OakComponentData<ED, T>
@@ -513,6 +526,8 @@ export function createComponent<
             lifetimes?.detached && lifetimes.detached.call(this);
         }
 
+        componentDidUpdate = fn
+
         render(): React.ReactNode {
             const Render = render.call(this);
             return Render;
@@ -526,53 +541,53 @@ export type MakeOakPage<
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
-> = <
-    T extends keyof ED,
-    Proj extends ED[T]['Selection']['data'],
-    FormedData extends WechatMiniprogram.Component.DataOption,
-    IsList extends boolean,
-    TData extends WechatMiniprogram.Component.DataOption,
-    TProperty extends WechatMiniprogram.Component.PropertyOption,
-    TMethod extends WechatMiniprogram.Component.MethodOption
->(
-    options: OakPageOption<
-        ED,
-        T,
-        Cxt,
-        AD,
-        FD,
-        Proj,
-        FormedData,
-        IsList,
-        TData,
-        TProperty,
-        TMethod
-    >
-) => JSX.Element;
+    > = <
+        T extends keyof ED,
+        Proj extends ED[T]['Selection']['data'],
+        FormedData extends WechatMiniprogram.Component.DataOption,
+        IsList extends boolean,
+        TData extends WechatMiniprogram.Component.DataOption,
+        TProperty extends WechatMiniprogram.Component.PropertyOption,
+        TMethod extends WechatMiniprogram.Component.MethodOption
+        >(
+        options: OakPageOption<
+            ED,
+            T,
+            Cxt,
+            AD,
+            FD,
+            Proj,
+            FormedData,
+            IsList,
+            TData,
+            TProperty,
+            TMethod
+        >
+    ) => JSX.Element;
 
 export type MakeOakComponent<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
-> = <
-    T extends keyof ED,
-    FormedData extends WechatMiniprogram.Component.DataOption,
-    IsList extends boolean,
-    TData extends WechatMiniprogram.Component.DataOption,
-    TProperty extends WechatMiniprogram.Component.PropertyOption,
-    TMethod extends WechatMiniprogram.Component.MethodOption
->(
-    options: OakComponentOption<
-        ED,
-        T,
-        Cxt,
-        AD,
-        FD,
-        FormedData,
-        IsList,
-        TData,
-        TProperty,
-        TMethod
-    >
-) => JSX.Element;
+    > = <
+        T extends keyof ED,
+        FormedData extends WechatMiniprogram.Component.DataOption,
+        IsList extends boolean,
+        TData extends WechatMiniprogram.Component.DataOption,
+        TProperty extends WechatMiniprogram.Component.PropertyOption,
+        TMethod extends WechatMiniprogram.Component.MethodOption
+        >(
+        options: OakComponentOption<
+            ED,
+            T,
+            Cxt,
+            AD,
+            FD,
+            FormedData,
+            IsList,
+            TData,
+            TProperty,
+            TMethod
+        >
+    ) => JSX.Element;

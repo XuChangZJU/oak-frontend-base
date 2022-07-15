@@ -8,6 +8,7 @@ import { RunningTree } from './runningTree';
 import { Locales } from './locales';
 import { EventBus } from './eventBus';
 import { LocalStorage } from './localStorage';
+import { Notification } from './notification';
 import { CacheStore } from '../cacheStore/CacheStore';
 
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> (
@@ -21,6 +22,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     const locales = new Locales(aspectWrapper);
     const eventBus = new EventBus(aspectWrapper);
     const localStorage = new LocalStorage(aspectWrapper);
+    const notification = new Notification(aspectWrapper);
     return {
         cache,
         location,
@@ -28,6 +30,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
         locales,
         eventBus,
         localStorage,
+        notification,
     };
 }
 
@@ -42,4 +45,5 @@ export type BasicFeatures<
     locales: Locales<ED, Cxt, AD>;
     eventBus: EventBus<ED, Cxt, AD>;
     localStorage: LocalStorage<ED, Cxt, AD>;
+    notification: Notification<ED, Cxt, AD>;
 };

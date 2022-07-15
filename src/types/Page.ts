@@ -5,6 +5,7 @@ import { Pagination } from "./Pagination";
 import { BasicFeatures } from "../features";
 import { NamedFilterItem, NamedSorterItem } from './NamedCondition';
 import { CreateNodeOptions } from '../features/runningTree';
+import { NotificationData } from "./Notification";
 
 
 type RowSelected<
@@ -104,6 +105,7 @@ export type OakPageOption<
     Partial<WechatMiniprogram.Component.Method<TMethod, true>> &
     Partial<{
         lifetimes: WechatMiniprogram.Component.Lifetimes['lifetimes'];
+        observers: Record<string, (...args: any[]) => any>;
         pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes> | undefined;
     }> &
     ThisType<{
@@ -219,6 +221,8 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
     ) => { dataset?: Record<string, any>; value?: string } & {
         [k in K]?: any;
     };
+    setNotification: (data: NotificationData) => void;
+    consumeNotification: () => NotificationData | undefined;
     reRender: (extra?: Record<string, any>) => Promise<void>;
     redirectTo: <T2 extends keyof ED>(
         options: Parameters<typeof wx.redirectTo>[0] &

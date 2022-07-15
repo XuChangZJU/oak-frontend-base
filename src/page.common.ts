@@ -149,6 +149,14 @@ export function makeCommonComponentMethods<
             features.localStorage.clear();
         },
 
+        setNotification(data) {
+            features.notification.setNotification(data);
+        },
+
+        consumeNotification() {
+            return features.notification.consumeNotification();
+        },
+
         async reRender(extra) {
             if (this.state.oakEntity && this.state.oakFullpath) {
                 const rows = features.runningTree.getFreshValue(
@@ -611,6 +619,10 @@ export function makePageMethods<
                     this.setState({
                         oakLoading: false,
                     });
+                    this.setNotification({
+                        type: 'success',
+                        content: '刷新成功',
+                    })
                 } catch (err) {
                     this.setState({
                         oakLoading: false,
