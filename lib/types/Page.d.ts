@@ -7,6 +7,7 @@ import { Pagination } from "./Pagination";
 import { BasicFeatures } from "../features";
 import { NamedFilterItem, NamedSorterItem } from './NamedCondition';
 import { CreateNodeOptions } from '../features/runningTree';
+import { NotificationData } from "./Notification";
 declare type RowSelected<ED extends EntityDict, T extends keyof ED, Proj extends ED[T]['Selection']['data'] = Required<ED[T]['Selection']['data']>> = SelectRowShape<ED[T]['Schema'], Proj> | undefined;
 interface ComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> {
     entity?: T;
@@ -61,6 +62,7 @@ interface PageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Cont
  */
 export declare type OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = PageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TProperty> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, true>> & Partial<{
     lifetimes: WechatMiniprogram.Component.Lifetimes['lifetimes'];
+    observers: Record<string, (...args: any[]) => any>;
     pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes> | undefined;
 }> & ThisType<{
     features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
@@ -130,6 +132,8 @@ export declare type OakCommonComponentMethods<ED extends EntityDict, T extends k
     } & {
         [k in K]?: any;
     };
+    setNotification: (data: NotificationData) => void;
+    consumeNotification: () => NotificationData | undefined;
     reRender: (extra?: Record<string, any>) => Promise<void>;
     redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>) => Promise<void>;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>) => Promise<void>;

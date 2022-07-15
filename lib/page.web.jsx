@@ -42,25 +42,11 @@ function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
             return this.props.t(key, params);
         },
         resolveInput(input, keys) {
-            const { currentTarget, target, nativeEvent } = input;
-            const { value, dataset } = target;
-            const newDataset = Object.assign({}, dataset);
-            if (!target.dataset || Object.keys(target.dataset).length === 0) {
-                const { parentNode } = nativeEvent
-                    .target;
-                const getDataset = (parentNode) => {
-                    const { dataset: dataset2, parentNode: parentNode2 } = parentNode;
-                    if (!dataset2 || Object.keys(dataset2).length === 0) {
-                        getDataset(parentNode2);
-                    }
-                    else {
-                        Object.assign(newDataset, dataset2);
-                    }
-                };
-                getDataset(parentNode);
-            }
+            const { currentTarget, target } = input;
+            const { value } = Object.assign({}, currentTarget, target);
+            const { dataset } = currentTarget;
             const result = {
-                dataset: newDataset,
+                dataset,
                 value,
             };
             if (keys) {
@@ -120,6 +106,33 @@ function makePageMethods(features, options, context) {
         ...rest,
     };
 }
+function translateObservers(observers) {
+    return {
+        fn(prevProps, prevState) {
+            const { state, props } = this;
+            for (const obs in observers) {
+                const keys = obs.split(',').map(ele => ele.trim());
+                let changed = false;
+                for (const k of keys) {
+                    if (k.includes('*')) {
+                        throw new Error('web模式下带*的observer通配符暂不支持');
+                    }
+                    if ((0, lodash_1.get)(props, k) !== (0, lodash_1.get)(prevProps, k) || (0, lodash_1.get)(state, k) !== (0, lodash_1.get)(prevState, k)) {
+                        changed = true;
+                        break;
+                    }
+                }
+                const args = [];
+                if (changed) {
+                    for (const k of keys) {
+                        args.push((0, lodash_1.get)(props, k) === undefined ? (0, lodash_1.get)(state, k) : (0, lodash_1.get)(props, k));
+                    }
+                    observers[obs].apply(this, args);
+                }
+            }
+        }
+    };
+}
 const DEFAULT_REACH_BOTTOM_DISTANCE = 50;
 function createPage(options, features, exceptionRouterDict, context) {
     const { formData, isList, render } = options;
@@ -127,7 +140,8 @@ function createPage(options, features, exceptionRouterDict, context) {
     const commonMethods = makeCommonComponentMethods(features, exceptionRouterDict, formData);
     const listMethods = isList ? (0, page_common_1.makeListComponentMethods)(features) : {};
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } = makePageMethods(features, options, context);
-    const { methods, lifetimes, pageLifetimes, data } = options;
+    const { methods, lifetimes, pageLifetimes, data, observers } = options;
+    const { fn } = translateObservers(observers);
     class OakPageWrapper extends React.PureComponent {
         constructor(props) {
             super(props);
@@ -166,6 +180,7 @@ function createPage(options, features, exceptionRouterDict, context) {
         }
         features = features;
         isReachBottom = false;
+        componentDidUpdate = fn;
         scrollEvent = () => {
             this.checkReachBottom();
             const event = { scrollTop: window.scrollY };
@@ -219,10 +234,11 @@ function createPage(options, features, exceptionRouterDict, context) {
 }
 exports.createPage = createPage;
 function createComponent(options, features, exceptionRouterDict, context) {
-    const { formData, isList, entity, methods, lifetimes, pageLifetimes, data, properties, actions, observers, render, } = options;
+    const { formData, isList, entity, methods, lifetimes, pageLifetimes, data, properties, observers, render, } = options;
     const hiddenMethods = (0, page_common_1.makeHiddenComponentMethods)();
     const commonMethods = makeCommonComponentMethods(features, exceptionRouterDict, formData);
     const listMethods = isList ? (0, page_common_1.makeListComponentMethods)(features) : {};
+    const { fn } = translateObservers(observers);
     class OakPageWrapper extends React.PureComponent {
         constructor(props) {
             super(props);
@@ -274,6 +290,7 @@ function createComponent(options, features, exceptionRouterDict, context) {
             hiddenMethods.unsubscribe.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
         }
+        componentDidUpdate = fn;
         render() {
             const Render = render.call(this);
             return Render;
