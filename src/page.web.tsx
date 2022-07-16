@@ -515,7 +515,6 @@ export function createComponent<
                     }
                 );
             }
-            hiddenMethods.subscribe.call(this);
             lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
             pageLifetimes?.show && pageLifetimes.show.call(this);

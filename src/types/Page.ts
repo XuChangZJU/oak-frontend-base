@@ -113,7 +113,7 @@ export type OakPageOption<
         state: TData & FormedData & OakPageData<ED, T>;
         props: WechatMiniprogram.Component.PropertyOptionToData<OakPageProperties & TProperty>;
         setState: (
-            data: Partial<TData & Pick<OakPageData<ED, T>, 'oakError'>>,
+            data: Partial<TData & OakPageData<ED, T>>,
             callback?: () => void,
         ) => Promise<void>;
     } &
@@ -316,10 +316,6 @@ export type OakPageData<ED extends EntityDict, T extends keyof ED> = {
     oakExecuting: boolean;
     oakFocused: object;
     oakDirty: boolean;
-    oakError: {
-        type: 'warning' | 'error' | 'success' | 'primary';
-        msg: string;
-    };
     oakLegalActions: ED[T]['Action'][];
     oakLoading: boolean;
     oakLoadingMore: boolean;

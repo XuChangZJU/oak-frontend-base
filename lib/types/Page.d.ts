@@ -68,7 +68,7 @@ export declare type OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt
     features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
     state: TData & FormedData & OakPageData<ED, T>;
     props: WechatMiniprogram.Component.PropertyOptionToData<OakPageProperties & TProperty>;
-    setState: (data: Partial<TData & Pick<OakPageData<ED, T>, 'oakError'>>, callback?: () => void) => Promise<void>;
+    setState: (data: Partial<TData & OakPageData<ED, T>>, callback?: () => void) => Promise<void>;
 } & TMethod & WechatMiniprogram.Page.ILifetime & OakCommonComponentMethods<ED, T> & (IsList extends true ? OakListComponentMethods<ED, T> : {}) & OakPageMethods & OakPageInstanceProperties<ED, Cxt, AD, FD>>;
 export declare type OakComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = ComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList, TProperty> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, false>> & Partial<{
     lifetimes: WechatMiniprogram.Component.Lifetimes['lifetimes'];
@@ -190,10 +190,6 @@ export declare type OakPageData<ED extends EntityDict, T extends keyof ED> = {
     oakExecuting: boolean;
     oakFocused: object;
     oakDirty: boolean;
-    oakError: {
-        type: 'warning' | 'error' | 'success' | 'primary';
-        msg: string;
-    };
     oakLegalActions: ED[T]['Action'][];
     oakLoading: boolean;
     oakLoadingMore: boolean;

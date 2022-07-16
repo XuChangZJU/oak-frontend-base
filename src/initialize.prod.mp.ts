@@ -7,6 +7,7 @@ import {
     Context,
     RowStore,
     OakException,
+    Connector,
 } from 'oak-domain/lib/types';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 
@@ -37,8 +38,7 @@ export function initialize<
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
     translations: Record<string, any>,
     exceptionRouters: ExceptionRouters = [],
-    serverUrl: string,
-    makeException: (str: string) => OakException,
+    connector: Connector<ED, Cxt>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
@@ -46,8 +46,7 @@ export function initialize<
         storageSchema,
         createFeatures,
         contextBuilder,
-        serverUrl,
-        makeException,
+        connector,
         checkers,
         actionDict
     );

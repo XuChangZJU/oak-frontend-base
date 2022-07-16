@@ -5,6 +5,7 @@ import {
     StorageSchema,
     Context,
     RowStore,
+    Connector,
 } from 'oak-domain/lib/types';
 import { OakException, OakExternalException } from 'oak-domain/lib/types/Exception';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
@@ -51,8 +52,7 @@ export function initialize<
         context: Cxt
     ) => FD,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
-    serverUrl: string,
-    makeException: (str: string) => OakException,
+    connector: Connector<ED, Cxt>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
@@ -71,38 +71,11 @@ export function initialize<
 
     const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
         exec: async (name, params) => {
-            const cxtStr = await context.toString();
-
-            const { contentType, body } = makeContentTypeAndBody(params);
-            const response = await global.fetch(serverUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': contentType,
-                    'oak-cxt': cxtStr,
-                    'oak-aspect': name as string,
-                },
-                body,
-            });
-            if (response.status > 299) {
-                const err = new OakExternalException(`网络请求返回异常，status是${response.status}`);
-                throw err;
-            }
-            
-            const {
-                error,
+            const { result, opRecords } = await connector.callAspect(name as string, params, context);
+            return {
                 result,
-                opRecords
-            } = await response.json();
-
-            if (error) {
-                throw makeException(error);
-            }
-            else {
-                return {
-                    result,
-                    opRecords,
-                };
-            }
+                opRecords,
+            };
         },
     };
 

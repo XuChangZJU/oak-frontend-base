@@ -281,7 +281,6 @@ function createComponent(options, features, exceptionRouterDict, context) {
                     commonMethods.reRender.call(this);
                 });
             }
-            hiddenMethods.subscribe.call(this);
             lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
             pageLifetimes?.show && pageLifetimes.show.call(this);

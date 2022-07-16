@@ -320,12 +320,10 @@ export function makeCommonComponentMethods<
                     action
                 );
                 this.setState({ oakExecuting: false });
-                this.setState({
-                    oakError: {
-                        type: 'success',
-                        msg: '操作成功',
-                    },
-                });
+                this.setNotification({
+                    type: 'success',
+                    content: '操作成功',
+                })
                 return result;
             } catch (err) {
                 if (err instanceof OakException) {
@@ -336,10 +334,10 @@ export function makeCommonComponentMethods<
                                 [attr]: true,
                             },
                             oakExecuting: false,
-                            oakError: {
-                                type: 'warning',
-                                msg: err.message,
-                            },
+                        });
+                        this.setNotification({
+                            type: 'warning',
+                            content: err.message,
                         });
                     } else {
                         const { name } = err.constructor;
@@ -360,10 +358,10 @@ export function makeCommonComponentMethods<
                             if (!hidden) {
                                 this.setState({
                                     oakExecuting: false,
-                                    oakError: {
-                                        type: level!,
-                                        msg: err.message,
-                                    },
+                                });
+                                this.setNotification({
+                                    type: level || 'warning',
+                                    content: err.message,
                                 });
                             } else {
                                 this.setState({
@@ -385,20 +383,20 @@ export function makeCommonComponentMethods<
                         } else {
                             this.setState({
                                 oakExecuting: false,
-                                oakError: {
-                                    type: 'warning',
-                                    msg: err.message,
-                                },
+                            });
+                            this.setNotification({
+                                type: 'warning',
+                                content: err.message,
                             });
                         }
                     }
                 } else {
                     this.setState({
                         oakExecuting: false,
-                        oakError: {
-                            type: 'error',
-                            msg: (err as Error).message,
-                        },
+                    });
+                    this.setNotification({
+                        type: 'warning',
+                        content: (err as Error).message,
                     });
                 }
                 throw err;
@@ -621,16 +619,13 @@ export function makePageMethods<
                     });
                     this.setNotification({
                         type: 'success',
-                        content: '刷新成功',
+                        content: '访问成功',
                     })
                 } catch (err) {
-                    this.setState({
-                        oakLoading: false,
-                        oakError: {
-                            type: 'error',
-                            msg: (err as Error).message,
-                        },
-                    });
+                    this.setNotification({
+                        type: 'error',
+                        content: (err as Error).message,
+                    })
                 }
             }
         },
@@ -652,11 +647,11 @@ export function makePageMethods<
                 } catch (err) {
                     this.setState({
                         oakMoreLoading: false,
-                        oakError: {
-                            type: 'error',
-                            msg: (err as Error).message,
-                        },
                     });
+                    this.setNotification({
+                        type: 'error',
+                        content: (err as Error).message,
+                    })
                 }
             }
         },
