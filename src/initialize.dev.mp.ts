@@ -38,7 +38,6 @@ export function initialize<
     ) => FD,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
     aspectDict: AD,
-    translations: Record<string, any>,
     exceptionRouters: ExceptionRouters = [],
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
@@ -46,7 +45,8 @@ export function initialize<
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
-    actionDict?: ActionDictOfEntityDict<ED>
+    actionDict?: ActionDictOfEntityDict<ED>,
+    translations?: Record<string, any>
 ) {
     const { features, context } = initDev<ED, Cxt, AD, FD>(
         storageSchema,

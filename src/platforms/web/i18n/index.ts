@@ -8,7 +8,7 @@ import Backend from 'i18next-chained-backend';
 import LocalStorageBackend from 'i18next-localstorage-backend'; // primary use cache
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
-// import { I18nextKeysOnDemand } from 'i18next-keys-ondemand';
+import { I18nextKeysOnDemand } from 'i18next-keys-ondemand';
 import { get, assign } from 'lodash';
 
 /**
@@ -24,18 +24,22 @@ const LOCAL_STORE_PREFIX = 'i18next_res_';
  * 当用户本地缓存的ns文件和远端的ns文件不一致时才会发生，此时先获得整个新的ns文件的内容，储存在本地
  * todo 可以做成增量获取，但现在没必要 by Xc
  * @param keys
- * @param lng
- * @param ns
+ * @param language
+ * @param namespace
  * @returns {Promise}
  */
-async function translationService(keys: [], lng: string, ns: string) {
-    const url = `${process.env.PUBLIC_URL}/locales/${lng}/${ns}.json`;
+async function translationGetter(
+    keys: string[],
+    language: string,
+    namespace: string
+) {
+    const url = `${process.env.PUBLIC_URL}/locales/${language}/${namespace}.json`;
     const response = await fetch(url);
     const json = await response.json();
     if (window.localStorage) {
         try {
             window.localStorage.setItem(
-                `${LOCAL_STORE_PREFIX}${lng}-${ns}`,
+                `${LOCAL_STORE_PREFIX}${language}-${namespace}`,
                 JSON.stringify(json)
             );
         } catch (e) {
@@ -46,73 +50,74 @@ async function translationService(keys: [], lng: string, ns: string) {
     keys.forEach((k: string) => {
         const v = get(json, k);
         if (process.env.NODE_ENV !== 'production') {
-            assert(v, `[i18n]:${ns}-${k}最新的服务器数据中无此键值`);
+            assert(v, `[i18n]:${namespace}-${k}最新的服务器数据中无此键值`);
         }
         assign(result, { [k]: v });
     });
     return result;
 }
 
-const i18nextInitOptions = {
-    debug: process.env.NODE_ENV !== 'production',
-    fallbackLng: 'zh-CN',
-    ns: ['common', 'error'],
-    lng: 'zh-CN',
-    load: 'currentOnly',
-    defaultNS: 'common',
+function getI18nextInitOptions(options?: Record<string, any>) {
+    const { version = '1.0.0' } = options || {};
+    return {
+        debug: process.env.NODE_ENV !== 'production',
+        fallbackLng: 'zh_CN',
+        ns: ['common', 'error'],
+        lng: 'zh_CN',
+        load: 'currentOnly',
+        defaultNS: 'common',
 
-    interpolation: {
-        escapeValue: false, // not needed for react!!
-    },
-
-    // react i18next special options (optional)
-    react: {
-        // wait: true,
-        bindI18n: 'added languageChanged',
-        bindI18nStore: 'added',
-        nsMode: 'default',
-        useSuspense: false,
-    },
-    // backend: {
-    //     backends: [
-    //         LocalStorageBackend, // primary
-    //         HttpBackend, // fallback
-    //     ],
-    //     backendOptions: [
-    //         {
-    //             // prefix for stored languages
-    //             prefix: LOCAL_STORE_PREFIX,
-    //             // expiration
-    //             expirationTime: process.env.NODE_ENV !== 'production' ? 120 * 1000 : 300 * 24 * 3600 * 1000,
-    //             defaultVersion: '2.9.0',
-    //         },
-    //         {
-    //             // for all available options read the backend's repository readme file
-    //             loadPath: `${process.env.PUBLIC_URL}/locales/{{lng}}/{{ns}}.json`,
-    //         },
-    //     ],
-    // },
-    returnObjects: true,
-    joinArrays: true,
-    saveMissing: true,
-};
-
-export function getI18next(translations: any) {
-    Object.assign(i18nextInitOptions, {
-        resources: {
-            'zh-CN': Object.assign(translations, {
-                common: {
-                    GREETING: 'Hello {{name}}, nice to see you.',
-                },
-            }),
+        interpolation: {
+            escapeValue: false, // not needed for react!!
         },
-    });
+
+        // react i18next special options (optional)
+        react: {
+            // wait: true,
+            bindI18n: 'added languageChanged',
+            bindI18nStore: 'added',
+            nsMode: 'default',
+            useSuspense: true,
+        },
+        backend: {
+            backends: [
+                LocalStorageBackend, // primary
+                HttpBackend, // fallback
+            ],
+            backendOptions: [
+                {
+                    // prefix for stored languages
+                    prefix: LOCAL_STORE_PREFIX,
+                    // expiration
+                    expirationTime:
+                        process.env.NODE_ENV !== 'production'
+                            ? 120 * 1000
+                            : 300 * 24 * 3600 * 1000,
+                    defaultVersion: version,
+                },
+                {
+                    // for all available options read the backend's repository readme file
+                    loadPath: `${process.env.PUBLIC_URL}/locales/{{lng}}/{{ns}}.json`,
+                },
+            ],
+        },
+        returnObjects: true,
+        joinArrays: true,
+        saveMissing: true,
+    };
+}
+
+export function getI18next(options?: Record<string, any>) {
+    const i18nextInitOptions = getI18nextInitOptions(options) as InitOptions;
     i18next
-        // .use(new I18nextKeysOnDemand({ translationGetter: translationService }))
+        .use(new I18nextKeysOnDemand({ translationGetter }) as any)
         .use(Backend)
         .use(LanguageDetector)
         .use(initReactI18next) // if not using I18nextProvider
-        .init(i18nextInitOptions as InitOptions);
+        .init(i18nextInitOptions, (err) => {
+            // console.log(err);
+
+        });
 
     return i18next;
 };

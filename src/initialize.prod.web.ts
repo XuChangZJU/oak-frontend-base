@@ -35,11 +35,11 @@ export function initialize<
         context: Cxt
     ) => FD,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
-    translations: Record<string, any>,
     exceptionRouters: ExceptionRouters = [],
     connector: Connector<ED, Cxt>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
-    actionDict?: ActionDictOfEntityDict<ED>
+    actionDict?: ActionDictOfEntityDict<ED>,
+    translations?: Record<string, any>
 ) {
     const { features, context } = initProd<ED, Cxt, AD, FD>(
         storageSchema,
