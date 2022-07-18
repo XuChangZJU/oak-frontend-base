@@ -21,6 +21,7 @@ import { ExceptionHandler, ExceptionRouters } from './types/ExceptionRoute';
 import { OakComponentOption, OakPageOption } from './types/Page';
 import { createComponent, createPage } from './page.web';
 import { initialize as initProd } from './initialize-prod';
+import { getI18next } from './platforms/web/i18n';
 
 export function initialize<
     ED extends EntityDict,
@@ -35,11 +36,12 @@ export function initialize<
         context: Cxt
     ) => FD,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
-    translations: Record<string, any>,
     exceptionRouters: ExceptionRouters = [],
     connector: Connector<ED, Cxt>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
-    actionDict?: ActionDictOfEntityDict<ED>
+    actionDict?: ActionDictOfEntityDict<ED>,
+    translations?: Record<string, any>,
+    version?: string
 ) {
     const { features, context } = initProd<ED, Cxt, AD, FD>(
         storageSchema,
@@ -54,6 +56,14 @@ export function initialize<
     for (const router of exceptionRouters) {
         assign(exceptionRouterDict, {
             [router[0].name]: router[1],
+        });
+    }
+
+    // 初始化i8n配置
+    let i18n;
+    if (translations) {
+        i18n = getI18next({
+            version,
         });
     }
 
@@ -128,4 +138,8 @@ export function initialize<
                 TMethod
             >(options, features, exceptionRouterDict, context),
     });
+
+    return {
+        i18n,
+    };
 }
