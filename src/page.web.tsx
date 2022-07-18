@@ -311,7 +311,6 @@ export function createPage<
             }
             context.setScene(options.path);
             lifetimes?.created && lifetimes.created.call(this);
-            hiddenMethods.subscribe.call(this);
         }
 
         features = features;
@@ -350,6 +349,7 @@ export function createPage<
         }
 
         async componentDidMount() {
+            hiddenMethods.subscribe.call(this);
             await onLoad.call(this, this.props);
             methods?.onLoad && methods.onLoad.call(this, this.props);
             methods?.onReady && methods.onReady.call(this);
@@ -495,13 +495,13 @@ export function createComponent<
                 }
             }
             lifetimes?.created && lifetimes.created.call(this);
-            hiddenMethods.subscribe.call(this);
         }
 
         features = features;
         isReachBottom = false;
 
         async componentDidMount() {
+            hiddenMethods.subscribe.call(this);
             const { oakPath, oakParent } = this.props;
             if (oakParent && oakPath) {
                 const oakFullpath = `${oakParent}.${oakPath}`;

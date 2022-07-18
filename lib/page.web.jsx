@@ -176,7 +176,6 @@ function createPage(options, features, exceptionRouterDict, context) {
             }
             context.setScene(options.path);
             lifetimes?.created && lifetimes.created.call(this);
-            hiddenMethods.subscribe.call(this);
         }
         features = features;
         isReachBottom = false;
@@ -205,6 +204,7 @@ function createPage(options, features, exceptionRouterDict, context) {
             this.isReachBottom = isCurrentReachBottom;
         }
         async componentDidMount() {
+            hiddenMethods.subscribe.call(this);
             await onLoad.call(this, this.props);
             methods?.onLoad && methods.onLoad.call(this, this.props);
             methods?.onReady && methods.onReady.call(this);
@@ -266,11 +266,11 @@ function createComponent(options, features, exceptionRouterDict, context) {
                 }
             }
             lifetimes?.created && lifetimes.created.call(this);
-            hiddenMethods.subscribe.call(this);
         }
         features = features;
         isReachBottom = false;
         async componentDidMount() {
+            hiddenMethods.subscribe.call(this);
             const { oakPath, oakParent } = this.props;
             if (oakParent && oakPath) {
                 const oakFullpath = `${oakParent}.${oakPath}`;
