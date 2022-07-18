@@ -69,12 +69,9 @@ export function initialize<
     }
 
     // 初始化i8n配置
-    let i18n;
-    if (translations) {
-        i18n = getI18next({
-            version,
-        });
-    }
+    const i18n = getI18next({
+        version,
+    });
 
     assign(global, {
         OakPage: <

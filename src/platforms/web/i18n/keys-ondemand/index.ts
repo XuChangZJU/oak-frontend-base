@@ -1,4 +1,4 @@
-import * as debounce from 'debounce';
+import debounce from 'debounce';
 import { InitOptions } from 'i18next';
 
 export interface i18nInitOptions extends InitOptions {
