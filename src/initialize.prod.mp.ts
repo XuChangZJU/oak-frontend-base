@@ -21,7 +21,7 @@ import { ExceptionHandler, ExceptionRouters } from './types/ExceptionRoute';
 import { OakComponentOption, OakPageOption } from './types/Page';
 import { createComponent, createPage } from './page.mp';
 import { initialize as initProd } from './initialize-prod';
-import { initI18nWechatMp } from './platforms/wechatMp/i18n';
+import { getI18next } from './platforms/wechatMp/i18n';
 
 export function initialize<
     ED extends EntityDict,
@@ -58,22 +58,9 @@ export function initialize<
         });
     }
     // 初始化locales
-    let i18n;
-    if (translations) {
-        const systemInfo = wx.getSystemInfoSync();
-        const { language } = systemInfo; // 系统语言
-        let defaultLocale;
-        if (language === 'zh_CN') {
-            defaultLocale = language;
-        }
-        //初始化i18n
-        initI18nWechatMp({
-            locales: {
-                translations,
-            },
-            defaultLocale,
-        });
-    }
+    const i18n = getI18next({
+        translations,
+    });
 
     assign(global, {
         OakPage: <

@@ -126,81 +126,98 @@ export function initI18nWechatMp(options: {
 }
 
 export function getI18nInstanceWechatMp() {
-    //@ts-ignore
-    return global.OakI18n?.i18nInstance;
+    return OakI18n?.i18nInstance;
 }
 
 export const CURRENT_LOCALE_KEY = '$_locale';
 export const LOCALE_CHANGE_HANDLER_NAME = '$_localeChange';
 export const CURRENT_LOCALE_DATA = '$_translations';
 
-type Func = (...args: any[]) => any;
+export function getI18next(options?: Record<string, any>) {
+    const systemInfo = wx.getSystemInfoSync();
+    const { language } = systemInfo; // 系统语言
+    const { translations } = options || {};
+    let defaultLocale = 'zh_CN';
+    if (language) {
+        defaultLocale = language;
+    }
+    //初始化i18n
+    const i18n = initI18nWechatMp({
+        locales: {
+            translations,
+        },
+        defaultLocale,
+    });
+    return i18n;
+}
 
-export const I18nWechatMp = Behavior(
-    (() => {
-        const behaviorHooks: Record<
-            string,
-            Record<string, Func> | CommonI18nInterface
-        > = {
-            lifetimes: {
-                created() {
-                    (this as any)[LOCALE_CHANGE_HANDLER_NAME] = (
-                        currentLocale: string
-                    ) => {
-                        (this as any).setData({
-                            [CURRENT_LOCALE_KEY]: currentLocale,
-                        });
-                    };
-                },
+// type Func = (...args: any[]) => any;
 
-                attached() {
-                    if (!OakI18n.i18nInstance) {
-                        throw new Error(
-                            '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
-                        );
-                    }
+// export const I18nWechatMp = Behavior(
+//     (() => {
+//         const behaviorHooks: Record<
+//             string,
+//             Record<string, Func> | CommonI18nInterface
+//         > = {
+//             lifetimes: {
+//                 created() {
+//                     (this as any)[LOCALE_CHANGE_HANDLER_NAME] = (
+//                         currentLocale: string
+//                     ) => {
+//                         (this as any).setData({
+//                             [CURRENT_LOCALE_KEY]: currentLocale,
+//                         });
+//                     };
+//                 },
 
-                    (this as any).setData({
-                        [CURRENT_LOCALE_KEY]:
-                            OakI18n.i18nInstance.currentLocale,
-                        [CURRENT_LOCALE_DATA]:
-                            OakI18n.i18nInstance.translations,
-                    });
-                },
+//                 attached() {
+//                     if (!OakI18n.i18nInstance) {
+//                         throw new Error(
+//                             '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
+//                         );
+//                     }
 
-                detached() {},
-            },
+//                     (this as any).setData({
+//                         [CURRENT_LOCALE_KEY]:
+//                             OakI18n.i18nInstance.currentLocale,
+//                         [CURRENT_LOCALE_DATA]:
+//                             OakI18n.i18nInstance.translations,
+//                     });
+//                 },
 
-            methods: {
-                t(key: string, params: object) {
-                    if (!OakI18n.i18nInstance) {
-                        throw new Error(
-                            '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
-                        );
-                    }
-                    return OakI18n.i18nInstance.getString(key, params);
-                },
+//                 detached() {},
+//             },
 
-                setLocale(locale: string) {
-                    if (!OakI18n.i18nInstance) {
-                        throw new Error(
-                            '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
-                        );
-                    }
-                    return OakI18n.i18nInstance.setLocale(locale);
-                },
+//             methods: {
+//                 t(key: string, params: object) {
+//                     if (!OakI18n.i18nInstance) {
+//                         throw new Error(
+//                             '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
+//                         );
+//                     }
+//                     return OakI18n.i18nInstance.getString(key, params);
+//                 },
 
-                getLocale() {
-                    if (!OakI18n.i18nInstance) {
-                        throw new Error(
-                            '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
-                        );
-                    }
-                    return OakI18n.i18nInstance.getLocale();
-                },
-            } as CommonI18nInterface,
-        };
+//                 setLocale(locale: string) {
+//                     if (!OakI18n.i18nInstance) {
+//                         throw new Error(
+//                             '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
+//                         );
+//                     }
+//                     return OakI18n.i18nInstance.setLocale(locale);
+//                 },
 
-        return behaviorHooks;
-    })()
-);
+//                 getLocale() {
+//                     if (!OakI18n.i18nInstance) {
+//                         throw new Error(
+//                             '[i18n] ensure run initI18nWechatMp() in app.js before using I18nWechatMp library'
+//                         );
+//                     }
+//                     return OakI18n.i18nInstance.getLocale();
+//                 },
+//             } as CommonI18nInterface,
+//         };
+
+//         return behaviorHooks;
+//     })()
+// );

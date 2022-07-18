@@ -35,8 +35,8 @@ export declare function initI18nWechatMp(options: {
     defaultLocale?: string;
     fallbackLocale?: string;
 }): I18nWechatMpRuntimeBase;
-export declare function getI18nInstanceWechatMp(): any;
+export declare function getI18nInstanceWechatMp(): I18nWechatMpRuntimeBase | null;
 export declare const CURRENT_LOCALE_KEY = "$_locale";
 export declare const LOCALE_CHANGE_HANDLER_NAME = "$_localeChange";
 export declare const CURRENT_LOCALE_DATA = "$_translations";
-export declare const I18nWechatMp: string;
+export declare function getI18next(options?: Record<string, any>): I18nWechatMpRuntimeBase;
