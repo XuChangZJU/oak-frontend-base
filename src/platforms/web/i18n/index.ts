@@ -8,8 +8,8 @@ import Backend from 'i18next-chained-backend';
 import LocalStorageBackend from 'i18next-localstorage-backend'; // primary use cache
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
-import { I18nextKeysOnDemand } from 'i18next-keys-ondemand';
 import { get, assign } from 'lodash';
+import I18nextKeysOnDemand from './keys-ondemand';
 
 /**
  * I18N语言包设计思路：
@@ -28,7 +28,7 @@ const LOCAL_STORE_PREFIX = 'i18next_res_';
  * @param namespace
  * @returns {Promise}
  */
-async function translationGetter(
+async function translationService(
     keys: string[],
     language: string,
     namespace: string
@@ -110,13 +110,16 @@ function getI18nextInitOptions(options?: Record<string, any>) {
 export function getI18next(options?: Record<string, any>) {
     const i18nextInitOptions = getI18nextInitOptions(options) as InitOptions;
     i18next
-        .use(new I18nextKeysOnDemand({ translationGetter }) as any)
+        .use(
+            new I18nextKeysOnDemand({
+                translationGetter: translationService,
+            }) as any
+        )
         .use(Backend)
         .use(LanguageDetector)
         .use(initReactI18next) // if not using I18nextProvider
         .init(i18nextInitOptions, (err) => {
             // console.log(err);
-
         });
 
     return i18next;

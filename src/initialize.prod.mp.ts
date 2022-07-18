@@ -58,6 +58,7 @@ export function initialize<
         });
     }
     // 初始化locales
+    let i18n;
     if (translations) {
         const systemInfo = wx.getSystemInfoSync();
         const { language } = systemInfo; // 系统语言
@@ -145,4 +146,8 @@ export function initialize<
                 TMethod
             >(options, features, exceptionRouterDict, context),
     });
+
+    return {
+        i18n,
+    };
 }

@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "oak框架中前端与平台无关的逻辑部分",
     "dependencies": {
+        "debounce": "^1.2.1",
         "format-message-parse": "^6.2.4",
         "lodash": "^4.17.21",
         "oak-common-aspect": "file:../oak-common-aspect",
@@ -18,7 +19,6 @@
         "i18next-browser-languagedetector": "^6.1.4",
         "i18next-chained-backend": "^3.0.2",
         "i18next-http-backend": "^1.4.1",
-        "i18next-keys-ondemand": "^0.2.0",
         "i18next-localstorage-backend": "^3.1.3",
         "i18next-resource-store-loader": "^0.1.2",
         "react": "^18.2.0",
@@ -34,6 +34,7 @@
         "@babel/preset-env": "^7.12.13",
         "@babel/preset-typescript": "^7.12.13",
         "@types/assert": "^1.5.6",
+        "@types/debounce": "^1.2.1",
         "@types/fs-extra": "^9.0.13",
         "@types/lodash": "^4.14.168",
         "@types/luxon": "^2.0.9",
