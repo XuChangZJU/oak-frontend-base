@@ -105,7 +105,7 @@ export function initI18nWechatMp(options: {
     const { locales, defaultLocale, fallbackLocale } = options;
     const _defaultLocale = defaultLocale || locales.defaultLocale;
     const _fallbackLocale = fallbackLocale || locales.fallbackLocale;
-    let translations = locales.translations;
+    let translations = locales.translations || {};
     if (!translations[_defaultLocale as keyof typeof translations]) {
         translations = {
             [_defaultLocale as string]: translations,
