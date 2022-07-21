@@ -5,7 +5,7 @@ import { Pagination } from "./Pagination";
 import { BasicFeatures } from "../features";
 import { NamedFilterItem, NamedSorterItem } from './NamedCondition';
 import { CreateNodeOptions } from '../features/runningTree';
-import { NotificationData } from "./Notification";
+import { NotificationProps } from './Notification';
 
 
 type RowSelected<
@@ -221,8 +221,8 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
     ) => { dataset?: Record<string, any>; value?: string } & {
         [k in K]?: any;
     };
-    setNotification: (data: NotificationData) => void;
-    consumeNotification: () => NotificationData | undefined;
+    setNotification: (data: NotificationProps) => void;
+    consumeNotification: () => NotificationProps | undefined;
     reRender: (extra?: Record<string, any>) => Promise<void>;
     redirectTo: <T2 extends keyof ED>(
         options: Parameters<typeof wx.redirectTo>[0] &
