@@ -620,10 +620,10 @@ export function makePageMethods<
                     this.setState({
                         oakLoading: false,
                     });
-                    this.setNotification({
-                        type: 'success',
-                        content: '访问成功',
-                    })
+                    // this.setNotification({
+                    //     type: 'success',
+                    //     content: '访问成功',
+                    // })
                 } catch (err) {
                     this.setNotification({
                         type: 'error',
