@@ -449,7 +449,10 @@ export function makeListComponentMethods<
         },
 
         removeNode(parent, path) {
-            features.runningTree.removeNode(parent, path);
+            const path2 = parent
+                ? `${this.state.oakFullpath}.${parent}`
+                : this.state.oakFullpath;
+            features.runningTree.removeNode(path2, path);
         },
 
         async getFilters() {
