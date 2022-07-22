@@ -1,9 +1,6 @@
 import { assign, unset } from 'lodash';
 import { PromisefyOption } from '../types/Wx';
 
-/**
- * Bluetooth不用action重渲染，用监听回调的方式处理数据变化吧
- */
 export class Bluetooth {
     private serverDict: Record<string, WechatMiniprogram.BLEPeripheralServer>;
 
