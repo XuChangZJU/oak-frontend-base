@@ -1,4 +1,4 @@
-import { assign, unset } from 'lodash';
+import unset from 'lodash/unset';
 import { PromisefyOption } from '../types/Wx';
 
 /**
@@ -111,7 +111,7 @@ export class Bluetooth {
     async createPeripheralServer() {
         const server = await wx.createBLEPeripheralServer({});
         const id = await generateNewId();
-        assign(this.serverDict, {
+        Object.assign(this.serverDict, {
             [id]: server,
         });
         return id;
