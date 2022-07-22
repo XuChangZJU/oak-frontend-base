@@ -289,7 +289,39 @@ function createComponent(options, features, exceptionRouterDict, context) {
             hiddenMethods.unsubscribe.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
         }
-        componentDidUpdate = fn;
+        componentDidUpdate(prevProps, prevState) {
+            if (this.props.oakPath &&
+                prevProps.oakPath !== this.props.oakPath) {
+                this.onPropsChanged({
+                    path: this.props.oakPath,
+                });
+            }
+            if (this.props.oakParent &&
+                prevProps.oakParent !== this.props.oakParent) {
+                this.onPropsChanged({
+                    parent: this.props.oakParent,
+                });
+            }
+            fn?.call(this, prevProps, prevState);
+        }
+        async onPropsChanged(options) {
+            const path2 = options.hasOwnProperty('path')
+                ? options.path
+                : this.props.oakPath;
+            const parent2 = options.hasOwnProperty('parent')
+                ? options.parent
+                : this.props.oakParent;
+            if (path2 && parent2) {
+                const oakFullpath2 = `${parent2}.${path2}`;
+                if (oakFullpath2 !== this.state.oakFullpath) {
+                    this.setState({
+                        oakFullpath: oakFullpath2,
+                        oakEntity: entity,
+                    });
+                    commonMethods.reRender.call(this);
+                }
+            }
+        }
         render() {
             const Render = render.call(this);
             return Render;
