@@ -23,12 +23,12 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const React = __importStar(require("react"));
+var React = __importStar(require("react"));
 require("./index.css");
-const values = '2; 2; 2; 2';
-const animateValues = '0; 4; 0; 0';
+var values = '2; 2; 2; 2';
+var animateValues = '0; 4; 0; 0';
 function LoadingIcon(props) {
-    const animate = props.animate;
+    var animate = props.animate;
     return (<svg className="oak-pull-to-refresh-loading" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
             <circle transform="translate(8 0)" cx="0" cy="16" r="0">
                 <animate attributeName="r" values={!animate ? values : animateValues} dur="1.2s" repeatCount="indefinite" begin="0" keyTimes="0;0.2;0.7;1" keySplines="0.2 0.2 0.4 0.8;0.2 0.6 0.4 0.8;0.2 0.6 0.4 0.8" calcMode="spline"/>

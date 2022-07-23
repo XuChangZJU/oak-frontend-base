@@ -33,11 +33,11 @@ export function subscribe(callback: () => any) {
  */
  export function Action(target: any, propertyName: string, descriptor: TypedPropertyDescriptor<any>) {
     const method = descriptor.value!;
-    descriptor.value = async function () {
+    descriptor.value = async function (...params: any[]) {
         mActionStackDepth++;
         let result;
         try {
-            result = await method.apply(this, arguments);
+            result = await method.apply(this, params);
         }
         catch (err) {
             console.error(err, method.name);

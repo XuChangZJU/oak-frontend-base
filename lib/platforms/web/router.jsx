@@ -27,34 +27,34 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 //react
-const React = __importStar(require("react"));
-const react_router_dom_1 = require("react-router-dom");
-const react_i18next_1 = require("react-i18next");
-const responsive_1 = require("./responsive");
-const url_1 = __importDefault(require("url"));
+var React = __importStar(require("react"));
+var react_router_dom_1 = require("react-router-dom");
+var react_i18next_1 = require("react-i18next");
+var responsive_1 = require("./responsive");
+var url_1 = __importDefault(require("url"));
 function getParams(location) {
-    const { search, state } = location;
-    const query = getQuery(search);
+    var search = location.search, state = location.state;
+    var query = getQuery(search);
     return Object.assign({}, query, state);
 }
 function getQuery(url) {
-    let query = {};
+    var query = {};
     if (!url) {
         return query;
     }
-    const parseUrl = url_1.default.parse(url, true);
+    var parseUrl = url_1.default.parse(url, true);
     if (parseUrl.query) {
         query = parseUrl.query;
     }
     return query;
 }
-const withRouter = (Component) => {
-    const ComponentWithRouterProp = (props) => {
-        const navigate = (0, react_router_dom_1.useNavigate)();
-        const location = (0, react_router_dom_1.useLocation)();
-        const { t, i18n } = (0, react_i18next_1.useTranslation)();
-        const width = (0, responsive_1.useWidth)();
-        const params = getParams(location);
+var withRouter = function (Component) {
+    var ComponentWithRouterProp = function (props) {
+        var navigate = (0, react_router_dom_1.useNavigate)();
+        var location = (0, react_router_dom_1.useLocation)();
+        var _a = (0, react_i18next_1.useTranslation)(), t = _a.t, i18n = _a.i18n;
+        var width = (0, responsive_1.useWidth)();
+        var params = getParams(location);
         return (<Component {...props} navigate={navigate} location={location} t={t} i18n={i18n} width={width} {...params}/>);
     };
     return ComponentWithRouterProp;
