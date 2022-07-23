@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { useContext, useState, useEffect } from 'react';
-=======
 import { useContext } from 'react';
->>>>>>> 7c9ee6c720b0be3cc9e4862427d3c19aca378add
 import { useMediaQuery } from 'react-responsive';
 
 import {
@@ -10,7 +6,7 @@ import {
     defaultBreakpoints,
     Breakpoints,
     Values,
-    Width
+    Width,
 } from './context';
 
 export function useWidth(props?: { breakpoints?: Breakpoints }) {
