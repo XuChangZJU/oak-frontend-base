@@ -515,17 +515,19 @@ export function createComponent<
             oakParent: String,
         }),
         observers: {
+            ...observers,
             oakPath: function (path) {
-                return this.onPropsChanged({
+                this.onPropsChanged({
                     path,
                 });
+                observers?.oakPath && observers.oakPath.call(this, path);
             },
             oakParent: function (parent) {
-                return this.onPropsChanged({
+                this.onPropsChanged({
                     parent,
                 });
+                observers?.oakParent && observers.oakParent.call(this, parent);
             },
-            ...observers,
         },
         methods: {
             setState(data: any, callback?: () => void) {
