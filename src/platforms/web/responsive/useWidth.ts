@@ -6,7 +6,7 @@ import {
     defaultBreakpoints,
     Breakpoints,
     Values,
-    Width
+    Width,
 } from './context';
 
 export function useWidth(props?: { breakpoints?: Breakpoints }) {
