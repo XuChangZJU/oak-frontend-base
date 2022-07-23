@@ -1,4 +1,4 @@
-import unset from 'lodash/unset';
+import { unset } from 'oak-domain/lib/utils/lodash';
 import { PromisefyOption } from '../types/Wx';
 
 export class Bluetooth {

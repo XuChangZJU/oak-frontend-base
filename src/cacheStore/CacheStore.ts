@@ -9,7 +9,7 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
 
     constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString: string) => (store: CacheStore<ED, Cxt>) => Cxt) {
         super(storageSchema);
-        this.executor = new TriggerExecutor((cxtStr) => contextBuilder(cxtStr)(this));
+        this.executor = new TriggerExecutor(async (cxtStr) => contextBuilder(cxtStr)(this));
     }
 
     async operate<T extends keyof ED>(

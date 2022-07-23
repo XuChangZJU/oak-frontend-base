@@ -1,5 +1,5 @@
-import assert from "assert";
-import { assign, at, cloneDeep, keys, omit, pick, pull, set, unset } from "lodash";
+import { assert } from 'oak-domain/lib/utils/assert';
+import { cloneDeep, pull, set, unset } from "oak-domain/lib/utils/lodash";
 import { combineFilters, contains, repel } from "oak-domain/lib/store/filter";
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult, CreateOpResult, RemoveOpResult, DeduceSorterItem, AspectWrapper } from "oak-domain/lib/types";
@@ -57,13 +57,13 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
         let subEntity: string | undefined = undefined;
         if (rel === 2) {
             if (value) {
-                assign(this.updateData, {
+                Object.assign(this.updateData, {
                     entity: attr,
                     entityId: value,
                 });
             }
             else {
-                assign(this.updateData, {
+                Object.assign(this.updateData, {
                     entity: undefined,
                     entityId: undefined,
                 });
@@ -72,12 +72,12 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
         }
         else if (typeof rel === 'string'){
             if (value) {
-                assign(this.updateData, {
+                Object.assign(this.updateData, {
                     [`${attr}Id`]: value,
                 });
             }
             else {
-                assign(this.updateData, {
+                Object.assign(this.updateData, {
                     [`${attr}Id`]: undefined,
                 });
             }
@@ -85,7 +85,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
         }
         else {
             assert(rel === 1);
-            assign(this.updateData, {
+            Object.assign(this.updateData, {
                 [attr]: value,
             });
         }
@@ -437,7 +437,7 @@ class ListNode<ED extends EntityDict,
                 return [];  // 这个可能跑到吗？
             }
             return value.map(
-                ele => assign({}, ele, this.updateData)
+                ele => Object.assign({}, ele, this.updateData)
             );
         }
         else {
@@ -476,7 +476,7 @@ class ListNode<ED extends EntityDict,
             if (subAction) {
                 // 如果有action，这里用action代替默认的update。userRelation/onEntity页面可以测到
                 if (action) {
-                    assign(subAction, {
+                    Object.assign(subAction, {
                         action,
                     });
                 }
@@ -637,19 +637,19 @@ class ListNode<ED extends EntityDict,
             for (const attr in origin) {
                 const rel = this.judgeRelation(attr);
                 if (rel === 2) {
-                    assign(result, {
+                    Object.assign(result, {
                         entity: attr,
                         entityId: origin[attr],
                     });
                 }
                 else if (typeof rel === 'string') {
-                    assign(result, {
+                    Object.assign(result, {
                         [`${attr}Id`]: origin[attr],
                     });
                 }
                 else {
                     assert (rel === 1);
-                    assign(result, {
+                    Object.assign(result, {
                         [attr]: origin[attr],
                     });
                 }
@@ -838,7 +838,7 @@ class SingleNode<ED extends EntityDict,
         this.children = {};
 
         const ownKeys: string[] = [];
-        keys(projectionShape).forEach(
+        Object.keys(projectionShape).forEach(
             (attr) => {
                 const proj = typeof projection === 'function' ? async () => {
                     const projection2 = await projection();
@@ -847,13 +847,13 @@ class SingleNode<ED extends EntityDict,
                 const rel = this.judgeRelation(attr);
                 if (rel === 2) {
                     const node = new SingleNode(attr, this.schema, this.cache, proj, projectionShape[attr], this);
-                    assign(this.children, {
+                    Object.assign(this.children, {
                         [attr]: node,
                     });
                 }
                 else if (typeof rel === 'string') {
                     const node = new SingleNode(rel, this.schema, this.cache, proj, projectionShape[attr], this);
-                    assign(this.children, {
+                    Object.assign(this.children, {
                         [attr]: node,
                     });
                 }
@@ -885,7 +885,7 @@ class SingleNode<ED extends EntityDict,
                             })
                         );
                     }
-                    assign(this.children, {
+                    Object.assign(this.children, {
                         [attr]: node,
                     });
                 }
@@ -918,12 +918,12 @@ class SingleNode<ED extends EntityDict,
                 this.freshValue = undefined;
             }
             else if (action === 'create') {
-                this.freshValue = assign({
+                this.freshValue = Object.assign({
                     id: generateMockId(),
                 }, this.value, this.updateData);
             }
             else {
-                this.freshValue = assign({}, this.value, this.updateData);
+                this.freshValue = Object.assign({}, this.value, this.updateData);
             }
         }
     }
@@ -960,12 +960,12 @@ class SingleNode<ED extends EntityDict,
 
     getFreshValue(ignoreRemoved?: boolean) {
         if (ignoreRemoved) {
-            return assign({}, this.value, this.updateData);
+            return Object.assign({}, this.value, this.updateData);
         }
         const freshValue = this.freshValue && cloneDeep(this.freshValue) as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
         if (freshValue) {
             for (const k in this.children) {
-                assign(freshValue, {
+                Object.assign(freshValue, {
                     [k]: this.children[k].getFreshValue(),
                 });
             }
@@ -986,7 +986,7 @@ class SingleNode<ED extends EntityDict,
 
         const operation = action === 'create' ? {
             action: 'create',
-            data: assign({}, this.updateData, { id: execute ? await generateNewId() : generateMockId() }),
+            data: Object.assign({}, this.updateData, { id: execute ? await generateNewId() : generateMockId() }),
         } as DeduceCreateOperation<ED[T]['Schema']> : {
             action,
             data: cloneDeep(this.updateData),
@@ -998,7 +998,7 @@ class SingleNode<ED extends EntityDict,
         for (const attr in this.children) {
             const subAction = await this.children[attr]!.composeOperation(undefined, execute);
             if (subAction) {
-                assign(operation.data, {
+                Object.assign(operation.data, {
                     [attr]: subAction,
                 });
             }
@@ -1241,13 +1241,13 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                             if (projection[attr]) {
                                 set(row, attr, await this.applyOperation(attr, row[attr] as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>, actionData[attr]!, projection[attr]!, scene));
                                 if (row[attr]) {
-                                    assign(row, {
+                                    Object.assign(row, {
                                         entity: attr,
                                         entityId: row[attr]!['id'],
                                     });
                                 }
                                 else {
-                                    assign(row, {
+                                    Object.assign(row, {
                                         entity: undefined,
                                         entityId: undefined,
                                     });
@@ -1258,12 +1258,12 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                             if (projection[attr]) {
                                 set(row, attr, await this.applyOperation(relation, row[attr] as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>, actionData[attr]!, projection[attr]!, scene));
                                 if (row[attr]) {
-                                    assign(row, {
+                                    Object.assign(row, {
                                         [`${attr}Id`]: row[attr]!['id'],
                                     });
                                 }
                                 else {
-                                    assign(row, {
+                                    Object.assign(row, {
                                         [`${attr}Id`]: undefined,
                                     });
                                 }
@@ -1276,12 +1276,12 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                                 row[attr]!.forEach(
                                     (ele: ED[keyof ED]['Schema']) => {
                                         if (relation[1]) {
-                                            assign(ele, {
+                                            Object.assign(ele, {
                                                 [relation[1]]: row.id,
                                             });
                                         }
                                         else {
-                                            assign(ele, {
+                                            Object.assign(ele, {
                                                 entity,
                                                 entityId: row.id,
                                             });

@@ -16,7 +16,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         [T in keyof ED]?: ED[T]['OpSchema'][];
     }, initialStat?: { create: number, update: number, remove: number, commit: number }) {
         super(storageSchema, initialData, initialStat);
-        this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
+        this.executor = new TriggerExecutor(async (cxtString) => contextBuilder(cxtString)(this));
         this.rwLock = new RWLock();
     }
 

@@ -30,7 +30,7 @@ exports.createComponent = exports.createPage = void 0;
 const React = __importStar(require("react"));
 const PullToRefresh_1 = __importDefault(require("./platforms/web/PullToRefresh"));
 const router_1 = __importDefault(require("./platforms/web/router"));
-const lodash_1 = require("lodash");
+const lodash_1 = require("oak-domain/lib/utils/lodash");
 const page_common_1 = require("./page.common");
 function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
     return {
@@ -50,7 +50,7 @@ function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
                 value,
             };
             if (keys) {
-                keys.forEach((k) => (0, lodash_1.assign)(result, {
+                keys.forEach((k) => Object.assign(result, {
                     [k]: target[k],
                 }));
             }
@@ -147,29 +147,29 @@ function createPage(options, features, exceptionRouterDict, context) {
             super(props);
             this.state = (data || {});
             /* for (const m in hiddenMethods) {
-                assign(this, {
+                Object.assign(this, {
                     [m]: hiddenMethods[m as keyof typeof hiddenMethods]!.bind(this),
                 });
             } */
             for (const m in commonMethods) {
-                (0, lodash_1.assign)(this, {
+                Object.assign(this, {
                     [m]: commonMethods[m].bind(this),
                 });
             }
             for (const m in listMethods) {
-                (0, lodash_1.assign)(this, {
+                Object.assign(this, {
                     [m]: listMethods[m].bind(this),
                 });
             }
             for (const m in restPageMethods) {
-                (0, lodash_1.assign)(this, {
+                Object.assign(this, {
                     [m]: restPageMethods[m].bind(this),
                 });
             }
             if (methods) {
                 const { onPullDownRefresh, onReachBottom, ...restMethods } = methods;
                 for (const m in restMethods) {
-                    (0, lodash_1.assign)(this, {
+                    Object.assign(this, {
                         [m]: restMethods[m].bind(this),
                     });
                 }
@@ -244,23 +244,23 @@ function createComponent(options, features, exceptionRouterDict, context) {
             super(props);
             this.state = (data || {});
             /* for (const m in hiddenMethods) {
-                assign(this, {
+                Object.assign(this, {
                     [m]: hiddenMethods[m as keyof typeof hiddenMethods]!.bind(this),
                 });
             } */
             for (const m in commonMethods) {
-                (0, lodash_1.assign)(this, {
+                Object.assign(this, {
                     [m]: commonMethods[m].bind(this),
                 });
             }
             for (const m in listMethods) {
-                (0, lodash_1.assign)(this, {
+                Object.assign(this, {
                     [m]: listMethods[m].bind(this),
                 });
             }
             if (methods) {
                 for (const m in methods) {
-                    (0, lodash_1.assign)(this, {
+                    Object.assign(this, {
                         [m]: methods[m].bind(this),
                     });
                 }

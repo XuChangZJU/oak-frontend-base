@@ -1,6 +1,6 @@
-import { assign, omit } from 'lodash';
+import { omit } from 'oak-domain/lib/utils/lodash';
 import URL from 'url';
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
 import { BasicFeatures } from './features';
@@ -80,7 +80,7 @@ function makeCommonComponentMethods<
             };
             if (keys) {
                 keys.forEach((k) =>
-                    assign(result, {
+                    Object.assign(result, {
                         [k]: detail[k],
                     })
                 );
@@ -90,7 +90,7 @@ function makeCommonComponentMethods<
         navigateBack(option) {
             return new Promise((resolve, reject) => {
                 wx.navigateBack(
-                    assign({}, option, {
+                    Object.assign({}, option, {
                         success() {
                             resolve(undefined);
                         },
@@ -147,12 +147,12 @@ function makeCommonComponentMethods<
                 pathname: pathname2,
                 search: search2,
             });
-            assign(options, {
+            Object.assign(options, {
                 url: url2,
             });
             return new Promise((resolve, reject) => {
                 wx.navigateTo(
-                    assign({}, options, {
+                    Object.assign({}, options, {
                         success(res: any) {
                             success && success(res);
                             resolve(undefined);
@@ -210,12 +210,12 @@ function makeCommonComponentMethods<
                 pathname: pathname2,
                 search: search2,
             });
-            assign(options, {
+            Object.assign(options, {
                 url: url2,
             });
             return new Promise((resolve, reject) => {
                 wx.redirectTo(
-                    assign({}, options, {
+                    Object.assign({}, options, {
                         success(res: any) {
                             success && success(res);
                             resolve(undefined);
@@ -278,7 +278,7 @@ function makePageMethods<
                 for (const key in options.properties) {
                     // Number和Boolean类型小程序框架能自动处理吗？实测中再改
                     if (typeof pageOption[key] === 'string' && options.properties[key] !== String) {
-                        assign(data, {
+                        Object.assign(data, {
                             [key]: JSON.parse(pageOption[key]!),
                         });
                     }
@@ -336,10 +336,10 @@ export function createPage<
 
     const { methods, lifetimes, pageLifetimes } = options;
     return Component({
-        data: assign({}, options.data, {
+        data: Object.assign({}, options.data, {
             oakFullpath: '',
         }),
-        properties: assign({}, options.properties, {
+        properties: Object.assign({}, options.properties, {
             oakEntity: String,
             oakId: String,
             oakPath: String,
@@ -505,11 +505,11 @@ export function createComponent<
     const listMethods = isList ? makeListComponentMethods(features) : {};
 
     return Component({
-        data: assign({}, data, {
+        data: Object.assign({}, data, {
             oakEntity: '',
             oakFullpath: '',
         }),
-        properties: assign({}, properties, {
+        properties: Object.assign({}, properties, {
             oakEntity: String,
             oakPath: String,
             oakParent: String,

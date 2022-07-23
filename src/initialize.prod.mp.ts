@@ -14,7 +14,6 @@ import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { Feature } from './types/Feature';
 
 import { BasicFeatures } from './features';
-import { assign } from 'lodash';
 import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { ExceptionHandler, ExceptionRouters } from './types/ExceptionRoute';
@@ -53,7 +52,7 @@ export function initialize<
 
     const exceptionRouterDict: Record<string, ExceptionHandler> = {};
     for (const router of exceptionRouters) {
-        assign(exceptionRouterDict, {
+        Object.assign(exceptionRouterDict, {
             [router[0].name]: router[1],
         });
     }
@@ -62,7 +61,7 @@ export function initialize<
         translations,
     });
 
-    assign(global, {
+    Object.assign(global, {
         OakPage: <
             T extends keyof ED,
             Proj extends ED[T]['Selection']['data'],

@@ -1,7 +1,7 @@
 import { EntityDict, Context } from 'oak-domain/lib/types';
 import { Feature } from '../types/Feature';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { pull, unset } from 'lodash';
+import { pull, unset } from 'oak-domain/lib/utils/lodash';
 
 export class EventBus<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     private EventTable: Record<string, Function[]> = {};

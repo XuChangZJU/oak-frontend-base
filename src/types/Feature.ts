@@ -1,4 +1,4 @@
-import { pull } from 'lodash';
+import { pull } from 'oak-domain/lib/utils/lodash';
 import { EntityDict, Aspect, AspectWrapper, Context } from 'oak-domain/lib/types';
 import { CommonAspectDict } from 'oak-common-aspect';
 

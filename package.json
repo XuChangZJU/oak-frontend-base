@@ -5,7 +5,6 @@
     "dependencies": {
         "debounce": "^1.2.1",
         "format-message-parse": "^6.2.4",
-        "lodash": "^4.17.21",
         "oak-common-aspect": "file:../oak-common-aspect",
         "oak-domain": "file:../oak-domain",
         "oak-external-sdk": "file:../oak-external-sdk",

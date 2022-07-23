@@ -1,7 +1,7 @@
 /**
  * Created by Administrator on 2018/3/24.
  */
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import i18next, { InitOptions } from 'i18next';
 import HttpBackend from 'i18next-http-backend';
 import Backend from 'i18next-chained-backend';

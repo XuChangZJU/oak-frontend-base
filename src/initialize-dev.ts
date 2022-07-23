@@ -15,7 +15,7 @@ import { Feature } from './types/Feature';
 import { createDebugStore } from './debugStore';
 
 import { initialize as createBasicFeatures, BasicFeatures } from './features';
-import { assign, intersection, keys } from 'lodash';
+import { intersection } from 'oak-domain/lib/utils/lodash';
 import commonAspectDict from 'oak-common-aspect';
 import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
@@ -58,13 +58,13 @@ export function initialize<
     },
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
-    let intersect = intersection(keys(commonAspectDict), keys(aspectDict));
+    let intersect = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
     if (intersect.length > 0) {
         throw new Error(
             `用户定义的aspect中不能和系统aspect同名：「${intersect.join(',')}」`
         );
     }
-    const aspectDict2 = assign({}, commonAspectDict, aspectDict);
+    const aspectDict2 = Object.assign({}, commonAspectDict, aspectDict);
     const debugStore = createDebugStore(
         storageSchema,
         contextBuilder,
@@ -119,7 +119,7 @@ export function initialize<
 
     const userDefinedfeatures = createFeatures(wrapper, basicFeatures, context);
 
-    intersect = intersection(keys(basicFeatures), keys(userDefinedfeatures));
+    intersect = intersection(Object.keys(basicFeatures), Object.keys(userDefinedfeatures));
     if (intersect.length > 0) {
         throw new Error(
             `用户定义的feature中不能和系统feature同名：「${intersect.join(
@@ -127,7 +127,7 @@ export function initialize<
             )}」`
         );
     }
-    const features = assign(basicFeatures, userDefinedfeatures);
+    const features = Object.assign(basicFeatures, userDefinedfeatures);
 
     return {
         features,

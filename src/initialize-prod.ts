@@ -13,7 +13,7 @@ import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { Feature } from './types/Feature';
 
 import { initialize as createBasicFeatures, BasicFeatures } from './features';
-import { assign, intersection, keys } from 'lodash';
+import { intersection } from 'oak-domain/lib/utils/lodash';
 import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -90,7 +90,7 @@ export function initialize<
 
     const userDefinedfeatures = createFeatures(wrapper, basicFeatures, context);
 
-    const intersect = intersection(keys(basicFeatures), keys(userDefinedfeatures));
+    const intersect = intersection(Object.keys(basicFeatures), Object.keys(userDefinedfeatures));
     if (intersect.length > 0) {
         throw new Error(
             `用户定义的feature中不能和系统feature同名：「${intersect.join(
@@ -98,7 +98,7 @@ export function initialize<
             )}」`
         );
     }
-    const features = assign(basicFeatures, userDefinedfeatures);
+    const features = Object.assign(basicFeatures, userDefinedfeatures);
 
     return {
         features,

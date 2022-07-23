@@ -1,5 +1,4 @@
-import assert from 'assert';
-import { assign, omit } from 'lodash';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { CommonAspectDict } from 'oak-common-aspect';
 import {
     Aspect,
@@ -192,18 +191,18 @@ export function makeCommonComponentMethods<
                 }) : {};
                 for (const k in data) {
                     if (data[k] === undefined) {
-                        assign(data, {
+                        Object.assign(data, {
                             [k]: null,
                         });
                     }
                 }
-                assign(data, { oakDirty: dirty });
+                Object.assign(data, { oakDirty: dirty });
 
                 if (extra) {
-                    assign(data, extra);
+                    Object.assign(data, extra);
                 }
 
-                assign(data, {
+                Object.assign(data, {
                     oakLegalActions,
                 });
                 this.setState(data);
@@ -218,7 +217,7 @@ export function makeCommonComponentMethods<
                     props: this.props,
                 } as any) : {};
                 if (extra) {
-                    assign(data, extra);
+                    Object.assign(data, extra);
                 }
                 this.setState(data);
             }

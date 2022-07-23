@@ -1,7 +1,7 @@
 import { StorageSchema, EntityDict, OperateParams, OpRecord, Aspect, Checker, RowStore, Context, AspectWrapper } from 'oak-domain/lib/types';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Action, Feature } from '../types/Feature';
-import { assign, pull } from 'lodash';
+import { pull } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 
 export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {

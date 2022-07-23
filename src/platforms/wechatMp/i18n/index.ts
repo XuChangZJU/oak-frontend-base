@@ -1,7 +1,7 @@
 import { interpret } from './interpreter';
 import { lookUpAST } from './common';
 import { parseTranslations } from './compile/translation-parser';
-import merge from 'lodash/merge';
+import { merge } from 'oak-domain/lib/utils/lodash';
 
 export interface CommonI18nInterface {
     t(key: string, params?: object): string;

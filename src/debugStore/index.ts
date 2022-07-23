@@ -5,7 +5,7 @@ import {
 } from "oak-domain/lib/types";
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { makeIntrinsicWatchers } from 'oak-domain/lib/store/watchers';
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 
 async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
     store: DebugStore<ED, Cxt>,

@@ -1,4 +1,3 @@
-import { forEach } from 'lodash';
 import { useContext, useState, useEffect } from 'react';
 import { useMediaQuery } from 'react-responsive';
 

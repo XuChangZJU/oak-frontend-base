@@ -1,7 +1,7 @@
 import * as React from 'react';
 import PullToRefresh from './platforms/web/PullToRefresh';
 import withRouter from './platforms/web/router';
-import { assign, get, omit } from 'lodash';
+import { get } from 'oak-domain/lib/utils/lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
 import { BasicFeatures } from './features';
@@ -74,7 +74,7 @@ function makeCommonComponentMethods<
             };
             if (keys) {
                 keys.forEach((k) =>
-                    assign(result, {
+                    Object.assign(result, {
                         [k]: target[k],
                     })
                 );
@@ -273,26 +273,26 @@ export function createPage<
             super(props);
             this.state = (data || {}) as any;
             /* for (const m in hiddenMethods) {
-                assign(this, {
+                Object.assign(this, {
                     [m]: hiddenMethods[m as keyof typeof hiddenMethods]!.bind(this),
                 });
             } */
             for (const m in commonMethods) {
-                assign(this, {
+                Object.assign(this, {
                     [m]: commonMethods[m as keyof typeof commonMethods]!.bind(
                         this
                     ),
                 });
             }
             for (const m in listMethods) {
-                assign(this, {
+                Object.assign(this, {
                     [m]: (listMethods as Record<string, Function>)[
                         m as keyof typeof listMethods
                     ]!.bind(this),
                 });
             }
             for (const m in restPageMethods) {
-                assign(this, {
+                Object.assign(this, {
                     [m]: restPageMethods[
                         m as keyof typeof restPageMethods
                     ]!.bind(this),
@@ -302,7 +302,7 @@ export function createPage<
                 const { onPullDownRefresh, onReachBottom, ...restMethods } =
                     methods;
                 for (const m in restMethods) {
-                    assign(this, {
+                    Object.assign(this, {
                         [m]: restMethods[m as keyof typeof restMethods]!.bind(
                             this
                         ),
@@ -469,19 +469,19 @@ export function createComponent<
             super(props);
             this.state = (data || {}) as any;
             /* for (const m in hiddenMethods) {
-                assign(this, {
+                Object.assign(this, {
                     [m]: hiddenMethods[m as keyof typeof hiddenMethods]!.bind(this),
                 });
             } */
             for (const m in commonMethods) {
-                assign(this, {
+                Object.assign(this, {
                     [m]: commonMethods[m as keyof typeof commonMethods]!.bind(
                         this
                     ),
                 });
             }
             for (const m in listMethods) {
-                assign(this, {
+                Object.assign(this, {
                     [m]: (listMethods as Record<string, Function>)[
                         m as keyof typeof listMethods
                     ]!.bind(this),
@@ -489,7 +489,7 @@ export function createComponent<
             }
             if (methods) {
                 for (const m in methods) {
-                    assign(this, {
+                    Object.assign(this, {
                         [m]: methods[m as keyof typeof methods]!.bind(this),
                     });
                 }
