@@ -241,6 +241,19 @@ function translateObservers(observers) {
         }
     };
 }
+function makeMiniprogramCompatibleFunctions() {
+    return {
+        triggerEvent: function (name, detail, option) {
+            throw new Error('method not implemented yet');
+        },
+        animate: function (selector, frames, duration, timeline) {
+            throw new Error('method not implemented yet');
+        },
+        clearAnimation: function (selector, option, callback) {
+            throw new Error('method not implemented yet');
+        }
+    };
+}
 var DEFAULT_REACH_BOTTOM_DISTANCE = 50;
 function createPage(options, features, exceptionRouterDict, context) {
     var _a = options, formData = _a.formData, isList = _a.isList, render = _a.render;
@@ -358,6 +371,9 @@ function createPage(options, features, exceptionRouterDict, context) {
         };
         return OakPageWrapper;
     }(React.PureComponent));
+    ;
+    // 可能有问题，by Xc
+    Object.assign(OakPageWrapper, makeMiniprogramCompatibleFunctions());
     return (0, router_1.default)(OakPageWrapper);
 }
 exports.createPage = createPage;
@@ -367,9 +383,9 @@ function createComponent(options, features, exceptionRouterDict, context) {
     var commonMethods = makeCommonComponentMethods(features, exceptionRouterDict, formData);
     var listMethods = isList ? (0, page_common_1.makeListComponentMethods)(features) : {};
     var fn = translateObservers(observers).fn;
-    var OakPageWrapper = /** @class */ (function (_super) {
-        __extends(OakPageWrapper, _super);
-        function OakPageWrapper(props) {
+    var OakComponentWrapper = /** @class */ (function (_super) {
+        __extends(OakComponentWrapper, _super);
+        function OakComponentWrapper(props) {
             var _a, _b, _c;
             var _this = _super.call(this, props) || this;
             _this.features = features;
@@ -400,7 +416,7 @@ function createComponent(options, features, exceptionRouterDict, context) {
             (lifetimes === null || lifetimes === void 0 ? void 0 : lifetimes.created) && lifetimes.created.call(_this);
             return _this;
         }
-        OakPageWrapper.prototype.componentDidMount = function () {
+        OakComponentWrapper.prototype.componentDidMount = function () {
             return __awaiter(this, void 0, void 0, function () {
                 var _a, oakPath, oakParent, oakFullpath;
                 var _this = this;
@@ -423,7 +439,7 @@ function createComponent(options, features, exceptionRouterDict, context) {
                 });
             });
         };
-        OakPageWrapper.prototype.componentWillUnmount = function () {
+        OakComponentWrapper.prototype.componentWillUnmount = function () {
             return __awaiter(this, void 0, void 0, function () {
                 return __generator(this, function (_a) {
                     hiddenMethods.unsubscribe.call(this);
@@ -432,7 +448,7 @@ function createComponent(options, features, exceptionRouterDict, context) {
                 });
             });
         };
-        OakPageWrapper.prototype.componentDidUpdate = function (prevProps, prevState) {
+        OakComponentWrapper.prototype.componentDidUpdate = function (prevProps, prevState) {
             if (this.props.oakPath &&
                 prevProps.oakPath !== this.props.oakPath) {
                 this.onPropsChanged({
@@ -447,7 +463,7 @@ function createComponent(options, features, exceptionRouterDict, context) {
             }
             fn === null || fn === void 0 ? void 0 : fn.call(this, prevProps, prevState);
         };
-        OakPageWrapper.prototype.onPropsChanged = function (options) {
+        OakComponentWrapper.prototype.onPropsChanged = function (options) {
             return __awaiter(this, void 0, void 0, function () {
                 var path2, parent2, oakFullpath2;
                 return __generator(this, function (_a) {
@@ -471,12 +487,18 @@ function createComponent(options, features, exceptionRouterDict, context) {
                 });
             });
         };
-        OakPageWrapper.prototype.render = function () {
+        OakComponentWrapper.prototype.render = function () {
             var Render = render.call(this);
             return Render;
         };
-        return OakPageWrapper;
+        OakComponentWrapper.prototype.triggerEvent = function (name, detail, options) {
+            // 需要兼容
+        };
+        return OakComponentWrapper;
     }(React.PureComponent));
-    return (0, router_1.default)(OakPageWrapper);
+    ;
+    // 可能有问题，by Xc
+    Object.assign(OakComponentWrapper, makeMiniprogramCompatibleFunctions());
+    return (0, router_1.default)(OakComponentWrapper);
 }
 exports.createComponent = createComponent;

@@ -76,8 +76,12 @@ export class Bluetooth {
         wx.offBLECharacteristicValueChange(callback);
     }
 
-    notifyBLECharacteristicValueChange(option: PromisefyOption<WechatMiniprogram.NotifyBLECharacteristicValueChangeOption>) {
-        wx.notifyBLECharacteristicValueChange(option);
+    async notifyBLECharacteristicValueChange(option: PromisefyOption<WechatMiniprogram.NotifyBLECharacteristicValueChangeOption>) {
+        const result = await wx.notifyBLECharacteristicValueChange(option);
+        if (result.errCode !== 0) {
+            const { errCode, errMsg } = result;
+            throw new Error(`[${errCode}]${errMsg}`);
+        }
     }
 
     getBLEDeviceServices(option: PromisefyOption<WechatMiniprogram.GetBLEDeviceServicesOption>) {
@@ -88,12 +92,20 @@ export class Bluetooth {
         return wx.getBLEDeviceCharacteristics(option);
     }
 
-    createBLEConnection(option: PromisefyOption<WechatMiniprogram.CreateBLEConnectionOption>) {
-        return wx.createBLEConnection(option);
+    async createBLEConnection(option: PromisefyOption<WechatMiniprogram.CreateBLEConnectionOption>) {
+        const result = await wx.createBLEConnection(option);
+        if (result.errCode !== 0) {
+            const { errCode, errMsg } = result;
+            throw new Error(`[${errCode}]${errMsg}`);
+        }
     }
 
-    closeBLEConnection(option: PromisefyOption<WechatMiniprogram.CloseBLEConnectionOption>) {
-        return wx.closeBLEConnection(option);
+    async closeBLEConnection(option: PromisefyOption<WechatMiniprogram.CloseBLEConnectionOption>) {
+        const result = await wx.closeBLEConnection(option);
+        if (result.errCode !== 0) {
+            const { errCode, errMsg } = result;
+            throw new Error(`[${errCode}]${errMsg}`);
+        } 
     }
 
     // peripheral

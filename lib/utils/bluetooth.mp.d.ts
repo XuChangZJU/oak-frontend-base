@@ -20,11 +20,11 @@ export declare class Bluetooth {
     onBLECharacteristicValueChange(callback: WechatMiniprogram.OnBLECharacteristicValueChangeCallback): void;
     offBLEConnectionStateChange(callback: WechatMiniprogram.OnBLEConnectionStateChangeCallback): void;
     offBLECharacteristicValueChange(callback: WechatMiniprogram.OnBLECharacteristicValueChangeCallback): void;
-    notifyBLECharacteristicValueChange(option: PromisefyOption<WechatMiniprogram.NotifyBLECharacteristicValueChangeOption>): void;
+    notifyBLECharacteristicValueChange(option: PromisefyOption<WechatMiniprogram.NotifyBLECharacteristicValueChangeOption>): Promise<void>;
     getBLEDeviceServices(option: PromisefyOption<WechatMiniprogram.GetBLEDeviceServicesOption>): Promise<WechatMiniprogram.GetBLEDeviceServicesSuccessCallbackResult>;
     getBLEDeviceCharacteristics(option: PromisefyOption<WechatMiniprogram.GetBLEDeviceCharacteristicsOption>): Promise<WechatMiniprogram.GetBLEDeviceCharacteristicsSuccessCallbackResult>;
-    createBLEConnection(option: PromisefyOption<WechatMiniprogram.CreateBLEConnectionOption>): Promise<WechatMiniprogram.BluetoothError>;
-    closeBLEConnection(option: PromisefyOption<WechatMiniprogram.CloseBLEConnectionOption>): Promise<WechatMiniprogram.BluetoothError>;
+    createBLEConnection(option: PromisefyOption<WechatMiniprogram.CreateBLEConnectionOption>): Promise<void>;
+    closeBLEConnection(option: PromisefyOption<WechatMiniprogram.CloseBLEConnectionOption>): Promise<void>;
     onPeripheralConnectionStateChanged(callback: WechatMiniprogram.OnBLEPeripheralConnectionStateChangedCallback): void;
     offPeripheralConnectionStateChanged(callback: WechatMiniprogram.OnBLEPeripheralConnectionStateChangedCallback): void;
     createPeripheralServer(): Promise<string>;

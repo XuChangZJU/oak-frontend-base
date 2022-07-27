@@ -8,6 +8,7 @@ import { BasicFeatures } from './features';
 import { ExceptionHandler } from './types/ExceptionRoute';
 import { Feature } from './types/Feature';
 import {
+    MiniprogramStyleMethods,
     OakCommonComponentMethods,
     OakComponentData,
     OakComponentOption,
@@ -192,6 +193,20 @@ function translateObservers(observers?: Record<string, (...args: any[]) => any>)
                     observers[obs].apply(this, args);
                 }
             }
+        }
+    };
+}
+
+function makeMiniprogramCompatibleFunctions(): MiniprogramStyleMethods & ThisType<React.Component> {
+    return {
+        triggerEvent(name, detail, option) {
+            throw new Error('method not implemented yet');
+        },
+        animate(selector, frames, duration, timeline) {
+            throw new Error('method not implemented yet');
+        },
+        clearAnimation(selector, option, callback) {
+            throw new Error('method not implemented yet');
         }
     };
 }
@@ -386,7 +401,10 @@ export function createPage<
                 Render
             );
         }
-    }
+    };
+
+    // 可能有问题，by Xc
+    Object.assign(OakPageWrapper, makeMiniprogramCompatibleFunctions());
     return withRouter(OakPageWrapper);
 }
 
@@ -461,7 +479,7 @@ export function createComponent<
     const listMethods = isList ? makeListComponentMethods(features) : {};
 
     const { fn } = translateObservers(observers);
-    class OakPageWrapper extends React.PureComponent<
+    class OakComponentWrapper extends React.PureComponent<
         ComponentProps<TProperty>,
         OakComponentData<ED, T>
     > {
@@ -571,8 +589,19 @@ export function createComponent<
             const Render = render.call(this);
             return Render;
         }
-    }
-    return withRouter(OakPageWrapper);
+
+        triggerEvent<DetailType = any>(            
+            name: string,
+            detail?: DetailType,
+            options?: WechatMiniprogram.Component.TriggerEventOption
+        ) {
+            // 需要兼容
+        }
+    };
+    
+    // 可能有问题，by Xc
+    Object.assign(OakComponentWrapper, makeMiniprogramCompatibleFunctions());
+    return withRouter(OakComponentWrapper);
 }
 
 export type MakeOakPage<

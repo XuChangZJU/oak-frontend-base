@@ -35,7 +35,7 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     getBeforeExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     getAfterExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     destroy(): void;
-    protected judgeRelation(attr: string): string | 0 | 2 | string[] | 1;
+    protected judgeRelation(attr: string): string | 0 | 1 | 2 | string[];
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }
@@ -50,7 +50,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
     refreshValue(): void;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), projectionShape: ED[T]['Selection']['data'], parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], pagination?: Pagination);
-    getChild(path: string): SingleNode<ED, T, Cxt, AD>;
+    getChild(path: string, newBorn?: true): SingleNode<ED, T, Cxt, AD> | undefined;
     getChildren(): SingleNode<ED, T, Cxt, AD>[];
     getNewBorn(): SingleNode<ED, T, Cxt, AD>[];
     removeChild(path: string): void;

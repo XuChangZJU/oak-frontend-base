@@ -290,7 +290,7 @@ class ListNode<ED extends EntityDict,
         this.pagination = pagination || DEFAULT_PAGINATION;
     }
 
-    getChild(path: string): SingleNode<ED, T, Cxt, AD> {
+    getChild(path: string, newBorn?: true): SingleNode<ED, T, Cxt, AD> | undefined {
         const idx = parseInt(path, 10);
         assert(typeof idx === 'number');
         if (idx < this.children.length) {
@@ -299,7 +299,13 @@ class ListNode<ED extends EntityDict,
         else {
             const idx2 = idx - this.children.length;
             // assert(idx2 < this.newBorn.length);  // 在删除结点时可能还是会跑到
-            return this.newBorn[idx2];
+            if(this.newBorn[idx2]) {
+                return this.newBorn[idx2];
+            }
+            else if (newBorn) {
+                this.newBorn[idx2] = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this, 'create');
+                return this.newBorn[idx2];
+            }
         }
     }
 
@@ -1357,7 +1363,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             if (node instanceof ListNode) {
                 const idx2 = parseInt(split);
                 assert(typeof idx2 === 'number');
-                node = node.getChild(split);
+                node = node.getChild(split, true)!;
                 idx++;
             }
             else {

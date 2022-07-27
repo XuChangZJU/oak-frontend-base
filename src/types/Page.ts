@@ -83,6 +83,25 @@ interface PageOption<
     ns?: T | T[];
 };
 
+export type MiniprogramStyleMethods = {
+    animate(
+        selector: string,
+        keyFrames: WechatMiniprogram.Component.KeyFrame[],
+        duration: number,
+        callback?: () => void
+    ): void
+    clearAnimation(
+        selector: string,
+        options?: WechatMiniprogram.Component.ClearAnimationOptions,
+        callback?: () => void
+    ): void;    
+    triggerEvent: <DetailType = any>(
+        name: string,
+        detail?: DetailType,
+        options?: WechatMiniprogram.Component.TriggerEventOption
+    ) => void;
+}
+
 /**
  * 这里对微信小程序中一些常用的字段进行了封装，维持住在各个平台下的通用性
  * 更多的字段未来再加入
@@ -116,7 +135,7 @@ export type OakPageOption<
             data: Partial<TData & OakPageData<ED, T>>,
             callback?: () => void,
         ) => Promise<void>;
-    } &
+    } & Omit<MiniprogramStyleMethods, 'triggerEvent'> &
         TMethod &
         WechatMiniprogram.Page.ILifetime &
         OakCommonComponentMethods<ED, T> &
@@ -154,13 +173,8 @@ export type OakComponentOption<
         setState: (
             data: Partial<TData>,
             callback?: () => void,
-        ) => Promise<void>;
-        triggerEvent: <DetailType = any>(
-            name: string,
-            detail?: DetailType,
-            options?: WechatMiniprogram.Component.TriggerEventOption
-        ) => void;
-    } &
+        ) => Promise<void>;        
+    } & MiniprogramStyleMethods &
         TMethod &
         OakCommonComponentMethods<ED, T> &
         (IsList extends true ? OakListComponentMethods<ED, T> : {})
