@@ -1,1 +1,2 @@
-export declare function getBrowserWidth(): "xs" | "sm" | "md" | "lg" | "xl" | "xxl";
+import { Width } from '../responsive/context';
+export declare function getBrowserWidth(): Width;
