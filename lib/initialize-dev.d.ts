@@ -22,10 +22,10 @@ export declare function initialize<ED extends EntityDict, Cxt extends Context<ED
     [T in keyof ED]?: Array<ED[T]['OpSchema']>;
 }, actionDict?: ActionDictOfEntityDict<ED>): {
     features: BasicFeatures<ED, Cxt, {
-        operate: typeof import("oak-common-aspect/src/crud").operate;
-        select: typeof import("oak-common-aspect/src/crud").select;
-        amap: typeof import("oak-common-aspect/src/amap").amap;
-        getTranslations: typeof import("oak-common-aspect/src/locales").getTranslations;
+        operate: typeof import("oak-common-aspect/lib/crud").operate;
+        select: typeof import("oak-common-aspect/lib/crud").select;
+        amap: typeof import("oak-common-aspect/lib/amap").amap;
+        getTranslations: typeof import("oak-common-aspect/lib/locales").getTranslations;
     } & AD> & FD;
     context: Cxt;
 };

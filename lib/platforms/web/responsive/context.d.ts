@@ -14,6 +14,8 @@ export declare type Breakpoints = {
     keys: Keys;
     values: Values;
 };
+export declare const keys: Keys;
+export declare const values: Values;
 export declare const defaultBreakpoints: Breakpoints;
 export declare const ResponsiveContext: React.Context<{
     breakpoints?: Breakpoints | undefined;

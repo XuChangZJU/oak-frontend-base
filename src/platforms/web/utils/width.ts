@@ -1,15 +1,12 @@
-export function getBrowserWidth() {
-    if (window.innerWidth < 576) {
-        return 'xs';
-    } else if (window.innerWidth < 768) {
-        return 'sm';
-    } else if (window.innerWidth < 992) {
-        return 'md';
-    } else if (window.innerWidth < 1200) {
-        return 'lg';
-    } else if (window.innerWidth < 1600) {
-        return 'xl';
-    } else {
-        return 'xxl';
+import { values as responsiveValues, Width } from '../responsive/context';
+
+export function getBrowserWidth(): Width {
+    let width = 'xxl';
+    for (let i in responsiveValues) {
+        if (window.innerWidth < responsiveValues[i]) {
+            width = i;
+            break;
+        }
     }
+    return width;
 };
