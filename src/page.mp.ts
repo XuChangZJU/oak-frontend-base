@@ -330,7 +330,7 @@ export function createPage<
         exceptionRouterDict,
         formData
     );
-    const listMethods = isList ? makeListComponentMethods(features) : {};
+    const listMethods = makeListComponentMethods(features);
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } =
         makePageMethods(features, options, context);
 
@@ -502,7 +502,7 @@ export function createComponent<
         exceptionRouterDict,
         formData
     );
-    const listMethods = isList ? makeListComponentMethods(features) : {};
+    const listMethods = makeListComponentMethods(features);
 
     return Component({
         data: Object.assign({}, data, {

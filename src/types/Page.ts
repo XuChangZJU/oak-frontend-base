@@ -139,7 +139,7 @@ export type OakPageOption<
         TMethod &
         WechatMiniprogram.Page.ILifetime &
         OakCommonComponentMethods<ED, T> &
-        (IsList extends true ? OakListComponentMethods<ED, T> : {}) &
+        OakListComponentMethods<ED, T>  &
         OakPageMethods &
         OakPageInstanceProperties<ED, Cxt, AD, FD>
     >;
@@ -177,7 +177,7 @@ export type OakComponentOption<
     } & MiniprogramStyleMethods &
         TMethod &
         OakCommonComponentMethods<ED, T> &
-        (IsList extends true ? OakListComponentMethods<ED, T> : {})
+        OakListComponentMethods<ED, T>
     >;
 
 

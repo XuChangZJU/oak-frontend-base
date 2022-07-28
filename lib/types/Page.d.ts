@@ -74,7 +74,7 @@ export declare type OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt
     state: TData & FormedData & OakPageData<ED, T>;
     props: WechatMiniprogram.Component.PropertyOptionToData<OakPageProperties & TProperty>;
     setState: (data: Partial<TData & OakPageData<ED, T>>, callback?: () => void) => Promise<void>;
-} & Omit<MiniprogramStyleMethods, 'triggerEvent'> & TMethod & WechatMiniprogram.Page.ILifetime & OakCommonComponentMethods<ED, T> & (IsList extends true ? OakListComponentMethods<ED, T> : {}) & OakPageMethods & OakPageInstanceProperties<ED, Cxt, AD, FD>>;
+} & Omit<MiniprogramStyleMethods, 'triggerEvent'> & TMethod & WechatMiniprogram.Page.ILifetime & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakPageMethods & OakPageInstanceProperties<ED, Cxt, AD, FD>>;
 export declare type OakComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = ComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList, TProperty> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, false>> & Partial<{
     lifetimes: WechatMiniprogram.Component.Lifetimes['lifetimes'];
     observers: Record<string, (...args: any[]) => any>;
@@ -86,7 +86,7 @@ export declare type OakComponentOption<ED extends EntityDict, T extends keyof ED
     state: TData & FormedData & OakComponentData<ED, T>;
     props: WechatMiniprogram.Component.PropertyOptionToData<OakComponentProperties & TProperty>;
     setState: (data: Partial<TData>, callback?: () => void) => Promise<void>;
-} & MiniprogramStyleMethods & TMethod & OakCommonComponentMethods<ED, T> & (IsList extends true ? OakListComponentMethods<ED, T> : {})>;
+} & MiniprogramStyleMethods & TMethod & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T>>;
 export declare type OakComponentProperties = {
     oakEntity: StringConstructor;
     oakPath: StringConstructor;
