@@ -25,21 +25,24 @@ export function useWidth(props?: { breakpoints?: Breakpoints }) {
     const obj = breakpoints.values as Values;
 
     const obj2 = {};
+    let isFirstZero = false;
     Object.keys(obj)
         .sort((ele1, ele2) => obj[ele1] - obj[ele2])
         .forEach((key, index) => {
             const value = obj[key as keyof typeof breakpoints.values];
             const nextKey = Object.keys(obj)[index + 1];
+            const preKey = Object.keys(obj)[index - 1];
             let result;
             if (index === 0) {
                 if (value === 0) {
                     result = useMediaQuery({
                         minWidth: obj[key],
-                        maxWidth: obj[nextKey] - 0.2,
+                        maxWidth: obj[nextKey] - 0.1,
                     });
+                    isFirstZero = true;
                 } else {
                     result = useMediaQuery({
-                        maxWidth: obj[key] - 0.2,
+                        maxWidth: obj[key] - 0.1,
                     });
                 }
             } else if (index === Object.keys(obj).length - 1) {
@@ -47,10 +50,18 @@ export function useWidth(props?: { breakpoints?: Breakpoints }) {
                     minWidth: obj[key],
                 });
             } else {
-                result = useMediaQuery({
-                    minWidth: obj[key],
-                    maxWidth: obj[nextKey] - 0.2,
-                });
+                if (isFirstZero) {
+                    result = useMediaQuery({
+                        minWidth: obj[key],
+                        maxWidth: obj[nextKey] - 0.1,
+                    });
+                } else {
+                    result = useMediaQuery({
+                        minWidth: obj[preKey],
+                        maxWidth: obj[key] - 0.1,
+                    });
+                }
+                
             }
 
             Object.assign(obj2, {
