@@ -136,22 +136,17 @@ export const CURRENT_LOCALE_DATA = '$_translations';
 
 export type I18nOptions = {
     translations?: Record<string, any>;
+    defaultLocale?: string;
 };
 
 export function getI18next(options?: I18nOptions) {
-    const systemInfo = wx.getSystemInfoSync();
-    const { language } = systemInfo; // 系统语言
-    const { translations } = options || { translations: {} };
-    let defaultLocale = 'zh_CN';
-    if (language) {
-        defaultLocale = language;
-    }
+    const { translations, defaultLocale } = options || {};
     //初始化i18n
     const i18n = initI18nWechatMp({
         locales: {
-            translations: translations!,
+            translations: translations || {},
         },
-        defaultLocale,
+        defaultLocale: defaultLocale || Locale.default,
     });
     return i18n;
 }
