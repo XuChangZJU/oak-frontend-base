@@ -46,9 +46,15 @@ export function useWidth(props?: { breakpoints?: Breakpoints }) {
                     });
                 }
             } else if (index === Object.keys(obj).length - 1) {
-                result = useMediaQuery({
-                    minWidth: obj[key],
-                });
+                if (isFirstZero) {
+                    result = useMediaQuery({
+                        minWidth: obj[key],
+                    });
+                } else {
+                    result = useMediaQuery({
+                        minWidth: obj[preKey],
+                    });
+                }
             } else {
                 if (isFirstZero) {
                     result = useMediaQuery({
