@@ -20,7 +20,7 @@ import { ExceptionHandler, ExceptionRouters } from './types/ExceptionRoute';
 import { OakComponentOption, OakPageOption } from './types/Page';
 import { createComponent, createPage } from './page.web';
 import { initialize as initProd } from './initialize-prod';
-import { getI18next } from './platforms/web/i18n';
+import { getI18next, I18nOptions } from './platforms/web/i18n';
 
 export function initialize<
     ED extends EntityDict,
@@ -39,8 +39,7 @@ export function initialize<
     connector: Connector<ED, Cxt>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>,
-    translations?: Record<string, any>,
-    version?: string
+    i18nOptions?: I18nOptions
 ) {
     const { features, context } = initProd<ED, Cxt, AD, FD>(
         storageSchema,
@@ -59,9 +58,7 @@ export function initialize<
     }
 
     // 初始化i8n配置
-    const i18n = getI18next({
-        version,
-    });
+    const i18n = getI18next(i18nOptions);
 
     Object.assign(global, {
         OakPage: <

@@ -1,7 +1,7 @@
 
 export type NotificationProps = {
     title?: string;
-    content?: string | React.ReactNode;
+    content?: string | any;
     type: 'info' | 'success' | 'warning' | 'error';
     icon?: string | boolean;
     duration?: number;
@@ -17,8 +17,8 @@ export type NotificationProps = {
         | 'top-right'
         | 'bottom-left'
         | 'bottom-right';
-    footer: React.ReactNode;
-    closeBtn?: string | boolean | React.ReactNode;
+    footer: any;
+    closeBtn?: string | boolean | any;
     onCloseBtnClick?: Function;
     onDurationEnd?: Function;
 };

@@ -134,10 +134,14 @@ export const CURRENT_LOCALE_KEY = '$_locale';
 export const LOCALE_CHANGE_HANDLER_NAME = '$_localeChange';
 export const CURRENT_LOCALE_DATA = '$_translations';
 
-export function getI18next(options?: Record<string, any>) {
+export type I18nOptions = {
+    translations?: Record<string, any>;
+};
+
+export function getI18next(options?: I18nOptions) {
     const systemInfo = wx.getSystemInfoSync();
     const { language } = systemInfo; // 系统语言
-    const { translations } = options || {};
+    const { translations } = options || { translations: {} };
     let defaultLocale = 'zh_CN';
     if (language) {
         defaultLocale = language;
@@ -145,7 +149,7 @@ export function getI18next(options?: Record<string, any>) {
     //初始化i18n
     const i18n = initI18nWechatMp({
         locales: {
-            translations,
+            translations: translations!,
         },
         defaultLocale,
     });

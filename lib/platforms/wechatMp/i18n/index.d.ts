@@ -39,4 +39,7 @@ export declare function getI18nInstanceWechatMp(): I18nWechatMpRuntimeBase | nul
 export declare const CURRENT_LOCALE_KEY = "$_locale";
 export declare const LOCALE_CHANGE_HANDLER_NAME = "$_localeChange";
 export declare const CURRENT_LOCALE_DATA = "$_translations";
-export declare function getI18next(options?: Record<string, any>): I18nWechatMpRuntimeBase;
+export declare type I18nOptions = {
+    translations?: Record<string, any>;
+};
+export declare function getI18next(options?: I18nOptions): I18nWechatMpRuntimeBase;

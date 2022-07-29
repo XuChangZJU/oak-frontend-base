@@ -107,7 +107,11 @@ function getI18nextInitOptions(options?: Record<string, any>) {
     };
 }
 
-export function getI18next(options?: Record<string, any>) {
+export type I18nOptions = {
+    version?: string;
+};
+
+export function getI18next(options?: I18nOptions) {
     const i18nextInitOptions = getI18nextInitOptions(options) as InitOptions;
     i18next
         .use(
