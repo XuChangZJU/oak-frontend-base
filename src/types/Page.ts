@@ -6,6 +6,7 @@ import { BasicFeatures } from "../features";
 import { NamedFilterItem, NamedSorterItem } from './NamedCondition';
 import { CreateNodeOptions } from '../features/runningTree';
 import { NotificationProps } from './Notification';
+import { MessageProps } from './Message';
 
 
 type RowSelected<
@@ -237,6 +238,8 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
     };
     setNotification: (data: NotificationProps) => void;
     consumeNotification: () => NotificationProps | undefined;
+    setMessage: (data: MessageProps) => void;
+    consumeMessage: () => MessageProps | undefined;
     reRender: (extra?: Record<string, any>) => Promise<void>;
     redirectTo: <T2 extends keyof ED>(
         options: Parameters<typeof wx.redirectTo>[0] &

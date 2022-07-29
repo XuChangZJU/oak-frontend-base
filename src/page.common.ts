@@ -156,6 +156,14 @@ export function makeCommonComponentMethods<
             return features.notification.consumeNotification();
         },
 
+        setMessage(data) {
+            features.message.setMessage(data);
+        },
+
+        consumeMessage() {
+            return features.message.consumeMessage();
+        },
+
         async reRender(extra) {
             if (this.state.oakEntity && this.state.oakFullpath) {
                 const rows = features.runningTree.getFreshValue(
@@ -183,12 +191,14 @@ export function makeCommonComponentMethods<
                     }
                 }
 
-                const data: Record<string, any> = formData ? await formData.call(this, {
-                    data: rows as any,
-                    features,
-                    props: this.props,
-                    legalActions: oakLegalActions,
-                }) : {};
+                const data: Record<string, any> = formData
+                    ? await formData.call(this, {
+                          data: rows as any,
+                          features,
+                          props: this.props,
+                          legalActions: oakLegalActions,
+                      })
+                    : {};
                 for (const k in data) {
                     if (data[k] === undefined) {
                         Object.assign(data, {
@@ -206,16 +216,17 @@ export function makeCommonComponentMethods<
                     oakLegalActions,
                 });
                 this.setState(data);
-            }
-            else {
+            } else {
                 /**
                  * 这里的data属性为undefined，但声明不太好写，很难精准的判断这种情况
                  * 即使oakpage的entity属性为空也不行，有可能动态传入
                  */
-                const data: Record<string, any> = formData ? await formData.call(this, {
-                    features,
-                    props: this.props,
-                } as any) : {};
+                const data: Record<string, any> = formData
+                    ? await formData.call(this, {
+                          features,
+                          props: this.props,
+                      } as any)
+                    : {};
                 if (extra) {
                     Object.assign(data, extra);
                 }
@@ -313,16 +324,18 @@ export function makeCommonComponentMethods<
                 oakFocused: {},
             });
             try {
-                const fullpath = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const fullpath = path
+                    ? `${this.state.oakFullpath}.${path}`
+                    : this.state.oakFullpath;
                 const result = await features.runningTree.execute(
                     fullpath,
                     action
                 );
                 this.setState({ oakExecuting: false });
-                this.setNotification({
+                this.setMessage({
                     type: 'success',
                     content: '操作成功',
-                })
+                });
                 return result;
             } catch (err) {
                 if (err instanceof OakException) {
@@ -334,7 +347,7 @@ export function makeCommonComponentMethods<
                             },
                             oakExecuting: false,
                         });
-                        this.setNotification({
+                        this.setMessage({
                             type: 'warning',
                             content: err.message,
                         });
@@ -358,7 +371,7 @@ export function makeCommonComponentMethods<
                                 this.setState({
                                     oakExecuting: false,
                                 });
-                                this.setNotification({
+                                this.setMessage({
                                     type: level || 'warning',
                                     content: err.message,
                                 });
@@ -383,7 +396,7 @@ export function makeCommonComponentMethods<
                             this.setState({
                                 oakExecuting: false,
                             });
-                            this.setNotification({
+                            this.setMessage({
                                 type: 'warning',
                                 content: err.message,
                             });
@@ -393,7 +406,7 @@ export function makeCommonComponentMethods<
                     this.setState({
                         oakExecuting: false,
                     });
-                    this.setNotification({
+                    this.setMessage({
                         type: 'warning',
                         content: (err as Error).message,
                     });
@@ -407,7 +420,9 @@ export function makeCommonComponentMethods<
         },
 
         setAction(action, path) {
-            const fullpath = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const fullpath = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             return features.runningTree.setAction(fullpath, action);
         },
 
@@ -619,15 +634,15 @@ export function makePageMethods<
                     this.setState({
                         oakLoading: false,
                     });
-                    // this.setNotification({
+                    // this.setMessage({
                     //     type: 'success',
                     //     content: '访问成功',
                     // })
                 } catch (err) {
-                    this.setNotification({
+                    this.setMessage({
                         type: 'error',
                         content: (err as Error).message,
-                    })
+                    });
                 }
             }
         },
@@ -650,10 +665,10 @@ export function makePageMethods<
                     this.setState({
                         oakMoreLoading: false,
                     });
-                    this.setNotification({
+                    this.setMessage({
                         type: 'error',
                         content: (err as Error).message,
-                    })
+                    });
                 }
             }
         },

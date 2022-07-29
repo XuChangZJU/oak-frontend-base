@@ -9,6 +9,7 @@ import { Locales } from './locales';
 import { EventBus } from './eventBus';
 import { LocalStorage } from './localStorage';
 import { Notification } from './notification';
+import { Message } from './message';
 import { CacheStore } from '../cacheStore/CacheStore';
 
 export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> (
@@ -23,6 +24,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     const eventBus = new EventBus(aspectWrapper);
     const localStorage = new LocalStorage(aspectWrapper);
     const notification = new Notification(aspectWrapper);
+    const message = new Message(aspectWrapper);
     return {
         cache,
         location,
@@ -31,6 +33,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
         eventBus,
         localStorage,
         notification,
+        message,
     };
 }
 
@@ -46,4 +49,5 @@ export type BasicFeatures<
     eventBus: EventBus<ED, Cxt, AD>;
     localStorage: LocalStorage<ED, Cxt, AD>;
     notification: Notification<ED, Cxt, AD>;
+    message: Message<ED, Cxt, AD>;
 };

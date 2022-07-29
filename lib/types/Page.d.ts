@@ -8,6 +8,7 @@ import { BasicFeatures } from "../features";
 import { NamedFilterItem, NamedSorterItem } from './NamedCondition';
 import { CreateNodeOptions } from '../features/runningTree';
 import { NotificationProps } from './Notification';
+import { MessageProps } from './Message';
 declare type RowSelected<ED extends EntityDict, T extends keyof ED, Proj extends ED[T]['Selection']['data'] = Required<ED[T]['Selection']['data']>> = SelectRowShape<ED[T]['Schema'], Proj> | undefined;
 interface ComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> {
     entity?: T;
@@ -138,6 +139,8 @@ export declare type OakCommonComponentMethods<ED extends EntityDict, T extends k
     };
     setNotification: (data: NotificationProps) => void;
     consumeNotification: () => NotificationProps | undefined;
+    setMessage: (data: MessageProps) => void;
+    consumeMessage: () => MessageProps | undefined;
     reRender: (extra?: Record<string, any>) => Promise<void>;
     redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>) => Promise<void>;
     navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>) => Promise<void>;

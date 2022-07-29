@@ -1,18 +1,13 @@
-
 //react
 import * as React from 'react';
 
-import {
-    useNavigate,
-    useSearchParams,
-    useLocation,
-} from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useWidth } from './responsive'
+import { useWidth } from './responsive';
 
 import URL from 'url';
 
-type Location = { state: object; search: string }
+type Location = { state: object; search: string };
 
 function getParams(location: Location) {
     const { search, state } = location;
@@ -40,20 +35,25 @@ const withRouter = (Component: React.ComponentType<any>) => {
         const { t, i18n } = useTranslation();
         const width = useWidth();
         const params = getParams(location as Location);
+        const { forwardedRef, ...rest } = props;
+
         return (
             <Component
-                {...props}
+                ref={forwardedRef}
+                {...rest}
+                {...params}
                 navigate={navigate}
                 location={location}
                 t={t}
                 i18n={i18n}
                 width={width}
-                {...params}
             />
         );
     };
 
-    return ComponentWithRouterProp;
-}
+    return React.forwardRef((props, ref) => {
+        return <ComponentWithRouterProp {...props} forwardedRef={ref} />;
+    });
+};
 
 export default withRouter;
