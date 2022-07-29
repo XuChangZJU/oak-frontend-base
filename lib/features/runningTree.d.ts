@@ -35,7 +35,7 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     getBeforeExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     getAfterExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     destroy(): void;
-    protected judgeRelation(attr: string): string | 0 | 2 | string[] | 1;
+    protected judgeRelation(attr: string): string | 0 | 1 | 2 | string[];
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }
@@ -169,5 +169,6 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     removeNode(parent: string, path: string): Promise<void>;
     resetUpdateData(path: string): void;
     toggleNode(path: string, nodeData: Record<string, any>, checked: boolean): void;
+    getRoot(): Record<string, SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>>;
 }
 export {};

@@ -91,4 +91,12 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Co
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>) {
         pull(this.syncEventsCallbacks, callback);
     }
+
+    getCachedData() {
+        return this.cacheStore.getCurrentData();
+    }
+
+    getFullData() {
+        return this.cacheStore.getFullData();
+    }
 }

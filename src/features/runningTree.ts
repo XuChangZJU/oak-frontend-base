@@ -1659,4 +1659,8 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             updateData: nodeData as any,
         }, checked);
     }
+
+    getRoot() {
+        return this.root;
+    }
 }

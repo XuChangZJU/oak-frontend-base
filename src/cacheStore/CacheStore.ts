@@ -6,10 +6,12 @@ import { TreeStore } from 'oak-memory-tree-store';
 
 export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;
+    private getFullDataFn?: () => any;
 
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString: string) => (store: CacheStore<ED, Cxt>) => Cxt) {
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString: string) => (store: CacheStore<ED, Cxt>) => Cxt, getFullDataFn?: () => any) {
         super(storageSchema);
         this.executor = new TriggerExecutor(async (cxtStr) => contextBuilder(cxtStr)(this));
+        this.getFullDataFn = getFullDataFn;
     }
 
     async operate<T extends keyof ED>(
@@ -85,5 +87,13 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
 
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
         this.executor.registerChecker(checker);
+    }
+
+    /**
+     * 这个函数是在debug下用来获取debugStore的数据，release下不能使用
+     * @returns 
+     */
+    getFullData() {
+        return this.getFullDataFn!();
     }
 }

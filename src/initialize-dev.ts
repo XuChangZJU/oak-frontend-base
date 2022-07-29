@@ -75,7 +75,7 @@ export function initialize<
         actionDict
     );
 
-    const cacheStore = new CacheStore(storageSchema, contextBuilder);
+    const cacheStore = new CacheStore(storageSchema, contextBuilder, () => debugStore.getCurrentData());
     if (checkers) {
         checkers.forEach((checker) => cacheStore.registerChecker(checker));
     }
