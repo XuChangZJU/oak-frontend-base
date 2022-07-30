@@ -259,7 +259,7 @@ function createPage(options, features, exceptionRouterDict, context) {
     var _a = options, formData = _a.formData, isList = _a.isList, render = _a.render;
     var hiddenMethods = (0, page_common_1.makeHiddenComponentMethods)();
     var commonMethods = makeCommonComponentMethods(features, exceptionRouterDict, formData);
-    var listMethods = isList ? (0, page_common_1.makeListComponentMethods)(features) : {};
+    var listMethods = (0, page_common_1.makeListComponentMethods)(features);
     var _b = makePageMethods(features, options, context), onLoad = _b.onLoad, onPullDownRefresh = _b.onPullDownRefresh, onReachBottom = _b.onReachBottom, restPageMethods = __rest(_b, ["onLoad", "onPullDownRefresh", "onReachBottom"]);
     var methods = options.methods, lifetimes = options.lifetimes, pageLifetimes = options.pageLifetimes, data = options.data, observers = options.observers;
     var fn = translateObservers(observers).fn;
@@ -381,7 +381,7 @@ function createComponent(options, features, exceptionRouterDict, context) {
     var _a = options, formData = _a.formData, isList = _a.isList, entity = _a.entity, methods = _a.methods, lifetimes = _a.lifetimes, pageLifetimes = _a.pageLifetimes, data = _a.data, properties = _a.properties, observers = _a.observers, render = _a.render;
     var hiddenMethods = (0, page_common_1.makeHiddenComponentMethods)();
     var commonMethods = makeCommonComponentMethods(features, exceptionRouterDict, formData);
-    var listMethods = isList ? (0, page_common_1.makeListComponentMethods)(features) : {};
+    var listMethods = (0, page_common_1.makeListComponentMethods)(features);
     var fn = translateObservers(observers).fn;
     var OakComponentWrapper = /** @class */ (function (_super) {
         __extends(OakComponentWrapper, _super);

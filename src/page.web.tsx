@@ -273,7 +273,7 @@ export function createPage<
         exceptionRouterDict,
         formData
     );
-    const listMethods = isList ? makeListComponentMethods(features) : {};
+    const listMethods = makeListComponentMethods(features);
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } =
         makePageMethods(features, options, context);
 
@@ -301,9 +301,7 @@ export function createPage<
             }
             for (const m in listMethods) {
                 Object.assign(this, {
-                    [m]: (listMethods as Record<string, Function>)[
-                        m as keyof typeof listMethods
-                    ]!.bind(this),
+                    [m]: listMethods[m as keyof typeof listMethods]!.bind(this),
                 });
             }
             for (const m in restPageMethods) {
@@ -476,7 +474,7 @@ export function createComponent<
         exceptionRouterDict,
         formData
     );
-    const listMethods = isList ? makeListComponentMethods(features) : {};
+    const listMethods = makeListComponentMethods(features);
 
     const { fn } = translateObservers(observers);
     class OakComponentWrapper extends React.PureComponent<
@@ -500,9 +498,7 @@ export function createComponent<
             }
             for (const m in listMethods) {
                 Object.assign(this, {
-                    [m]: (listMethods as Record<string, Function>)[
-                        m as keyof typeof listMethods
-                    ]!.bind(this),
+                    [m]: listMethods[m as keyof typeof listMethods]!.bind(this),
                 });
             }
             if (methods) {
