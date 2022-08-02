@@ -1,7 +1,6 @@
 /**
  * Created by Administrator on 2018/3/24.
  */
-import { assert } from 'oak-domain/lib/utils/assert';
 import i18next, { InitOptions } from 'i18next';
 import HttpBackend from 'i18next-http-backend';
 import Backend from 'i18next-chained-backend';
@@ -49,8 +48,11 @@ async function translationService(
     const result = {};
     keys.forEach((k: string) => {
         const v = get(json, k);
-        if (process.env.NODE_ENV !== 'production') {
-            assert(v, `[i18n]:${namespace}-${k}最新的服务器数据中无此键值`);
+        if (process.env.NODE_ENV !== 'production' && !v) {
+            console.warn(
+                v,
+                `[i18n]:${namespace}-${k}最新的服务器数据中无此键值`
+            );
         }
         assign(result, { [k]: v });
     });
