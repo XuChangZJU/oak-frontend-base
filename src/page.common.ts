@@ -590,6 +590,20 @@ export function makeListComponentMethods<
                 filters
             );
         },
+
+        getPagination() {
+            return features.runningTree.getPagination(this.state.oakFullpath);
+        },
+
+        setPageSize(pageSize: number, refresh = true) {
+            features.runningTree.setPageSize(
+                this.state.oakFullpath,
+                pageSize
+            );
+            if (refresh) {
+                this.refresh();
+            }
+        }
     };
 }
 

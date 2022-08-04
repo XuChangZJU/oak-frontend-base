@@ -173,6 +173,8 @@ export declare type OakListComponentMethods<ED extends EntityDict, T extends key
     addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
     removeNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
     removeNamedSorterByName: (name: string, refresh?: boolean) => void;
+    getPagination: () => void;
+    setPageSize: (pageSize: number) => void;
 };
 declare type ComponentOnPropsChangeOption = {
     path?: string;

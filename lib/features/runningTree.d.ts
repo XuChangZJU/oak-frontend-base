@@ -16,7 +16,7 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     protected refreshing: boolean;
     private beforeExecute?;
     private afterExecute?;
-    abstract onCachSync(opRecords: OpRecord<ED>[]): Promise<void>;
+    abstract onCacheSync(opRecords: OpRecord<ED>[]): Promise<void>;
     abstract refreshValue(): void;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data']);
     getEntity(): T;
@@ -46,10 +46,12 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     private sorters;
     private pagination;
     private projectionShape;
-    onCachSync(records: OpRecord<ED>[]): Promise<void>;
+    onCacheSync(records: OpRecord<ED>[]): Promise<void>;
     setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
     refreshValue(): void;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), projectionShape: ED[T]['Selection']['data'], parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], pagination?: Pagination);
+    getPagination(): Pagination;
+    setPageSize(pageSize: number): void;
     getChild(path: string, newBorn?: true): SingleNode<ED, T, Cxt, AD> | undefined;
     getChildren(): SingleNode<ED, T, Cxt, AD>[];
     getNewBorn(): SingleNode<ED, T, Cxt, AD>[];
@@ -91,7 +93,7 @@ declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends 
     private value?;
     private freshValue?;
     private children;
-    onCachSync(records: OpRecord<ED>[]): Promise<void>;
+    onCacheSync(records: OpRecord<ED>[]): Promise<void>;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), projectionShape: ED[T]['Selection']['data'], parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data']);
     getChild(path: string): SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
     getChildren(): {
@@ -147,6 +149,8 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     setUniqueForeignKeys(parent: string, attr: string, ids: string[]): void;
     refresh(path: string): Promise<void>;
     loadMore(path: string): Promise<void>;
+    getPagination<T extends keyof ED>(path: string): Pagination;
+    setPageSize<T extends keyof ED>(path: string, pageSize: number): void;
     getNamedFilters<T extends keyof ED>(path: string): NamedFilterItem<ED, keyof ED>[];
     getNamedFilterByName<T extends keyof ED>(path: string, name: string): NamedFilterItem<ED, keyof ED> | undefined;
     setNamedFilters<T extends keyof ED>(path: string, filters: NamedFilterItem<ED, T>[], refresh?: boolean): Promise<void>;

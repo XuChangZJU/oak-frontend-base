@@ -277,20 +277,38 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
 };
 
 export type OakListComponentMethods<ED extends EntityDict, T extends keyof ED> = {
-    pushNode: (path?: string, options?: Pick<CreateNodeOptions<ED, keyof ED>, 'updateData' | 'beforeExecute' | 'afterExecute'>) => void;
+    pushNode: (
+        path?: string,
+        options?: Pick<
+            CreateNodeOptions<ED, keyof ED>,
+            'updateData' | 'beforeExecute' | 'afterExecute'
+        >
+    ) => void;
     removeNode: (parent: string, path: string) => void;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
     getFilters: () => Promise<ED[T]['Selection']['filter'][]>;
-    getFilterByName: (name: string) => Promise<ED[T]['Selection']['filter']> | undefined;
+    getFilterByName: (
+        name: string
+    ) => Promise<ED[T]['Selection']['filter']> | undefined;
     addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
-    removeNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
+    removeNamedFilter: (
+        filter: NamedFilterItem<ED, T>,
+        refresh?: boolean
+    ) => void;
     removeNamedFilterByName: (name: string, refresh?: boolean) => void;
     setNamedSorters: (sorters: NamedSorterItem<ED, T>[]) => void;
     getSorters: () => Promise<ED[T]['Selection']['sorter']>;
-    getSorterByName: (name: string) => Promise<DeduceSorterItem<ED[T]['Schema']> | undefined>;
+    getSorterByName: (
+        name: string
+    ) => Promise<DeduceSorterItem<ED[T]['Schema']> | undefined>;
     addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
-    removeNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
+    removeNamedSorter: (
+        filter: NamedSorterItem<ED, T>,
+        refresh?: boolean
+    ) => void;
     removeNamedSorterByName: (name: string, refresh?: boolean) => void;
+    getPagination: () => void;
+    setPageSize: (pageSize: number) => void;
 };
 
 type ComponentOnPropsChangeOption = {

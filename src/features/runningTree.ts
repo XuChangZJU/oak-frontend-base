@@ -25,7 +25,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
     private beforeExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
     private afterExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
 
-    abstract onCachSync(opRecords: OpRecord<ED>[]): Promise<void>;
+    abstract onCacheSync(opRecords: OpRecord<ED>[]): Promise<void>;
 
     abstract refreshValue(): void;
 
@@ -42,7 +42,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
         this.dirty = false;
         this.refreshing = false;
         this.updateData = updateData || {};
-        this.cache.bindOnSync((records) => this.onCachSync(records));
+        this.cache.bindOnSync((records) => this.onCacheSync(records));
     }
 
     getEntity() {
@@ -157,7 +157,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
     }
 
     destroy() {
-        this.cache.unbindOnSync(this.onCachSync);
+        this.cache.unbindOnSync(this.onCacheSync);
     }
 
     protected judgeRelation(attr: string) {
@@ -192,7 +192,7 @@ class ListNode<ED extends EntityDict,
     private pagination: Pagination;
     private projectionShape: ED[T]['Selection']['data'];
 
-    async onCachSync(records: OpRecord<ED>[]): Promise<void> {
+    async onCacheSync(records: OpRecord<ED>[]): Promise<void> {
         if (this.refreshing) {
             return;
         }
@@ -288,6 +288,17 @@ class ListNode<ED extends EntityDict,
         this.filters = filters || [];
         this.sorters = sorters || [];
         this.pagination = pagination || DEFAULT_PAGINATION;
+    }
+
+    getPagination() {
+        return this.pagination;
+    }
+
+    setPageSize(pageSize: number) {
+        // 切换分页count就重新设置
+        this.pagination.step = pageSize;
+        this.pagination.indexFrom = 0;
+        this.pagination.more = true;
     }
 
     getChild(path: string, newBorn?: true): SingleNode<ED, T, Cxt, AD> | undefined {
@@ -763,7 +774,7 @@ class SingleNode<ED extends EntityDict,
         [K: string]: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
     };
 
-    async onCachSync(records: OpRecord<ED>[]): Promise<void> {
+    async onCacheSync(records: OpRecord<ED>[]): Promise<void> {
         let needReGetValue = false;
         if (this.refreshing || !this.id) {
             return;
@@ -1442,6 +1453,18 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         await node.loadMore();
+    }
+
+    getPagination<T extends keyof ED>(path: string) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        return node.getPagination();
+    }
+
+    setPageSize<T extends keyof ED>(path: string, pageSize: number) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        return node.setPageSize(pageSize);
     }
 
     getNamedFilters<T extends keyof ED>(path: string) {
