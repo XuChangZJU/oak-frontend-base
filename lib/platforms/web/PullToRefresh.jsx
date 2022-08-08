@@ -28,15 +28,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = __importStar(require("react"));
 var rmc_pull_to_refresh_1 = __importDefault(require("rmc-pull-to-refresh"));
-var LoadingIcon_1 = __importDefault(require("./LoadingIcon"));
-// import 'rmc-pull-to-refresh/assets/index.css';
 require("./index.css");
+// import LoadingIcon from './LoadingIcon';
 var OakPullToRefresh = function (props) {
-    return (<rmc_pull_to_refresh_1.default {...props} getScrollContainer={function () { return document.body; }} indicator={{
-            activate: <LoadingIcon_1.default />,
-            deactivate: <LoadingIcon_1.default />,
-            release: <LoadingIcon_1.default animate={true}/>,
-            finish: <LoadingIcon_1.default />,
-        }}/>);
+    return (<rmc_pull_to_refresh_1.default {...props} getScrollContainer={function () { return document.body; }}/>);
 };
 exports.default = OakPullToRefresh;

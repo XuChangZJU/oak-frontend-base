@@ -362,6 +362,7 @@ export function createPage<
         }
 
         async componentDidMount() {
+            this.registerPageScroll();
             hiddenMethods.subscribe.call(this);
             await onLoad.call(this, this.props);
             methods?.onLoad && methods.onLoad.call(this, this.props);
@@ -372,6 +373,7 @@ export function createPage<
         }
 
         async componentWillUnmount() {
+            this.unregisterPageScroll();
             features.runningTree.destroyNode(this.state.oakFullpath);
             hiddenMethods.unsubscribe.call(this);
             methods?.onUnload && methods.onUnload.call(this);
@@ -393,6 +395,12 @@ export function createPage<
                     distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}
                     getScrollContainer={() => {
                         document.body;
+                    }}
+                    indicator={{
+                        activate: commonMethods.t.call(this, 'common:ptrActivate'),
+                        deactivate: commonMethods.t.call(this, 'common:ptrDeactivate'),
+                        release: commonMethods.t.call(this, 'common:ptrRelease'),
+                        finish: commonMethods.t.call(this, 'common:ptrFinish'),
                     }}
                 />,
                 {},

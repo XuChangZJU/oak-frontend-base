@@ -332,6 +332,7 @@ function createPage(options, features, exceptionRouterDict, context) {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
+                            this.registerPageScroll();
                             hiddenMethods.subscribe.call(this);
                             return [4 /*yield*/, onLoad.call(this, this.props)];
                         case 1:
@@ -349,6 +350,7 @@ function createPage(options, features, exceptionRouterDict, context) {
         OakPageWrapper.prototype.componentWillUnmount = function () {
             return __awaiter(this, void 0, void 0, function () {
                 return __generator(this, function (_a) {
+                    this.unregisterPageScroll();
                     features.runningTree.destroyNode(this.state.oakFullpath);
                     hiddenMethods.unsubscribe.call(this);
                     (methods === null || methods === void 0 ? void 0 : methods.onUnload) && methods.onUnload.call(this);
@@ -367,6 +369,11 @@ function createPage(options, features, exceptionRouterDict, context) {
                         methods.onPullDownRefresh.call(_this);
                 }} refreshing={oakLoading} distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE} getScrollContainer={function () {
                     document.body;
+                }} indicator={{
+                    activate: commonMethods.t.call(this, 'common:ptrActivate'),
+                    deactivate: commonMethods.t.call(this, 'common:ptrDeactivate'),
+                    release: commonMethods.t.call(this, 'common:ptrRelease'),
+                    finish: commonMethods.t.call(this, 'common:ptrFinish'),
                 }}/>, {}, Render);
         };
         return OakPageWrapper;
