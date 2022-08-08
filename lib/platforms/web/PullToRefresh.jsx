@@ -32,9 +32,7 @@ var LoadingIcon_1 = __importDefault(require("./LoadingIcon"));
 // import 'rmc-pull-to-refresh/assets/index.css';
 require("./index.css");
 var OakPullToRefresh = function (props) {
-    return (<rmc_pull_to_refresh_1.default {...props} getScrollContainer={function () {
-            document.body;
-        }} indicator={{
+    return (<rmc_pull_to_refresh_1.default {...props} getScrollContainer={function () { return document.body; }} indicator={{
             activate: <LoadingIcon_1.default />,
             deactivate: <LoadingIcon_1.default />,
             release: <LoadingIcon_1.default animate={true}/>,

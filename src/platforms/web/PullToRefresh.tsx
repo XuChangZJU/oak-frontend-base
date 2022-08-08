@@ -8,9 +8,7 @@ const OakPullToRefresh: React.FC<any> = (props) => {
     return (
         <PullToRefresh
             {...props}
-            getScrollContainer={() => {
-                document.body;
-            }}
+            getScrollContainer={() => document.body}
             indicator={{
                 activate: <LoadingIcon />,
                 deactivate: <LoadingIcon />,
