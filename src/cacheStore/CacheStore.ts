@@ -1,4 +1,4 @@
-import { EntityDict, OperationResult, OpRecord } from 'oak-domain/lib/types/Entity';
+import { EntityDict, OperateOption, OperationResult, OpRecord, SelectOption } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from "oak-domain/lib/types/Storage";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { Checker, Context, Trigger } from 'oak-domain/lib/types';
@@ -18,7 +18,7 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         entity: T,
         operation: ED[T]['Operation'],
         context: Cxt,
-        params?: Object
+        option?: OperateOption
     ): Promise<OperationResult<ED>> {
         const autoCommit = !context.getCurrentTxnId();
         let result;
@@ -27,7 +27,7 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         }
         try {
             await this.executor.preOperation(entity, operation, context);
-            result = await super.operate(entity, operation, context, params);
+            result = await super.operate(entity, operation, context, option);
             await this.executor.postOperation(entity, operation, context);
         }
         catch (err) {
@@ -64,7 +64,7 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         entity: T,
         selection: S,
         context: Cxt,
-        params?: Object
+        option?: SelectOption
     ) {
         const autoCommit = !context.getCurrentTxnId();
         if (autoCommit) {
@@ -73,7 +73,7 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         let result;
 
         try {
-            result = await super.select(entity, selection, context, params);
+            result = await super.select(entity, selection, context, option);
         }
         catch (err) {
             await context.rollback();

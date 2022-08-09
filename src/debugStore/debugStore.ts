@@ -1,12 +1,16 @@
-import { EntityDict, OperationResult, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateParams, SelectionResult, SelectRowShape } from "oak-domain/lib/types";
+import { EntityDict, SelectOption, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateOption, SelectionResult, SelectRowShape } from "oak-domain/lib/types";
 import { TreeStore } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { RWLock } from 'oak-domain/lib/utils/concurrent';
 
-interface DebugStoreOperationParams extends OperateParams {
-    noLock?: true,
-    omitTrigger?: true,
+interface DebugStoreOperateOption extends OperateOption {
+    noLock?: true;
+};
+
+interface DebugStoreSelectOption extends SelectOption {
+    noLock?: true;
+    omitTrigger?: true;
 };
 
 export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
@@ -20,24 +24,24 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         this.rwLock = new RWLock();
     }
 
-    protected async cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, params?: DebugStoreOperationParams) {        
-        await this.executor.preOperation(entity, operation, context, params);
-        const result = super.cascadeUpdate(entity, operation, context, params);
-        await this.executor.postOperation(entity, operation, context, params);
+    protected async cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, option?: OperateOption) {        
+        await this.executor.preOperation(entity, operation, context, option);
+        const result = super.cascadeUpdate(entity, operation, context, option);
+        await this.executor.postOperation(entity, operation, context, option);
         return result;
     }
 
-    protected async cascadeSelect<T extends keyof ED, S extends ED[T]["Selection"]>(entity: T, selection: S, context: Cxt, params?: DebugStoreOperationParams): Promise<SelectRowShape<ED[T]['Schema'], S['data']>[]> {
+    protected async cascadeSelect<T extends keyof ED, S extends ED[T]["Selection"]>(entity: T, selection: S, context: Cxt, option?: DebugStoreSelectOption): Promise<SelectRowShape<ED[T]['Schema'], S['data']>[]> {
         const selection2 = Object.assign({
             action: 'select',
         }, selection) as ED[T]['Operation'];
 
-        if (!params?.omitTrigger) {
-            await this.executor.preOperation(entity, selection2, context, params);
+        if (!option?.omitTrigger) {
+            await this.executor.preOperation(entity, selection2, context, option);
         }
-        const result = await super.cascadeSelect(entity, selection2 as any, context, params);
-        if (!params?.omitTrigger) {
-            await this.executor.postOperation(entity, selection2, context, params, result);
+        const result = await super.cascadeSelect(entity, selection2 as any, context, option);
+        if (!option?.omitTrigger) {
+            await this.executor.postOperation(entity, selection2, context, option, result);
         }
         return result;
     }
@@ -46,9 +50,9 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         entity: T,
         operation: ED[T]['Operation'],
         context: Cxt,
-        params?: DebugStoreOperationParams
+        option?: DebugStoreOperateOption
     ) {
-        if (!params || !params.noLock) {
+        if (!option || !option.noLock) {
             await this.rwLock.acquire('S');
         }
 
@@ -58,7 +62,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
             await context.begin();
         }
         try {
-            result = await super.operate(entity, operation, context, params);
+            result = await super.operate(entity, operation, context, option);
         }
         catch (err) {
             await context.rollback();
@@ -67,7 +71,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         if (autoCommit) {
             await context.commit();
         }
-        if (!params || !params.noLock) {
+        if (!option || !option.noLock) {
             this.rwLock.release();
         }
         return result;
@@ -77,9 +81,9 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         entity: T,
         selection: S,
         context: Cxt,
-        params?: DebugStoreOperationParams
+        option?: DebugStoreSelectOption
     ) {
-        if (!params || !params.noLock) {
+        if (!option || !option.noLock) {
             await this.rwLock.acquire('S');
         }
         const autoCommit = !context.getCurrentTxnId();
@@ -89,7 +93,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         let result: SelectionResult<ED[T]['Schema'], S['data']>;
 
         try {
-            result = await super.select(entity, selection, context, params);
+            result = await super.select(entity, selection, context, option);
         }
         catch (err) {
             await context.rollback();
@@ -98,7 +102,7 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         if (autoCommit) {
             await context.commit();
         }
-        if (!params || !params.noLock) {
+        if (!option || !option.noLock) {
             this.rwLock.release();
         }
         return result;

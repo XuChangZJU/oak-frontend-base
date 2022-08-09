@@ -1,4 +1,4 @@
-import { StorageSchema, EntityDict, OperateParams, OpRecord, Aspect, Checker, RowStore, Context, AspectWrapper } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper } from 'oak-domain/lib/types';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Action, Feature } from '../types/Feature';
 import { pull } from 'oak-domain/lib/utils/lodash';
@@ -29,11 +29,12 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Co
 
 
     @Action
-    async refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: object) {
+    async refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], option?: SelectOption, getCount?: true) {
         const { result } = await this.getAspectWrapper().exec('select', {
             entity, 
             selection,
-            params,
+            option,
+            getCount,
         });
         return result;
     }
@@ -54,14 +55,14 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Co
      * @param operation 
      * @param scene 
      * @param commit 
-     * @param params 
+     * @param option 
      * @returns 
      */
-    async operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], params?: OperateParams) {
+    async operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], option?: OperateOption) {
         let result: Awaited<ReturnType<typeof this.cacheStore.operate>>;
         await this.context.begin();
         try {
-            result = await this.cacheStore.operate(entity, operation, this.context, params);
+            result = await this.cacheStore.operate(entity, operation, this.context, option);
             
             await this.context.rollback();
         }
@@ -73,7 +74,7 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Co
     }
 
 
-    async get<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, params?: object) {                
+    async get<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, params?: SelectOption) {                
         const { result } = await this.cacheStore.select(entity, selection, this.context, params);
         return result;
     }

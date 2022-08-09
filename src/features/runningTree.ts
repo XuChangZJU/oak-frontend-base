@@ -536,18 +536,20 @@ class ListNode<ED extends EntityDict,
             }
         ));
         this.refreshing = true;
-        const { result } = await this.cache.refresh(entity, {
+        // todo 什么时候该传getCount参数 (老王)
+        const { data, count } = await this.cache.refresh(entity, {
             data: proj as any,
             filter: filterss.length > 0 ? combineFilters(filterss.filter(ele => !!ele)) : undefined,
             sorter: sorterss,
             indexFrom: 0,
             count: step,
-        });
+        }, undefined, true);
         this.pagination.indexFrom = 0;
-        this.pagination.more = result.length === step;
+        this.pagination.more = data.length === step;
         this.refreshing = false;
+        this.pagination.total = count;
 
-        this.setValue(result as any);
+        this.setValue(data);
     }
 
     async loadMore() {
@@ -579,7 +581,7 @@ class ListNode<ED extends EntityDict,
             }
         ));
         this.refreshing = true;
-        const { result } = await this.cache.refresh(entity, {
+        const { data } = await this.cache.refresh(entity, {
             data: proj as any,
             filter: filterss.length > 0 ? combineFilters(filterss.filter(ele => !!ele)) : undefined,
             sorter: sorterss,
@@ -587,10 +589,10 @@ class ListNode<ED extends EntityDict,
             count: step,
         });
         this.pagination.indexFrom = this.pagination.indexFrom + step;
-        this.pagination.more = result.length === step;
+        this.pagination.more = data.length === step;
         this.refreshing = false;
 
-        this.appendValue(result as any);
+        this.appendValue(data);
     }
 
     resetUpdateData() {
@@ -1027,14 +1029,14 @@ class SingleNode<ED extends EntityDict,
         const projection = await this.getProjection();
         if (this.id) {
             this.refreshing = true;
-            const { result: [value] } = await this.cache.refresh(this.entity, {
+            const { data: [value] } = await this.cache.refresh(this.entity, {
                 data: projection,
                 filter: {
                     id: this.id,
                 },
             } as any);
             this.refreshing = false;
-            this.setValue(value as any);
+            this.setValue(value);
         }
     }
 
