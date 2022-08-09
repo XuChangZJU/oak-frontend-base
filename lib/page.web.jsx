@@ -367,9 +367,7 @@ function createPage(options, features, exceptionRouterDict, context) {
                     onPullDownRefresh.call(_this);
                     (methods === null || methods === void 0 ? void 0 : methods.onPullDownRefresh) &&
                         methods.onPullDownRefresh.call(_this);
-                }} refreshing={oakLoading} distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE} getScrollContainer={function () {
-                    document.body;
-                }} indicator={{
+                }} refreshing={oakLoading} distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE} indicator={{
                     activate: commonMethods.t.call(this, 'common:ptrActivate'),
                     deactivate: commonMethods.t.call(this, 'common:ptrDeactivate'),
                     release: commonMethods.t.call(this, 'common:ptrRelease'),
