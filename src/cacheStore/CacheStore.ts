@@ -14,11 +14,11 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         this.getFullDataFn = getFullDataFn;
     }
 
-    async operate<T extends keyof ED>(
+    async operate<T extends keyof ED, OP extends OperateOption>(
         entity: T,
         operation: ED[T]['Operation'],
         context: Cxt,
-        option?: OperateOption
+        option?: OP
     ): Promise<OperationResult<ED>> {
         const autoCommit = !context.getCurrentTxnId();
         let result;
@@ -60,11 +60,11 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         return result;
     }
 
-    async select<T extends keyof ED, S extends ED[T]['Selection']>(
+    async select<T extends keyof ED, S extends ED[T]['Selection'], OP extends SelectOption>(
         entity: T,
         selection: S,
         context: Cxt,
-        option?: SelectOption
+        option?: OP
     ) {
         const autoCommit = !context.getCurrentTxnId();
         if (autoCommit) {

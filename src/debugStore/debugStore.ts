@@ -24,14 +24,14 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         this.rwLock = new RWLock();
     }
 
-    protected async cascadeUpdate<T extends keyof ED>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, option?: OperateOption) {        
+    protected async cascadeUpdate<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, option?: OP) {        
         await this.executor.preOperation(entity, operation, context, option);
         const result = super.cascadeUpdate(entity, operation, context, option);
         await this.executor.postOperation(entity, operation, context, option);
         return result;
     }
 
-    protected async cascadeSelect<T extends keyof ED, S extends ED[T]["Selection"]>(entity: T, selection: S, context: Cxt, option?: DebugStoreSelectOption): Promise<SelectRowShape<ED[T]['Schema'], S['data']>[]> {
+    protected async cascadeSelect<T extends keyof ED, S extends ED[T]["Selection"], OP extends DebugStoreSelectOption>(entity: T, selection: S, context: Cxt, option?: OP): Promise<SelectRowShape<ED[T]['Schema'], S['data']>[]> {
         const selection2 = Object.assign({
             action: 'select',
         }, selection) as ED[T]['Operation'];
@@ -46,11 +46,11 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         return result;
     }
 
-    async operate<T extends keyof ED>(
+    async operate<T extends keyof ED, OP extends DebugStoreOperateOption>(
         entity: T,
         operation: ED[T]['Operation'],
         context: Cxt,
-        option?: DebugStoreOperateOption
+        option?: OP
     ) {
         if (!option || !option.noLock) {
             await this.rwLock.acquire('S');
@@ -77,11 +77,11 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         return result;
     }
 
-    async select<T extends keyof ED, S extends ED[T]['Selection']>(
+    async select<T extends keyof ED, S extends ED[T]['Selection'], OP extends DebugStoreSelectOption>(
         entity: T,
         selection: S,
         context: Cxt,
-        option?: DebugStoreSelectOption
+        option?: OP
     ) {
         if (!option || !option.noLock) {
             await this.rwLock.acquire('S');

@@ -7,7 +7,7 @@ export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     context: Cxt;
     private syncEventsCallbacks;
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, context: Cxt, cacheStore: CacheStore<ED, Cxt>);
-    refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], option?: SelectOption, getCount?: true): Promise<{
+    refresh<T extends keyof ED, OP extends SelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true): Promise<{
         data: import("oak-domain/lib/types").SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]>[];
         count?: number | undefined;
     }>;

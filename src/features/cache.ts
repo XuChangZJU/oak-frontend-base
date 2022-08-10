@@ -29,7 +29,7 @@ export class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends Co
 
 
     @Action
-    async refresh<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], option?: SelectOption, getCount?: true) {
+    async refresh<T extends keyof ED, OP extends SelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true) {
         const { result } = await this.getAspectWrapper().exec('select', {
             entity, 
             selection,
