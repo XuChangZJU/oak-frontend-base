@@ -1,7 +1,7 @@
 export interface Pagination {
-    step: number;
-    append: boolean;
-    indexFrom: number;
+    currentPage: number;
+    pageSize: number;
+    append?: boolean;
     more: boolean;
     total?: number;
 };;

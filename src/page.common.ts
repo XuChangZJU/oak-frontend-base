@@ -595,15 +595,21 @@ export function makeListComponentMethods<
             return features.runningTree.getPagination(this.state.oakFullpath);
         },
 
-        setPageSize(pageSize: number, refresh = true) {
-            features.runningTree.setPageSize(
+        async setPageSize(pageSize: number, refresh = true) {
+            return await features.runningTree.setPageSize(
                 this.state.oakFullpath,
-                pageSize
+                pageSize,
+                refresh
             );
-            if (refresh) {
-                this.refresh();
-            }
-        }
+        },
+
+        async setCurrentPage(currentPage: number) {
+            assert(currentPage !== 0);
+            return await features.runningTree.setCurrentPage(
+                this.state.oakFullpath,
+                currentPage
+            );
+        },
     };
 }
 
@@ -665,7 +671,7 @@ export function makePageMethods<
             await this.refresh();
         },
 
-        async onReachBottom() {
+        async loadMore() {
             if (this.state.oakEntity && options.isList) {
                 this.setState({
                     oakMoreLoading: true,
@@ -685,6 +691,10 @@ export function makePageMethods<
                     });
                 }
             }
+        },
+
+        async onReachBottom() {
+            await this.loadMore();
         },
 
         async onLoad(pageOption) {
@@ -717,11 +727,11 @@ export function makePageMethods<
                                     filter:
                                         typeof filter === 'function'
                                             ? () =>
-                                                filter({
-                                                    features,
-                                                    props: this.props,
-                                                    onLoadOptions: pageOption,
-                                                })
+                                                  filter({
+                                                      features,
+                                                      props: this.props,
+                                                      onLoadOptions: pageOption,
+                                                  })
                                             : filter,
                                     ['#name']: name,
                                 });
@@ -733,11 +743,11 @@ export function makePageMethods<
                             proj =
                                 typeof projection === 'function'
                                     ? () =>
-                                        projection({
-                                            features,
-                                            props: this.props,
-                                            onLoadOptions: pageOption,
-                                        })
+                                          projection({
+                                              features,
+                                              props: this.props,
+                                              onLoadOptions: pageOption,
+                                          })
                                     : projection;
                         }
                         let sorters: NamedSorterItem<ED, T>[] = [];
@@ -752,11 +762,11 @@ export function makePageMethods<
                                     sorter:
                                         typeof sorter === 'function'
                                             ? () =>
-                                                sorter({
-                                                    features,
-                                                    props: this.props,
-                                                    onLoadOptions: pageOption,
-                                                })
+                                                  sorter({
+                                                      features,
+                                                      props: this.props,
+                                                      onLoadOptions: pageOption,
+                                                  })
                                             : sorter,
                                     ['#name']: name,
                                 });
@@ -785,7 +795,8 @@ export function makePageMethods<
                                 oakFullpath: path2,
                                 oakFrom,
                                 newOakActions:
-                                    oakActions && JSON.parse(oakActions).length > 0
+                                    oakActions &&
+                                    JSON.parse(oakActions).length > 0
                                         ? JSON.parse(oakActions)
                                         : options.actions || [],
                             },
@@ -793,14 +804,19 @@ export function makePageMethods<
                                 context.setScene(path2);
                                 this.refresh();
                                 options.methods?.onLoad &&
-                                    await options.methods.onLoad.call(this, pageOption);
+                                    (await options.methods.onLoad.call(
+                                        this,
+                                        pageOption
+                                    ));
                                 resolve();
                             }
                         );
-                    }
-                    else {
+                    } else {
                         options.methods?.onLoad &&
-                            await options.methods.onLoad.call(this, pageOption);
+                            (await options.methods.onLoad.call(
+                                this,
+                                pageOption
+                            ));
 
                         resolve();
                     }

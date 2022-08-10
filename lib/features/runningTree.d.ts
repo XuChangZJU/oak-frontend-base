@@ -51,7 +51,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     refreshValue(): void;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), projectionShape: ED[T]['Selection']['data'], parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], pagination?: Pagination);
     getPagination(): Pagination;
-    setPageSize(pageSize: number): void;
+    setPagination(pagination: Pagination): void;
     getChild(path: string, newBorn?: true): SingleNode<ED, T, Cxt, AD> | undefined;
     getChildren(): SingleNode<ED, T, Cxt, AD>[];
     getNewBorn(): SingleNode<ED, T, Cxt, AD>[];
@@ -75,6 +75,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     composeOperation(action?: string, execute?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
     refresh(): Promise<void>;
     loadMore(): Promise<void>;
+    setCurrentPage<T extends keyof ED>(currentPage: number, append?: boolean): Promise<void>;
     resetUpdateData(): void;
     pushNewBorn(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): SingleNode<ED, T, Cxt, AD>;
     popNewBorn(path: string): void;
@@ -150,7 +151,8 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     refresh(path: string): Promise<void>;
     loadMore(path: string): Promise<void>;
     getPagination<T extends keyof ED>(path: string): Pagination;
-    setPageSize<T extends keyof ED>(path: string, pageSize: number): void;
+    setPageSize<T extends keyof ED>(path: string, pageSize: number, refresh?: boolean): Promise<void>;
+    setCurrentPage<T extends keyof ED>(path: string, currentPage: number): Promise<void>;
     getNamedFilters<T extends keyof ED>(path: string): NamedFilterItem<ED, keyof ED>[];
     getNamedFilterByName<T extends keyof ED>(path: string, name: string): NamedFilterItem<ED, keyof ED> | undefined;
     setNamedFilters<T extends keyof ED>(path: string, filters: NamedFilterItem<ED, T>[], refresh?: boolean): Promise<void>;

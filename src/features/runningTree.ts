@@ -174,18 +174,20 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
 }
 
 const DEFAULT_PAGINATION: Pagination = {
-    step: 20,
+    currentPage: 1,
+    pageSize: 20,
     append: true,
-    indexFrom: 0,
     more: true,
 }
 
-class ListNode<ED extends EntityDict,
+class ListNode<
+    ED extends EntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
-    AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
+    AD extends CommonAspectDict<ED, Cxt>
+> extends Node<ED, T, Cxt, AD> {
     private children: SingleNode<ED, T, Cxt, AD>[];
-    private newBorn: SingleNode<ED, T, Cxt, AD>[];    // 新插入的结点
+    private newBorn: SingleNode<ED, T, Cxt, AD>[]; // 新插入的结点
 
     private filters: NamedFilterItem<ED, T>[];
     private sorters: NamedSorterItem<ED, T>[];
@@ -205,14 +207,11 @@ class ListNode<ED extends EntityDict,
                     const { e, d } = record as CreateOpResult<ED, T>;
                     if (e === this.entity) {
                         if (d instanceof Array) {
-                            d.forEach(
-                                (dd) => {
-                                    const { id } = dd;
-                                    createdIds.push(id);
-                                }
-                            )
-                        }
-                        else {
+                            d.forEach((dd) => {
+                                const { id } = dd;
+                                createdIds.push(id);
+                            });
+                        } else {
                             const { id } = d;
                             createdIds.push(id);
                         }
@@ -233,54 +232,73 @@ class ListNode<ED extends EntityDict,
             }
         }
         if (createdIds.length > 0 || removeIds) {
-            const currentIds = this.children.map(
-                ele => ele.getFreshValue()?.id
-            ).filter(ele => !!ele) as string[];
+            const currentIds = this.children
+                .map((ele) => ele.getFreshValue()?.id)
+                .filter((ele) => !!ele) as string[];
 
-            const filter = combineFilters([{
-                id: {
-                    $in: currentIds.concat(createdIds),
-                }
-            }, ...(this.filters).map(ele => ele.filter)]);
+            const filter = combineFilters([
+                {
+                    id: {
+                        $in: currentIds.concat(createdIds),
+                    },
+                },
+                ...this.filters.map((ele) => ele.filter),
+            ]);
 
-            const sorterss = (await Promise.all(
-                this.sorters.map(
-                    async (ele) => {
+            const sorterss = (
+                await Promise.all(
+                    this.sorters.map(async (ele) => {
                         const { sorter } = ele;
                         if (typeof sorter === 'function') {
                             return await sorter();
-                        }
-                        else {
+                        } else {
                             return sorter;
                         }
-                    }
+                    })
                 )
-            )).filter(ele => !!ele)  as DeduceSorterItem<ED[T]['Schema']>[];
-            const projection = typeof this.projection === 'function' ? await this.projection() : this.projection;
-            const value = await this.cache.get(this.entity, {
-                data: projection as any,
-                filter,
-                sorter: sorterss,
-            }, { obscure: true });
+            ).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
+            const projection =
+                typeof this.projection === 'function'
+                    ? await this.projection()
+                    : this.projection;
+            const value = await this.cache.get(
+                this.entity,
+                {
+                    data: projection as any,
+                    filter,
+                    sorter: sorterss,
+                },
+                { obscure: true }
+            );
             this.setValue(value);
         }
     }
 
-    async setForeignKey(attr: string, entity: keyof ED, id: string | undefined) {
+    async setForeignKey(
+        attr: string,
+        entity: keyof ED,
+        id: string | undefined
+    ) {
         // todo 对list的update外键的情况等遇到了再写 by Xc
     }
 
-    refreshValue(): void {
+    refreshValue(): void {}
 
-    }
-
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
-        projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
+    constructor(
+        entity: T,
+        schema: StorageSchema<ED>,
+        cache: Cache<ED, Cxt, AD>,
+        projection:
+            | ED[T]['Selection']['data']
+            | (() => Promise<ED[T]['Selection']['data']>),
         projectionShape: ED[T]['Selection']['data'],
         parent?: Node<ED, keyof ED, Cxt, AD>,
-        action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'],
-        filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[],
-        pagination?: Pagination) {
+        action?: ED[T]['Action'],
+        updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'],
+        filters?: NamedFilterItem<ED, T>[],
+        sorters?: NamedSorterItem<ED, T>[],
+        pagination?: Pagination
+    ) {
         super(entity, schema, cache, projection, parent, action, updateData);
         this.projectionShape = projectionShape;
         this.children = [];
@@ -294,27 +312,34 @@ class ListNode<ED extends EntityDict,
         return this.pagination;
     }
 
-    setPageSize(pageSize: number) {
-        // 切换分页count就重新设置
-        this.pagination.step = pageSize;
-        this.pagination.indexFrom = 0;
-        this.pagination.more = true;
+    setPagination(pagination: Pagination) {
+        const newPagination = Object.assign(this.pagination, pagination);
+        this.pagination = newPagination;
     }
 
-    getChild(path: string, newBorn?: true): SingleNode<ED, T, Cxt, AD> | undefined {
+    getChild(
+        path: string,
+        newBorn?: true
+    ): SingleNode<ED, T, Cxt, AD> | undefined {
         const idx = parseInt(path, 10);
         assert(typeof idx === 'number');
         if (idx < this.children.length) {
             return this.children[idx];
-        }
-        else {
+        } else {
             const idx2 = idx - this.children.length;
             // assert(idx2 < this.newBorn.length);  // 在删除结点时可能还是会跑到
-            if(this.newBorn[idx2]) {
+            if (this.newBorn[idx2]) {
                 return this.newBorn[idx2];
-            }
-            else if (newBorn) {
-                this.newBorn[idx2] = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this, 'create');
+            } else if (newBorn) {
+                this.newBorn[idx2] = new SingleNode(
+                    this.entity,
+                    this.schema,
+                    this.cache,
+                    this.projection,
+                    this.projectionShape,
+                    this,
+                    'create'
+                );
                 return this.newBorn[idx2];
             }
         }
@@ -339,26 +364,45 @@ class ListNode<ED extends EntityDict,
         this.children.splice(idx, 1);
     }
 
-    setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined) {
+    setValue(
+        value:
+            | SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[]
+            | undefined
+    ) {
         this.children = [];
-        value && value.forEach(
-            (ele, idx) => {
-                const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this);
+        value &&
+            value.forEach((ele, idx) => {
+                const node = new SingleNode(
+                    this.entity,
+                    this.schema,
+                    this.cache,
+                    this.projection,
+                    this.projectionShape,
+                    this
+                );
                 this.children[idx] = node;
                 node.setValue(ele);
-            }
-        );
+            });
     }
 
-
-    private appendValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined) {
-        value && value.forEach(
-            (ele, idx) => {
-                const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this);
+    private appendValue(
+        value:
+            | SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[]
+            | undefined
+    ) {
+        value &&
+            value.forEach((ele, idx) => {
+                const node = new SingleNode(
+                    this.entity,
+                    this.schema,
+                    this.cache,
+                    this.projection,
+                    this.projectionShape,
+                    this
+                );
                 this.children[this.children.length + idx] = node;
                 node.setValue(ele);
-            }
-        );
+            });
     }
 
     getNamedFilters() {
@@ -376,7 +420,9 @@ class ListNode<ED extends EntityDict,
 
     addNamedFilter(filter: NamedFilterItem<ED, T>) {
         // filter 根据#name查找
-        const fIndex = this.filters.findIndex(ele => filter['#name'] && ele['#name'] === filter['#name']);
+        const fIndex = this.filters.findIndex(
+            (ele) => filter['#name'] && ele['#name'] === filter['#name']
+        );
         if (fIndex >= 0) {
             this.filters.splice(fIndex, 1, filter);
         } else {
@@ -386,7 +432,9 @@ class ListNode<ED extends EntityDict,
 
     removeNamedFilter(filter: NamedFilterItem<ED, T>) {
         // filter 根据#name查找
-        const fIndex = this.filters.findIndex(ele => filter['#name'] && ele['#name'] === filter['#name']);
+        const fIndex = this.filters.findIndex(
+            (ele) => filter['#name'] && ele['#name'] === filter['#name']
+        );
         if (fIndex >= 0) {
             this.filters.splice(fIndex, 1);
         }
@@ -394,7 +442,7 @@ class ListNode<ED extends EntityDict,
 
     removeNamedFilterByName(name: string) {
         // filter 根据#name查找
-        const fIndex = this.filters.findIndex(ele => ele['#name'] === name);
+        const fIndex = this.filters.findIndex((ele) => ele['#name'] === name);
         if (fIndex >= 0) {
             this.filters.splice(fIndex, 1);
         }
@@ -415,7 +463,9 @@ class ListNode<ED extends EntityDict,
 
     addNamedSorter(sorter: NamedSorterItem<ED, T>) {
         // sorter 根据#name查找
-        const fIndex = this.sorters.findIndex(ele => sorter['#name'] && ele['#name'] === sorter['#name']);
+        const fIndex = this.sorters.findIndex(
+            (ele) => sorter['#name'] && ele['#name'] === sorter['#name']
+        );
         if (fIndex >= 0) {
             this.sorters.splice(fIndex, 1, sorter);
         } else {
@@ -425,7 +475,9 @@ class ListNode<ED extends EntityDict,
 
     removeNamedSorter(sorter: NamedSorterItem<ED, T>) {
         // sorter 根据#name查找
-        const fIndex = this.sorters.findIndex(ele => sorter['#name'] && ele['#name'] === sorter['#name']);
+        const fIndex = this.sorters.findIndex(
+            (ele) => sorter['#name'] && ele['#name'] === sorter['#name']
+        );
         if (fIndex >= 0) {
             this.sorters.splice(fIndex, 1);
         }
@@ -433,31 +485,27 @@ class ListNode<ED extends EntityDict,
 
     removeNamedSorterByName(name: string) {
         // sorter 根据#name查找
-        const fIndex = this.sorters.findIndex(ele => ele['#name'] === name);
+        const fIndex = this.sorters.findIndex((ele) => ele['#name'] === name);
         if (fIndex >= 0) {
             this.sorters.splice(fIndex, 1);
         }
     }
 
-    getFreshValue(): Array<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined> {
-        const value = this.children.map(
-            ele => ele.getFreshValue()
-        ).concat(this.newBorn.map(
-            ele => ele.getFreshValue()
-        )).filter(
-            ele => !!ele
-        );
+    getFreshValue(): Array<
+        SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined
+    > {
+        const value = this.children
+            .map((ele) => ele.getFreshValue())
+            .concat(this.newBorn.map((ele) => ele.getFreshValue()))
+            .filter((ele) => !!ele);
         if (this.isDirty()) {
             const action = this.action || 'update';
 
             if (action === 'remove') {
-                return [];  // 这个可能跑到吗？
+                return []; // 这个可能跑到吗？
             }
-            return value.map(
-                ele => Object.assign({}, ele, this.updateData)
-            );
-        }
-        else {
+            return value.map((ele) => Object.assign({}, ele, this.updateData));
+        } else {
             return value;
         }
     }
@@ -467,10 +515,17 @@ class ListNode<ED extends EntityDict,
         return this.action || 'update';
     }
 
-    async composeOperation(action?: string, execute?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined> {
+    async composeOperation(
+        action?: string,
+        execute?: boolean
+    ): Promise<
+        | DeduceOperation<ED[T]['Schema']>
+        | DeduceOperation<ED[T]['Schema']>[]
+        | undefined
+    > {
         if (!this.isDirty()) {
             if (action) {
-                assert(action === 'create');   // 在list页面测试create是否允许？
+                assert(action === 'create'); // 在list页面测试create是否允许？
                 return {
                     action,
                     data: {},
@@ -484,8 +539,8 @@ class ListNode<ED extends EntityDict,
             return {
                 action: this.getAction(),
                 data: cloneDeep(this.updateData),
-                filter: combineFilters(this.filters.map(ele => ele.filter)),
-            } as DeduceUpdateOperation<ED[T]['Schema']>;  // todo 这里以后再增加对选中id的过滤
+                filter: combineFilters(this.filters.map((ele) => ele.filter)),
+            } as DeduceUpdateOperation<ED[T]['Schema']>; // todo 这里以后再增加对选中id的过滤
         }
         const actions = [];
         for (const node of this.children) {
@@ -503,7 +558,7 @@ class ListNode<ED extends EntityDict,
         for (const node of this.newBorn) {
             const subAction = await node.composeOperation(undefined, execute);
             if (subAction) {
-                assert(!action || action === 'update');     // 如果还有新建，应该不会有其它类型的action
+                assert(!action || action === 'update'); // 如果还有新建，应该不会有其它类型的action
                 actions.push(subAction);
             }
         }
@@ -512,40 +567,50 @@ class ListNode<ED extends EntityDict,
 
     async refresh() {
         const { filters, sorters, pagination, entity } = this;
-        const { step } = pagination;
+        const { pageSize } = pagination;
         const proj = await this.getProjection();
         assert(proj);
-        const sorterss = (await Promise.all(sorters.map(
-            async (ele) => {
-                const { sorter } = ele;
-                if (typeof sorter === 'function') {
-                    return await sorter();
-                }
-                else {
-                    return sorter;
-                }
-            }
-        ))).filter(ele => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
-        const filterss = await Promise.all(filters.map(
-            async (ele) => {
+        const sorterArr = (
+            await Promise.all(
+                sorters.map(async (ele) => {
+                    const { sorter } = ele;
+                    if (typeof sorter === 'function') {
+                        return await sorter();
+                    } else {
+                        return sorter;
+                    }
+                })
+            )
+        ).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
+        const filterArr = await Promise.all(
+            filters.map(async (ele) => {
                 const { filter } = ele;
                 if (typeof filter === 'function') {
                     return await filter();
                 }
                 return filter;
-            }
-        ));
+            })
+        );
         this.refreshing = true;
+        const currentPage = 1;
         // todo 什么时候该传getCount参数 (老王)
-        const { data, count } = await this.cache.refresh(entity, {
-            data: proj as any,
-            filter: filterss.length > 0 ? combineFilters(filterss.filter(ele => !!ele)) : undefined,
-            sorter: sorterss,
-            indexFrom: 0,
-            count: step,
-        }, undefined, true);
-        this.pagination.indexFrom = 0;
-        this.pagination.more = data.length === step;
+        const { data, count } = await this.cache.refresh(
+            entity,
+            {
+                data: proj as any,
+                filter:
+                    filterArr.length > 0
+                        ? combineFilters(filterArr.filter((ele) => !!ele))
+                        : undefined,
+                sorter: sorterArr,
+                indexFrom: (currentPage - 1) * pageSize,
+                count: pageSize,
+            },
+            undefined,
+            true
+        );
+        this.pagination.currentPage = currentPage;
+        this.pagination.more = data.length === pageSize;
         this.refreshing = false;
         this.pagination.total = count;
 
@@ -554,45 +619,98 @@ class ListNode<ED extends EntityDict,
 
     async loadMore() {
         const { filters, sorters, pagination, entity } = this;
-        const { step, more } = pagination;
+        const { pageSize, more, currentPage } = pagination;
         if (!more) {
             return;
         }
         const proj = await this.getProjection();
         assert(proj);
-        const sorterss = (await Promise.all(sorters.map(
-            async (ele) => {
-                const { sorter } = ele;
-                if (typeof sorter === 'function') {
-                    return await sorter();
-                }
-                else {
-                    return sorter;
-                }
-            }
-        ))).filter(ele => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
-        const filterss = await Promise.all(filters.map(
-            async (ele) => {
+        const sorterArr = (
+            await Promise.all(
+                sorters.map(async (ele) => {
+                    const { sorter } = ele;
+                    if (typeof sorter === 'function') {
+                        return await sorter();
+                    } else {
+                        return sorter;
+                    }
+                })
+            )
+        ).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
+        const filterArr = await Promise.all(
+            filters.map(async (ele) => {
                 const { filter } = ele;
                 if (typeof filter === 'function') {
                     return await filter();
                 }
                 return filter;
-            }
-        ));
+            })
+        );
         this.refreshing = true;
+        const currentPage2 = currentPage + 1;
         const { data } = await this.cache.refresh(entity, {
             data: proj as any,
-            filter: filterss.length > 0 ? combineFilters(filterss.filter(ele => !!ele)) : undefined,
-            sorter: sorterss,
-            indexFrom: this.pagination.indexFrom + step,
-            count: step,
+            filter:
+                filterArr.length > 0
+                    ? combineFilters(filterArr.filter((ele) => !!ele))
+                    : undefined,
+            sorter: sorterArr,
+            indexFrom: (currentPage2 - 1) * pageSize,
+            count: pageSize,
         });
-        this.pagination.indexFrom = this.pagination.indexFrom + step;
-        this.pagination.more = data.length === step;
+        this.pagination.currentPage = currentPage2;
+        this.pagination.more = data.length === pageSize;
         this.refreshing = false;
 
         this.appendValue(data);
+    }
+
+    async setCurrentPage<T extends keyof ED>(currentPage: number, append?: boolean) {
+        const { filters, sorters, pagination, entity } = this;
+        const { pageSize } = pagination;
+        const proj = await this.getProjection();
+        assert(proj);
+        const sorterArr = (
+            await Promise.all(
+                sorters.map(async (ele) => {
+                    const { sorter } = ele;
+                    if (typeof sorter === 'function') {
+                        return await sorter();
+                    } else {
+                        return sorter;
+                    }
+                })
+            )
+        ).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
+        const filterArr = await Promise.all(
+            filters.map(async (ele) => {
+                const { filter } = ele;
+                if (typeof filter === 'function') {
+                    return await filter();
+                }
+                return filter;
+            })
+        );
+        this.refreshing = true;
+        const { data } = await this.cache.refresh(entity, {
+            data: proj as any,
+            filter:
+                filterArr.length > 0
+                    ? combineFilters(filterArr.filter((ele) => !!ele))
+                    : undefined,
+            sorter: sorterArr,
+            indexFrom: (currentPage - 1) * pageSize,
+            count: pageSize,
+        });
+        this.pagination.currentPage = currentPage;
+        this.pagination.more = data.length === pageSize;
+        this.refreshing = false;
+
+        if (append) {
+            this.appendValue(data);
+        } else {
+            this.setValue(data);
+        }
     }
 
     resetUpdateData() {
@@ -600,15 +718,26 @@ class ListNode<ED extends EntityDict,
         this.action = undefined;
         this.dirty = false;
 
-        this.children.forEach(
-            (ele) => ele.resetUpdateData()
-        );
+        this.children.forEach((ele) => ele.resetUpdateData());
         this.newBorn = [];
     }
 
-    pushNewBorn(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>) {
+    pushNewBorn(
+        options: Pick<
+            CreateNodeOptions<ED, T>,
+            'updateData' | 'beforeExecute' | 'afterExecute'
+        >
+    ) {
         const { updateData, beforeExecute, afterExecute } = options;
-        const node = new SingleNode(this.entity, this.schema, this.cache, this.projection, this.projectionShape, this, 'create');
+        const node = new SingleNode(
+            this.entity,
+            this.schema,
+            this.cache,
+            this.projection,
+            this.projectionShape,
+            this,
+            'create'
+        );
 
         if (updateData) {
             node.setMultiUpdateData(updateData);
@@ -635,9 +764,12 @@ class ListNode<ED extends EntityDict,
      * 判断传入的updateData和当前的某项是否相等
      * @param from 当前项
      * @param to 传入项
-     * @returns 
+     * @returns
      */
-    private judgeTheSame(from: ED[T]['Update']['data'] | undefined, to : ED[T]['Update']['data']) {
+    private judgeTheSame(
+        from: ED[T]['Update']['data'] | undefined,
+        to: ED[T]['Update']['data']
+    ) {
         if (!from) {
             return false;
         }
@@ -650,9 +782,16 @@ class ListNode<ED extends EntityDict,
     }
 
     // 将本结点的freshValue更正成data的要求，其中updateData要和现有的数据去重
-    setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]) {
-        const convertForeignKey = (origin: ED[T]['Update']['data']): ED[T]['Update']['data']  => {
-            const result: ED[T]['Update']['data']  = {};
+    setUniqueChildren(
+        data: Pick<
+            CreateNodeOptions<ED, T>,
+            'updateData' | 'beforeExecute' | 'afterExecute'
+        >[]
+    ) {
+        const convertForeignKey = (
+            origin: ED[T]['Update']['data']
+        ): ED[T]['Update']['data'] => {
+            const result: ED[T]['Update']['data'] = {};
             for (const attr in origin) {
                 const rel = this.judgeRelation(attr);
                 if (rel === 2) {
@@ -660,20 +799,18 @@ class ListNode<ED extends EntityDict,
                         entity: attr,
                         entityId: origin[attr],
                     });
-                }
-                else if (typeof rel === 'string') {
+                } else if (typeof rel === 'string') {
                     Object.assign(result, {
                         [`${attr}Id`]: origin[attr],
                     });
-                }
-                else {
-                    assert (rel === 1);
+                } else {
+                    assert(rel === 1);
                     Object.assign(result, {
                         [attr]: origin[attr],
                     });
                 }
             }
-            
+
             return result;
         };
         const uds = [];
@@ -729,24 +866,29 @@ class ListNode<ED extends EntityDict,
         this.newBorn = newBorn2;
     }
 
-    toggleChild(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>, checked: boolean) {
+    toggleChild(
+        data: Pick<
+            CreateNodeOptions<ED, T>,
+            'updateData' | 'beforeExecute' | 'afterExecute'
+        >,
+        checked: boolean
+    ) {
         const { updateData } = data;
         if (checked) {
             // 如果是选中，这里要处理一种例外就是之前被删除
             for (const child of this.children) {
                 if (this.judgeTheSame(child.getFreshValue(true), updateData!)) {
-                    assert (child.getAction() === 'remove'); 
+                    assert(child.getAction() === 'remove');
                     // 这里把updateData全干掉了，如果本身是先update再remove或许会有问题 by Xc
                     child.resetUpdateData();
                     return;
                 }
             }
             this.pushNewBorn(data);
-        }
-        else {
+        } else {
             for (const child of this.children) {
                 if (this.judgeTheSame(child.getFreshValue(true), updateData!)) {
-                    assert (child.getAction() !== 'remove'); 
+                    assert(child.getAction() !== 'remove');
                     // 这里把updateData全干掉了，如果本身是先update再remove或许会有问题 by Xc
                     child.setAction('remove');
                     return;
@@ -1104,13 +1246,23 @@ export type CreateNodeOptions<ED extends EntityDict, T extends keyof ED> = {
     afterExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
 };
 
-export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
+export class RunningTree<
+    ED extends EntityDict,
+    Cxt extends Context<ED>,
+    AD extends CommonAspectDict<ED, Cxt>
+> extends Feature<ED, Cxt, AD> {
     private cache: Cache<ED, Cxt, AD>;
     private schema: StorageSchema<ED>;
-    private root: Record<string, SingleNode<ED,
-        keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>>;
+    private root: Record<
+        string,
+        SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>
+    >;
 
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, AD>, schema: StorageSchema<ED>) {
+    constructor(
+        aspectWrapper: AspectWrapper<ED, Cxt, AD>,
+        cache: Cache<ED, Cxt, AD>,
+        schema: StorageSchema<ED>
+    ) {
         super(aspectWrapper);
         this.cache = cache;
         this.schema = schema;
@@ -1137,20 +1289,40 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         } = options;
         let node: ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>;
         const parentNode = parent ? this.findNode(parent) : undefined;
-        const projectionShape = typeof projection === 'function' ? await projection() : projection;
+        const projectionShape =
+            typeof projection === 'function' ? await projection() : projection;
         if (isList) {
-            node = new ListNode<ED, T, Cxt, AD>(entity, this.schema!, this.cache, projection, projectionShape, parentNode, action, updateData, filters, sorters, pagination);
-        }
-        else {
-            node = new SingleNode<ED, T, Cxt, AD>(entity, this.schema!, this.cache, projection, projectionShape, parentNode, action, updateData);
+            node = new ListNode<ED, T, Cxt, AD>(
+                entity,
+                this.schema!,
+                this.cache,
+                projection,
+                projectionShape,
+                parentNode,
+                action,
+                updateData,
+                filters,
+                sorters,
+                pagination
+            );
+        } else {
+            node = new SingleNode<ED, T, Cxt, AD>(
+                entity,
+                this.schema!,
+                this.cache,
+                projection,
+                projectionShape,
+                parentNode,
+                action,
+                updateData
+            );
             if (id) {
                 node.setValue({ id } as any);
             }
         }
         if (parentNode) {
             // todo，这里有几种情况，待处理
-        }
-        else {
+        } else {
             assert(!this.root[path]);
             this.root[path] = node;
         }
@@ -1192,11 +1364,9 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             const parent = node.getParent();
             if (parent instanceof SingleNode) {
                 parent.removeChild(childPath);
-            }
-            else if (parent instanceof ListNode) {
+            } else if (parent instanceof ListNode) {
                 parent.removeChild(childPath);
-            }
-            else if (!parent) {
+            } else if (!parent) {
                 assert(this.root.hasOwnProperty(path));
                 unset(this.root, path);
             }
@@ -1204,102 +1374,177 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     private async applyOperation<T extends keyof ED>(
-        entity: T, value: SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[],
-        operation: DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[],
+        entity: T,
+        value:
+            | SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>
+            | SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[],
+        operation:
+            | DeduceOperation<ED[T]['Schema']>
+            | DeduceOperation<ED[T]['Schema']>[],
         projection: ED[T]['Selection']['data'],
-        scene: string): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[] | undefined> {
-
+        scene: string
+    ): Promise<
+        | SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>
+        | SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[]
+        | undefined
+    > {
         if (operation instanceof Array) {
             assert(value instanceof Array);
             for (const action of operation) {
                 switch (action.action) {
                     case 'create': {
-                        value.push(await this.applyOperation(entity, {} as any, action, projection, scene) as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>);
+                        value.push(
+                            (await this.applyOperation(
+                                entity,
+                                {} as any,
+                                action,
+                                projection,
+                                scene
+                            )) as SelectRowShape<
+                                ED[T]['Schema'],
+                                ED[T]['Selection']['data']
+                            >
+                        );
                         break;
                     }
                     case 'remove': {
                         const { filter } = action;
                         assert(filter!.id);
-                        const row = value.find(
-                            ele => ele.id === filter!.id
-                        );
+                        const row = value.find((ele) => ele.id === filter!.id);
                         pull(value, row);
                         break;
                     }
                     default: {
                         const { filter } = action;
                         assert(filter!.id);
-                        const row = value.find(
-                            ele => ele.id === filter!.id
+                        const row = value.find((ele) => ele.id === filter!.id);
+                        await this.applyOperation(
+                            entity,
+                            row!,
+                            action,
+                            projection,
+                            scene
                         );
-                        await this.applyOperation(entity, row!, action, projection, scene);
                     }
                 }
             }
             return value;
-        }
-        else {
+        } else {
             if (value instanceof Array) {
                 // todo 这里还有种可能不是对所有的行，只对指定id的行操作
-                return (await Promise.all(value.map(
-                    async (row) => await this.applyOperation(entity, row, operation, projection, scene)
-                ))).filter(
-                    ele => !!ele
-                ) as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>[];
-            }
-            else {
+                return (
+                    await Promise.all(
+                        value.map(
+                            async (row) =>
+                                await this.applyOperation(
+                                    entity,
+                                    row,
+                                    operation,
+                                    projection,
+                                    scene
+                                )
+                        )
+                    )
+                ).filter((ele) => !!ele) as SelectRowShape<
+                    ED[T]['Schema'],
+                    ED[T]['Selection']['data']
+                >[];
+            } else {
                 const { action, data } = operation;
-                const applyUpsert = async (row: SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>, actionData: DeduceUpdateOperation<ED[T]['Schema']>['data']) => {
+                const applyUpsert = async (
+                    row: SelectRowShape<
+                        ED[T]['Schema'],
+                        ED[T]['Selection']['data']
+                    >,
+                    actionData: DeduceUpdateOperation<ED[T]['Schema']>['data']
+                ) => {
                     for (const attr in actionData) {
-                        const relation = judgeRelation(this.schema!, entity, attr);
+                        const relation = judgeRelation(
+                            this.schema!,
+                            entity,
+                            attr
+                        );
                         if (relation === 1) {
                             set(row, attr, actionData[attr]);
-                        }
-                        else if (relation === 2) {
+                        } else if (relation === 2) {
                             // 基于entity/entityId的多对一
                             if (projection[attr]) {
-                                set(row, attr, await this.applyOperation(attr, row[attr] as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>, actionData[attr]!, projection[attr]!, scene));
+                                set(
+                                    row,
+                                    attr,
+                                    await this.applyOperation(
+                                        attr,
+                                        row[attr] as SelectRowShape<
+                                            ED[T]['Schema'],
+                                            ED[T]['Selection']['data']
+                                        >,
+                                        actionData[attr]!,
+                                        projection[attr]!,
+                                        scene
+                                    )
+                                );
                                 if (row[attr]) {
                                     Object.assign(row, {
                                         entity: attr,
                                         entityId: row[attr]!['id'],
                                     });
-                                }
-                                else {
+                                } else {
                                     Object.assign(row, {
                                         entity: undefined,
                                         entityId: undefined,
                                     });
                                 }
                             }
-                        }
-                        else if (typeof relation === 'string') {
+                        } else if (typeof relation === 'string') {
                             if (projection[attr]) {
-                                set(row, attr, await this.applyOperation(relation, row[attr] as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>, actionData[attr]!, projection[attr]!, scene));
+                                set(
+                                    row,
+                                    attr,
+                                    await this.applyOperation(
+                                        relation,
+                                        row[attr] as SelectRowShape<
+                                            ED[T]['Schema'],
+                                            ED[T]['Selection']['data']
+                                        >,
+                                        actionData[attr]!,
+                                        projection[attr]!,
+                                        scene
+                                    )
+                                );
                                 if (row[attr]) {
                                     Object.assign(row, {
                                         [`${attr}Id`]: row[attr]!['id'],
                                     });
-                                }
-                                else {
+                                } else {
                                     Object.assign(row, {
                                         [`${attr}Id`]: undefined,
                                     });
                                 }
                             }
-                        }
-                        else {
+                        } else {
                             assert(relation instanceof Array);
                             if (projection[attr]) {
-                                set(row, attr, await this.applyOperation(relation[0], row[attr] as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>, actionData[attr]!, projection[attr]!['data'], scene));
+                                set(
+                                    row,
+                                    attr,
+                                    await this.applyOperation(
+                                        relation[0],
+                                        row[attr] as SelectRowShape<
+                                            ED[T]['Schema'],
+                                            ED[T]['Selection']['data']
+                                        >,
+                                        actionData[attr]!,
+                                        projection[attr]!['data'],
+                                        scene
+                                    )
+                                );
                                 row[attr]!.forEach(
                                     (ele: ED[keyof ED]['Schema']) => {
                                         if (relation[1]) {
                                             Object.assign(ele, {
                                                 [relation[1]]: row.id,
                                             });
-                                        }
-                                        else {
+                                        } else {
                                             Object.assign(ele, {
                                                 entity,
                                                 entityId: row.id,
@@ -1314,26 +1559,42 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                     // 这里有一种额外的情况，actionData中更新了某项外键而projection中有相应的请求
                     for (const attr in projection) {
                         if (!actionData.hasOwnProperty(attr)) {
-                            const relation = judgeRelation(this.schema!, entity, attr);
-                            if (relation === 2 &&
-                                (actionData.hasOwnProperty('entity') || actionData.hasOwnProperty('entityId'))) {
+                            const relation = judgeRelation(
+                                this.schema!,
+                                entity,
+                                attr
+                            );
+                            if (
+                                relation === 2 &&
+                                (actionData.hasOwnProperty('entity') ||
+                                    actionData.hasOwnProperty('entityId'))
+                            ) {
                                 const entity = actionData.entity || row.entity!;
-                                const entityId = actionData.entityId || row.entityId!;
-                                const [entityRow] = await this.cache.get(entity, {
-                                    data: projection[attr]!,
-                                    filter: {
-                                        id: entityId,
-                                    } as any,
-                                });
+                                const entityId =
+                                    actionData.entityId || row.entityId!;
+                                const [entityRow] = await this.cache.get(
+                                    entity,
+                                    {
+                                        data: projection[attr]!,
+                                        filter: {
+                                            id: entityId,
+                                        } as any,
+                                    }
+                                );
                                 set(row, attr, entityRow);
-                            }
-                            else if (typeof relation === 'string' && actionData.hasOwnProperty(`${attr}Id`)) {
-                                const [entityRow] = await this.cache.get(relation, {
-                                    data: projection[attr]!,
-                                    filter: {
-                                        id: actionData[`${attr}Id`],
-                                    } as any,
-                                });
+                            } else if (
+                                typeof relation === 'string' &&
+                                actionData.hasOwnProperty(`${attr}Id`)
+                            ) {
+                                const [entityRow] = await this.cache.get(
+                                    relation,
+                                    {
+                                        data: projection[attr]!,
+                                        filter: {
+                                            id: actionData[`${attr}Id`],
+                                        } as any,
+                                    }
+                                );
                                 set(row, attr, entityRow);
                             }
                         }
@@ -1341,14 +1602,24 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                 };
                 switch (action) {
                     case 'create': {
-                        await applyUpsert(value, data as DeduceUpdateOperation<ED[T]['Schema']>['data']);
+                        await applyUpsert(
+                            value,
+                            data as DeduceUpdateOperation<
+                                ED[T]['Schema']
+                            >['data']
+                        );
                         return value;
                     }
                     case 'remove': {
                         return undefined;
                     }
                     default: {
-                        await applyUpsert(value!, data as DeduceUpdateOperation<ED[T]['Schema']>['data']);
+                        await applyUpsert(
+                            value!,
+                            data as DeduceUpdateOperation<
+                                ED[T]['Schema']
+                            >['data']
+                        );
                         return value;
                     }
                 }
@@ -1378,8 +1649,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                 assert(typeof idx2 === 'number');
                 node = node.getChild(split, true)!;
                 idx++;
-            }
-            else {
+            } else {
                 const entity = node.getEntity();
                 const relation = judgeRelation(this.schema!, entity, split);
                 if (relation === 1) {
@@ -1387,8 +1657,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                     const attrName = attrSplit.slice(idx).join('.');
                     node.setUpdateData(attrName, value);
                     return;
-                }
-                else {
+                } else {
                     // node.setDirty();
                     node = node.getChild(split)!;
                     idx++;
@@ -1421,13 +1690,10 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         const parentNode = this.findNode(parent);
         assert(parentNode instanceof ListNode);
 
-        ids.forEach(
-            (id) => {
-                const node = parentNode.pushNewBorn({
-                });
-                node.setUpdateData(attr, id);
-            }
-        )
+        ids.forEach((id) => {
+            const node = parentNode.pushNewBorn({});
+            node.setUpdateData(attr, id);
+        });
     }
 
     @Action
@@ -1435,13 +1701,13 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         const parentNode = this.findNode(parent);
         assert(parentNode instanceof ListNode);
 
-        parentNode.setUniqueChildren(ids.map(
-            (id) => ({
+        parentNode.setUniqueChildren(
+            ids.map((id) => ({
                 updateData: {
                     [attr]: id,
-                } as any
-            })
-        ));
+                } as any,
+            }))
+        );
     }
 
     @Action
@@ -1463,10 +1729,30 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         return node.getPagination();
     }
 
-    setPageSize<T extends keyof ED>(path: string, pageSize: number) {
+    @Action
+    async setPageSize<T extends keyof ED>(
+        path: string,
+        pageSize: number,
+        refresh: boolean = true
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        return node.setPageSize(pageSize);
+        // 切换分页pageSize就重新设置
+        node.setPagination({
+            pageSize,
+            currentPage: 0,
+            more: true,
+        });
+        if (refresh) {
+            await node.refresh();
+        }
+    }
+
+    @Action
+    setCurrentPage<T extends keyof ED>(path: string, currentPage: number) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        return node.setCurrentPage(currentPage);
     }
 
     getNamedFilters<T extends keyof ED>(path: string) {
@@ -1482,7 +1768,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async setNamedFilters<T extends keyof ED>(path: string, filters: NamedFilterItem<ED, T>[], refresh: boolean = true) {
+    async setNamedFilters<T extends keyof ED>(
+        path: string,
+        filters: NamedFilterItem<ED, T>[],
+        refresh: boolean = true
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.setNamedFilters(filters);
@@ -1492,7 +1782,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async addNamedFilter<T extends keyof ED>(path: string, filter: NamedFilterItem<ED, T>, refresh: boolean = false) {
+    async addNamedFilter<T extends keyof ED>(
+        path: string,
+        filter: NamedFilterItem<ED, T>,
+        refresh: boolean = false
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.addNamedFilter(filter);
@@ -1502,7 +1796,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async removeNamedFilter<T extends keyof ED>(path: string, filter: NamedFilterItem<ED, T>, refresh: boolean = false) {
+    async removeNamedFilter<T extends keyof ED>(
+        path: string,
+        filter: NamedFilterItem<ED, T>,
+        refresh: boolean = false
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.removeNamedFilter(filter);
@@ -1512,7 +1810,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async removeNamedFilterByName<T extends keyof ED>(path: string, name: string, refresh: boolean = false) {
+    async removeNamedFilterByName<T extends keyof ED>(
+        path: string,
+        name: string,
+        refresh: boolean = false
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.removeNamedFilterByName(name);
@@ -1534,7 +1836,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async setNamedSorters<T extends keyof ED>(path: string, sorters: NamedSorterItem<ED, T>[], refresh: boolean = true) {
+    async setNamedSorters<T extends keyof ED>(
+        path: string,
+        sorters: NamedSorterItem<ED, T>[],
+        refresh: boolean = true
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.setNamedSorters(sorters);
@@ -1544,7 +1850,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async addNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh: boolean = false) {
+    async addNamedSorter<T extends keyof ED>(
+        path: string,
+        sorter: NamedSorterItem<ED, T>,
+        refresh: boolean = false
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.addNamedSorter(sorter);
@@ -1554,7 +1864,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh: boolean = false) {
+    async removeNamedSorter<T extends keyof ED>(
+        path: string,
+        sorter: NamedSorterItem<ED, T>,
+        refresh: boolean = false
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.removeNamedSorter(sorter);
@@ -1564,7 +1878,11 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    async removeNamedSorterByName<T extends keyof ED>(path: string, name: string, refresh: boolean = false) {
+    async removeNamedSorterByName<T extends keyof ED>(
+        path: string,
+        name: string,
+        refresh: boolean = false
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.removeNamedSorterByName(name);
@@ -1584,11 +1902,9 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
             for (const oper of operation) {
                 await this.cache.operate(node.getEntity(), oper);
             }
-        }
-        else if (operation) {
+        } else if (operation) {
             await this.cache.operate(node.getEntity(), operation);
-        }
-        else {
+        } else {
             assert(false);
         }
         return {
@@ -1597,12 +1913,25 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         };
     }
 
-    private async beforeExecute(node2: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>, action?: string) {
-        async function beNode(node: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>, action2?: string) {
+    private async beforeExecute(
+        node2:
+            | SingleNode<ED, keyof ED, Cxt, AD>
+            | ListNode<ED, keyof ED, Cxt, AD>,
+        action?: string
+    ) {
+        async function beNode(
+            node:
+                | SingleNode<ED, keyof ED, Cxt, AD>
+                | ListNode<ED, keyof ED, Cxt, AD>,
+            action2?: string
+        ) {
             if (node.isDirty()) {
                 const beforeExecuteFn = node.getBeforeExecute();
                 if (beforeExecuteFn) {
-                    await beforeExecuteFn(node.getUpdateData(), action2 || node.getAction());
+                    await beforeExecuteFn(
+                        node.getUpdateData(),
+                        action2 || node.getAction()
+                    );
                 }
                 if (node instanceof ListNode) {
                     for (const child of node.getChildren()) {
@@ -1611,8 +1940,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                     for (const child of node.getNewBorn()) {
                         await beNode(child);
                     }
-                }
-                else {
+                } else {
                     for (const k in node.getChildren()) {
                         await beNode(node.getChildren()[k]);
                     }
@@ -1629,7 +1957,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         await this.getAspectWrapper().exec('operate', {
             entity: node.getEntity() as string,
             operation,
-        })
+        });
 
         // 清空缓存
         node.resetUpdateData();
@@ -1637,7 +1965,13 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
     }
 
     @Action
-    pushNode<T extends keyof ED>(path: string, options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>) {
+    pushNode<T extends keyof ED>(
+        path: string,
+        options: Pick<
+            CreateNodeOptions<ED, T>,
+            'updateData' | 'beforeExecute' | 'afterExecute'
+        >
+    ) {
         const parent = this.findNode(path);
         assert(parent instanceof ListNode);
 
@@ -1648,7 +1982,7 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         const parentNode = this.findNode(parent);
 
         const node = parentNode.getChild(path);
-        assert(parentNode instanceof ListNode && node instanceof SingleNode);        // 现在应该不可能remove一个list吧，未来对list的处理还要细化
+        assert(parentNode instanceof ListNode && node instanceof SingleNode); // 现在应该不可能remove一个list吧，未来对list的处理还要细化
         if (node.getAction() !== 'create') {
             // 不是增加，说明是删除数据
             await this.getAspectWrapper().exec('operate', {
@@ -1659,10 +1993,9 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
                     filter: {
                         id: node.getFreshValue()!.id,
                     },
-                } as ED[keyof ED]['Remove']
+                } as ED[keyof ED]['Remove'],
             });
-        }
-        else {
+        } else {
             // 删除子结点
             parentNode.popNewBorn(path);
         }
@@ -1680,9 +2013,12 @@ export class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD exte
         const node = this.findNode(path);
         assert(node instanceof ListNode);
 
-        node.toggleChild({
-            updateData: nodeData as any,
-        }, checked);
+        node.toggleChild(
+            {
+                updateData: nodeData as any,
+            },
+            checked
+        );
     }
 
     getRoot() {

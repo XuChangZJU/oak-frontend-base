@@ -353,8 +353,13 @@ export function createPage<
             if (!this.isReachBottom && isCurrentReachBottom) {
                 this.isReachBottom = true;
                 // 执行触底事件
-                onReachBottom.call(this);
-                methods?.onReachBottom && methods.onReachBottom.call(this);
+                if (methods?.onReachBottom) {
+                    methods.onReachBottom.call(this);
+                    return;
+                }
+                if (this.props.width === 'xs') {
+                    onReachBottom.call(this);
+                }
                 return;
             }
 
@@ -387,9 +392,13 @@ export function createPage<
             return React.cloneElement(
                 <PullToRefresh
                     onRefresh={() => {
-                        onPullDownRefresh.call(this);
-                        methods?.onPullDownRefresh &&
+                        if (methods?.onPullDownRefresh) {
                             methods.onPullDownRefresh.call(this);
+                            return;
+                        }
+                        if (this.props.width === 'xs') {
+                            onPullDownRefresh.call(this);
+                        }
                     }}
                     refreshing={oakLoading}
                     distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}
