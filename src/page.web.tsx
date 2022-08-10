@@ -393,9 +393,6 @@ export function createPage<
                     }}
                     refreshing={oakLoading}
                     distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}
-                    getScrollContainer={() => {
-                        document.body;
-                    }}
                     indicator={{
                         activate: commonMethods.t.call(this, 'common:ptrActivate'),
                         deactivate: commonMethods.t.call(this, 'common:ptrDeactivate'),
