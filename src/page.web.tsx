@@ -379,7 +379,9 @@ export function createPage<
 
         async componentWillUnmount() {
             this.unregisterPageScroll();
-            features.runningTree.destroyNode(this.state.oakFullpath);
+            if (this.state.oakFullpath) {
+                features.runningTree.destroyNode(this.state.oakFullpath);
+            }
             hiddenMethods.unsubscribe.call(this);
             methods?.onUnload && methods.onUnload.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);

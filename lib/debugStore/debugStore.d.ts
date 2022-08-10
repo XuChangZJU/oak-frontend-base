@@ -6,7 +6,6 @@ interface DebugStoreOperateOption extends OperateOption {
 }
 interface DebugStoreSelectOption extends SelectOption {
     noLock?: true;
-    ignoreTrigger?: true;
 }
 export declare class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
     private executor;

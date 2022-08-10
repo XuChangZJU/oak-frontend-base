@@ -356,7 +356,9 @@ function createPage(options, features, exceptionRouterDict, context) {
             return __awaiter(this, void 0, void 0, function () {
                 return __generator(this, function (_a) {
                     this.unregisterPageScroll();
-                    features.runningTree.destroyNode(this.state.oakFullpath);
+                    if (this.state.oakFullpath) {
+                        features.runningTree.destroyNode(this.state.oakFullpath);
+                    }
                     hiddenMethods.unsubscribe.call(this);
                     (methods === null || methods === void 0 ? void 0 : methods.onUnload) && methods.onUnload.call(this);
                     (lifetimes === null || lifetimes === void 0 ? void 0 : lifetimes.detached) && lifetimes.detached.call(this);
