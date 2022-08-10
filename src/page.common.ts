@@ -596,19 +596,40 @@ export function makeListComponentMethods<
         },
 
         async setPageSize(pageSize: number, refresh = true) {
-            return await features.runningTree.setPageSize(
+            features.runningTree.setPageSize(
                 this.state.oakFullpath,
                 pageSize,
-                refresh
             );
+            if (refresh) {
+                this.refresh();
+            }
         },
 
         async setCurrentPage(currentPage: number) {
             assert(currentPage !== 0);
-            return await features.runningTree.setCurrentPage(
-                this.state.oakFullpath,
-                currentPage
-            );
+
+            if (this.state.oakEntity && this.state.oakFullpath) {
+                this.setState({
+                    oakLoading: true,
+                });
+                try {
+                    await features.runningTree.setCurrentPage(
+                        this.state.oakFullpath,
+                        currentPage
+                    );
+                    this.setState({
+                        oakLoading: false,
+                    });
+                } catch (err) {
+                    this.setState({
+                        oakLoading: false,
+                    });
+                    this.setMessage({
+                        type: 'error',
+                        content: (err as Error).message,
+                    });
+                }
+            }
         },
     };
 }
@@ -672,7 +693,7 @@ export function makePageMethods<
         },
 
         async loadMore() {
-            if (this.state.oakEntity && options.isList) {
+            if (this.state.oakEntity && this.state.oakFullpath && options.isList) {
                 this.setState({
                     oakMoreLoading: true,
                 });

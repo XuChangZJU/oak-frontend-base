@@ -1730,22 +1730,18 @@ export class RunningTree<
     }
 
     @Action
-    async setPageSize<T extends keyof ED>(
+    setPageSize<T extends keyof ED>(
         path: string,
         pageSize: number,
-        refresh: boolean = true
     ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         // 切换分页pageSize就重新设置
         node.setPagination({
             pageSize,
-            currentPage: 0,
+            currentPage: 1,
             more: true,
         });
-        if (refresh) {
-            await node.refresh();
-        }
     }
 
     @Action
