@@ -309,6 +309,7 @@ export type OakListComponentMethods<ED extends EntityDict, T extends keyof ED> =
     removeNamedSorterByName: (name: string, refresh?: boolean) => void;
     getPagination: () => void;
     setPageSize: (pageSize: number) => void;
+    setCurrentPage: (current: number) => void;
 };
 
 type ComponentOnPropsChangeOption = {
@@ -322,11 +323,10 @@ export type OakComponentOnlyMethods = {
 
 export type OakPageMethods = {
     refresh: (extra?: any) => Promise<void>;
+    loadMore: () => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
     onReachBottom: () => Promise<void>;
-    onLoad: (
-        options: Record<string, string | undefined>
-    ) => Promise<void>;
+    onLoad: (options: Record<string, string | undefined>) => Promise<void>;
 };
 
 export type OakComponentInstanceProperties<

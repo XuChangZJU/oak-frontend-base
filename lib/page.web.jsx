@@ -321,8 +321,13 @@ function createPage(options, features, exceptionRouterDict, context) {
             if (!this.isReachBottom && isCurrentReachBottom) {
                 this.isReachBottom = true;
                 // 执行触底事件
-                onReachBottom.call(this);
-                (methods === null || methods === void 0 ? void 0 : methods.onReachBottom) && methods.onReachBottom.call(this);
+                if (methods === null || methods === void 0 ? void 0 : methods.onReachBottom) {
+                    methods.onReachBottom.call(this);
+                    return;
+                }
+                if (this.props.width === 'xs') {
+                    onReachBottom.call(this);
+                }
                 return;
             }
             this.isReachBottom = isCurrentReachBottom;
@@ -364,9 +369,13 @@ function createPage(options, features, exceptionRouterDict, context) {
             var Render = render.call(this);
             var oakLoading = this.state.oakLoading;
             return React.cloneElement(<PullToRefresh_1.default onRefresh={function () {
-                    onPullDownRefresh.call(_this);
-                    (methods === null || methods === void 0 ? void 0 : methods.onPullDownRefresh) &&
+                    if (methods === null || methods === void 0 ? void 0 : methods.onPullDownRefresh) {
                         methods.onPullDownRefresh.call(_this);
+                        return;
+                    }
+                    if (_this.props.width === 'xs') {
+                        onPullDownRefresh.call(_this);
+                    }
                 }} refreshing={oakLoading} distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE} indicator={{
                     activate: commonMethods.t.call(this, 'common:ptrActivate'),
                     deactivate: commonMethods.t.call(this, 'common:ptrDeactivate'),

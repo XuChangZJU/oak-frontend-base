@@ -175,6 +175,7 @@ export declare type OakListComponentMethods<ED extends EntityDict, T extends key
     removeNamedSorterByName: (name: string, refresh?: boolean) => void;
     getPagination: () => void;
     setPageSize: (pageSize: number) => void;
+    setCurrentPage: (current: number) => void;
 };
 declare type ComponentOnPropsChangeOption = {
     path?: string;
@@ -185,6 +186,7 @@ export declare type OakComponentOnlyMethods = {
 };
 export declare type OakPageMethods = {
     refresh: (extra?: any) => Promise<void>;
+    loadMore: () => Promise<void>;
     onPullDownRefresh: () => Promise<void>;
     onReachBottom: () => Promise<void>;
     onLoad: (options: Record<string, string | undefined>) => Promise<void>;
