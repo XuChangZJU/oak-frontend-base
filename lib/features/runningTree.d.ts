@@ -151,7 +151,7 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     refresh(path: string): Promise<void>;
     loadMore(path: string): Promise<void>;
     getPagination<T extends keyof ED>(path: string): Pagination;
-    setPageSize<T extends keyof ED>(path: string, pageSize: number, refresh?: boolean): Promise<void>;
+    setPageSize<T extends keyof ED>(path: string, pageSize: number): void;
     setCurrentPage<T extends keyof ED>(path: string, currentPage: number): Promise<void>;
     getNamedFilters<T extends keyof ED>(path: string): NamedFilterItem<ED, keyof ED>[];
     getNamedFilterByName<T extends keyof ED>(path: string, name: string): NamedFilterItem<ED, keyof ED> | undefined;
