@@ -10,7 +10,7 @@ interface DebugStoreOperateOption extends OperateOption {
 
 interface DebugStoreSelectOption extends SelectOption {
     noLock?: true;
-    omitTrigger?: true;
+    ignoreTrigger?: true;
 };
 
 export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
@@ -36,11 +36,11 @@ export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
             action: 'select',
         }, selection) as ED[T]['Operation'];
 
-        if (!option?.omitTrigger) {
+        if (!option?.ignoreTrigger) {
             await this.executor.preOperation(entity, selection2, context, option);
         }
         const result = await super.cascadeSelect(entity, selection2 as any, context, option);
-        if (!option?.omitTrigger) {
+        if (!option?.ignoreTrigger) {
             await this.executor.postOperation(entity, selection2, context, option, result);
         }
         return result;
