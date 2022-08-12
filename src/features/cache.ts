@@ -130,7 +130,7 @@ export class Cache<
         return this.cacheStore.getFullData();
     }
 
-    setInitialData() {
-        return this.cacheStore.setInitialData();
+    resetInitialData() {
+        return this.cacheStore.resetInitialData();
     }
 }

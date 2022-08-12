@@ -10,14 +10,7 @@ interface DebugStoreSelectOption extends SelectOption {
 export declare class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
     private executor;
     private rwLock;
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt, initialData?: {
-        [T in keyof ED]?: ED[T]['OpSchema'][];
-    }, initialStat?: {
-        create: number;
-        update: number;
-        remove: number;
-        commit: number;
-    });
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt);
     protected cascadeUpdate<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, option?: OP): Promise<import("oak-domain/lib/types").OperationResult<ED>>;
     protected cascadeSelect<T extends keyof ED, S extends ED[T]["Selection"], OP extends DebugStoreSelectOption>(entity: T, selection: S, context: Cxt, option?: OP): Promise<SelectRowShape<ED[T]['Schema'], S['data']>[]>;
     operate<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: Cxt, option?: OP): Promise<import("oak-domain/lib/types").OperationResult<ED>>;

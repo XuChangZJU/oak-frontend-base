@@ -12,7 +12,7 @@ import {
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 
 import { Feature } from './types/Feature';
-import { createDebugStore } from './debugStore';
+import { createDebugStore, resetDebugStore } from './debugStore';
 
 import { initialize as createBasicFeatures, BasicFeatures } from './features';
 import { intersection } from 'oak-domain/lib/utils/lodash';
@@ -79,16 +79,7 @@ export function initialize<
         storageSchema,
         contextBuilder,
         () => debugStore.getCurrentData(),
-        async () => {
-            debugStore.startInitializing();
-            const context = contextBuilder()(debugStore);
-            await context.begin();
-            if (initialData) {
-                debugStore.setInitialData(initialData);
-            }
-            await context.commit();
-            debugStore.endInitializing();
-        }
+        () => resetDebugStore(debugStore, initialData || {}),
     );
     if (checkers) {
         checkers.forEach((checker) => cacheStore.registerChecker(checker));

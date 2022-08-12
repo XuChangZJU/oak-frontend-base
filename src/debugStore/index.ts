@@ -9,22 +9,16 @@ import { assert } from 'oak-domain/lib/utils/assert';
 
 async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
     store: DebugStore<ED, Cxt>,
-    contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
-    initialData?: {
+    initialData: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
+    }, stat?: {
+        create: number;
+        update: number;
+        remove: number;
+        commit: number;
     }) {
     store.startInitializing();
-    if (false) {
-        // todo 在不同环境下读取相应的store数据并初始化
-    }
-    else {
-        const context = contextBuilder()(store);
-        await context.begin();
-        if (initialData) {
-            store.setInitialData(initialData);
-        }
-        await context.commit();
-    }
+    store.resetInitialData(initialData, stat);
     store.endInitializing();
 }
 
@@ -158,6 +152,21 @@ function initializeWatchers<ED extends EntityDict, Cxt extends Context<ED>>(
     doWatchers();
 }
 
+export function resetDebugStore<ED extends EntityDict, Cxt extends Context<ED>>(
+    store: DebugStore<ED, Cxt>,
+    data: {
+        [T in keyof ED]?: Array<ED[T]['OpSchema']>;
+    }
+) {
+    initDataInStore(store, data, {
+        create: 0,
+        update: 0,
+        remove: 0,
+        commit: 0
+    });
+    materializeData(data, store.getStat());
+}
+
 export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>(
     storageSchema: StorageSchema<ED>,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
@@ -168,8 +177,7 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
     actionDict?: ActionDictOfEntityDict<ED>) {
-    const data = getMaterializedData();
-    const store = new DebugStore<ED, Cxt>(storageSchema, contextBuilder, data && data.data, data && data.stat);
+    const store = new DebugStore<ED, Cxt>(storageSchema, contextBuilder);
 
     triggers.forEach(
         ele => store.registerTrigger(ele)
@@ -189,11 +197,13 @@ export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>
     );
 
     // 如果没有物化数据则使用initialData初始化debugStore
+    const data = getMaterializedData();
     if (!data) {
-        console.log('使用初始化数据建立debugStore');
-        initDataInStore(store, contextBuilder, initialData);
+        initDataInStore(store, initialData!);
+        console.log('使用初始化数据建立debugStore', initialData);
     }
     else {
+        initDataInStore(store, data.data, data.stat);
         console.log('使用物化数据建立debugStore', data);
     }
     lastMaterializedVersion = store.getStat().commit;

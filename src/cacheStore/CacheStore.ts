@@ -10,7 +10,7 @@ export class CacheStore<
 > extends TreeStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;
     private getFullDataFn?: () => any;
-    private setInitialDataFn?: () => any;
+    private resetInitialDataFn?: () => void;
 
     constructor(
         storageSchema: StorageSchema<ED>,
@@ -18,14 +18,14 @@ export class CacheStore<
             cxtString: string
         ) => (store: CacheStore<ED, Cxt>) => Cxt,
         getFullDataFn?: () => any,
-        setInitialDataFn?: () => any
+        resetInitialDataFn?: () => void
     ) {
         super(storageSchema);
         this.executor = new TriggerExecutor(async (cxtStr) =>
             contextBuilder(cxtStr)(this)
         );
         this.getFullDataFn = getFullDataFn;
-        this.setInitialDataFn = setInitialDataFn;
+        this.resetInitialDataFn = resetInitialDataFn;
     }
 
     async operate<T extends keyof ED, OP extends OperateOption>(
@@ -111,7 +111,7 @@ export class CacheStore<
      * 这个函数是在debug下用来初始化debugStore的数据，release下不能使用
      * @returns
      */
-    setInitialData() {
-        return this.setInitialDataFn!();
+    resetInitialData() {
+        return this.resetInitialDataFn!();
     }
 }
