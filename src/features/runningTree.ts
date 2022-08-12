@@ -49,12 +49,13 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
         return this.entity;
     }
 
-    protected abstract setForeignKey(attr: string, entity: keyof ED, id: string | undefined): void;
+    protected abstract setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
     
-    private setLocalUpdateData(attr: string, value: any) {
+    private async setLocalUpdateData(attr: string, value: any) {
         const rel = this.judgeRelation(attr);
 
         let subEntity: string | undefined = undefined;
+        let attr2: string | undefined = undefined;
         if (rel === 2) {
             if (value) {
                 Object.assign(this.updateData, {
@@ -69,6 +70,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
                 });
             }
             subEntity = attr;
+            attr2 = attr;
         }
         else if (typeof rel === 'string'){
             if (value) {
@@ -82,21 +84,31 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
                 });
             }
             subEntity = rel;
+            attr2 = attr;
         }
         else {
             assert(rel === 1);
             Object.assign(this.updateData, {
                 [attr]: value,
             });
+
+            // 处理一下开发人员手动传xxxId
+            if (attr.endsWith('Id')) {
+                attr2 = attr.slice(0, attr.length - 2);
+                const rel2 = this.judgeRelation(attr2);
+                if (typeof rel2 === 'string') {
+                    subEntity = rel2;
+                }
+            }
         }
         if (subEntity) {
             // 说明是更新了外键
-            this.setForeignKey(attr, subEntity, value);
+            await this.setForeignKey(attr2!, subEntity, value);
         }
     }
 
-    setUpdateData(attr: string, value: any) {
-        this.setLocalUpdateData(attr, value);
+    async setUpdateData(attr: string, value: any) {
+        await this.setLocalUpdateData(attr, value);
         this.setDirty();
         this.refreshValue();
     }
@@ -105,9 +117,9 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
         return this.updateData;
     }
 
-    setMultiUpdateData(updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data']) {
+    async setMultiUpdateData(updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data']) {
         for (const k in updateData) {
-            this.setLocalUpdateData(k, updateData[k]);
+            await this.setLocalUpdateData(k, updateData[k]);
         }
         this.setDirty();
         this.refreshValue();
@@ -280,6 +292,7 @@ class ListNode<
         id: string | undefined
     ) {
         // todo 对list的update外键的情况等遇到了再写 by Xc
+        assert(false);
     }
 
     refreshValue(): void {}
@@ -1216,13 +1229,28 @@ class SingleNode<ED extends EntityDict,
         if (this.children[attr]) {
             const proj = typeof this.projection === 'function' ? await this.projection() : this.projection;
             const subProj = proj[attr];
-            const newId = id || this.value?.id;
-            const [value] =  newId ? await this.cache.get(entity, {
-                data: subProj,
-                filter: {
-                    id: newId,
-                } as any,
-            }) : [undefined];
+            const newId = id/*  || this.value?.id */;       // 这个或不知道什么意思，看上去是错的 by Xc 20220810
+            let value: any;
+            if (!newId) {
+                value = undefined;
+            }
+            else {
+                value = (await this.cache.get(entity, {
+                    data: subProj,
+                    filter: {
+                        id: newId,
+                    } as any,
+                }))[0];
+                if (!value) {
+                    // 说明cache中没取到，去refresh数据（当页面带有parentId之类的外键参数进行upsert时会有这种情况）
+                    value = (await this.cache.refresh(entity, {
+                        data: subProj,
+                        filter: {
+                            id: newId,
+                        } as any,
+                    })).data[0];
+                }
+            }
             (<SingleNode<ED, keyof ED, Cxt, AD>>this.children[attr]).setValue(value);
         }
     }
@@ -1655,7 +1683,7 @@ export class RunningTree<
                 if (relation === 1) {
                     // todo transform data format
                     const attrName = attrSplit.slice(idx).join('.');
-                    node.setUpdateData(attrName, value);
+                    await node.setUpdateData(attrName, value);
                     return;
                 } else {
                     // node.setDirty();
@@ -1678,22 +1706,22 @@ export class RunningTree<
     }
 
     @Action
-    setForeignKey(parent: string, attr: string, id: string | undefined) {
+    async setForeignKey(parent: string, attr: string, id: string | undefined) {
         const parentNode = this.findNode(parent);
         assert(parentNode instanceof SingleNode);
 
-        parentNode.setUpdateData(attr, id);
+        await parentNode.setUpdateData(attr, id);
     }
 
     @Action
-    addForeignKeys(parent: string, attr: string, ids: string[]) {
+    async addForeignKeys(parent: string, attr: string, ids: string[]) {
         const parentNode = this.findNode(parent);
         assert(parentNode instanceof ListNode);
 
-        ids.forEach((id) => {
+        for (const id of ids) {
             const node = parentNode.pushNewBorn({});
-            node.setUpdateData(attr, id);
-        });
+            await node.setUpdateData(attr, id);
+        }
     }
 
     @Action

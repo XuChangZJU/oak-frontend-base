@@ -20,11 +20,11 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     abstract refreshValue(): void;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data']);
     getEntity(): T;
-    protected abstract setForeignKey(attr: string, entity: keyof ED, id: string | undefined): void;
+    protected abstract setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
     private setLocalUpdateData;
-    setUpdateData(attr: string, value: any): void;
+    setUpdateData(attr: string, value: any): Promise<void>;
     getUpdateData(): import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>;
-    setMultiUpdateData(updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data']): void;
+    setMultiUpdateData(updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data']): Promise<void>;
     setDirty(): void;
     setAction(action: ED[T]['Action']): void;
     isDirty(): boolean;
@@ -145,8 +145,8 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     private setUpdateDataInner;
     setUpdateData(path: string, attr: string, value: any): Promise<void>;
     setAction<T extends keyof ED>(path: string, action: ED[T]['Action']): Promise<void>;
-    setForeignKey(parent: string, attr: string, id: string | undefined): void;
-    addForeignKeys(parent: string, attr: string, ids: string[]): void;
+    setForeignKey(parent: string, attr: string, id: string | undefined): Promise<void>;
+    addForeignKeys(parent: string, attr: string, ids: string[]): Promise<void>;
     setUniqueForeignKeys(parent: string, attr: string, ids: string[]): void;
     refresh(path: string): Promise<void>;
     loadMore(path: string): Promise<void>;
