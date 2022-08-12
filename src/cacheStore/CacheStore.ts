@@ -4,14 +4,28 @@ import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { Checker, Context, Trigger } from 'oak-domain/lib/types';
 import { TreeStore } from 'oak-memory-tree-store';
 
-export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
+export class CacheStore<
+    ED extends EntityDict,
+    Cxt extends Context<ED>
+> extends TreeStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;
     private getFullDataFn?: () => any;
+    private setInitialDataFn?: () => any;
 
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString: string) => (store: CacheStore<ED, Cxt>) => Cxt, getFullDataFn?: () => any) {
+    constructor(
+        storageSchema: StorageSchema<ED>,
+        contextBuilder: (
+            cxtString: string
+        ) => (store: CacheStore<ED, Cxt>) => Cxt,
+        getFullDataFn?: () => any,
+        setInitialDataFn?: () => any
+    ) {
         super(storageSchema);
-        this.executor = new TriggerExecutor(async (cxtStr) => contextBuilder(cxtStr)(this));
+        this.executor = new TriggerExecutor(async (cxtStr) =>
+            contextBuilder(cxtStr)(this)
+        );
         this.getFullDataFn = getFullDataFn;
+        this.setInitialDataFn = setInitialDataFn;
     }
 
     async operate<T extends keyof ED, OP extends OperateOption>(
@@ -29,8 +43,7 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
             await this.executor.preOperation(entity, operation, context);
             result = await super.operate(entity, operation, context, option);
             await this.executor.postOperation(entity, operation, context);
-        }
-        catch (err) {
+        } catch (err) {
             await context.rollback();
             throw err;
         }
@@ -46,11 +59,10 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
             await context.begin();
         }
         let result;
-        
+
         try {
             result = await super.sync(opRecords, context);
-        }
-        catch (err) {
+        } catch (err) {
             await context.rollback();
             throw err;
         }
@@ -60,12 +72,11 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
         return result;
     }
 
-    async select<T extends keyof ED, S extends ED[T]['Selection'], OP extends SelectOption>(
-        entity: T,
-        selection: S,
-        context: Cxt,
-        option?: OP
-    ) {
+    async select<
+        T extends keyof ED,
+        S extends ED[T]['Selection'],
+        OP extends SelectOption
+    >(entity: T, selection: S, context: Cxt, option?: OP) {
         const autoCommit = !context.getCurrentTxnId();
         if (autoCommit) {
             await context.begin();
@@ -74,8 +85,7 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
 
         try {
             result = await super.select(entity, selection, context, option);
-        }
-        catch (err) {
+        } catch (err) {
             await context.rollback();
             throw err;
         }
@@ -91,9 +101,17 @@ export class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends 
 
     /**
      * 这个函数是在debug下用来获取debugStore的数据，release下不能使用
-     * @returns 
+     * @returns
      */
     getFullData() {
         return this.getFullDataFn!();
+    }
+
+    /**
+     * 这个函数是在debug下用来初始化debugStore的数据，release下不能使用
+     * @returns
+     */
+    setInitialData() {
+        return this.setInitialDataFn!();
     }
 }

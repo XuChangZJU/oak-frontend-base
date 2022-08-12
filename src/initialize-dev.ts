@@ -75,7 +75,21 @@ export function initialize<
         actionDict
     );
 
-    const cacheStore = new CacheStore(storageSchema, contextBuilder, () => debugStore.getCurrentData());
+    const cacheStore = new CacheStore(
+        storageSchema,
+        contextBuilder,
+        () => debugStore.getCurrentData(),
+        async () => {
+            debugStore.startInitializing();
+            const context = contextBuilder()(debugStore);
+            await context.begin();
+            if (initialData) {
+                debugStore.setInitialData(initialData);
+            }
+            await context.commit();
+            debugStore.endInitializing();
+        }
+    );
     if (checkers) {
         checkers.forEach((checker) => cacheStore.registerChecker(checker));
     }
@@ -117,9 +131,12 @@ export function initialize<
 
     // basicFeatures.runningNode.setStorageSchema(storageSchema);
 
-    const userDefinedfeatures = createFeatures(wrapper, basicFeatures, context);
+    const userDefinedFeatures = createFeatures(wrapper, basicFeatures, context);
 
-    intersect = intersection(Object.keys(basicFeatures), Object.keys(userDefinedfeatures));
+    intersect = intersection(
+        Object.keys(basicFeatures),
+        Object.keys(userDefinedFeatures)
+    );
     if (intersect.length > 0) {
         throw new Error(
             `用户定义的feature中不能和系统feature同名：「${intersect.join(
@@ -127,7 +144,7 @@ export function initialize<
             )}」`
         );
     }
-    const features = Object.assign(basicFeatures, userDefinedfeatures);
+    const features = Object.assign(basicFeatures, userDefinedFeatures);
 
     return {
         features,
