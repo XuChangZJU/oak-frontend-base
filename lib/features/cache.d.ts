@@ -28,4 +28,5 @@ export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
     getCachedData(): { [T in keyof ED]?: ED[T]["OpSchema"][] | undefined; };
     getFullData(): any;
+    setInitialData(): any;
 }
