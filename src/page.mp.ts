@@ -127,20 +127,22 @@ function makeCommonComponentMethods<
 
             for (const param in rest) {
                 const param2 = param as unknown as keyof typeof rest;
-                search2 += `&${param}=${
-                    typeof rest[param2] === 'string'
+                if (rest[param2] !== undefined) {
+                    search2 += `&${param}=${typeof rest[param2] === 'string'
                         ? rest[param2]
                         : JSON.stringify(rest[param2])
-                }`;
+                        }`;
+                }
             }
             if (state) {
                 for (const param in state) {
                     const param2 = param as unknown as keyof typeof state;
-                    search2 += `&${param}=${
-                        typeof state[param2] === 'string'
+                    if (state[param2] !== undefined) {
+                        search2 += `&${param}=${typeof state[param2] === 'string'
                             ? state[param2]
                             : JSON.stringify(state[param2])
-                    }`;
+                            }`;
+                    }
                 }
             }
             const url2 = URL.format({
@@ -190,20 +192,22 @@ function makeCommonComponentMethods<
 
             for (const param in rest) {
                 const param2 = param as unknown as keyof typeof rest;
-                search2 += `&${param}=${
-                    typeof rest[param2] === 'string'
+                if (rest[param2] !== undefined) {
+                    search2 += `&${param}=${typeof rest[param2] === 'string'
                         ? rest[param2]
                         : JSON.stringify(rest[param2])
-                }`;
+                        }`;
+                }
             }
             if (state) {
                 for (const param in state) {
                     const param2 = param as unknown as keyof typeof state;
-                    search2 += `&${param}=${
-                        typeof state[param2] === 'string'
+                    if (state[param2] !== undefined) {
+                        search2 += `&${param}=${typeof state[param2] === 'string'
                             ? state[param2]
                             : JSON.stringify(state[param2])
-                    }`;
+                            }`;
+                    }
                 }
             }
             const url2 = URL.format({
@@ -381,10 +385,10 @@ export function createPage<
             ...restPageMethods,
             ...(methods
                 ? omit(methods, [
-                      'onLoad',
-                      'onPullDownRefresh',
-                      'onReachBottom',
-                  ])
+                    'onLoad',
+                    'onPullDownRefresh',
+                    'onReachBottom',
+                ])
                 : {}),
         },
         lifetimes: {
@@ -642,53 +646,53 @@ export type MakeOakPage<
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
-> = <
-    T extends keyof ED,
-    Proj extends ED[T]['Selection']['data'],
-    FormedData extends WechatMiniprogram.Component.DataOption,
-    IsList extends boolean,
-    TData extends WechatMiniprogram.Component.DataOption,
-    TProperty extends WechatMiniprogram.Component.PropertyOption,
-    TMethod extends WechatMiniprogram.Component.MethodOption
->(
-    options: OakPageOption<
-        ED,
-        T,
-        Cxt,
-        AD,
-        FD,
-        Proj,
-        FormedData,
-        IsList,
-        TData,
-        TProperty,
-        TMethod
-    >
-) => string;
+    > = <
+        T extends keyof ED,
+        Proj extends ED[T]['Selection']['data'],
+        FormedData extends WechatMiniprogram.Component.DataOption,
+        IsList extends boolean,
+        TData extends WechatMiniprogram.Component.DataOption,
+        TProperty extends WechatMiniprogram.Component.PropertyOption,
+        TMethod extends WechatMiniprogram.Component.MethodOption
+        >(
+        options: OakPageOption<
+            ED,
+            T,
+            Cxt,
+            AD,
+            FD,
+            Proj,
+            FormedData,
+            IsList,
+            TData,
+            TProperty,
+            TMethod
+        >
+    ) => string;
 
 export type MakeOakComponent<
     ED extends EntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
-> = <
-    T extends keyof ED,
-    FormedData extends WechatMiniprogram.Component.DataOption,
-    IsList extends boolean,
-    TData extends WechatMiniprogram.Component.DataOption,
-    TProperty extends WechatMiniprogram.Component.PropertyOption,
-    TMethod extends WechatMiniprogram.Component.MethodOption
->(
-    options: OakComponentOption<
-        ED,
-        T,
-        Cxt,
-        AD,
-        FD,
-        FormedData,
-        IsList,
-        TData,
-        TProperty,
-        TMethod
-    >
-) => string;
+    > = <
+        T extends keyof ED,
+        FormedData extends WechatMiniprogram.Component.DataOption,
+        IsList extends boolean,
+        TData extends WechatMiniprogram.Component.DataOption,
+        TProperty extends WechatMiniprogram.Component.PropertyOption,
+        TMethod extends WechatMiniprogram.Component.MethodOption
+        >(
+        options: OakComponentOption<
+            ED,
+            T,
+            Cxt,
+            AD,
+            FD,
+            FormedData,
+            IsList,
+            TData,
+            TProperty,
+            TMethod
+        >
+    ) => string;

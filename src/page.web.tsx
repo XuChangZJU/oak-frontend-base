@@ -101,10 +101,12 @@ function makeCommonComponentMethods<
 
             for (const param in rest) {
                 const param2 = param as unknown as keyof typeof rest;
-                url2 += `&${param}=${typeof rest[param2] === 'string'
+                if (rest[param2] !== undefined) {
+                    url2 += `&${param}=${typeof rest[param2] === 'string'
                         ? rest[param2]
                         : JSON.stringify(rest[param2])
-                    }`;
+                        }`;
+                }
             }
             return this.props.navigate(url2, { replace: false, state });
         },
@@ -117,10 +119,12 @@ function makeCommonComponentMethods<
 
             for (const param in rest) {
                 const param2 = param as unknown as keyof typeof rest;
-                url2 += `&${param}=${typeof rest[param2] === 'string'
+                if (rest[param2] !== undefined) {
+                    url2 += `&${param}=${typeof rest[param2] === 'string'
                         ? rest[param2]
                         : JSON.stringify(rest[param2])
-                    }`;
+                        }`;
+                }
             }
             return this.props.navigate(url2, { replace: true, state });
         },
@@ -571,9 +575,9 @@ export function createComponent<
                 this.props.oakParent &&
                 prevProps.oakParent !== this.props.oakParent
             ) {
-                 this.onPropsChanged({
-                     parent: this.props.oakParent,
-                 });
+                this.onPropsChanged({
+                    parent: this.props.oakParent,
+                });
             }
             fn?.call(this, prevProps, prevState);
         }
@@ -602,7 +606,7 @@ export function createComponent<
             return Render;
         }
 
-        triggerEvent<DetailType = any>(            
+        triggerEvent<DetailType = any>(
             name: string,
             detail?: DetailType,
             options?: WechatMiniprogram.Component.TriggerEventOption
@@ -610,7 +614,7 @@ export function createComponent<
             // 需要兼容
         }
     };
-    
+
     // 可能有问题，by Xc
     Object.assign(OakComponentWrapper, makeMiniprogramCompatibleFunctions());
     return withRouter(OakComponentWrapper);

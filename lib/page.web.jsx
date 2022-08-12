@@ -159,9 +159,11 @@ function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
                 : url.concat("?oakFrom=".concat(this.state.oakFullpath));
             for (var param in rest) {
                 var param2 = param;
-                url2 += "&".concat(param, "=").concat(typeof rest[param2] === 'string'
-                    ? rest[param2]
-                    : JSON.stringify(rest[param2]));
+                if (rest[param2] !== undefined) {
+                    url2 += "&".concat(param, "=").concat(typeof rest[param2] === 'string'
+                        ? rest[param2]
+                        : JSON.stringify(rest[param2]));
+                }
             }
             return this.props.navigate(url2, { replace: false, state: state });
         }, redirectTo: function (options, state) {
@@ -171,9 +173,11 @@ function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
                 : url.concat("?oakFrom=".concat(this.state.oakFullpath));
             for (var param in rest) {
                 var param2 = param;
-                url2 += "&".concat(param, "=").concat(typeof rest[param2] === 'string'
-                    ? rest[param2]
-                    : JSON.stringify(rest[param2]));
+                if (rest[param2] !== undefined) {
+                    url2 += "&".concat(param, "=").concat(typeof rest[param2] === 'string'
+                        ? rest[param2]
+                        : JSON.stringify(rest[param2]));
+                }
             }
             return this.props.navigate(url2, { replace: true, state: state });
         } }, (0, page_common_1.makeCommonComponentMethods)(features, exceptionRouterDict, formData));
