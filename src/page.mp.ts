@@ -174,7 +174,7 @@ function makeCommonComponentMethods<
                 pathname: string;
                 search: string;
             };
-            if (/^\//.test(pathname)) {
+            if (!/^\/{1}/.test(pathname)) {
                 assert(false, 'url前面必须以/开头');
             }
             if (
