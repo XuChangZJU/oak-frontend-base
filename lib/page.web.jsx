@@ -165,6 +165,10 @@ function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
                         : JSON.stringify(rest[param2]));
                 }
             }
+            // 路由传入namespace
+            if (this.props.namespace) {
+                url2 = '/' + this.props.namespace + (url2.startsWith('/') ? '' : '/') + url2;
+            }
             return this.props.navigate(url2, { replace: false, state: state });
         }, redirectTo: function (options, state) {
             var url = options.url, events = options.events, fail = options.fail, complete = options.complete, success = options.success, rest = __rest(options, ["url", "events", "fail", "complete", "success"]);
@@ -178,6 +182,10 @@ function makeCommonComponentMethods(features, exceptionRouterDict, formData) {
                         ? rest[param2]
                         : JSON.stringify(rest[param2]));
                 }
+            }
+            // 路由传入namespace
+            if (this.props.namespace) {
+                url2 = '/' + this.props.namespace + (url2.startsWith('/') ? '' : '/') + url2;
             }
             return this.props.navigate(url2, { replace: true, state: state });
         } }, (0, page_common_1.makeCommonComponentMethods)(features, exceptionRouterDict, formData));

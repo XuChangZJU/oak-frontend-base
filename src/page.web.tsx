@@ -102,11 +102,16 @@ function makeCommonComponentMethods<
             for (const param in rest) {
                 const param2 = param as unknown as keyof typeof rest;
                 if (rest[param2] !== undefined) {
-                    url2 += `&${param}=${typeof rest[param2] === 'string'
-                        ? rest[param2]
-                        : JSON.stringify(rest[param2])
-                        }`;
+                    url2 += `&${param}=${
+                        typeof rest[param2] === 'string'
+                            ? rest[param2]
+                            : JSON.stringify(rest[param2])
+                    }`;
                 }
+            }
+            // 路由传入namespace
+            if (this.props.namespace) {
+                url2 = '/' + this.props.namespace + (url2.startsWith('/') ? '' : '/')  + url2;
             }
             return this.props.navigate(url2, { replace: false, state });
         },
@@ -125,6 +130,10 @@ function makeCommonComponentMethods<
                         : JSON.stringify(rest[param2])
                         }`;
                 }
+            }
+              // 路由传入namespace
+            if (this.props.namespace) {
+                url2 = '/' + this.props.namespace + (url2.startsWith('/') ? '' : '/')  + url2;
             }
             return this.props.navigate(url2, { replace: true, state });
         },
