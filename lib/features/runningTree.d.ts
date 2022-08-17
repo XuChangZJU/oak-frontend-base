@@ -35,7 +35,7 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     getBeforeExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     getAfterExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     destroy(): void;
-    protected judgeRelation(attr: string): string | 0 | 2 | string[] | 1;
+    protected judgeRelation(attr: string): string | 0 | 1 | 2 | string[];
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }
@@ -77,7 +77,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     loadMore(): Promise<void>;
     setCurrentPage<T extends keyof ED>(currentPage: number, append?: boolean): Promise<void>;
     resetUpdateData(): void;
-    pushNewBorn(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): SingleNode<ED, T, Cxt, AD>;
+    pushNewBorn(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): Promise<SingleNode<ED, T, Cxt, AD>>;
     popNewBorn(path: string): void;
     /**
      * 判断传入的updateData和当前的某项是否相等
@@ -86,8 +86,8 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
      * @returns
      */
     private judgeTheSame;
-    setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]): void;
-    toggleChild(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>, checked: boolean): void;
+    setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]): Promise<void>;
+    toggleChild(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>, checked: boolean): Promise<void>;
 }
 declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private id?;
@@ -147,7 +147,7 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     setAction<T extends keyof ED>(path: string, action: ED[T]['Action']): Promise<void>;
     setForeignKey(parent: string, attr: string, id: string | undefined): Promise<void>;
     addForeignKeys(parent: string, attr: string, ids: string[]): Promise<void>;
-    setUniqueForeignKeys(parent: string, attr: string, ids: string[]): void;
+    setUniqueForeignKeys(parent: string, attr: string, ids: string[]): Promise<void>;
     refresh(path: string): Promise<void>;
     loadMore(path: string): Promise<void>;
     getPagination<T extends keyof ED>(path: string): Pagination;
@@ -171,10 +171,10 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     }>;
     private beforeExecute;
     execute(path: string, action?: string): Promise<DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[]>;
-    pushNode<T extends keyof ED>(path: string, options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): void;
+    pushNode<T extends keyof ED>(path: string, options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): Promise<SingleNode<ED, keyof ED, Cxt, AD>>;
     removeNode(parent: string, path: string): Promise<void>;
     resetUpdateData(path: string): void;
-    toggleNode(path: string, nodeData: Record<string, any>, checked: boolean): void;
+    toggleNode(path: string, nodeData: Record<string, any>, checked: boolean): Promise<void>;
     getRoot(): Record<string, SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>>;
 }
 export {};

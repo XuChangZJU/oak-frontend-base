@@ -735,7 +735,7 @@ class ListNode<
         this.newBorn = [];
     }
 
-    pushNewBorn(
+    async pushNewBorn(
         options: Pick<
             CreateNodeOptions<ED, T>,
             'updateData' | 'beforeExecute' | 'afterExecute'
@@ -753,7 +753,7 @@ class ListNode<
         );
 
         if (updateData) {
-            node.setMultiUpdateData(updateData);
+            await node.setMultiUpdateData(updateData);
         }
         if (beforeExecute) {
             node.setBeforeExecute(beforeExecute);
@@ -795,7 +795,7 @@ class ListNode<
     }
 
     // 将本结点的freshValue更正成data的要求，其中updateData要和现有的数据去重
-    setUniqueChildren(
+    async setUniqueChildren(
         data: Pick<
             CreateNodeOptions<ED, T>,
             'updateData' | 'beforeExecute' | 'afterExecute'
@@ -850,7 +850,7 @@ class ListNode<
             }
             if (!existed) {
                 // 如果不存在，就生成newBorn
-                this.pushNewBorn(dt);
+                await this.pushNewBorn(dt);
             }
         }
 
@@ -879,7 +879,7 @@ class ListNode<
         this.newBorn = newBorn2;
     }
 
-    toggleChild(
+    async toggleChild(
         data: Pick<
             CreateNodeOptions<ED, T>,
             'updateData' | 'beforeExecute' | 'afterExecute'
@@ -897,7 +897,7 @@ class ListNode<
                     return;
                 }
             }
-            this.pushNewBorn(data);
+            await this.pushNewBorn(data);
         } else {
             for (const child of this.children) {
                 if (this.judgeTheSame(child.getFreshValue(true), updateData!)) {
@@ -1719,17 +1719,17 @@ export class RunningTree<
         assert(parentNode instanceof ListNode);
 
         for (const id of ids) {
-            const node = parentNode.pushNewBorn({});
+            const node = await parentNode.pushNewBorn({});
             await node.setUpdateData(attr, id);
         }
     }
 
     @Action
-    setUniqueForeignKeys(parent: string, attr: string, ids: string[]) {
+    async setUniqueForeignKeys(parent: string, attr: string, ids: string[]) {
         const parentNode = this.findNode(parent);
         assert(parentNode instanceof ListNode);
 
-        parentNode.setUniqueChildren(
+        return await parentNode.setUniqueChildren(
             ids.map((id) => ({
                 updateData: {
                     [attr]: id,
@@ -1989,7 +1989,7 @@ export class RunningTree<
     }
 
     @Action
-    pushNode<T extends keyof ED>(
+    async pushNode<T extends keyof ED>(
         path: string,
         options: Pick<
             CreateNodeOptions<ED, T>,
@@ -1999,8 +1999,9 @@ export class RunningTree<
         const parent = this.findNode(path);
         assert(parent instanceof ListNode);
 
-        parent.pushNewBorn(options);
+        return await parent.pushNewBorn(options);
     }
+    
     @Action
     async removeNode(parent: string, path: string) {
         const parentNode = this.findNode(parent);
@@ -2033,11 +2034,11 @@ export class RunningTree<
     }
 
     @Action
-    toggleNode(path: string, nodeData: Record<string, any>, checked: boolean) {
+    async toggleNode(path: string, nodeData: Record<string, any>, checked: boolean) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
 
-        node.toggleChild(
+        return await node.toggleChild(
             {
                 updateData: nodeData as any,
             },
