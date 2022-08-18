@@ -1,5 +1,8 @@
-import { OakException } from 'oak-domain/lib/types/Exception';
+function ttt(this: any) {
+    console.log(this.a + this.b);
+}
 
-const e = new OakException('ddddd');
-
-console.log(e.name);
+ttt.call({
+    a: 1,
+    b: 2,
+});

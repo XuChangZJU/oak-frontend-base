@@ -256,15 +256,15 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
     setUpdateData: (attr: string, input: any) => void;
     t(key: string, params?: object): string;
     callPicker: (attr: string, params: Record<string, any>) => void;
-    setForeignKey: (id: string, goBackDelta?: number) => void;
-    addForeignKeys: (ids: string[], goBackDelta?: number) => void;
-    setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => void;
-    setAction: (action: ED[T]['Action'], path?: string) => void;
+    setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
+    addForeignKeys: (ids: string[], goBackDelta?: number) => Promise<void>;
+    setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => Promise<void>;
+    setAction: (action: ED[T]['Action'], path?: string) => Promise<void>;
     toggleNode: (
         nodeData: Record<string, any>,
         checked: boolean,
         path?: string
-    ) => void;
+    ) => Promise<void>;
     execute: (
         action?: ED[T]['Action'],
         legalExceptions?: Array<string>,
@@ -283,30 +283,30 @@ export type OakListComponentMethods<ED extends EntityDict, T extends keyof ED> =
             CreateNodeOptions<ED, keyof ED>,
             'updateData' | 'beforeExecute' | 'afterExecute'
         >
-    ) => void;
-    removeNode: (parent: string, path: string) => void;
-    setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
+    ) => Promise<void>;
+    removeNode: (parent: string, path: string) => Promise<void>;
+    setFilters: (filters: NamedFilterItem<ED, T>[]) => Promise<void>;
     getFilters: () => Promise<ED[T]['Selection']['filter'][]>;
     getFilterByName: (
         name: string
     ) => Promise<ED[T]['Selection']['filter']> | undefined;
-    addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
+    addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => Promise<void>;
     removeNamedFilter: (
         filter: NamedFilterItem<ED, T>,
         refresh?: boolean
-    ) => void;
-    removeNamedFilterByName: (name: string, refresh?: boolean) => void;
-    setNamedSorters: (sorters: NamedSorterItem<ED, T>[]) => void;
+    ) => Promise<void>;
+    removeNamedFilterByName: (name: string, refresh?: boolean) => Promise<void>;
+    setNamedSorters: (sorters: NamedSorterItem<ED, T>[]) => Promise<void>;
     getSorters: () => Promise<ED[T]['Selection']['sorter']>;
     getSorterByName: (
         name: string
     ) => Promise<DeduceSorterItem<ED[T]['Schema']> | undefined>;
-    addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
+    addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => Promise<void>;
     removeNamedSorter: (
         filter: NamedSorterItem<ED, T>,
         refresh?: boolean
-    ) => void;
-    removeNamedSorterByName: (name: string, refresh?: boolean) => void;
+    ) => Promise<void>;
+    removeNamedSorterByName: (name: string, refresh?: boolean) => Promise<void>;
     getPagination: () => void;
     setPageSize: (pageSize: number) => void;
     setCurrentPage: (current: number) => void;

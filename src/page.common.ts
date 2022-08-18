@@ -259,13 +259,13 @@ export function makeCommonComponentMethods<
             });
         },
 
-        setForeignKey(id: string, goBackDelta: number = -1) {
+        async setForeignKey(id: string, goBackDelta: number = -1) {
             if (this.state.oakExecuting) {
                 return;
             }
             const { oakIsPicker, oakParent, oakPath } = this.state;
             assert(oakIsPicker);
-            features.runningTree.setForeignKey(oakParent, oakPath, id);
+            await features.runningTree.setForeignKey(oakParent, oakPath, id);
 
             if (goBackDelta !== 0) {
                 this.navigateBack({
@@ -274,13 +274,13 @@ export function makeCommonComponentMethods<
             }
         },
 
-        addForeignKeys(ids: string[], goBackDelta: number = -1) {
+        async addForeignKeys(ids: string[], goBackDelta: number = -1) {
             if (this.state.oakExecuting) {
                 return;
             }
             const { oakIsPicker, oakParent, oakPath } = this.state;
             assert(oakIsPicker);
-            features.runningTree.addForeignKeys(oakParent, oakPath, ids);
+            await features.runningTree.addForeignKeys(oakParent, oakPath, ids);
 
             if (goBackDelta !== 0) {
                 this.navigateBack({
@@ -289,13 +289,13 @@ export function makeCommonComponentMethods<
             }
         },
 
-        setUniqueForeignKeys(ids: string[], goBackDelta: number = -1) {
+        async setUniqueForeignKeys(ids: string[], goBackDelta: number = -1) {
             if (this.state.oakExecuting) {
                 return;
             }
             const { oakIsPicker, oakParent, oakPath } = this.state;
             assert(oakIsPicker);
-            features.runningTree.setUniqueForeignKeys(oakParent, oakPath, ids);
+            await features.runningTree.setUniqueForeignKeys(oakParent, oakPath, ids);
 
             if (goBackDelta !== 0) {
                 this.navigateBack({
@@ -304,7 +304,7 @@ export function makeCommonComponentMethods<
             }
         },
 
-        toggleNode(
+        async toggleNode(
             nodeData: Record<string, any>,
             checked: boolean,
             path?: string
@@ -312,7 +312,7 @@ export function makeCommonComponentMethods<
             const fullpath = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            features.runningTree.toggleNode(fullpath, nodeData, checked);
+            await features.runningTree.toggleNode(fullpath, nodeData, checked);
         },
 
         async execute(action, legalExceptions, path) {
@@ -455,18 +455,18 @@ export function makeListComponentMethods<
 ): OakListComponentMethods<ED, T> &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
-        pushNode(path, options) {
+        async pushNode(path, options) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            features.runningTree.pushNode(path2, options || {});
+            await features.runningTree.pushNode(path2, options || {});
         },
 
-        removeNode(parent, path) {
+        async removeNode(parent, path) {
             const path2 = parent
                 ? `${this.state.oakFullpath}.${parent}`
                 : this.state.oakFullpath;
-            features.runningTree.removeNode(path2, path);
+            await features.runningTree.removeNode(path2, path);
         },
 
         async getFilters() {
@@ -498,32 +498,32 @@ export function makeListComponentMethods<
             return;
         },
 
-        addNamedFilter(namedFilter, refresh = false) {
-            return features.runningTree.addNamedFilter(
+        async addNamedFilter(namedFilter, refresh = false) {
+            await features.runningTree.addNamedFilter(
                 this.state.oakFullpath,
                 namedFilter,
                 refresh
             );
         },
 
-        removeNamedFilter(namedFilter, refresh = false) {
-            return features.runningTree.removeNamedFilter(
+        async removeNamedFilter(namedFilter, refresh = false) {
+            await features.runningTree.removeNamedFilter(
                 this.state.oakFullpath,
                 namedFilter,
                 refresh
             );
         },
 
-        removeNamedFilterByName(name, refresh = false) {
-            return features.runningTree.removeNamedFilterByName(
+        async removeNamedFilterByName(name, refresh = false) {
+            await features.runningTree.removeNamedFilterByName(
                 this.state.oakFullpath,
                 name,
                 refresh
             );
         },
 
-        setNamedSorters(namedSorters) {
-            return features.runningTree.setNamedSorters(
+        async setNamedSorters(namedSorters) {
+            await features.runningTree.setNamedSorters(
                 this.state.oakFullpath,
                 namedSorters
             );
@@ -560,32 +560,32 @@ export function makeListComponentMethods<
             return;
         },
 
-        addNamedSorter(namedSorter, refresh = false) {
-            return features.runningTree.addNamedSorter(
+        async addNamedSorter(namedSorter, refresh = false) {
+            await features.runningTree.addNamedSorter(
                 this.state.oakFullpath,
                 namedSorter,
                 refresh
             );
         },
 
-        removeNamedSorter(namedSorter, refresh = false) {
-            return features.runningTree.removeNamedSorter(
+        async removeNamedSorter(namedSorter, refresh = false) {
+            await features.runningTree.removeNamedSorter(
                 this.state.oakFullpath,
                 namedSorter,
                 refresh
             );
         },
 
-        removeNamedSorterByName(name, refresh = false) {
-            return features.runningTree.removeNamedSorterByName(
+        async removeNamedSorterByName(name, refresh = false) {
+            await features.runningTree.removeNamedSorterByName(
                 this.state.oakFullpath,
                 name,
                 refresh
             );
         },
 
-        setFilters(filters) {
-            return features.runningTree.setNamedFilters(
+        async setFilters(filters) {
+            await features.runningTree.setNamedFilters(
                 this.state.oakFullpath,
                 filters
             );
