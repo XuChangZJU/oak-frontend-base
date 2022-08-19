@@ -11,10 +11,10 @@
     "dependencies": {
         "debounce": "^1.2.1",
         "format-message-parse": "^6.2.4",
-        "oak-common-aspect": "file:../oak-common-aspect",
-        "oak-domain": "file:../oak-domain",
-        "oak-external-sdk": "file:../oak-external-sdk",
-        "oak-memory-tree-store": "file:../oak-memory-tree-store",
+        "oak-common-aspect": "^1.0.0",
+        "oak-domain": "^1.0.0",
+        "oak-external-sdk": "^1.0.0",
+        "oak-memory-tree-store": "^1.0.0",
         "rmc-pull-to-refresh": "^1.0.13",
         "url": "^0.11.0",
         "uuid": "^8.3.2"
