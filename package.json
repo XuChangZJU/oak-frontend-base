@@ -16,7 +16,6 @@
         "oak-external-sdk": "file:../oak-external-sdk",
         "oak-memory-tree-store": "file:../oak-memory-tree-store",
         "rmc-pull-to-refresh": "^1.0.13",
-        "tslib": "^2.4.0",
         "url": "^0.11.0",
         "uuid": "^8.3.2"
     },
@@ -57,6 +56,7 @@
         "mocha": "^8.2.1",
         "rimraf": "^3.0.2",
         "ts-node": "~10.9.1",
+        "tslib": "^2.4.0",
         "typescript": "~4.7.4"
     },
     "scripts": {
