@@ -1619,7 +1619,7 @@ export class RunningTree<
                                     {
                                         data: projection[attr]!,
                                         filter: {
-                                            id: actionData[`${attr}Id`],
+                                            id: (actionData as Record<string, string>)[`${attr}Id`],
                                         } as any,
                                     }
                                 );

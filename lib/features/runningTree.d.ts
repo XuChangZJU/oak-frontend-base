@@ -35,7 +35,7 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     getBeforeExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     getAfterExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
     destroy(): void;
-    protected judgeRelation(attr: string): string | 0 | 1 | 2 | string[];
+    protected judgeRelation(attr: string): string | 0 | 2 | string[] | 1;
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }
@@ -103,11 +103,9 @@ declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends 
     removeChild(path: string): void;
     refreshValue(): void;
     setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']> | undefined): void;
-    getFreshValue(ignoreRemoved?: boolean): (SelectRowShape<ED[T]["OpSchema"], ED[T]["Selection"]["data"]> & Partial<Omit<ED[T]["OpSchema"], import("oak-domain/lib/types").InstinctiveAttributes>> & {
-        [k: string]: any;
-    }) | SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]> | undefined;
+    getFreshValue(ignoreRemoved?: boolean): (SelectRowShape<ED[T]["OpSchema"], ED[T]["Selection"]["data"]> & import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>) | SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]> | undefined;
     getAction(): "create" | "update" | ED[T]["Action"];
-    composeOperation(action2?: string, execute?: boolean): Promise<import("oak-domain/lib/types").DeduceCreateMultipleOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | undefined>;
+    composeOperation(action2?: string, execute?: boolean): Promise<DeduceUpdateOperation<ED[T]["Schema"]> | undefined>;
     refresh(scene: string): Promise<void>;
     resetUpdateData(attrs?: string[]): void;
     setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
@@ -138,9 +136,7 @@ export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>,
     private findNode;
     destroyNode(path: string): void;
     private applyOperation;
-    getFreshValue(path: string): (SelectRowShape<ED[keyof ED]["OpSchema"], ED[keyof ED]["Selection"]["data"]> & Partial<Omit<ED[keyof ED]["OpSchema"], import("oak-domain/lib/types").InstinctiveAttributes>> & {
-        [k: string]: any;
-    }) | SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | (SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | undefined)[] | undefined;
+    getFreshValue(path: string): (SelectRowShape<ED[keyof ED]["OpSchema"], ED[keyof ED]["Selection"]["data"]> & import("oak-domain/lib/types").DeduceUpdateOperationData<ED[keyof ED]["OpSchema"]>) | SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | (SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | undefined)[] | undefined;
     isDirty(path: string): boolean;
     private setUpdateDataInner;
     setUpdateData(path: string, attr: string, value: any): Promise<void>;
