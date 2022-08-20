@@ -4,6 +4,7 @@ import withRouter from './platforms/web/router';
 import { get } from 'oak-domain/lib/utils/lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { ExceptionHandler } from './types/ExceptionRoute';
 import { Feature } from './types/Feature';
@@ -28,7 +29,7 @@ import {
 } from './page.common';
 
 function makeCommonComponentMethods<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -143,7 +144,7 @@ function makeCommonComponentMethods<
 }
 
 function makePageMethods<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -227,7 +228,7 @@ function makeMiniprogramCompatibleFunctions(): MiniprogramStyleMethods & ThisTyp
 const DEFAULT_REACH_BOTTOM_DISTANCE = 50;
 
 export function createPage<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -383,7 +384,7 @@ export function createPage<
             this.registerPageScroll();
             hiddenMethods.subscribe.call(this);
             await onLoad.call(this, this.props);
-            methods?.onLoad && methods.onLoad.call(this, this.props);
+            // methods?.onLoad && methods.onLoad.call(this, this.props);
             methods?.onReady && methods.onReady.call(this);
             lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
@@ -436,7 +437,7 @@ export function createPage<
 }
 
 export function createComponent<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -630,7 +631,7 @@ export function createComponent<
 }
 
 export type MakeOakPage<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
@@ -659,7 +660,7 @@ export type MakeOakPage<
     ) => JSX.Element;
 
 export type MakeOakComponent<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>

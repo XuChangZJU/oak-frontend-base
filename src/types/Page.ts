@@ -1,4 +1,5 @@
 import { Aspect, OakInputIllegalException, Checker, Context, DeduceFilter, EntityDict, RowStore, SelectionResult, StorageSchema, Trigger, OakException, ActionDictOfEntityDict, DeduceSorterItem, DeduceUpdateOperation, DeduceOperation, SelectRowShape, Watcher } from "oak-domain/lib/types";
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
 import { Pagination } from "./Pagination";
@@ -10,14 +11,14 @@ import { MessageProps } from './Message';
 
 
 type RowSelected<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Proj extends ED[T]['Selection']['data'] = Required<ED[T]['Selection']['data']>
     > = SelectRowShape<ED[T]['Schema'], Proj> | undefined;
 
 
 interface ComponentOption<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -38,7 +39,7 @@ interface ComponentOption<
 };
 
 interface PageOption<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -108,7 +109,7 @@ export type MiniprogramStyleMethods = {
  * 更多的字段未来再加入
  */
 export type OakPageOption<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -146,7 +147,7 @@ export type OakPageOption<
     >;
 
 export type OakComponentOption<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -203,7 +204,7 @@ export type OakListPageProperties = {
     oakIsPicker: BooleanConstructor;
 }
 
-type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
+type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakId?: string;
     oakEntity?: T;
     oakPath?: string;
@@ -222,7 +223,7 @@ export type OakHiddenComponentMethods = {
     unsubscribe: () => void;
 };
 
-export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED> = {
+export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     sub: (type: string, callback: Function) => void;
     unsub: (type: string, callback: Function) => void;
     pub: (type: string, options?: any) => void;
@@ -276,7 +277,7 @@ export type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED>
     >;
 };
 
-export type OakListComponentMethods<ED extends EntityDict, T extends keyof ED> = {
+export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     pushNode: (
         path?: string,
         options?: Pick<
@@ -330,7 +331,7 @@ export type OakPageMethods = {
 };
 
 export type OakComponentInstanceProperties<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>> = {
@@ -339,14 +340,14 @@ export type OakComponentInstanceProperties<
     };
 
 export type OakPageInstanceProperties<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
     > = OakComponentInstanceProperties<ED, Cxt, AD, FD>;
 
 
-export type OakPageData<ED extends EntityDict, T extends keyof ED> = {
+export type OakPageData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakFullpath: string;
     oakExecuting: boolean;
     oakFocused: object;
@@ -357,6 +358,6 @@ export type OakPageData<ED extends EntityDict, T extends keyof ED> = {
     oakEntity: string;
 };
 
-export type OakComponentData<ED extends EntityDict, T extends keyof ED> = {
+export type OakComponentData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     // entity: keyof EntityDict;
 } & OakPageData<ED, T>;

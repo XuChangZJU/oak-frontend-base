@@ -1,11 +1,13 @@
 import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper } from 'oak-domain/lib/types';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Action, Feature } from '../types/Feature';
 import { pull } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
+import { RWLock } from 'oak-domain/lib/utils/concurrent';
 
 export class Cache<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends CommonAspectDict<ED, Cxt>
 > extends Feature<ED, Cxt, AD> {
@@ -14,16 +16,21 @@ export class Cache<
     private syncEventsCallbacks: Array<
         (opRecords: OpRecord<ED>[]) => Promise<void>
     >;
+    private contextBuilder: () => Cxt;
+    private syncLock: RWLock;
 
     constructor(
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         context: Cxt,
-        cacheStore: CacheStore<ED, Cxt>
+        cacheStore: CacheStore<ED, Cxt>,
+        contextBuilder: () => Cxt
     ) {
         super(aspectWrapper);
         this.cacheStore = cacheStore;
         this.context = context;
         this.syncEventsCallbacks = [];
+        this.contextBuilder = contextBuilder;
+        this.syncLock = new RWLock();
 
         // 在这里把wrapper的返回opRecords截取到并同步到cache中
         const { exec } = aspectWrapper;
@@ -57,7 +64,11 @@ export class Cache<
     }
 
     private async sync(records: OpRecord<ED>[]) {
-        await this.cacheStore.sync(records, this.context);
+        // sync会异步并发的调用，不能用this.context;
+        const context = this.contextBuilder();
+        await this.syncLock.acquire('X');
+        await this.cacheStore.sync(records, context);
+        this.syncLock.release();
 
         // 唤起同步注册的回调
         const result = this.syncEventsCallbacks.map((ele) => ele(records));
@@ -123,11 +134,11 @@ export class Cache<
     }
 
     getCachedData() {
-        return this.cacheStore.getCurrentData();
+        return this.cacheStore;
     }
 
     getFullData() {
-        return this.cacheStore.getFullData();
+        return this.cacheStore;
     }
 
     resetInitialData() {

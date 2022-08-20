@@ -7,7 +7,7 @@ import {
     RowStore,
     Connector,
 } from 'oak-domain/lib/types';
-import { OakException, OakExternalException } from 'oak-domain/lib/types/Exception';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 
 import { Feature } from './types/Feature';
@@ -40,7 +40,7 @@ function makeContentTypeAndBody(data: any) {
  * @returns
  */
 export function initialize<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
@@ -83,7 +83,8 @@ export function initialize<
         wrapper,
         storageSchema,
         context,
-        cacheStore
+        cacheStore,
+        () => contextBuilder()(cacheStore)
     );
 
     // basicFeatures.runningNode.setStorageSchema(storageSchema);

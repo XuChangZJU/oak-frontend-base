@@ -1,8 +1,9 @@
 import { EntityDict, OperateOption, OperationResult, OpRecord, SelectOption } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from "oak-domain/lib/types/Storage";
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Checker, Context } from 'oak-domain/lib/types';
 import { TreeStore } from 'oak-memory-tree-store';
-export declare class CacheStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
+export declare class CacheStore<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
     private executor;
     private getFullDataFn?;
     private resetInitialDataFn?;

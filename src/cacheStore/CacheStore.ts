@@ -1,11 +1,12 @@
 import { EntityDict, OperateOption, OperationResult, OpRecord, SelectOption } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from "oak-domain/lib/types/Storage";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Checker, Context, Trigger } from 'oak-domain/lib/types';
 import { TreeStore } from 'oak-memory-tree-store';
 
 export class CacheStore<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>
 > extends TreeStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;

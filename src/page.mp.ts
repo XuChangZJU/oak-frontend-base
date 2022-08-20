@@ -1,6 +1,7 @@
 import { omit } from 'oak-domain/lib/utils/lodash';
 import URL from 'url';
 import { assert } from 'oak-domain/lib/utils/assert';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
 import { BasicFeatures } from './features';
@@ -27,7 +28,7 @@ import {
 
 
 function makeCommonComponentMethods<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -238,7 +239,7 @@ function makeCommonComponentMethods<
 }
 
 function makePageMethods<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -298,7 +299,7 @@ function makePageMethods<
 }
 
 export function createPage<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -368,7 +369,7 @@ export function createPage<
             async onLoad(pageOption: Record<string, string | undefined>) {
                 (this as any).props = this.data;
                 await onLoad.call(this, pageOption);
-                methods?.onLoad && methods?.onLoad.call(this, pageOption);
+                // methods?.onLoad && methods?.onLoad.call(this, pageOption);
             },
             async onPullDownRefresh() {
                 await onPullDownRefresh.call(this);
@@ -460,7 +461,7 @@ export function createPage<
 }
 
 export function createComponent<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -642,7 +643,7 @@ export function createComponent<
 }
 
 export type MakeOakPage<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
@@ -671,7 +672,7 @@ export type MakeOakPage<
     ) => string;
 
 export type MakeOakComponent<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>

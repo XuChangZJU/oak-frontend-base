@@ -2,6 +2,7 @@ import { EntityDict, SelectOption, Context, RowStore, DeduceCreateOperation, Ded
 import { TreeStore } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { RWLock } from 'oak-domain/lib/utils/concurrent';
 
 interface DebugStoreOperateOption extends OperateOption {
@@ -12,7 +13,7 @@ interface DebugStoreSelectOption extends SelectOption {
     noLock?: true;
 };
 
-export class DebugStore<ED extends EntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
+export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;
     private rwLock: RWLock;
     constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt) {

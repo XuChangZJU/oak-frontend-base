@@ -10,6 +10,7 @@ import {
     OakRowInconsistencyException,
     Watcher,
 } from 'oak-domain/lib/types';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 
 import { Feature } from './types/Feature';
@@ -24,7 +25,7 @@ import { initialize as initDev } from './initialize-dev';
 import { getI18next, I18nOptions } from './platforms/web/i18n';
 
 export function initialize<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>

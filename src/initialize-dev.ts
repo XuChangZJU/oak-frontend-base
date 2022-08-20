@@ -9,10 +9,11 @@ import {
     OakRowInconsistencyException,
     Watcher,
 } from 'oak-domain/lib/types';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 
 import { Feature } from './types/Feature';
-import { createDebugStore, resetDebugStore } from './debugStore';
+import { createDebugStore, clearMaterializedData } from './debugStore';
 
 import { initialize as createBasicFeatures, BasicFeatures } from './features';
 import { intersection } from 'oak-domain/lib/utils/lodash';
@@ -37,7 +38,7 @@ import { CacheStore } from './cacheStore/CacheStore';
  * @returns
  */
 export function initialize<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
@@ -79,7 +80,7 @@ export function initialize<
         storageSchema,
         contextBuilder,
         () => debugStore.getCurrentData(),
-        () => resetDebugStore(debugStore, initialData || {}),
+        () => clearMaterializedData(),
     );
     if (checkers) {
         checkers.forEach((checker) => cacheStore.registerChecker(checker));
@@ -117,7 +118,8 @@ export function initialize<
         wrapper,
         storageSchema,
         context,
-        cacheStore
+        cacheStore,
+        () => contextBuilder()(cacheStore)
     );
 
     // basicFeatures.runningNode.setStorageSchema(storageSchema);

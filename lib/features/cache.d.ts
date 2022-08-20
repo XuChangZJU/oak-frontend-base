@@ -1,12 +1,15 @@
 import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper } from 'oak-domain/lib/types';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
 import { CacheStore } from '../cacheStore/CacheStore';
-export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
+export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     cacheStore: CacheStore<ED, Cxt>;
     context: Cxt;
     private syncEventsCallbacks;
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, context: Cxt, cacheStore: CacheStore<ED, Cxt>);
+    private contextBuilder;
+    private syncLock;
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, context: Cxt, cacheStore: CacheStore<ED, Cxt>, contextBuilder: () => Cxt);
     refresh<T extends keyof ED, OP extends SelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true): Promise<{
         data: import("oak-domain/lib/types").SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]>[];
         count?: number | undefined;
@@ -26,7 +29,7 @@ export declare class Cache<ED extends EntityDict, Cxt extends Context<ED>, AD ex
     judgeRelation(entity: keyof ED, attr: string): string | 0 | 2 | string[] | 1;
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
-    getCachedData(): { [T in keyof ED]?: ED[T]["OpSchema"][] | undefined; };
-    getFullData(): any;
+    getCachedData(): CacheStore<ED, Cxt>;
+    getFullData(): CacheStore<ED, Cxt>;
     resetInitialData(): void;
 }

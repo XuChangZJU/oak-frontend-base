@@ -3,6 +3,7 @@ import { cloneDeep, pull, set, unset } from "oak-domain/lib/utils/lodash";
 import { combineFilters, contains, repel } from "oak-domain/lib/store/filter";
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import { EntityDict, Aspect, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceCreateOperation, DeduceOperation, UpdateOpResult, SelectOpResult, CreateOpResult, RemoveOpResult, DeduceSorterItem, AspectWrapper } from "oak-domain/lib/types";
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
@@ -11,14 +12,14 @@ import { Cache } from './cache';
 import { Pagination } from '../types/Pagination';
 import { Action, Feature } from '../types/Feature';
 
-abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> {
+abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> {
     protected entity: T;
     // protected fullPath: string;
     protected schema: StorageSchema<ED>;
     protected projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>);      // 只在Page层有
     protected parent?: Node<ED, keyof ED, Cxt, AD>;
     protected action?: ED[T]['Action'];
-    protected dirty: boolean;
+    protected dirty?: string;
     protected updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'];
     protected cache: Cache<ED, Cxt, AD>;
     protected refreshing: boolean;
@@ -28,6 +29,8 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
     abstract onCacheSync(opRecords: OpRecord<ED>[]): Promise<void>;
 
     abstract refreshValue(): void;
+
+    private syncHandler: (records: OpRecord<ED>[]) => Promise<void>;
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
         projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
@@ -39,10 +42,11 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
         this.projection = projection;
         this.parent = parent;
         this.action = action;
-        this.dirty = false;
+        this.dirty = undefined;
         this.refreshing = false;
         this.updateData = updateData || {};
-        this.cache.bindOnSync((records) => this.onCacheSync(records));
+        this.syncHandler = (records) => this.onCacheSync(records);
+        this.cache.bindOnSync(this.syncHandler);
     }
 
     getEntity() {
@@ -109,7 +113,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
 
     async setUpdateData(attr: string, value: any) {
         await this.setLocalUpdateData(attr, value);
-        this.setDirty();
+        await this.setDirty();
         this.refreshValue();
     }
 
@@ -121,27 +125,27 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
         for (const k in updateData) {
             await this.setLocalUpdateData(k, updateData[k]);
         }
-        this.setDirty();
+        await this.setDirty();
         this.refreshValue();
     }
 
-    setDirty() {
+    async setDirty() {
         if (!this.dirty) {
-            this.dirty = true;
+            this.dirty = await generateNewId();
             if (this.parent) {
-                this.parent.setDirty();
+                await this.parent.setDirty();
             }
         }
     }
 
-    setAction(action: ED[T]['Action']) {
+    async setAction(action: ED[T]['Action']) {
         this.action = action;
-        this.setDirty();
+        await this.setDirty();
         this.refreshValue();
     }
 
     isDirty() {
-        return this.dirty;
+        return !!this.dirty;
     }
 
     getParent() {
@@ -169,7 +173,7 @@ abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Conte
     }
 
     destroy() {
-        this.cache.unbindOnSync(this.onCacheSync);
+        this.cache.unbindOnSync(this.syncHandler);
     }
 
     protected judgeRelation(attr: string) {
@@ -193,7 +197,7 @@ const DEFAULT_PAGINATION: Pagination = {
 }
 
 class ListNode<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends CommonAspectDict<ED, Cxt>
@@ -283,6 +287,13 @@ class ListNode<
                 { obscure: true }
             );
             this.setValue(value);
+        }
+    }
+
+    destroy(): void {
+        super.destroy();
+        for (const child of this.children) {
+            child.destroy();
         }
     }
 
@@ -524,7 +535,7 @@ class ListNode<
     }
 
     getAction() {
-        assert(this.dirty);
+        assert(this.isDirty());
         return this.action || 'update';
     }
 
@@ -540,6 +551,7 @@ class ListNode<
             if (action) {
                 assert(action === 'create'); // 在list页面测试create是否允许？
                 return {
+                    id: this.dirty!,
                     action,
                     data: {},
                 };
@@ -550,6 +562,7 @@ class ListNode<
         // todo 这里的逻辑还没有测试过，后面还有ids选择的Case
         if (this.action) {
             return {
+                id: this.dirty!,
                 action: this.getAction(),
                 data: cloneDeep(this.updateData),
                 filter: combineFilters(this.filters.map((ele) => ele.filter)),
@@ -729,7 +742,7 @@ class ListNode<
     resetUpdateData() {
         this.updateData = {};
         this.action = undefined;
-        this.dirty = false;
+        this.dirty = undefined;
 
         this.children.forEach((ele) => ele.resetUpdateData());
         this.newBorn = [];
@@ -863,7 +876,7 @@ class ListNode<
                 }
             }
             if (!included) {
-                child.setAction('remove');
+                await child.setAction('remove');
             }
         }
 
@@ -903,7 +916,7 @@ class ListNode<
                 if (this.judgeTheSame(child.getFreshValue(true), updateData!)) {
                     assert(child.getAction() !== 'remove');
                     // 这里把updateData全干掉了，如果本身是先update再remove或许会有问题 by Xc
-                    child.setAction('remove');
+                    await child.setAction('remove');
                     return;
                 }
             }
@@ -919,7 +932,7 @@ class ListNode<
     }
 }
 
-class SingleNode<ED extends EntityDict,
+class SingleNode<ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
@@ -1070,6 +1083,13 @@ class SingleNode<ED extends EntityDict,
         );
     }
 
+    destroy(): void {
+        super.destroy();
+        for (const k in this.children) {
+            this.children[k].destroy();
+        }
+    }
+
     getChild(path: string): SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD> {
         return this.children[path];
     }
@@ -1159,9 +1179,11 @@ class SingleNode<ED extends EntityDict,
         const action = action2 || this.getAction();
 
         const operation = action === 'create' ? {
+            id: this.dirty!,
             action: 'create',
             data: Object.assign({}, this.updateData, { id: execute ? await generateNewId() : generateMockId() }),
         } as DeduceCreateOperation<ED[T]['Schema']> : {
+            id: this.dirty!,
             action,
             data: cloneDeep(this.updateData),
             filter: {
@@ -1217,7 +1239,7 @@ class SingleNode<ED extends EntityDict,
         unset(this.updateData, attrsReset);
         // this.action = undefined;
         if (!attrs) {
-            this.dirty = false;
+            this.dirty = undefined;
             this.action = undefined;
         }
 
@@ -1256,7 +1278,7 @@ class SingleNode<ED extends EntityDict,
     }
 }
 
-export type CreateNodeOptions<ED extends EntityDict, T extends keyof ED> = {
+export type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     path: string;
     parent?: string;
     entity: T;
@@ -1275,7 +1297,7 @@ export type CreateNodeOptions<ED extends EntityDict, T extends keyof ED> = {
 };
 
 export class RunningTree<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends CommonAspectDict<ED, Cxt>
 > extends Feature<ED, Cxt, AD> {
@@ -1356,7 +1378,7 @@ export class RunningTree<
         }
 
         if (action) {
-            node.setAction(action);
+            await node.setAction(action);
         }
         if (updateData) {
             node.setMultiUpdateData(updateData);
@@ -1398,6 +1420,7 @@ export class RunningTree<
                 assert(this.root.hasOwnProperty(path));
                 unset(this.root, path);
             }
+            node.destroy();
         }
     }
 
@@ -1702,7 +1725,7 @@ export class RunningTree<
     @Action
     async setAction<T extends keyof ED>(path: string, action: ED[T]['Action']) {
         const node = this.findNode(path);
-        node.setAction(action);
+        await node.setAction(action);
     }
 
     @Action

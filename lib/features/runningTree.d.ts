@@ -1,16 +1,17 @@
 import { EntityDict, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceOperation, AspectWrapper } from "oak-domain/lib/types";
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
 import { Cache } from './cache';
 import { Pagination } from '../types/Pagination';
 import { Feature } from '../types/Feature';
-declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> {
+declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> {
     protected entity: T;
     protected schema: StorageSchema<ED>;
     protected projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>);
     protected parent?: Node<ED, keyof ED, Cxt, AD>;
     protected action?: ED[T]['Action'];
-    protected dirty: boolean;
+    protected dirty?: string;
     protected updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'];
     protected cache: Cache<ED, Cxt, AD>;
     protected refreshing: boolean;
@@ -18,6 +19,7 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     private afterExecute?;
     abstract onCacheSync(opRecords: OpRecord<ED>[]): Promise<void>;
     abstract refreshValue(): void;
+    private syncHandler;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data']);
     getEntity(): T;
     protected abstract setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
@@ -25,8 +27,8 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     setUpdateData(attr: string, value: any): Promise<void>;
     getUpdateData(): import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>;
     setMultiUpdateData(updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data']): Promise<void>;
-    setDirty(): void;
-    setAction(action: ED[T]['Action']): void;
+    setDirty(): Promise<void>;
+    setAction(action: ED[T]['Action']): Promise<void>;
     isDirty(): boolean;
     getParent(): Node<ED, keyof ED, Cxt, AD> | undefined;
     getProjection(): Promise<ED[T]["Selection"]["data"]>;
@@ -39,7 +41,7 @@ declare abstract class Node<ED extends EntityDict, T extends keyof ED, Cxt exten
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }
-declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
+declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private children;
     private newBorn;
     private filters;
@@ -47,6 +49,7 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     private pagination;
     private projectionShape;
     onCacheSync(records: OpRecord<ED>[]): Promise<void>;
+    destroy(): void;
     setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
     refreshValue(): void;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), projectionShape: ED[T]['Selection']['data'], parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], pagination?: Pagination);
@@ -89,13 +92,14 @@ declare class ListNode<ED extends EntityDict, T extends keyof ED, Cxt extends Co
     setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]): Promise<void>;
     toggleChild(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>, checked: boolean): Promise<void>;
 }
-declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
+declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private id?;
     private value?;
     private freshValue?;
     private children;
     onCacheSync(records: OpRecord<ED>[]): Promise<void>;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), projectionShape: ED[T]['Selection']['data'], parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data']);
+    destroy(): void;
     getChild(path: string): SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
     getChildren(): {
         [K: string]: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
@@ -110,7 +114,7 @@ declare class SingleNode<ED extends EntityDict, T extends keyof ED, Cxt extends 
     resetUpdateData(attrs?: string[]): void;
     setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
 }
-export declare type CreateNodeOptions<ED extends EntityDict, T extends keyof ED> = {
+export declare type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     path: string;
     parent?: string;
     entity: T;
@@ -127,7 +131,7 @@ export declare type CreateNodeOptions<ED extends EntityDict, T extends keyof ED>
     beforeExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
     afterExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
 };
-export declare class RunningTree<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
+export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     private cache;
     private schema;
     private root;

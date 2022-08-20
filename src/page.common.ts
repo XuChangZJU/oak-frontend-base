@@ -8,6 +8,7 @@ import {
     OakException,
     OakInputIllegalException,
 } from 'oak-domain/lib/types';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { ExceptionHandler } from './types/ExceptionRoute';
 import { Feature, subscribe } from './types/Feature';
@@ -30,14 +31,14 @@ export type ComponentProps<
     >;
 
 export type ComponentData<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     FormedData extends WechatMiniprogram.Component.DataOption,
     TData extends WechatMiniprogram.Component.DataOption
     > = TData & FormedData & OakComponentData<ED, T>;
 
 export type ComponentThisType<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean,
@@ -61,7 +62,7 @@ export type ComponentThisType<
     >;
 
 export function makeHiddenComponentMethods<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean,
@@ -87,7 +88,7 @@ export function makeHiddenComponentMethods<
 }
 
 export function makeCommonComponentMethods<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -440,7 +441,7 @@ export function makeCommonComponentMethods<
 }
 
 export function makeListComponentMethods<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
@@ -635,7 +636,7 @@ export function makeListComponentMethods<
 }
 
 export function makePageMethods<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,

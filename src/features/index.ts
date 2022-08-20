@@ -1,4 +1,5 @@
 import { AspectWrapper, Checker, Context, EntityDict, RowStore } from 'oak-domain/lib/types';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Cache } from './cache';
@@ -12,12 +13,13 @@ import { Notification } from './notification';
 import { Message } from './message';
 import { CacheStore } from '../cacheStore/CacheStore';
 
-export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> (
+export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> (
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         storageSchema: StorageSchema<ED>,
         context: Cxt,
-        cacheStore: CacheStore<ED, Cxt>): BasicFeatures<ED, Cxt, AD> {
-    const cache = new Cache<ED, Cxt, AD>(aspectWrapper, context, cacheStore);
+        cacheStore: CacheStore<ED, Cxt>,
+        contextBuilder: () => Cxt): BasicFeatures<ED, Cxt, AD> {
+    const cache = new Cache<ED, Cxt, AD>(aspectWrapper, context, cacheStore, contextBuilder);
     const location = new Location(aspectWrapper);
     const runningTree = new RunningTree<ED, Cxt, AD>(aspectWrapper, cache, storageSchema);
     const locales = new Locales(aspectWrapper);
@@ -38,7 +40,7 @@ export function initialize<ED extends EntityDict, Cxt extends Context<ED>, AD ex
 }
 
 export type BasicFeatures<
-    ED extends EntityDict,
+    ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends CommonAspectDict<ED, Cxt>
 > = {

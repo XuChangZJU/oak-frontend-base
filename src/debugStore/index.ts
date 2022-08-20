@@ -3,11 +3,12 @@ import {
     Checker, Trigger, StorageSchema, FormCreateData, Context, EntityDict, RowStore,
     ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, OperationResult
 } from "oak-domain/lib/types";
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { makeIntrinsicWatchers } from 'oak-domain/lib/store/watchers';
 import { assert } from 'oak-domain/lib/utils/assert';
 
-async function initDataInStore<ED extends EntityDict, Cxt extends Context<ED>>(
+async function initDataInStore<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>>(
     store: DebugStore<ED, Cxt>,
     initialData: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
@@ -96,12 +97,45 @@ function materializeData(data: any, stat: { create: number, update: number, remo
     }
 }
 
+export function clearMaterializedData() {
+    if (process.env.OAK_PLATFORM === 'wechatMp') {
+        try {
+            wx.removeStorageSync('debugStore');
+            wx.removeStorageSync('debugStoreStat');
+            lastMaterializedVersion = 0;
+            wx.showToast({
+                title: '数据已清除',
+                icon: 'success',
+            });
+            console.log('清空数据');
+        } catch (e) {
+            console.error(e);
+            wx.showToast({
+                title: '清空数据失败',
+                icon: 'error',
+            });
+        }
+    }
+     else if (process.env.OAK_PLATFORM === 'web') {
+        try {
+            window.localStorage.removeItem('debugStore');
+            window.localStorage.removeItem('debugStoreStat');
+            lastMaterializedVersion = 0;
+            console.log('清空数据');
+            // alert('数据已物化');
+        } catch (e) {
+            console.error(e);
+            // alert('物化数据失败');
+        }
+    }
+}
+
 /**
  * 在debug环境上创建watcher
  * @param store 
  * @param watchers 
  */
-function initializeWatchers<ED extends EntityDict, Cxt extends Context<ED>>(
+function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>>(
     store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt, watchers: Array<Watcher<ED, keyof ED, Cxt>>) {
     
     let count = 0;
@@ -117,6 +151,7 @@ function initializeWatchers<ED extends EntityDict, Cxt extends Context<ED>>(
                     const filter2 = typeof filter === 'function' ? await filter() : filter;
                     const data = typeof actionData === 'function' ? await (actionData as any)() : actionData;        // 这里有个奇怪的编译错误，不理解 by Xc
                     const result = await store.operate(entity, {
+                        id: await generateNewId(),
                         action,
                         data,
                         filter: filter2
@@ -152,7 +187,7 @@ function initializeWatchers<ED extends EntityDict, Cxt extends Context<ED>>(
     doWatchers();
 }
 
-export function resetDebugStore<ED extends EntityDict, Cxt extends Context<ED>>(
+/* export function resetDebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>>(
     store: DebugStore<ED, Cxt>,
     data: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
@@ -165,9 +200,9 @@ export function resetDebugStore<ED extends EntityDict, Cxt extends Context<ED>>(
         commit: 0
     });
     materializeData(data, store.getStat());
-}
+} */
 
-export function createDebugStore<ED extends EntityDict, Cxt extends Context<ED>>(
+export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>>(
     storageSchema: StorageSchema<ED>,
     contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
     triggers: Array<Trigger<ED, keyof ED, Cxt>>,

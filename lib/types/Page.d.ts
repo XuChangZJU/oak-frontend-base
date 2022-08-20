@@ -1,6 +1,7 @@
 /// <reference types="wechat-miniprogram" />
 /// <reference types="wechat-miniprogram" />
 import { Aspect, Context, EntityDict, DeduceSorterItem, DeduceOperation, SelectRowShape } from "oak-domain/lib/types";
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
 import { Pagination } from "./Pagination";
@@ -9,8 +10,8 @@ import { NamedFilterItem, NamedSorterItem } from './NamedCondition';
 import { CreateNodeOptions } from '../features/runningTree';
 import { NotificationProps } from './Notification';
 import { MessageProps } from './Message';
-declare type RowSelected<ED extends EntityDict, T extends keyof ED, Proj extends ED[T]['Selection']['data'] = Required<ED[T]['Selection']['data']>> = SelectRowShape<ED[T]['Schema'], Proj> | undefined;
-interface ComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> {
+declare type RowSelected<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Proj extends ED[T]['Selection']['data'] = Required<ED[T]['Selection']['data']>> = SelectRowShape<ED[T]['Schema'], Proj> | undefined;
+interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> {
     entity?: T;
     isList?: IsList;
     formData?: (options: {
@@ -21,7 +22,7 @@ interface ComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends
     }) => Promise<FormedData>;
     actions?: ED[T]['Action'][];
 }
-interface PageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> {
+interface PageOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> {
     entity?: T;
     path?: string;
     isList?: IsList;
@@ -66,7 +67,7 @@ export declare type MiniprogramStyleMethods = {
  * 这里对微信小程序中一些常用的字段进行了封装，维持住在各个平台下的通用性
  * 更多的字段未来再加入
  */
-export declare type OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = PageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TProperty> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, true>> & Partial<{
+export declare type OakPageOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = PageOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TProperty> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, true>> & Partial<{
     lifetimes: WechatMiniprogram.Component.Lifetimes['lifetimes'];
     observers: Record<string, (...args: any[]) => any>;
     pageLifetimes?: Partial<WechatMiniprogram.Component.PageLifetimes> | undefined;
@@ -76,7 +77,7 @@ export declare type OakPageOption<ED extends EntityDict, T extends keyof ED, Cxt
     props: WechatMiniprogram.Component.PropertyOptionToData<OakPageProperties & TProperty>;
     setState: (data: Partial<TData & OakPageData<ED, T>>, callback?: () => void) => Promise<void>;
 } & Omit<MiniprogramStyleMethods, 'triggerEvent'> & TMethod & WechatMiniprogram.Page.ILifetime & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakPageMethods & OakPageInstanceProperties<ED, Cxt, AD, FD>>;
-export declare type OakComponentOption<ED extends EntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = ComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList, TProperty> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, false>> & Partial<{
+export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption> = ComponentOption<ED, T, Cxt, AD, FD, FormedData, IsList, TProperty> & Partial<WechatMiniprogram.Component.Data<TData>> & Partial<WechatMiniprogram.Component.Property<TProperty>> & Partial<WechatMiniprogram.Component.Method<TMethod, false>> & Partial<{
     lifetimes: WechatMiniprogram.Component.Lifetimes['lifetimes'];
     observers: Record<string, (...args: any[]) => any>;
     pageLifetimes: Partial<WechatMiniprogram.Component.PageLifetimes> | undefined;
@@ -106,7 +107,7 @@ export declare type OakListPageProperties = {
     oakSorters: StringConstructor;
     oakIsPicker: BooleanConstructor;
 };
-declare type OakNavigateToParameters<ED extends EntityDict, T extends keyof ED> = {
+declare type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakId?: string;
     oakEntity?: T;
     oakPath?: string;
@@ -123,7 +124,7 @@ export declare type OakHiddenComponentMethods = {
     subscribe: () => void;
     unsubscribe: () => void;
 };
-export declare type OakCommonComponentMethods<ED extends EntityDict, T extends keyof ED> = {
+export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     sub: (type: string, callback: Function) => void;
     unsub: (type: string, callback: Function) => void;
     pub: (type: string, options?: any) => void;
@@ -158,7 +159,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict, T extends k
     toggleNode: (nodeData: Record<string, any>, checked: boolean, path?: string) => Promise<void>;
     execute: (action?: ED[T]['Action'], legalExceptions?: Array<string>, path?: string) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
 };
-export declare type OakListComponentMethods<ED extends EntityDict, T extends keyof ED> = {
+export declare type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     pushNode: (path?: string, options?: Pick<CreateNodeOptions<ED, keyof ED>, 'updateData' | 'beforeExecute' | 'afterExecute'>) => Promise<void>;
     removeNode: (parent: string, path: string) => Promise<void>;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => Promise<void>;
@@ -191,12 +192,12 @@ export declare type OakPageMethods = {
     onReachBottom: () => Promise<void>;
     onLoad: (options: Record<string, string | undefined>) => Promise<void>;
 };
-export declare type OakComponentInstanceProperties<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>> = {
+export declare type OakComponentInstanceProperties<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>> = {
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
     isReady: boolean;
 };
-export declare type OakPageInstanceProperties<ED extends EntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>> = OakComponentInstanceProperties<ED, Cxt, AD, FD>;
-export declare type OakPageData<ED extends EntityDict, T extends keyof ED> = {
+export declare type OakPageInstanceProperties<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>> = OakComponentInstanceProperties<ED, Cxt, AD, FD>;
+export declare type OakPageData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakFullpath: string;
     oakExecuting: boolean;
     oakFocused: object;
@@ -206,5 +207,5 @@ export declare type OakPageData<ED extends EntityDict, T extends keyof ED> = {
     oakLoadingMore: boolean;
     oakEntity: string;
 };
-export declare type OakComponentData<ED extends EntityDict, T extends keyof ED> = {} & OakPageData<ED, T>;
+export declare type OakComponentData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {} & OakPageData<ED, T>;
 export {};
