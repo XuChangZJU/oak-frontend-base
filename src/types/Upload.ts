@@ -1,5 +1,5 @@
 export type QiniuUploadInfo = {
-    key: string;
+    key?: string;
     uploadToken: string;
     uploadHost: string;
     bucket: string;
@@ -7,7 +7,7 @@ export type QiniuUploadInfo = {
 };
 
 export type AliyunUploadInfo = {
-    key: string;
+    key?: string;
     signature: string;
     policy: string;
     uploadHost: string;
