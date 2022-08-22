@@ -138,7 +138,7 @@ export class Cache<
     }
 
     getFullData() {
-        return this.cacheStore;
+        return this.cacheStore.getFullData();
     }
 
     resetInitialData() {

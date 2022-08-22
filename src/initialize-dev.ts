@@ -79,7 +79,7 @@ export function initialize<
     const cacheStore = new CacheStore(
         storageSchema,
         contextBuilder,
-        () => debugStore.getCurrentData(),
+        () => debugStore,
         () => clearMaterializedData(),
     );
     if (checkers) {

@@ -30,6 +30,6 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
     getCachedData(): CacheStore<ED, Cxt>;
-    getFullData(): CacheStore<ED, Cxt>;
+    getFullData(): any;
     resetInitialData(): void;
 }

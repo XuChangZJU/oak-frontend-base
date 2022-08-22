@@ -1,8 +1,1 @@
-function ttt(this: any) {
-    console.log(this.a + this.b);
-}
-
-ttt.call({
-    a: 1,
-    b: 2,
-});
+console.log(/^[a-z][a-z|A-Z]+$/.test('create-page'));
