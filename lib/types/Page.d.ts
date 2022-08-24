@@ -149,7 +149,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
         delta: number;
     }) => Promise<void>;
     resetUpdateData: () => void;
-    setUpdateData: (attr: string, input: any) => void;
+    setUpdateData: (attr: string, input: any) => Promise<void>;
     t(key: string, params?: object): string;
     callPicker: (attr: string, params: Record<string, any>) => void;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;

@@ -420,14 +420,14 @@ export function makeCommonComponentMethods<
             return features.runningTree.resetUpdateData(this.state.oakFullpath);
         },
 
-        setAction(action, path) {
+        async setAction(action, path) {
             const fullpath = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
             return features.runningTree.setAction(fullpath, action);
         },
 
-        setUpdateData(attr, value) {
+        async setUpdateData(attr, value) {
             if (this.state.oakExecuting) {
                 return;
             }
