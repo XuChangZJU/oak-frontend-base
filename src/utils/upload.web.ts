@@ -33,16 +33,16 @@ export class Upload {
     }> {
         // 七牛上传
         const { uploadHost, uploadToken, key, domain, bucket } = uploadInfo;
-         const formData = new FormData();
+        const formData = new FormData();
 
-         formData.append('key', key);
-         formData.append('file', file);
-         formData.append('token', uploadToken);
+        formData.append('key', key!);
+        formData.append('file', file);
+        formData.append('token', uploadToken);
 
-         const options = {
-             body: formData,
-             method: 'POST',
-         };
+        const options = {
+            body: formData,
+            method: 'POST',
+        };
 
         const json = await(await fetch(uploadHost, options))
             .json()

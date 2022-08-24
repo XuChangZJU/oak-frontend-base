@@ -1,12 +1,12 @@
 export declare type QiniuUploadInfo = {
-    key: string;
+    key?: string;
     uploadToken: string;
     uploadHost: string;
     bucket: string;
     domain: string;
 };
 export declare type AliyunUploadInfo = {
-    key: string;
+    key?: string;
     signature: string;
     policy: string;
     uploadHost: string;
