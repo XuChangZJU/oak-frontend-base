@@ -267,7 +267,7 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
         path?: string
     ) => Promise<void>;
     execute: (
-        action?: ED[T]['Action'],
+        action: ED[T]['Action'],
         legalExceptions?: Array<string>,
         path?: string
     ) => Promise<

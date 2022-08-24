@@ -551,7 +551,7 @@ class ListNode<
             if (action) {
                 assert(action === 'create'); // 在list页面测试create是否允许？
                 return {
-                    id: this.dirty!,
+                    id: 'dummy',
                     action,
                     data: {},
                 };
@@ -1938,9 +1938,13 @@ export class RunningTree<
         }
     }
 
-    async testAction(path: string, action?: string, execute?: boolean) {
+    async testAction(path: string, action: string, execute?: boolean) {
         const node = this.findNode(path);
         if (execute) {
+            if (!node.isDirty()) {
+                // remove会出现这样的情况，create和update似乎也不是完全没有可能
+                await node.setDirty();
+            }
             await this.beforeExecute(node, action);
         }
         const operation = await node.composeOperation(action, execute);
@@ -1998,7 +2002,7 @@ export class RunningTree<
     }
 
     @Action
-    async execute(path: string, action?: string) {
+    async execute(path: string, action: string) {
         const { node, operation } = await this.testAction(path, action, true);
 
         await this.getAspectWrapper().exec('operate', {

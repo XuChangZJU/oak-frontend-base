@@ -165,12 +165,12 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     addNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
     removeNamedSorterByName<T extends keyof ED>(path: string, name: string, refresh?: boolean): Promise<void>;
-    testAction(path: string, action?: string, execute?: boolean): Promise<{
+    testAction(path: string, action: string, execute?: boolean): Promise<{
         node: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
         operation: DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[];
     }>;
     private beforeExecute;
-    execute(path: string, action?: string): Promise<DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[]>;
+    execute(path: string, action: string): Promise<DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[]>;
     pushNode<T extends keyof ED>(path: string, options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): Promise<SingleNode<ED, keyof ED, Cxt, AD>>;
     removeNode(parent: string, path: string): Promise<void>;
     resetUpdateData(path: string): void;
