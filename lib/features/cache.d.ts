@@ -14,6 +14,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
         data: import("oak-domain/lib/types").SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]>[];
         count?: number | undefined;
     }>;
+    operate<T extends keyof ED, OP extends OperateOption>(entity: T, operation: ED[T]['Operation'], option?: OP): Promise<import("oak-domain/lib/types").OperationResult<ED> | import("oak-domain/lib/types").OperationResult<ED>[]>;
     private sync;
     /**
      * 前端缓存做operation只可能是测试权限，必然回滚
@@ -24,7 +25,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
      * @param option
      * @returns
      */
-    operate<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], option?: OperateOption): Promise<import("oak-domain/lib/types").OperationResult<ED>>;
+    testOperation<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], option?: OperateOption): Promise<import("oak-domain/lib/types").OperationResult<ED>>;
     get<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, params?: SelectOption): Promise<import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], S["data"]>[]>;
     judgeRelation(entity: keyof ED, attr: string): string | 0 | 2 | string[] | 1;
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;

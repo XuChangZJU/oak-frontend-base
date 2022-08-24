@@ -63,6 +63,21 @@ export class Cache<
         return result;
     }
 
+    @Action
+    async operate<T extends keyof ED, OP extends OperateOption>(
+        entity: T,
+        operation: ED[T]['Operation'],
+        option?: OP,        
+    ) {
+        const { result } = await this.getAspectWrapper().exec('operate', {
+            entity,
+            operation,
+            option,
+        });
+        
+        return result;
+    }
+
     private async sync(records: OpRecord<ED>[]) {
         // sync会异步并发的调用，不能用this.context;
         const context = this.contextBuilder();
@@ -84,7 +99,7 @@ export class Cache<
      * @param option
      * @returns
      */
-    async operate<T extends keyof ED>(
+    async testOperation<T extends keyof ED>(
         entity: T,
         operation: ED[T]['Operation'],
         option?: OperateOption

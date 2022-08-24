@@ -1951,10 +1951,10 @@ export class RunningTree<
         // 先在cache中尝试能否执行，如果权限上否决了在这里就失败
         if (operation instanceof Array) {
             for (const oper of operation) {
-                await this.cache.operate(node.getEntity(), oper);
+                await this.cache.testOperation(node.getEntity(), oper);
             }
         } else if (operation) {
-            await this.cache.operate(node.getEntity(), operation);
+            await this.cache.testOperation(node.getEntity(), operation);
         } else {
             assert(false);
         }
