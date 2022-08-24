@@ -584,7 +584,7 @@ class ListNode<
         for (const node of this.newBorn) {
             const subAction = await node.composeOperation(undefined, execute);
             if (subAction) {
-                assert(!action || action === 'update'); // 如果还有新建，应该不会有其它类型的action
+                // assert(!action || action === 'create'); // 如果还有新建，应该不会有其它类型的action
                 actions.push(subAction);
             }
         }
