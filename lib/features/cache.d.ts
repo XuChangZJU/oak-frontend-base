@@ -25,7 +25,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
      * @param option
      * @returns
      */
-    testOperation<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], option?: OperateOption): Promise<import("oak-domain/lib/types").OperationResult<ED>>;
+    testOperation<T extends keyof ED>(entity: T, operation: ED[T]['Operation']): Promise<import("oak-domain/lib/types").OperationResult<ED>>;
     get<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, params?: SelectOption): Promise<import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], S["data"]>[]>;
     judgeRelation(entity: keyof ED, attr: string): string | 0 | 2 | string[] | 1;
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;

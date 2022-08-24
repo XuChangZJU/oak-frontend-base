@@ -155,7 +155,9 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
                         action,
                         data,
                         filter: filter2
-                    }, context);
+                    }, context, {
+                        dontCollect: true,
+                    });
 
                     console.log(`执行了watcher【${w.name}】，结果是：`, result);
                 }
@@ -166,7 +168,9 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
                     const { result: rows } = await store.select(entity, {
                         data: projection2 as any,
                         filter: filter2,
-                    }, context);
+                    }, context, {
+                        dontCollect: true,
+                    });
 
                     const result = fn(context, rows);
                     console.log(`执行了watcher【${w.name}】，结果是：`, result);

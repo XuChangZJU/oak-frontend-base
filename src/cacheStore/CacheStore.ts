@@ -33,7 +33,7 @@ export class CacheStore<
         entity: T,
         operation: ED[T]['Operation'],
         context: Cxt,
-        option?: OP
+        option: OP
     ): Promise<OperationResult<ED>> {
         const autoCommit = !context.getCurrentTxnId();
         let result;
@@ -41,9 +41,9 @@ export class CacheStore<
             await context.begin();
         }
         try {
-            await this.executor.preOperation(entity, operation, context);
+            await this.executor.preOperation(entity, operation, context, option);
             result = await super.operate(entity, operation, context, option);
-            await this.executor.postOperation(entity, operation, context);
+            await this.executor.postOperation(entity, operation, context, option);
         } catch (err) {
             await context.rollback();
             throw err;
@@ -77,7 +77,7 @@ export class CacheStore<
         T extends keyof ED,
         S extends ED[T]['Selection'],
         OP extends SelectOption
-    >(entity: T, selection: S, context: Cxt, option?: OP) {
+    >(entity: T, selection: S, context: Cxt, option: OP) {
         const autoCommit = !context.getCurrentTxnId();
         if (autoCommit) {
             await context.begin();

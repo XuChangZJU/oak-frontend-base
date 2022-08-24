@@ -102,7 +102,6 @@ export class Cache<
     async testOperation<T extends keyof ED>(
         entity: T,
         operation: ED[T]['Operation'],
-        option?: OperateOption
     ) {
         let result: Awaited<ReturnType<typeof this.cacheStore.operate>>;
         await this.context.begin();
@@ -111,7 +110,10 @@ export class Cache<
                 entity,
                 operation,
                 this.context,
-                option
+                {
+                    dontCollect: true,
+                    dontCreateOper: true,
+                }
             );
 
             await this.context.rollback();
@@ -131,7 +133,7 @@ export class Cache<
             entity,
             selection,
             this.context,
-            params
+            {}
         );
         return result;
     }
