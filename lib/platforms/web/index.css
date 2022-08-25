@@ -1,32 +1,4 @@
-/* .rmc-pull-to-refresh-content {
-    transform-origin: left top 0px;
-}
-.rmc-pull-to-refresh-transition {
-    transition: transform 0.3s;
-}
 
-.rmc-pull-to-refresh-wrapper {
-    overflow: hidden;
-}
-
-.rmc-pull-to-refresh-indicator {
-    color: grey;
-    text-align: center;
-    height: 100px;
-}
-
-.rmc-pull-to-refresh-down .rmc-pull-to-refresh-indicator {
-    margin-top: -100px;
-}
-
-.rmc-pull-to-refresh-up .rmc-pull-to-refresh-indicator {
-    margin-top: -100px;
-}
-
-.oak-pull-to-refresh-loading {
-    width: 100px;
-    height: 100px;
-} */
 .rmc-pull-to-refresh-content {
     transform-origin: left top 0px;
 }

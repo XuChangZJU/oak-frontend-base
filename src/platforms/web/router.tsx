@@ -1,5 +1,4 @@
-//react
-import * as React from 'react';
+import React from 'react';
 
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +6,7 @@ import { useWidth } from './responsive';
 
 import URL from 'url';
 
-type Location = { state: object; search: string };
+type Location = { state: Record<string, any>; search: string };
 
 function getParams(location: Location) {
     const { search, state } = location;
@@ -28,32 +27,43 @@ function getQuery(url: string) {
     return query;
 }
 
-const withRouter = (Component: React.ComponentType<any>) => {
+const withRouter = (Component: React.ComponentType<any>, isComponent?: boolean) => {
     const ComponentWithRouterProp = (props: any) => {
         const navigate = useNavigate();
-        const location = useLocation();
         const { t, i18n } = useTranslation();
         const width = useWidth();
-        const params = getParams(location as Location);
         const { forwardedRef, ...rest } = props;
+
+        if (isComponent) {
+            return (
+                <Component
+                    {...rest}
+                    t={t}
+                    i18n={i18n}
+                    width={width}
+                    navigate={navigate}
+                    ref={forwardedRef}
+                />
+            );
+        }
+        const location = useLocation();
+        const params = getParams(location as Location);
 
         return (
             <Component
-                ref={forwardedRef}
                 {...rest}
                 {...params}
-                navigate={navigate}
-                location={location}
                 t={t}
                 i18n={i18n}
                 width={width}
+                navigate={navigate}
+                location={location}
+                ref={forwardedRef}
             />
         );
     };
 
-    return React.forwardRef((props, ref) => {
-        return <ComponentWithRouterProp {...props} forwardedRef={ref} />;
-    });
+    return React.forwardRef((props, ref) => <ComponentWithRouterProp {...props} forwardedRef={ref} />);
 };
 
 export default withRouter;

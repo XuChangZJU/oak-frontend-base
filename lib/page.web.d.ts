@@ -1,5 +1,5 @@
 /// <reference types="wechat-miniprogram" />
-import * as React from 'react';
+import React from 'react';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';

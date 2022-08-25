@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 
 export type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | string;
 export type Keys = Width[];
