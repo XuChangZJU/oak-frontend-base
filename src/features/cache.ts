@@ -124,6 +124,42 @@ export class Cache<
         return result;
     }
 
+    /**
+     * 尝试在cache中重做一些动作，然后选择重做后的数据（为了实现modi）
+     * @param entity 
+     * @param projection 
+     * @param opers 
+     */
+    async tryRedoOperations<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, opers: Array<{
+        entity: keyof ED,
+        operation: ED[keyof ED]['Operation']
+    }>) {
+        let result: Awaited<ReturnType<typeof this.cacheStore.select>>;
+        await this.context.begin();
+        try {
+            for (const oper of opers) {
+                await this.cacheStore.operate(
+                    oper.entity,
+                    oper.operation,
+                    this.context,
+                    {
+                        dontCollect: true,
+                        dontCreateOper: true,
+                    }
+                );
+            }
+            result = await this.cacheStore.select(entity, selection, this.context, {
+                dontCollect: true,
+            });
+
+            await this.context.rollback();
+        } catch (err) {
+            await this.context.rollback();
+            throw err;
+        }
+        return result;
+    }
+
     async get<T extends keyof ED, S extends ED[T]['Selection']>(
         entity: T,
         selection: S,
