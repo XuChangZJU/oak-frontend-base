@@ -388,10 +388,14 @@ export function makeCommonComponentMethods<
                                 this.setState({
                                     oakExecuting: false,
                                 });
-                                this.navigateTo({
-                                    url: router,
-                                    exception: err.toString(),
-                                });
+                                this.navigateTo(
+                                    {
+                                        url: router,
+                                    },
+                                    {
+                                        exception: err.toString(),
+                                    }
+                                );
                             }
                         } else {
                             this.setState({

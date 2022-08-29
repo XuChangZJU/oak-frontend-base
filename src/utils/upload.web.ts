@@ -28,6 +28,8 @@ export class Upload {
         file: File,
         uploadInfo: QiniuUploadInfo
     ): Promise<{
+        key: string;
+        hash: string;
         url: string;
         bucket: string;
     }> {
@@ -44,17 +46,17 @@ export class Upload {
             method: 'POST',
         };
 
-        const json = await(await fetch(uploadHost, options))
-            .json()
+        const json = await (await fetch(uploadHost, options)).json();
 
         if (json.success === true || json.key) {
             return {
+                key: json.key,
+                hash: json.hash,
                 url: `${domain}/${key}`,
                 bucket,
             };
         } else {
-            const message = `上传错误: ${JSON.stringify(json)}`;
-            throw new Error(message);
+            throw new Error(JSON.stringify(json));
         }
     }
 
