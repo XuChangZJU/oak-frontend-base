@@ -6,6 +6,8 @@ export declare class Upload {
         bucket: string;
     }>;
     uploadFileByQiniu(file: File, uploadInfo: QiniuUploadInfo): Promise<{
+        key: string;
+        hash: string;
         url: string;
         bucket: string;
     }>;
