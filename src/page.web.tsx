@@ -113,8 +113,8 @@ function makeCommonComponentMethods<
             // 路由传入namespace
             if (this.props.namespace) {
                 url2 =
-                    '/' +
-                    this.props.namespace +
+                    (this.props.namespace.startsWith('/') ? '' : '/') +
+                    (this.props.namespace === '/' ? '' : this.props.namespace) +
                     (url2.startsWith('/') ? '' : '/') +
                     url2;
             }
@@ -139,8 +139,8 @@ function makeCommonComponentMethods<
             // 路由传入namespace
             if (this.props.namespace) {
                 url2 =
-                    '/' +
-                    this.props.namespace +
+                    (this.props.namespace.startsWith('/') ? '' : '/') +
+                    (this.props.namespace === '/' ? '' : this.props.namespace) +
                     (url2.startsWith('/') ? '' : '/') +
                     url2;
             }
