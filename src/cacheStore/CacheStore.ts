@@ -41,9 +41,13 @@ export class CacheStore<
             await context.begin();
         }
         try {
-            await this.executor.preOperation(entity, operation, context, option);
+            if (!option.blockTrigger) {
+                await this.executor.preOperation(entity, operation, context, option);
+            }
             result = await super.operate(entity, operation, context, option);
-            await this.executor.postOperation(entity, operation, context, option);
+            if (!option.blockTrigger) {
+                await this.executor.postOperation(entity, operation, context, option);
+            }
         } catch (err) {
             await context.rollback();
             throw err;

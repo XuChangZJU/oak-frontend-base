@@ -11,6 +11,7 @@ import {
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { createCheckers } from 'oak-domain/lib/checkers/index';
 
 import { Feature } from './types/Feature';
 import { createDebugStore, clearMaterializedData } from './debugStore';
@@ -66,11 +67,12 @@ export function initialize<
         );
     }
     const aspectDict2 = Object.assign({}, commonAspectDict, aspectDict);
+    const checkers2 = createCheckers<ED, Cxt>(storageSchema).concat(checkers || []);
     const debugStore = createDebugStore(
         storageSchema,
         contextBuilder,
         triggers || [],
-        checkers || [],
+        checkers2,
         watchers || [],
         initialData,
         actionDict
@@ -82,9 +84,7 @@ export function initialize<
         () => debugStore,
         () => clearMaterializedData(),
     );
-    if (checkers) {
-        checkers.forEach((checker) => cacheStore.registerChecker(checker));
-    }
+    checkers2.forEach((checker) => cacheStore.registerChecker(checker));
     if (actionDict) {
         const { checkers: adCheckers } = analyzeActionDefDict(
             storageSchema,

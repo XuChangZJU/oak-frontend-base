@@ -18,6 +18,7 @@ import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
+import { createCheckers } from 'oak-domain/lib/checkers';
 
 
 function makeContentTypeAndBody(data: any) {
@@ -57,9 +58,8 @@ export function initialize<
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
     const cacheStore = new CacheStore(storageSchema, contextBuilder);
-    if (checkers) {
-        checkers.forEach((checker) => cacheStore.registerChecker(checker));
-    }
+    const checkers2 = createCheckers<ED, Cxt>(storageSchema).concat(checkers || []);
+    checkers2.forEach((checker) => cacheStore.registerChecker(checker));
     if (actionDict) {
         const { checkers: adCheckers } = analyzeActionDefDict(
             storageSchema,

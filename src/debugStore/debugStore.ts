@@ -23,9 +23,13 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Cont
     }
 
     protected async cascadeUpdate<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, option: OP) {        
-        await this.executor.preOperation(entity, operation, context, option);
+        if (!option.blockTrigger) {
+            await this.executor.preOperation(entity, operation, context, option);
+        }
         const result = super.cascadeUpdate(entity, operation, context, option);
-        await this.executor.postOperation(entity, operation, context, option);
+        if (!option.blockTrigger) {
+            await this.executor.postOperation(entity, operation, context, option);
+        }
         return result;
     }
 
@@ -34,11 +38,11 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Cont
             action: 'select',
         }, selection) as ED[T]['Operation'];
 
-        if (!option?.ignoreTrigger) {
+        if (!option.blockTrigger) {
             await this.executor.preOperation(entity, selection2, context, option);
         }
         const result = await super.cascadeSelect(entity, selection2 as any, context, option);
-        if (!option?.ignoreTrigger) {
+        if (!option.blockTrigger) {
             await this.executor.postOperation(entity, selection2, context, option, result);
         }
         return result;
