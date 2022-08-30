@@ -575,7 +575,7 @@ export function createComponent<
             hiddenMethods.subscribe.call(this);
             const { oakPath, oakParent } = this.props;
             if (oakParent || oakPath) {
-                const oakFullpath = `${oakParent ? `${oakParent}.` : ''}${oakPath || ''}`;
+                const oakFullpath = `${oakParent || ''}${oakParent && oakPath ? '.' : ''}${oakPath || ''}`;
                 this.setState(
                     {
                         oakFullpath,
@@ -626,7 +626,7 @@ export function createComponent<
             const parent2 = options.hasOwnProperty('parent')
                 ? options.parent!
                 : this.props.oakParent;
-            const oakFullpath2 = `${parent2 ? `${parent2}.` : ''}${path2 || ''}`;
+            const oakFullpath2 = `${parent2 || ''}${parent2 && path2 ? '.' : ''}${path2 || ''}`;
 
             if (oakFullpath2) {
                 if (oakFullpath2 !== this.state.oakFullpath) {
