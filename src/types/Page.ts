@@ -361,3 +361,59 @@ export type OakPageData<ED extends EntityDict & BaseEntityDict, T extends keyof 
 export type OakComponentData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     // entity: keyof EntityDict;
 } & OakPageData<ED, T>;
+
+export type MakeOakPage<
+    ED extends EntityDict & BaseEntityDict,
+    Cxt extends Context<ED>,
+    AD extends Record<string, Aspect<ED, Cxt>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
+> = <
+    T extends keyof ED,
+    Proj extends ED[T]['Selection']['data'],
+    FormedData extends WechatMiniprogram.Component.DataOption,
+    IsList extends boolean,
+    TData extends WechatMiniprogram.Component.DataOption,
+    TProperty extends WechatMiniprogram.Component.PropertyOption,
+    TMethod extends WechatMiniprogram.Component.MethodOption
+>(
+    options: OakPageOption<
+        ED,
+        T,
+        Cxt,
+        AD,
+        FD,
+        Proj,
+        FormedData,
+        IsList,
+        TData,
+        TProperty,
+        TMethod
+    >
+) => React.ComponentType<any>;
+
+export type MakeOakComponent<
+    ED extends EntityDict & BaseEntityDict,
+    Cxt extends Context<ED>,
+    AD extends Record<string, Aspect<ED, Cxt>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
+> = <
+    T extends keyof ED,
+    FormedData extends WechatMiniprogram.Component.DataOption,
+    IsList extends boolean,
+    TData extends WechatMiniprogram.Component.DataOption,
+    TProperty extends WechatMiniprogram.Component.PropertyOption,
+    TMethod extends WechatMiniprogram.Component.MethodOption
+>(
+    options: OakComponentOption<
+        ED,
+        T,
+        Cxt,
+        AD,
+        FD,
+        FormedData,
+        IsList,
+        TData,
+        TProperty,
+        TMethod
+    >
+) => React.ComponentType<any>;
