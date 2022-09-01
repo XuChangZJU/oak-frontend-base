@@ -8,7 +8,7 @@ import { TreeStore } from 'oak-memory-tree-store';
 export class CacheStore<
     ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>
-> extends TreeStore<ED, Cxt> {
+    > extends TreeStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;
     private getFullDataFn?: () => any;
     private resetInitialDataFn?: () => void;
@@ -49,7 +49,9 @@ export class CacheStore<
                 await this.executor.postOperation(entity, operation, context, option);
             }
         } catch (err) {
-            await context.rollback();
+            if (autoCommit) {
+                await context.rollback();
+            }
             throw err;
         }
         if (autoCommit) {
@@ -91,7 +93,9 @@ export class CacheStore<
         try {
             result = await super.select(entity, selection, context, option);
         } catch (err) {
-            await context.rollback();
+            if (autoCommit) {
+                await context.rollback();
+            }
             throw err;
         }
         if (autoCommit) {

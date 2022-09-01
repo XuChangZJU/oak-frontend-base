@@ -1038,7 +1038,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
         const ownKeys: string[] = [];
         const attrs = Object.keys(projectionShape);
-        const hasModi = attrs.includes('modi$entity');
+        const { toModi } = schema[entity];
         attrs.forEach(
             (attr) => {
                 const proj = typeof projection === 'function' ? async () => {
@@ -1051,7 +1051,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     Object.assign(this.children, {
                         [attr]: node,
                     });
-                    if (hasModi && attr !== 'modi$entity') {
+                    if (toModi && attr !== 'modi$entity') {
                         const node2 = new SingleNode(attr, this.schema, this.cache, proj, projectionShape[attr], this);
                         Object.assign(this.children, {
                             [`${attr}:prev`]: node2,
@@ -1063,7 +1063,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     Object.assign(this.children, {
                         [attr]: node,
                     });
-                    if (hasModi && attr !== 'modi$entity') {
+                    if (toModi && attr !== 'modi$entity') {
                         const node2 = new SingleNode(attr, this.schema, this.cache, proj, projectionShape[attr], this);
                         Object.assign(this.children, {
                             [`${attr}:prev`]: node2,
@@ -1101,7 +1101,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     Object.assign(this.children, {
                         [attr]: node,
                     });
-                    if (hasModi && attr !== 'modi$entity') {
+                    if (toModi && attr !== 'modi$entity') {
                         const node2 = new ListNode(rel[0], this.schema, this.cache, proj, subProjectionShape, this);
                         if (filter) {
                             node2.addNamedFilter({
@@ -1169,27 +1169,28 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     async setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']> | undefined) {
         let value2 = value && Object.assign({}, value);
+        this.id = value2 && value2.id as string;
         const attrs = Object.keys(this.children);
         if (attrs.includes('modi$entity')) {
             // 说明这个对象关联了modi，所以这个对象的子对象必须要显示modi应用后的值，同时将当前的值记录在attr:prev属性
             if (value2) {
-                if (value2.modi$entity) {
+                if (value2.modi$entity && value2.modi$entity.length > 0) {
                     const entityOperations = createOperationsFromModies(value2.modi$entity as any);
                     const { projection, id, entity } = this;
                     const projection2 = typeof projection === 'function' ? await projection() : projection;
 
-                    const { result } = await this.cache.tryRedoOperations(entity, {
+                    const { result: [value3] } = await this.cache.tryRedoOperations(entity, {
                         data: projection2,
                         filter: {
                             id: id!,
                         } as any,
                     }, entityOperations);
 
-                    for (const attr in value2) {
+                    for (const attr in value3) {
                         if (attr !== 'modi$entity' && this.children[attr]) {
                             // 如果有子结点，就用modi应用后的结点替代原来的结点，
                             Object.assign(value2, {
-                                [attr]: result[0][attr],
+                                [attr]: value3[attr],
                                 [`${attr}:prev`]: value2[attr],
                             });
                         }
@@ -1221,7 +1222,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 await node.setValue(undefined);
             }
         }
-        this.id = value2 && value2.id as string;
         this.value = value2;
         this.refreshValue();
     }

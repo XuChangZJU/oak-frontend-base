@@ -25,6 +25,7 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
     features: BasicFeatures<ED, Cxt, {
         operate: typeof import("oak-common-aspect/lib/crud").operate;
         select: typeof import("oak-common-aspect/lib/crud").select;
+        fetchRows: typeof import("oak-common-aspect/lib/crud").fetchRows;
         amap: typeof import("oak-common-aspect/lib/amap").amap;
         getTranslations: typeof import("oak-common-aspect/lib/locales").getTranslations;
     } & AD> & FD;

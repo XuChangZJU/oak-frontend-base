@@ -5,6 +5,7 @@ import { Action, Feature } from '../types/Feature';
 import { pull } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { RWLock } from 'oak-domain/lib/utils/concurrent';
+import { OakRowUnexistedException } from 'oak-domain/src/types';
 
 export class Cache<
     ED extends EntityDict & BaseEntityDict,
@@ -136,28 +137,36 @@ export class Cache<
     }>) {
         let result: Awaited<ReturnType<typeof this.cacheStore.select>>;
         await this.context.begin();
-        try {
-            for (const oper of opers) {
-                await this.cacheStore.operate(
-                    oper.entity,
-                    oper.operation,
-                    this.context,
-                    {
-                        dontCollect: true,
-                        dontCreateOper: true,
-                    }
-                );
-            }
-            result = await this.cacheStore.select(entity, selection, this.context, {
-                dontCollect: true,
-            });
-
-            await this.context.rollback();
-        } catch (err) {
-            await this.context.rollback();
-            throw err;
+        for (const oper of opers) {
+            await this.cacheStore.operate(
+                oper.entity,
+                oper.operation,
+                this.context,
+                {
+                    dontCollect: true,
+                    dontCreateOper: true,
+                }
+            );
         }
-        return result;
+        while (true) {
+            try {
+                result = await this.cacheStore.select(entity, selection, this.context, {
+                    dontCollect: true,
+                });
+    
+                await this.context.rollback();
+                return result;
+            } catch (err) {
+                if (err instanceof OakRowUnexistedException) {
+                    const missedRows = err.getRows();
+                    await this.getAspectWrapper().exec('fetchRows', missedRows);
+                }
+                else {
+                    await this.context.rollback();
+                    throw err;
+                }
+            }
+        }
     }
 
     async get<T extends keyof ED, S extends ED[T]['Selection']>(
