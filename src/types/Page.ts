@@ -28,7 +28,7 @@ interface ComponentOption<
     TProperty extends WechatMiniprogram.Component.PropertyOption,
     > {
     entity?: T;
-    isList?: IsList;
+    isList: IsList;
     formData?: (options: {
         data: IsList extends true ? RowSelected<ED, T>[] : RowSelected<ED, T>;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
@@ -51,7 +51,7 @@ interface PageOption<
     > {
     entity?: T;
     path?: string;
-    isList?: IsList;
+    isList: IsList;
     projection?: Proj | ((options: {
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
