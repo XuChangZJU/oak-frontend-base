@@ -5,7 +5,7 @@ import { Action, Feature } from '../types/Feature';
 import { pull } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { RWLock } from 'oak-domain/lib/utils/concurrent';
-import { OakRowUnexistedException } from 'oak-domain/src/types';
+import { OakRowUnexistedException } from 'oak-domain/lib/types/Exception';
 
 export class Cache<
     ED extends EntityDict & BaseEntityDict,
