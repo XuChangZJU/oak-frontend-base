@@ -1,8 +1,8 @@
 import React from 'react';
 
-import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useWidth } from './responsive';
+import { useWidth } from './../responsive';
 
 import URL from 'url';
 

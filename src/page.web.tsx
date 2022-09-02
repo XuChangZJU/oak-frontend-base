@@ -1,6 +1,5 @@
 import React from 'react';
-import PullToRefresh from './platforms/web/PullToRefresh';
-import withRouter from './platforms/web/router';
+import { withRouter, PullToRefresh } from './platforms/web';
 import { get } from 'oak-domain/lib/utils/lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';

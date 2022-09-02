@@ -1,6 +1,6 @@
 import React from 'react';
 import PullToRefresh from 'rmc-pull-to-refresh';
-import './index.css';
+import 'rmc-pull-to-refresh/assets/index.css';
 
 const OakPullToRefresh: React.FC<any> = (props) => {
     return (
