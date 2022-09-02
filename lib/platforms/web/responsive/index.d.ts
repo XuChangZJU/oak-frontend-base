@@ -1,2 +1,3 @@
-export { ResponsiveProvider } from './ResponsiveProvider';
-export { useWidth } from './useWidth';
+import { ResponsiveProvider } from './ResponsiveProvider';
+import { useWidth } from './useWidth';
+export { ResponsiveProvider, useWidth };

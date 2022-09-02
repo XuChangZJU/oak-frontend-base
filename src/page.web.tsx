@@ -1,6 +1,5 @@
 import React from 'react';
-import PullToRefresh from './platforms/web/PullToRefresh';
-import withRouter from './platforms/web/router';
+import { withRouter, PullToRefresh } from './platforms/web';
 import { get } from 'oak-domain/lib/utils/lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
@@ -364,8 +363,6 @@ export function createPage<
 
         scrollEvent = () => {
             this.checkReachBottom();
-
-            const event = { scrollTop: window.scrollY };
         };
 
         registerPageScroll() {
@@ -402,7 +399,6 @@ export function createPage<
             this.registerPageScroll();
             hiddenMethods.subscribe.call(this);
             await onLoad.call(this, this.props);
-            // methods?.onLoad && methods.onLoad.call(this, this.props);
             methods?.onReady && methods.onReady.call(this);
             lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
@@ -657,59 +653,3 @@ export function createComponent<
     Object.assign(OakComponentWrapper, makeMiniprogramCompatibleFunctions());
     return withRouter(OakComponentWrapper, true);
 }
-
-// export type MakeOakPage<
-//     ED extends EntityDict & BaseEntityDict,
-//     Cxt extends Context<ED>,
-//     AD extends Record<string, Aspect<ED, Cxt>>,
-//     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
-// > = <
-//     T extends keyof ED,
-//     Proj extends ED[T]['Selection']['data'],
-//     FormedData extends WechatMiniprogram.Component.DataOption,
-//     IsList extends boolean,
-//     TData extends WechatMiniprogram.Component.DataOption,
-//     TProperty extends WechatMiniprogram.Component.PropertyOption,
-//     TMethod extends WechatMiniprogram.Component.MethodOption
-// >(
-//     options: OakPageOption<
-//         ED,
-//         T,
-//         Cxt,
-//         AD,
-//         FD,
-//         Proj,
-//         FormedData,
-//         IsList,
-//         TData,
-//         TProperty,
-//         TMethod
-//     >
-// ) => React.ComponentType<any>;
-
-// export type MakeOakComponent<
-//     ED extends EntityDict & BaseEntityDict,
-//     Cxt extends Context<ED>,
-//     AD extends Record<string, Aspect<ED, Cxt>>,
-//     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
-// > = <
-//     T extends keyof ED,
-//     FormedData extends WechatMiniprogram.Component.DataOption,
-//     IsList extends boolean,
-//     TData extends WechatMiniprogram.Component.DataOption,
-//     TProperty extends WechatMiniprogram.Component.PropertyOption,
-//     TMethod extends WechatMiniprogram.Component.MethodOption
-// >(
-//     options: OakComponentOption<
-//         ED,
-//         T,
-//         Cxt,
-//         AD,
-//         FD,
-//         FormedData,
-//         IsList,
-//         TData,
-//         TProperty,
-//         TMethod
-//     >
-// ) => React.ComponentType<any>;
