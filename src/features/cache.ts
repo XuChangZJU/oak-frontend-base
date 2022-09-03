@@ -1,5 +1,6 @@
 import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { reinforceSelection } from 'oak-domain/lib/store/selection';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Action, Feature } from '../types/Feature';
 import { pull } from 'oak-domain/lib/utils/lodash';
@@ -55,6 +56,7 @@ export class Cache<
         option?: OP,
         getCount?: true
     ) {
+        reinforceSelection(this.cacheStore.getSchema() ,entity, selection);
         const { result } = await this.getAspectWrapper().exec('select', {
             entity,
             selection,
