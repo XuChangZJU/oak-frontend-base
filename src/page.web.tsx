@@ -93,7 +93,7 @@ function makeCommonComponentMethods<
                 }
             });
         },
-        navigateTo(options, state) {
+        navigateTo(options, state, disableNamespace) {
             const { url, events, fail, complete, success, ...rest } = options;
             let url2 = url.includes('?')
                 ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
@@ -110,7 +110,7 @@ function makeCommonComponentMethods<
                 }
             }
             // 路由传入namespace
-            if (this.props.namespace) {
+            if (!disableNamespace && this.props.namespace) {
                 url2 =
                     (this.props.namespace.startsWith('/') ? '' : '/') +
                     (this.props.namespace === '/' ? '' : this.props.namespace) +
@@ -119,7 +119,7 @@ function makeCommonComponentMethods<
             }
             return this.props.navigate(url2, { replace: false, state });
         },
-        redirectTo(options, state) {
+        redirectTo(options, state, disableNamespace) {
             const { url, events, fail, complete, success, ...rest } = options;
             let url2 = url.includes('?')
                 ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
@@ -136,7 +136,7 @@ function makeCommonComponentMethods<
                 }
             }
             // 路由传入namespace
-            if (this.props.namespace) {
+            if (!disableNamespace && this.props.namespace) {
                 url2 =
                     (this.props.namespace.startsWith('/') ? '' : '/') +
                     (this.props.namespace === '/' ? '' : this.props.namespace) +

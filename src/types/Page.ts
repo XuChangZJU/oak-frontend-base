@@ -223,7 +223,10 @@ export type OakHiddenComponentMethods = {
     unsubscribe: () => void;
 };
 
-export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
+export type OakCommonComponentMethods<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED
+> = {
     sub: (type: string, callback: Function) => void;
     unsub: (type: string, callback: Function) => void;
     pub: (type: string, options?: any) => void;
@@ -245,12 +248,14 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
     redirectTo: <T2 extends keyof ED>(
         options: Parameters<typeof wx.redirectTo>[0] &
             OakNavigateToParameters<ED, T2>,
-        state?: Record<string, any>
+        state?: Record<string, any>,
+        disableNamespace?: boolean
     ) => Promise<void>;
     navigateTo: <T2 extends keyof ED>(
         options: Parameters<typeof wx.navigateTo>[0] &
             OakNavigateToParameters<ED, T2>,
-        state?: Record<string, any>
+        state?: Record<string, any>,
+        disableNamespace?: boolean
     ) => Promise<void>;
     navigateBack: (option?: { delta: number }) => Promise<void>;
     resetUpdateData: () => void;
@@ -259,7 +264,10 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
     callPicker: (attr: string, params: Record<string, any>) => void;
     setForeignKey: (id: string, goBackDelta?: number) => Promise<void>;
     addForeignKeys: (ids: string[], goBackDelta?: number) => Promise<void>;
-    setUniqueForeignKeys: (ids: string[], goBackDelta?: number) => Promise<void>;
+    setUniqueForeignKeys: (
+        ids: string[],
+        goBackDelta?: number
+    ) => Promise<void>;
     setAction: (action: ED[T]['Action'], path?: string) => Promise<void>;
     toggleNode: (
         nodeData: Record<string, any>,
