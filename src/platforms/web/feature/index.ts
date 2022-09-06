@@ -37,7 +37,9 @@ const useFeature = () => {
 };
 
 function useFormData<Value>(
-    useHook: (options: Record<string, any>) => Promise<Value>
+    useHook: (options: {
+        features: features;
+    }) => Promise<Value>
 ) {
     const { features } = useContext(FeatureContext);
 

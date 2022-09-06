@@ -16,5 +16,7 @@ declare const FeatureProvider: React.FC<{
 declare const useFeature: () => {
     features: features;
 };
-declare function useFormData<Value>(useHook: (options: Record<string, any>) => Promise<Value>): Value;
+declare function useFormData<Value>(useHook: (options: {
+    features: features;
+}) => Promise<Value>): Value;
 export { FeatureProvider, useFeature, useFormData };
