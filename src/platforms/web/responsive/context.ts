@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | string;
+export type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 export type Keys = Width[];
 
 export type Values = {
@@ -10,7 +10,6 @@ export type Values = {
     lg: number;
     xl: number;
     xxl: number;
-    [k: string]: number;
 };
 
 export type Breakpoints = {

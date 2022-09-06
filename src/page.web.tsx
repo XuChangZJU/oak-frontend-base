@@ -318,11 +318,6 @@ export function createPage<
         constructor(props: any) {
             super(props);
             this.state = (data || {}) as any;
-            /* for (const m in hiddenMethods) {
-                Object.assign(this, {
-                    [m]: hiddenMethods[m as keyof typeof hiddenMethods]!.bind(this),
-                });
-            } */
             for (const m in commonMethods) {
                 Object.assign(this, {
                     [m]: commonMethods[m as keyof typeof commonMethods]!.bind(
