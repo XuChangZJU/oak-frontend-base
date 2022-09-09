@@ -799,7 +799,7 @@ export function makePageMethods<
                             }
                         }
                         const oakPath2 = oakPath || options.path;
-                        assert(oakPath2);
+                        assert(oakPath2, '没有正确的path信息，请检查是否配置正确');
                         const path2 = oakParent
                             ? `${oakParent}:${oakPath2}`
                             : oakPath2;

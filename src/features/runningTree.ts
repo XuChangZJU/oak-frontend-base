@@ -605,7 +605,7 @@ class ListNode<
         const { filters, sorters, pagination, entity } = this;
         const { pageSize } = pagination;
         const proj = await this.getProjection();
-        assert(proj);
+        assert(proj, "取数据时找不到projection信息");
         const sorterArr = (
             await Promise.all(
                 sorters.map(async (ele) => {
