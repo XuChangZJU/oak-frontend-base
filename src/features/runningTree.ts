@@ -2114,6 +2114,7 @@ export class RunningTree<
             await this.getAspectWrapper().exec('operate', {
                 entity: node.getEntity() as string,
                 operation: {
+                    id: await generateNewId(),
                     action: 'remove',
                     data: {},
                     filter: {
