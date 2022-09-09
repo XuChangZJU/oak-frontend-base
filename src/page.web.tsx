@@ -96,13 +96,19 @@ function makeCommonComponentMethods<
         navigateTo(options, state, disableNamespace) {
             const { url, events, fail, complete, success, ...rest } = options;
             let url2 = url.includes('?')
-                ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
-                : url.concat(`?oakFrom=${this.state.oakFullpath}`);
+                ? url.concat(
+                      this.state.oakFullpath
+                          ? `&oakFrom=${this.state.oakFullpath}`
+                          : ''
+                  )
+                : url.concat(
+                      this.state.oakFullpath ? `?oakFrom=${this.state.oakFullpath}` : ''
+                  );
 
             for (const param in rest) {
                 const param2 = param as unknown as keyof typeof rest;
                 if (rest[param2] !== undefined) {
-                    url2 += `&${param}=${
+                    url2 += `${url2.includes('?') ? '&' : '?'}${param}=${
                         typeof rest[param2] === 'string'
                             ? rest[param2]
                             : JSON.stringify(rest[param2])
@@ -122,13 +128,21 @@ function makeCommonComponentMethods<
         redirectTo(options, state, disableNamespace) {
             const { url, events, fail, complete, success, ...rest } = options;
             let url2 = url.includes('?')
-                ? url.concat(`&oakFrom=${this.state.oakFullpath}`)
-                : url.concat(`?oakFrom=${this.state.oakFullpath}`);
+                ? url.concat(
+                      this.state.oakFullpath
+                          ? `&oakFrom=${this.state.oakFullpath}`
+                          : ''
+                  )
+                : url.concat(
+                      this.state.oakFullpath
+                          ? `?oakFrom=${this.state.oakFullpath}`
+                          : ''
+                  );
 
             for (const param in rest) {
                 const param2 = param as unknown as keyof typeof rest;
                 if (rest[param2] !== undefined) {
-                    url2 += `&${param}=${
+                    url2 += `${url2.includes('?') ? '&' : '?'}${param}=${
                         typeof rest[param2] === 'string'
                             ? rest[param2]
                             : JSON.stringify(rest[param2])
@@ -532,11 +546,6 @@ export function createComponent<
         constructor(props: any) {
             super(props);
             this.state = (data || {}) as any;
-            /* for (const m in hiddenMethods) {
-                Object.assign(this, {
-                    [m]: hiddenMethods[m as keyof typeof hiddenMethods]!.bind(this),
-                });
-            } */
             for (const m in commonMethods) {
                 Object.assign(this, {
                     [m]: commonMethods[m as keyof typeof commonMethods]!.bind(
