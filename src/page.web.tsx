@@ -465,7 +465,7 @@ export function createPage<
 
     // 可能有问题，by Xc
     Object.assign(OakPageWrapper, makeMiniprogramCompatibleFunctions());
-    return withRouter(OakPageWrapper);
+    return withRouter(OakPageWrapper, false, options.path);
 }
 
 export function createComponent<
