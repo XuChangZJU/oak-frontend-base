@@ -144,8 +144,8 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     setMessage: (data: MessageProps) => void;
     consumeMessage: () => MessageProps | undefined;
     reRender: (extra?: Record<string, any>) => Promise<void>;
-    redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>) => Promise<void>;
-    navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>) => Promise<void>;
+    redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) => Promise<void>;
+    navigateTo: <T2 extends keyof ED>(options: Parameters<typeof wx.navigateTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) => Promise<void>;
     navigateBack: (option?: {
         delta: number;
     }) => Promise<void>;

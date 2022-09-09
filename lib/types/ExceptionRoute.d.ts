@@ -4,5 +4,6 @@ export interface ExceptionHandler {
     level?: 'warning' | 'error';
     handler?: (error: OakException) => void;
     router?: string;
+    disableNamespace?: boolean;
 }
 export declare type ExceptionRouters = Array<[new (...args: any) => OakException, ExceptionHandler]>;

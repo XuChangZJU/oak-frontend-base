@@ -367,6 +367,7 @@ export function makeCommonComponentMethods<
                                 level,
                                 handler: fn,
                                 router,
+                                disableNamespace,
                             } = handler;
                             if (!hidden) {
                                 this.setState({
@@ -394,7 +395,8 @@ export function makeCommonComponentMethods<
                                     },
                                     {
                                         exception: err.toString(),
-                                    }
+                                    },
+                                    disableNamespace
                                 );
                             }
                         } else {
