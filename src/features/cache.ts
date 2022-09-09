@@ -147,6 +147,7 @@ export class Cache<
                 {
                     dontCollect: true,
                     dontCreateOper: true,
+                    blockTrigger: true,
                 }
             );
         }
