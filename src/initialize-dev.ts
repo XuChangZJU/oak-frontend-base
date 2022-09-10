@@ -11,7 +11,8 @@ import {
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { createCheckers } from 'oak-domain/lib/checkers/index';
+import { createDynamicCheckers } from 'oak-domain/lib/checkers/index';
+import { createDynamicTriggers } from 'oak-domain/lib/triggers/index';
 
 import { Feature } from './types/Feature';
 import { createDebugStore, clearMaterializedData } from './debugStore';
@@ -67,11 +68,12 @@ export function initialize<
         );
     }
     const aspectDict2 = Object.assign({}, commonAspectDict, aspectDict);
-    const checkers2 = createCheckers<ED, Cxt>(storageSchema).concat(checkers || []);
+    const checkers2 = createDynamicCheckers<ED, Cxt>(storageSchema).concat(checkers || []);
+    const triggers2 = createDynamicTriggers<ED, Cxt>(storageSchema).concat(triggers || []);
     const debugStore = createDebugStore(
         storageSchema,
         contextBuilder,
-        triggers || [],
+        triggers2,
         checkers2,
         watchers || [],
         initialData,
