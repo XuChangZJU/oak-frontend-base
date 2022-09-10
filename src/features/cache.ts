@@ -199,7 +199,7 @@ export class Cache<
     }
 
     getCachedData() {
-        return this.cacheStore;
+        return this.cacheStore.getCurrentData();
     }
 
     getFullData() {

@@ -81,7 +81,7 @@ export function initialize<
     const cacheStore = new CacheStore(
         storageSchema,
         contextBuilder,
-        () => debugStore,
+        () => debugStore.getCurrentData(),
         () => clearMaterializedData(),
     );
     checkers2.forEach((checker) => cacheStore.registerChecker(checker));

@@ -40,7 +40,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
     judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | string[] | 2;
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
-    getCachedData(): CacheStore<ED, Cxt>;
+    getCachedData(): { [T in keyof ED]?: ED[T]["OpSchema"][] | undefined; };
     getFullData(): any;
     resetInitialData(): void;
 }
