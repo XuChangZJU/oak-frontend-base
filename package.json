@@ -61,7 +61,7 @@
     },
     "scripts": {
         "clean": "rimraf lib/*",
-        "copy-files": "copyfiles -u 1 src/**/*.css lib/",
+        "copy-files": "copyfiles -u 1 src/**/*.css src/**/wxs.js lib/",
         "build": "tsc && npm run copy-files",
         "test": "ts-node ./test/test.ts",
         "prepare": "rimraf node_modules/react & rimraf node_modules/react-dom & rimraf node_modules/react-router"
