@@ -9,5 +9,8 @@ export declare class Location<ED extends EntityDict, Cxt extends Context<ED>, AD
         latitude: number;
         longitude: number;
     }>;
-    refresh(): void;
+    refresh(): Promise<{
+        latitude: number;
+        longitude: number;
+    }>;
 }
