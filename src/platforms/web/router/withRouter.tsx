@@ -32,22 +32,13 @@ const withRouter = (Component: React.ComponentType<any>, isComponent?: boolean, 
         const navigate = useNavigate();
         const { t, i18n } = useTranslation();
         const width = useWidth();
-        const { forwardedRef, ...rest } = props;
         const location = useLocation();
+        const { forwardedRef, ...rest } = props;
 
-        if (isComponent || !location.pathname.includes(path)) {
-            return (
-                <Component
-                    {...rest}
-                    t={t}
-                    i18n={i18n}
-                    width={width}
-                    navigate={navigate}
-                    ref={forwardedRef}
-                />
-            );
+        let params = {};
+        if (!isComponent && location.pathname.includes(path)) {
+            params = getParams(location as Location);
         }
-        const params = getParams(location as Location);
 
         return (
             <Component
