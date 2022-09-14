@@ -67,7 +67,12 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Cont
             result = await super.operate(entity, operation, context, option);
         }
         catch (err) {
-            await context.rollback();
+            if (autoCommit) {
+                await context.rollback();
+            }
+            if (!option || !option.noLock) {
+                this.rwLock.release();
+            }
             throw err;
         }
         if (autoCommit) {
@@ -98,7 +103,12 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Cont
             result = await super.select(entity, selection, context, option);
         }
         catch (err) {
-            await context.rollback();
+            if (autoCommit) {
+                await context.rollback();
+            }
+            if (!option || !option.noLock) {
+                this.rwLock.release();
+            }
             throw err;
         }
         if (autoCommit) {

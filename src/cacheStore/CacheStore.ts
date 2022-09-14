@@ -70,7 +70,9 @@ export class CacheStore<
         try {
             result = await super.sync(opRecords, context);
         } catch (err) {
-            await context.rollback();
+            if (autoCommit) {
+                await context.rollback();
+            }
             throw err;
         }
         if (autoCommit) {
