@@ -12,7 +12,7 @@ import { EntityDict } from 'oak-domain/lib/types/Entity';
 
 import { Feature } from './types/Feature';
 
-import { initialize as createBasicFeatures, BasicFeatures } from './features';
+import { initialize as initBasicFeatures, BasicFeatures } from './features';
 import { intersection } from 'oak-domain/lib/utils/lodash';
 import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
@@ -50,15 +50,50 @@ export function initialize<
     createFeatures: (
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         basicFeatures: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>,
-        context: Cxt
     ) => FD,
-    contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
+    frontendContextBuilder: (features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>) => (store: RowStore<ED, Cxt>) => Cxt,
     connector: Connector<ED, Cxt>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
-    const cacheStore = new CacheStore(storageSchema, contextBuilder);
     const checkers2 = createDynamicCheckers<ED, Cxt>(storageSchema).concat(checkers || []);
+
+    const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
+    } as any;
+
+    const basicFeatures = initBasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>(
+        wrapper,
+        storageSchema
+    );
+
+    const userDefinedfeatures = createFeatures(wrapper, basicFeatures);
+
+    const intersected = intersection(Object.keys(basicFeatures), Object.keys(userDefinedfeatures));
+    if (intersected.length > 0) {
+        throw new Error(
+            `用户定义的feature中不能和系统feature同名：「${intersected.join(
+                ','
+            )}」`
+        );
+    }
+    const features = Object.assign(basicFeatures, userDefinedfeatures);
+    const cacheStore = new CacheStore(
+        storageSchema,
+        () => frontendContextBuilder(features)
+    );
+
+    wrapper.exec = async (name, params) => {
+        const context = frontendContextBuilder(features)(cacheStore);
+        const { result, opRecords } = await connector.callAspect(name as string, params, context);
+        return {
+            result,
+            opRecords,
+        };
+    },
+
+    // cache这个feature依赖于cacheStore和contextBuilder，后注入
+    basicFeatures.cache.init(() => frontendContextBuilder(features)(cacheStore), cacheStore);
+
     checkers2.forEach((checker) => cacheStore.registerChecker(checker));
     if (actionDict) {
         const { checkers: adCheckers } = analyzeActionDefDict(
@@ -67,42 +102,8 @@ export function initialize<
         );
         adCheckers.forEach((checker) => cacheStore.registerChecker(checker));
     }
-    const context = contextBuilder()(cacheStore);
-
-    const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
-        exec: async (name, params) => {
-            const { result, opRecords } = await connector.callAspect(name as string, params, context);
-            return {
-                result,
-                opRecords,
-            };
-        },
-    };
-
-    const basicFeatures = createBasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>(
-        wrapper,
-        storageSchema,
-        context,
-        cacheStore,
-        () => contextBuilder()(cacheStore)
-    );
-
-    // basicFeatures.runningNode.setStorageSchema(storageSchema);
-
-    const userDefinedfeatures = createFeatures(wrapper, basicFeatures, context);
-
-    const intersect = intersection(Object.keys(basicFeatures), Object.keys(userDefinedfeatures));
-    if (intersect.length > 0) {
-        throw new Error(
-            `用户定义的feature中不能和系统feature同名：「${intersect.join(
-                ','
-            )}」`
-        );
-    }
-    const features = Object.assign(basicFeatures, userDefinedfeatures);
 
     return {
         features,
-        context,
     };
 }

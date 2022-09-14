@@ -16,9 +16,9 @@ interface DebugStoreSelectOption extends SelectOption {
 export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;
     private rwLock: RWLock;
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt) {
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Promise<Cxt>) {
         super(storageSchema);
-        this.executor = new TriggerExecutor(async (cxtString) => contextBuilder(cxtString)(this));
+        this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
         this.rwLock = new RWLock();
     }
 

@@ -34,9 +34,9 @@ export function initialize<
     createFeatures: (
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         basicFeatures: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>,
-        context: Cxt
     ) => FD,
-    contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
+    frontendContextBuilder: (features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>) => (store: RowStore<ED, Cxt>) => Cxt,
+    backendContextBuilder: (contextStr?: string) => (store: RowStore<ED, Cxt>) =>  Promise<Cxt>,
     aspectDict: AD,
     exceptionRouters: ExceptionRouters = [],
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
@@ -48,10 +48,11 @@ export function initialize<
     actionDict?: ActionDictOfEntityDict<ED>,
     i18nOptions?: I18nOptions
 ) {
-    const { features, context } = initDev<ED, Cxt, AD, FD>(
+    const { features } = initDev<ED, Cxt, AD, FD>(
         storageSchema,
         createFeatures,
-        contextBuilder,
+        frontendContextBuilder,
+        backendContextBuilder,
         aspectDict,
         triggers,
         checkers,
@@ -106,7 +107,7 @@ export function initialize<
                 TData,
                 TProperty,
                 TMethod
-            >(options, features, exceptionRouterDict, context),
+            >(options, features, exceptionRouterDict),
         OakComponent: <
             T extends keyof ED,
             FormedData extends WechatMiniprogram.Component.DataOption,
@@ -139,10 +140,11 @@ export function initialize<
                 TData,
                 TProperty,
                 TMethod
-            >(options, features, exceptionRouterDict, context),
+            >(options, features, exceptionRouterDict),
     });
 
     return {
         i18n,
+        features,
     };
 }

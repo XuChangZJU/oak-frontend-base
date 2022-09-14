@@ -15,15 +15,13 @@ export class CacheStore<
 
     constructor(
         storageSchema: StorageSchema<ED>,
-        contextBuilder: (
-            cxtString: string
-        ) => (store: CacheStore<ED, Cxt>) => Cxt,
+        contextBuilder: () => (store: CacheStore<ED, Cxt>) => Cxt,
         getFullDataFn?: () => any,
         resetInitialDataFn?: () => void
     ) {
         super(storageSchema);
-        this.executor = new TriggerExecutor(async (cxtStr) =>
-            contextBuilder(cxtStr)(this)
+        this.executor = new TriggerExecutor(async () =>
+            contextBuilder()(this)
         );
         this.getFullDataFn = getFullDataFn;
         this.resetInitialDataFn = resetInitialDataFn;

@@ -10,8 +10,16 @@ import { EventBus } from './eventBus';
 import { LocalStorage } from './localStorage';
 import { Notification } from './notification';
 import { Message } from './message';
-import { CacheStore } from '../cacheStore/CacheStore';
-export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>>(aspectWrapper: AspectWrapper<ED, Cxt, AD>, storageSchema: StorageSchema<ED>, context: Cxt, cacheStore: CacheStore<ED, Cxt>, contextBuilder: () => Cxt): BasicFeatures<ED, Cxt, AD>;
+export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>>(aspectWrapper: AspectWrapper<ED, Cxt, AD>, storageSchema: StorageSchema<ED>): {
+    cache: Cache<ED, Cxt, AD>;
+    location: Location<ED, Cxt, AD>;
+    runningTree: RunningTree<ED, Cxt, AD>;
+    locales: Locales<ED, Cxt, AD>;
+    eventBus: EventBus<ED, Cxt, AD>;
+    localStorage: LocalStorage<ED, Cxt, AD>;
+    notification: Notification<ED, Cxt, AD>;
+    message: Message<ED, Cxt, AD>;
+};
 export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> = {
     cache: Cache<ED, Cxt, AD>;
     location: Location<ED, Cxt, AD>;

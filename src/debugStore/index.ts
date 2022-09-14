@@ -1,4 +1,4 @@
-import { DebugStore } from './debugStore';
+import { DebugStore } from './DebugStore';
 import {
     Checker, Trigger, StorageSchema, FormCreateData, Context, EntityDict, RowStore,
     ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, OperationResult
@@ -136,13 +136,13 @@ export function clearMaterializedData() {
  * @param watchers 
  */
 function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>>(
-    store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt, watchers: Array<Watcher<ED, keyof ED, Cxt>>) {
+    store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) =>  Promise<Cxt>, watchers: Array<Watcher<ED, keyof ED, Cxt>>) {
     
     let count = 0;
     async function doWatchers() {
         count++;
         const start = Date.now();
-        const context = contextBuilder()(store);
+        const context = await contextBuilder()(store);
         for (const w of watchers) {
             await context.begin();
             try {
@@ -208,7 +208,7 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
 
 export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>>(
     storageSchema: StorageSchema<ED>,
-    contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Cxt,
+    contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Promise<Cxt>,
     triggers: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers: Array<Checker<ED, keyof ED, Cxt>>,
     watchers: Array<Watcher<ED, keyof ED, Cxt>>,

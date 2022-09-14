@@ -11,15 +11,11 @@ import { EventBus } from './eventBus';
 import { LocalStorage } from './localStorage';
 import { Notification } from './notification';
 import { Message } from './message';
-import { CacheStore } from '../cacheStore/CacheStore';
 
 export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> (
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
-        storageSchema: StorageSchema<ED>,
-        context: Cxt,
-        cacheStore: CacheStore<ED, Cxt>,
-        contextBuilder: () => Cxt): BasicFeatures<ED, Cxt, AD> {
-    const cache = new Cache<ED, Cxt, AD>(aspectWrapper, context, cacheStore, contextBuilder);
+        storageSchema: StorageSchema<ED>) {
+    const cache = new Cache<ED, Cxt, AD>(aspectWrapper);
     const location = new Location(aspectWrapper);
     const runningTree = new RunningTree<ED, Cxt, AD>(aspectWrapper, cache, storageSchema);
     const locales = new Locales(aspectWrapper);

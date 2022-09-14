@@ -667,8 +667,7 @@ export function makePageMethods<
         TData,
         TProperty,
         TMethod
-    >,
-    context: Cxt,
+    >
 ): OakPageMethods &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
@@ -829,7 +828,6 @@ export function makePageMethods<
                                         : options.actions || [],
                             },
                             async () => {
-                                context.setScene(path2);
                                 this.refresh();
                                 options.methods?.onLoad &&
                                     (await options.methods.onLoad.call(

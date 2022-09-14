@@ -264,11 +264,10 @@ function makePageMethods<
         TData,
         TProperty,
         TMethod
-    >,
-    context: Cxt,
+    >
 ): OakPageMethods &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
-    const { onPullDownRefresh, onLoad, ...rest } = makePage(features, options, context);
+    const { onPullDownRefresh, onLoad, ...rest } = makePage(features, options);
     return {
         async onPullDownRefresh() {
             await onPullDownRefresh.call(this);
@@ -325,8 +324,7 @@ export function createPage<
         TMethod
     >,
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
-    exceptionRouterDict: Record<string, ExceptionHandler>,
-    context: Cxt
+    exceptionRouterDict: Record<string, ExceptionHandler>
 ) {
     const { formData, isList } = options;
     const hiddenMethods = makeHiddenComponentMethods();
@@ -337,7 +335,7 @@ export function createPage<
     );
     const listMethods = makeListComponentMethods(features);
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } =
-        makePageMethods(features, options, context);
+        makePageMethods(features, options);
 
     const { methods, lifetimes, pageLifetimes } = options;
     return Component({
@@ -444,7 +442,6 @@ export function createPage<
             show() {
                 this.subscribe();
                 if (this.data.oakFullpath) {
-                    context.setScene(this.data.oakFullpath);
                     this.reRender();
                 }
                 pageLifetimes?.show && pageLifetimes.show.call(this);
@@ -485,8 +482,7 @@ export function createComponent<
         TMethod
     >,
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
-    exceptionRouterDict: Record<string, ExceptionHandler>,
-    context: Cxt
+    exceptionRouterDict: Record<string, ExceptionHandler>
 ) {
     const {
         formData,

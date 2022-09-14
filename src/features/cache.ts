@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper, SelectionResult } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { reinforceSelection } from 'oak-domain/lib/store/selection';
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -13,25 +13,16 @@ export class Cache<
     Cxt extends Context<ED>,
     AD extends CommonAspectDict<ED, Cxt>
 > extends Feature<ED, Cxt, AD> {
-    cacheStore: CacheStore<ED, Cxt>;
-    context: Cxt;
+    cacheStore?: CacheStore<ED, Cxt>;
     private syncEventsCallbacks: Array<
         (opRecords: OpRecord<ED>[]) => Promise<void>
     >;
-    private contextBuilder: () => Cxt;
+    private contextBuilder?: () => Cxt;
     private syncLock: RWLock;
 
-    constructor(
-        aspectWrapper: AspectWrapper<ED, Cxt, AD>,
-        context: Cxt,
-        cacheStore: CacheStore<ED, Cxt>,
-        contextBuilder: () => Cxt
-    ) {
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>) {
         super(aspectWrapper);
-        this.cacheStore = cacheStore;
-        this.context = context;
         this.syncEventsCallbacks = [];
-        this.contextBuilder = contextBuilder;
         this.syncLock = new RWLock();
 
         // 在这里把wrapper的返回opRecords截取到并同步到cache中
@@ -49,6 +40,15 @@ export class Cache<
         };
     }
 
+    /**
+     * 目前context和cache会形成循环依赖，这里不太好处理，只能先让contextBuilder后注入
+     * @param contextBuilder 
+     */
+    init(contextBuilder: () => Cxt, store: CacheStore<ED, Cxt>) {
+        this.contextBuilder = contextBuilder;
+        this.cacheStore = store;
+    }
+
     @Action
     async refresh<T extends keyof ED, OP extends SelectOption>(
         entity: T,
@@ -56,7 +56,7 @@ export class Cache<
         option?: OP,
         getCount?: true
     ) {
-        reinforceSelection(this.cacheStore.getSchema() ,entity, selection);
+        reinforceSelection(this.cacheStore!.getSchema() ,entity, selection);
         const { result } = await this.getAspectWrapper().exec('select', {
             entity,
             selection,
@@ -83,9 +83,9 @@ export class Cache<
 
     private async sync(records: OpRecord<ED>[]) {
         // sync会异步并发的调用，不能用this.context;
-        const context = this.contextBuilder();
+        const context = this.contextBuilder!();
         await this.syncLock.acquire('X');
-        await this.cacheStore.sync(records, context);
+        await this.cacheStore!.sync(records, context);
         this.syncLock.release();
 
         // 唤起同步注册的回调
@@ -106,25 +106,25 @@ export class Cache<
         entity: T,
         operation: ED[T]['Operation'],
     ) {
-        let result: Awaited<ReturnType<typeof this.cacheStore.operate>>;
-        await this.context.begin();
+        const context = this.contextBuilder!();
+        await context.begin();
         try {
-            result = await this.cacheStore.operate(
+            await this.cacheStore!.operate(
                 entity,
                 operation,
-                this.context,
+                context,
                 {
                     dontCollect: true,
                     dontCreateOper: true,
                 }
             );
 
-            await this.context.rollback();
+            await context.rollback();
         } catch (err) {
-            await this.context.rollback();
+            await context.rollback();
             throw err;
         }
-        return result;
+        return true;
     }
 
     /**
@@ -137,13 +137,14 @@ export class Cache<
         entity: keyof ED,
         operation: ED[keyof ED]['Operation']
     }>) {
-        let result: Awaited<ReturnType<typeof this.cacheStore.select>>;
-        await this.context.begin();
+        let result: SelectionResult<ED[T]['Schema'], S['data']>;
+        const context = this.contextBuilder!();
+        await context.begin();
         for (const oper of opers) {
-            await this.cacheStore.operate(
+            await this.cacheStore!.operate(
                 oper.entity,
                 oper.operation,
-                this.context,
+                context,
                 {
                     dontCollect: true,
                     dontCreateOper: true,
@@ -153,11 +154,11 @@ export class Cache<
         }
         while (true) {
             try {
-                result = await this.cacheStore.select(entity, selection, this.context, {
+                result = await this.cacheStore!.select(entity, selection, context, {
                     dontCollect: true,
                 });
     
-                await this.context.rollback();
+                await context.rollback();
                 return result;
             } catch (err) {
                 if (err instanceof OakRowUnexistedException) {
@@ -165,7 +166,7 @@ export class Cache<
                     await this.getAspectWrapper().exec('fetchRows', missedRows);
                 }
                 else {
-                    await this.context.rollback();
+                    await context.rollback();
                     throw err;
                 }
             }
@@ -177,17 +178,18 @@ export class Cache<
         selection: S,
         params?: SelectOption
     ) {
-        const { result } = await this.cacheStore.select(
+        const context = this.contextBuilder!();
+        const { result } = await this.cacheStore!.select(
             entity,
             selection,
-            this.context,
+            context,
             {}
         );
         return result;
     }
 
     judgeRelation(entity: keyof ED, attr: string) {
-        return this.cacheStore.judgeRelation(entity, attr);
+        return this.cacheStore!.judgeRelation(entity, attr);
     }
 
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>) {
@@ -199,14 +201,14 @@ export class Cache<
     }
 
     getCachedData() {
-        return this.cacheStore.getCurrentData();
+        return this.cacheStore!.getCurrentData();
     }
 
     getFullData() {
-        return this.cacheStore.getFullData();
+        return this.cacheStore!.getFullData();
     }
 
     resetInitialData() {
-        return this.cacheStore.resetInitialData();
+        return this.cacheStore!.resetInitialData();
     }
 }
