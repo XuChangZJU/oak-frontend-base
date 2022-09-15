@@ -1230,7 +1230,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (ignoreRemoved) {
             return Object.assign({}, this.value, this.updateData);
         }
-        const freshValue = this.freshValue && cloneDeep(this.freshValue) as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>;
+        const freshValue = this.freshValue && cloneDeep(this.freshValue) || this.isDirty() && {} || undefined;
         if (freshValue) {
             for (const k in this.children) {
                 Object.assign(freshValue, {
@@ -1239,7 +1239,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             }
         }
 
-        return freshValue;
+        return freshValue as SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>  | undefined;
     }
 
     getAction() {
