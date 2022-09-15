@@ -425,38 +425,43 @@ export function createPage<
             const Render = render.call(this);
             const { oakLoading } = this.state;
 
-            return React.cloneElement(
-                <PullToRefresh
-                    onRefresh={() => {
-                        if (methods?.onPullDownRefresh) {
-                            methods.onPullDownRefresh.call(this);
-                            return;
-                        }
-                        if (this.props.width === 'xs') {
-                            onPullDownRefresh.call(this);
-                        }
-                    }}
-                    refreshing={oakLoading}
-                    distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}
-                    indicator={{
-                        activate: commonMethods.t.call(
-                            this,
-                            'common:ptrActivate'
-                        ),
-                        deactivate: commonMethods.t.call(
-                            this,
-                            'common:ptrDeactivate'
-                        ),
-                        release: commonMethods.t.call(
-                            this,
-                            'common:ptrRelease'
-                        ),
-                        finish: commonMethods.t.call(this, 'common:ptrFinish'),
-                    }}
-                />,
-                {},
-                Render
-            );
+            if (this.props.width === 'xs') {
+                return React.cloneElement(
+                    <PullToRefresh
+                        onRefresh={() => {
+                            if (methods?.onPullDownRefresh) {
+                                methods.onPullDownRefresh.call(this);
+                                return;
+                            } else {
+                                onPullDownRefresh.call(this);
+                            }
+                        }}
+                        refreshing={oakLoading}
+                        distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}
+                        indicator={{
+                            activate: commonMethods.t.call(
+                                this,
+                                'common:ptrActivate'
+                            ),
+                            deactivate: commonMethods.t.call(
+                                this,
+                                'common:ptrDeactivate'
+                            ),
+                            release: commonMethods.t.call(
+                                this,
+                                'common:ptrRelease'
+                            ),
+                            finish: commonMethods.t.call(
+                                this,
+                                'common:ptrFinish'
+                            ),
+                        }}
+                    />,
+                    {},
+                    Render
+                );
+            }
+            return Render;
         }
     }
 
