@@ -10,7 +10,8 @@ import { EventBus } from './eventBus';
 import { LocalStorage } from './localStorage';
 import { Notification } from './notification';
 import { Message } from './message';
-export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>>(aspectWrapper: AspectWrapper<ED, Cxt, AD>, storageSchema: StorageSchema<ED>): {
+import { CacheStore } from '../cacheStore/CacheStore';
+export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>>(aspectWrapper: AspectWrapper<ED, Cxt, AD>, storageSchema: StorageSchema<ED>, contextBuilder: () => Cxt, store: CacheStore<ED, Cxt>): {
     cache: Cache<ED, Cxt, AD>;
     location: Location<ED, Cxt, AD>;
     runningTree: RunningTree<ED, Cxt, AD>;

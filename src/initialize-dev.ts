@@ -79,10 +79,37 @@ export function initialize<
         actionDict
     );
 
-    const wrapper: AspectWrapper<ED, Cxt, typeof aspectDict2> = {
-    } as any;
+    const features = {} as FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
 
-    const basicFeatures = initBasicFeatures(wrapper, storageSchema);
+    const cacheStore = new CacheStore(
+        storageSchema,
+        () => frontendContextBuilder(features),
+        () => debugStore.getCurrentData(),
+        () => clearMaterializedData(),
+    );
+    
+    const wrapper: AspectWrapper<ED, Cxt, typeof aspectDict2> = {
+        exec: async (name, params) => {
+            const context = frontendContextBuilder(features)(cacheStore);
+            const str = await context.toString();
+            const contextBackend = await backendContextBuilder(str)(debugStore);
+            await contextBackend.begin();
+            let result;
+            try {
+                result = await aspectDict2[name](params, contextBackend);
+                await contextBackend.commit();
+            } catch (err) {
+                await contextBackend.rollback();
+                throw err;
+            }
+            return {
+                result,
+                opRecords: contextBackend.opRecords,
+            };
+        },
+    };
+
+    const basicFeatures = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder(features)(cacheStore), cacheStore);
     const userDefinedfeatures = createFeatures(wrapper, basicFeatures);
 
     intersected = intersection(Object.keys(basicFeatures), Object.keys(userDefinedfeatures));
@@ -93,37 +120,7 @@ export function initialize<
             )}」`
         );
     }
-    const features = Object.assign(basicFeatures, userDefinedfeatures);
-
-    // feature 和 wrapper在这里又形成了相互调用
-    wrapper.exec = async (name, params) => {
-        const context = frontendContextBuilder(features)(cacheStore);
-        const str = await context.toString();
-        const contextBackend = await backendContextBuilder(str)(debugStore);
-        await contextBackend.begin();
-        let result;
-        try {
-            result = await aspectDict2[name](params, contextBackend);
-            await contextBackend.commit();
-        } catch (err) {
-            await contextBackend.rollback();
-            throw err;
-        }
-        return {
-            result,
-            opRecords: contextBackend.opRecords,
-        };
-    };
-
-    const cacheStore = new CacheStore(
-        storageSchema,
-        () => frontendContextBuilder(features),
-        () => debugStore.getCurrentData(),
-        () => clearMaterializedData(),
-    );
-
-    // cache这个feature依赖于cacheStore和contextBuilder，后注入
-    basicFeatures.cache.init(() => frontendContextBuilder(features)(cacheStore), cacheStore);
+    Object.assign(features, basicFeatures, userDefinedfeatures);
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker));
     if (actionDict) {

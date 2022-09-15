@@ -20,13 +20,6 @@ import { CommonAspectDict } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
 import { createDynamicCheckers } from 'oak-domain/lib/checkers';
 
-
-function makeContentTypeAndBody(data: any) {
-    return {
-        contentType: 'application/json',
-        body: JSON.stringify(data),
-    };
-}
 /**
  * @param storageSchema
  * @param createFeatures
@@ -58,14 +51,25 @@ export function initialize<
 ) {
     const checkers2 = createDynamicCheckers<ED, Cxt>(storageSchema).concat(checkers || []);
 
-    const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
-    } as any;
+    const features = {} as FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
 
-    const basicFeatures = initBasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>(
-        wrapper,
-        storageSchema
+    const cacheStore = new CacheStore(
+        storageSchema,
+        () => frontendContextBuilder(features)
     );
+    
+    const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
+        exec: async (name, params) => {
+            const context = frontendContextBuilder(features)(cacheStore);
+            const { result, opRecords } = await connector.callAspect(name as string, params, context);
+            return {
+                result,
+                opRecords,
+            };
+        },
+    };
 
+    const basicFeatures = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder(features)(cacheStore), cacheStore);
     const userDefinedfeatures = createFeatures(wrapper, basicFeatures);
 
     const intersected = intersection(Object.keys(basicFeatures), Object.keys(userDefinedfeatures));
@@ -76,23 +80,7 @@ export function initialize<
             )}」`
         );
     }
-    const features = Object.assign(basicFeatures, userDefinedfeatures);
-    const cacheStore = new CacheStore(
-        storageSchema,
-        () => frontendContextBuilder(features)
-    );
-
-    wrapper.exec = async (name, params) => {
-        const context = frontendContextBuilder(features)(cacheStore);
-        const { result, opRecords } = await connector.callAspect(name as string, params, context);
-        return {
-            result,
-            opRecords,
-        };
-    },
-
-    // cache这个feature依赖于cacheStore和contextBuilder，后注入
-    basicFeatures.cache.init(() => frontendContextBuilder(features)(cacheStore), cacheStore);
+    Object.assign(features, basicFeatures, userDefinedfeatures);
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker));
     if (actionDict) {

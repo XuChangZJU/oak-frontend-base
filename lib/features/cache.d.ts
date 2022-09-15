@@ -8,13 +8,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
     private syncEventsCallbacks;
     private contextBuilder?;
     private syncLock;
-    private initLock;
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>);
-    /**
-     * 目前context和cache会形成循环依赖，这里不太好处理，只能先让contextBuilder后注入
-     * @param contextBuilder
-     */
-    init(contextBuilder: () => Cxt, store: CacheStore<ED, Cxt>): void;
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => Cxt, store: CacheStore<ED, Cxt>);
     refresh<T extends keyof ED, OP extends SelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true): Promise<{
         data: import("oak-domain/lib/types").SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]>[];
         count?: number | undefined;

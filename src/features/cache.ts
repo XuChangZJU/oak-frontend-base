@@ -19,29 +19,18 @@ export class Cache<
     >;
     private contextBuilder?: () => Cxt;
     private syncLock: RWLock;
-    private initLock: RWLock;
 
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>) {
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => Cxt, store: CacheStore<ED, Cxt>) {
         super(aspectWrapper);
         this.syncEventsCallbacks = [];
         this.syncLock = new RWLock();
-        this.initLock = new RWLock();
 
-        this.initLock.acquire('X');
-    }
-
-    /**
-     * 目前context和cache会形成循环依赖，这里不太好处理，只能先让contextBuilder后注入
-     * @param contextBuilder 
-     */
-    init(contextBuilder: () => Cxt, store: CacheStore<ED, Cxt>) {
         this.contextBuilder = contextBuilder;
         this.cacheStore = store;
 
-        // 在这里把wrapper的返回opRecords截取到并同步到cache中，因为现在init过程的更改，所以必须在这里替换，不太好的设计
-        const wrapper = this.getAspectWrapper();
-        const { exec } = wrapper;
-        wrapper.exec = async <T extends keyof AD>(
+        // 在这里把wrapper的返回opRecords截取到并同步到cache中
+        const { exec } = aspectWrapper;
+        aspectWrapper.exec = async <T extends keyof AD>(
             name: T,
             params: any
         ) => {
@@ -52,9 +41,9 @@ export class Cache<
                 opRecords,
             };
         };
-        this.initLock.release();
     }
 
+    
     @Action
     async refresh<T extends keyof ED, OP extends SelectOption>(
         entity: T,
@@ -62,7 +51,6 @@ export class Cache<
         option?: OP,
         getCount?: true
     ) {
-        await this.initLock.acquire('S');
         reinforceSelection(this.cacheStore!.getSchema() ,entity, selection);
         const { result } = await this.getAspectWrapper().exec('select', {
             entity,
@@ -70,7 +58,6 @@ export class Cache<
             option,
             getCount,
         });
-        this.initLock.release();
         return result;
     }
 
@@ -80,25 +67,21 @@ export class Cache<
         operation: ED[T]['Operation'],
         option?: OP,        
     ) {
-        await this.initLock.acquire('S');
         const { result } = await this.getAspectWrapper().exec('operate', {
             entity,
             operation,
             option,
         });
         
-        this.initLock.release();
         return result;
     }
 
     private async sync(records: OpRecord<ED>[]) {
         // sync会异步并发的调用，不能用this.context;
         const context = this.contextBuilder!();
-        await this.initLock.acquire('S');
         await this.syncLock.acquire('X');
         await this.cacheStore!.sync(records, context);
         this.syncLock.release();
-        this.initLock.release();
 
         // 唤起同步注册的回调
         const result = this.syncEventsCallbacks.map((ele) => ele(records));
@@ -120,7 +103,6 @@ export class Cache<
     ) {
         const context = this.contextBuilder!();
         await context.begin();
-        await this.initLock.acquire('S');
         try {
             await this.cacheStore!.operate(
                 entity,
@@ -132,10 +114,8 @@ export class Cache<
                 }
             );
 
-            this.initLock.release();
             await context.rollback();
         } catch (err) {
-            this.initLock.release();
             await context.rollback();
             throw err;
         }
@@ -155,7 +135,6 @@ export class Cache<
         let result: SelectionResult<ED[T]['Schema'], S['data']>;
         const context = this.contextBuilder!();
         await context.begin();
-        await this.initLock.acquire('S');
         for (const oper of opers) {
             await this.cacheStore!.operate(
                 oper.entity,
@@ -175,7 +154,6 @@ export class Cache<
                 });
     
                 await context.rollback();
-                this.initLock.release();
                 return result;
             } catch (err) {
                 if (err instanceof OakRowUnexistedException) {
@@ -183,7 +161,6 @@ export class Cache<
                     await this.getAspectWrapper().exec('fetchRows', missedRows);
                 }
                 else {
-                    this.initLock.release();
                     await context.rollback();
                     throw err;
                 }
