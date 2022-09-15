@@ -8,6 +8,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
     private syncEventsCallbacks;
     private contextBuilder?;
     private syncLock;
+    private initLock;
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>);
     /**
      * 目前context和cache会形成循环依赖，这里不太好处理，只能先让contextBuilder后注入

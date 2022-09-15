@@ -19,11 +19,13 @@ export class Cache<
     >;
     private contextBuilder?: () => Cxt;
     private syncLock: RWLock;
+    private initLock: RWLock;
 
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>) {
         super(aspectWrapper);
         this.syncEventsCallbacks = [];
         this.syncLock = new RWLock();
+        this.initLock = new RWLock();
 
         // 在这里把wrapper的返回opRecords截取到并同步到cache中
         const { exec } = aspectWrapper;
@@ -38,6 +40,7 @@ export class Cache<
                 opRecords,
             };
         };
+        this.initLock.acquire('X');
     }
 
     /**
@@ -47,6 +50,7 @@ export class Cache<
     init(contextBuilder: () => Cxt, store: CacheStore<ED, Cxt>) {
         this.contextBuilder = contextBuilder;
         this.cacheStore = store;
+        this.initLock.release();
     }
 
     @Action
@@ -56,6 +60,7 @@ export class Cache<
         option?: OP,
         getCount?: true
     ) {
+        await this.initLock.acquire('S');
         reinforceSelection(this.cacheStore!.getSchema() ,entity, selection);
         const { result } = await this.getAspectWrapper().exec('select', {
             entity,
@@ -63,6 +68,7 @@ export class Cache<
             option,
             getCount,
         });
+        this.initLock.release();
         return result;
     }
 
@@ -72,21 +78,25 @@ export class Cache<
         operation: ED[T]['Operation'],
         option?: OP,        
     ) {
+        await this.initLock.acquire('S');
         const { result } = await this.getAspectWrapper().exec('operate', {
             entity,
             operation,
             option,
         });
         
+        this.initLock.release();
         return result;
     }
 
     private async sync(records: OpRecord<ED>[]) {
         // sync会异步并发的调用，不能用this.context;
         const context = this.contextBuilder!();
+        await this.initLock.acquire('S');
         await this.syncLock.acquire('X');
         await this.cacheStore!.sync(records, context);
         this.syncLock.release();
+        this.initLock.release();
 
         // 唤起同步注册的回调
         const result = this.syncEventsCallbacks.map((ele) => ele(records));
@@ -108,6 +118,7 @@ export class Cache<
     ) {
         const context = this.contextBuilder!();
         await context.begin();
+        await this.initLock.acquire('S');
         try {
             await this.cacheStore!.operate(
                 entity,
@@ -119,8 +130,10 @@ export class Cache<
                 }
             );
 
+            this.initLock.release();
             await context.rollback();
         } catch (err) {
+            this.initLock.release();
             await context.rollback();
             throw err;
         }
@@ -140,6 +153,7 @@ export class Cache<
         let result: SelectionResult<ED[T]['Schema'], S['data']>;
         const context = this.contextBuilder!();
         await context.begin();
+        await this.initLock.acquire('S');
         for (const oper of opers) {
             await this.cacheStore!.operate(
                 oper.entity,
@@ -159,6 +173,7 @@ export class Cache<
                 });
     
                 await context.rollback();
+                this.initLock.release();
                 return result;
             } catch (err) {
                 if (err instanceof OakRowUnexistedException) {
@@ -166,6 +181,7 @@ export class Cache<
                     await this.getAspectWrapper().exec('fetchRows', missedRows);
                 }
                 else {
+                    this.initLock.release();
                     await context.rollback();
                     throw err;
                 }
