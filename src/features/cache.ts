@@ -27,19 +27,6 @@ export class Cache<
         this.syncLock = new RWLock();
         this.initLock = new RWLock();
 
-        // 在这里把wrapper的返回opRecords截取到并同步到cache中
-        const { exec } = aspectWrapper;
-        aspectWrapper.exec = async <T extends keyof AD>(
-            name: T,
-            params: any
-        ) => {
-            const { result, opRecords } = await exec(name, params);
-            await this.sync(opRecords);
-            return {
-                result,
-                opRecords,
-            };
-        };
         this.initLock.acquire('X');
     }
 
@@ -50,6 +37,21 @@ export class Cache<
     init(contextBuilder: () => Cxt, store: CacheStore<ED, Cxt>) {
         this.contextBuilder = contextBuilder;
         this.cacheStore = store;
+
+        // 在这里把wrapper的返回opRecords截取到并同步到cache中，因为现在init过程的更改，所以必须在这里替换，不太好的设计
+        const wrapper = this.getAspectWrapper();
+        const { exec } = wrapper;
+        wrapper.exec = async <T extends keyof AD>(
+            name: T,
+            params: any
+        ) => {
+            const { result, opRecords } = await exec(name, params);
+            await this.sync(opRecords);
+            return {
+                result,
+                opRecords,
+            };
+        };
         this.initLock.release();
     }
 
