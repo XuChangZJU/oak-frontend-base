@@ -403,7 +403,10 @@ export function createPage<
 
         async componentDidMount() {
             this.registerPageScroll();
-            hiddenMethods.subscribe.call(this);
+            if (typeof formData === 'function') {
+                hiddenMethods.subscribe.call(this);
+                commonMethods.reRender.call(this);
+            }
             await onLoad.call(this, this.props);
             methods?.onReady && methods.onReady.call(this);
             lifetimes?.attached && lifetimes.attached.call(this);
@@ -416,7 +419,9 @@ export function createPage<
             if (this.state.oakFullpath) {
                 features.runningTree.destroyNode(this.state.oakFullpath);
             }
-            hiddenMethods.unsubscribe.call(this);
+            if (typeof formData === 'function') {
+                hiddenMethods.unsubscribe.call(this);
+            }
             methods?.onUnload && methods.onUnload.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
         }
@@ -573,7 +578,6 @@ export function createComponent<
         isReachBottom = false;
 
         async componentDidMount() {
-            hiddenMethods.subscribe.call(this);
             const { oakPath, oakParent } = this.props;
             if (oakParent || oakPath) {
                 const oakFullpath = `${oakParent || ''}${oakParent && oakPath ? '.' : ''}${oakPath || ''}`;
@@ -583,9 +587,13 @@ export function createComponent<
                         oakEntity: entity as any,
                     },
                     () => {
-                        commonMethods.reRender.call(this);
+                        //commonMethods.reRender.call(this);
                     }
                 );
+            }
+            if (typeof formData === 'function') {
+                hiddenMethods.subscribe.call(this);
+                commonMethods.reRender.call(this);
             }
             lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
@@ -593,7 +601,10 @@ export function createComponent<
         }
 
         async componentWillUnmount() {
-            hiddenMethods.unsubscribe.call(this);
+            if (typeof formData === 'function') {
+                hiddenMethods.unsubscribe.call(this);
+            }
+            
             lifetimes?.detached && lifetimes.detached.call(this);
         }
 
@@ -635,7 +646,7 @@ export function createComponent<
                         oakFullpath: oakFullpath2,
                         oakEntity: entity as string,
                     });
-                    commonMethods.reRender.call(this);
+                    //commonMethods.reRender.call(this);
                 }
             }
         }

@@ -815,7 +815,6 @@ export function makePageMethods<
                             sorters,
                             id: oakId,
                         });
-                        // const oakFullpath = oakParent ? `${oakParent}.${oakPath || options.path}` : oakPath || options.path;
                         await this.setState(
                             {
                                 oakEntity: node.getEntity(),
