@@ -295,7 +295,7 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     ) => Promise<void>;
     removeNode: (parent: string, path: string) => Promise<void>;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => Promise<void>;
-    getFilters: () => Promise<ED[T]['Selection']['filter'][]>;
+    getFilters: () => Promise<ED[T]['Selection']['filter'][] | undefined>;
     getFilterByName: (
         name: string
     ) => Promise<ED[T]['Selection']['filter']> | undefined;
@@ -306,7 +306,7 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     ) => Promise<void>;
     removeNamedFilterByName: (name: string, refresh?: boolean) => Promise<void>;
     setNamedSorters: (sorters: NamedSorterItem<ED, T>[]) => Promise<void>;
-    getSorters: () => Promise<ED[T]['Selection']['sorter']>;
+    getSorters: () => Promise<ED[T]['Selection']['sorter'] | undefined>;
     getSorterByName: (
         name: string
     ) => Promise<DeduceSorterItem<ED[T]['Schema']> | undefined>;

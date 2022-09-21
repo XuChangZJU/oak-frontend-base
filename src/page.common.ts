@@ -477,32 +477,35 @@ export function makeListComponentMethods<
         },
 
         async getFilters() {
-            const namedFilters = features.runningTree.getNamedFilters(
-                this.state.oakFullpath
-            );
-            const filters = await Promise.all(
-                namedFilters.map(({ filter }) => {
-                    if (typeof filter === 'function') {
-                        return filter();
-                    }
-                    return filter;
-                })
-            );
-            return filters;
+            if (this.state.oakFullpath) {
+                const namedFilters = features.runningTree.getNamedFilters(
+                    this.state.oakFullpath
+                );
+                const filters = await Promise.all(
+                    namedFilters.map(({ filter }) => {
+                        if (typeof filter === 'function') {
+                            return filter();
+                        }
+                        return filter;
+                    })
+                );
+                return filters;
+            }
         },
 
         async getFilterByName(name) {
-            const filter = features.runningTree.getNamedFilterByName(
-                this.state.oakFullpath,
-                name
-            );
-            if (filter?.filter) {
-                if (typeof filter.filter === 'function') {
-                    return filter.filter();
+            if (this.state.oakFullpath) {
+                const filter = features.runningTree.getNamedFilterByName(
+                    this.state.oakFullpath,
+                    name
+                );
+                if (filter?.filter) {
+                    if (typeof filter.filter === 'function') {
+                        return filter.filter();
+                    }
+                    return filter.filter;
                 }
-                return filter.filter;
             }
-            return;
         },
 
         async addNamedFilter(namedFilter, refresh = false) {
@@ -537,34 +540,37 @@ export function makeListComponentMethods<
         },
 
         async getSorters() {
-            const namedSorters = features.runningTree.getNamedSorters(
-                this.state.oakFullpath
-            );
-            const sorters = (
-                await Promise.all(
-                    namedSorters.map(({ sorter }) => {
-                        if (typeof sorter === 'function') {
-                            return sorter();
-                        }
-                        return sorter;
-                    })
-                )
-            ).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
-            return sorters;
+            if (this.state.oakFullpath) {
+                const namedSorters = features.runningTree.getNamedSorters(
+                    this.state.oakFullpath
+                );
+                const sorters = (
+                    await Promise.all(
+                        namedSorters.map(({ sorter }) => {
+                            if (typeof sorter === 'function') {
+                                return sorter();
+                            }
+                            return sorter;
+                        })
+                    )
+                ).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
+                return sorters;
+            }
         },
 
         async getSorterByName(name) {
-            const sorter = features.runningTree.getNamedSorterByName(
-                this.state.oakFullpath,
-                name
-            );
-            if (sorter?.sorter) {
-                if (typeof sorter.sorter === 'function') {
-                    return sorter.sorter();
+            if (this.state.oakFullpath) {
+                const sorter = features.runningTree.getNamedSorterByName(
+                    this.state.oakFullpath,
+                    name
+                );
+                if (sorter?.sorter) {
+                    if (typeof sorter.sorter === 'function') {
+                        return sorter.sorter();
+                    }
+                    return sorter.sorter;
                 }
-                return sorter.sorter;
             }
-            return;
         },
 
         async addNamedSorter(namedSorter, refresh = false) {
@@ -599,7 +605,9 @@ export function makeListComponentMethods<
         },
 
         getPagination() {
-            return features.runningTree.getPagination(this.state.oakFullpath);
+            if (this.state.oakFullpath) {
+                return features.runningTree.getPagination(this.state.oakFullpath);
+            }
         },
 
         async setPageSize(pageSize: number, refresh = true) {
