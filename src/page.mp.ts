@@ -367,7 +367,6 @@ export function createPage<
             async onLoad(pageOption: Record<string, string | undefined>) {
                 (this as any).props = this.data;
                 await onLoad.call(this, pageOption);
-                // methods?.onLoad && methods?.onLoad.call(this, pageOption);
             },
             async onPullDownRefresh() {
                 await onPullDownRefresh.call(this);
@@ -384,10 +383,10 @@ export function createPage<
             ...restPageMethods,
             ...(methods
                 ? omit(methods, [
-                    'onLoad',
-                    'onPullDownRefresh',
-                    'onReachBottom',
-                ])
+                      'onLoad',
+                      'onPullDownRefresh',
+                      'onReachBottom',
+                  ])
                 : {}),
         },
         lifetimes: {
@@ -407,7 +406,10 @@ export function createPage<
             },
 
             attached() {
-                this.subscribe();
+                // this.subscribe();
+                if (typeof formData === 'function') {
+                    this.subscribe();
+                }
                 const i18nInstance = getI18nInstanceWechatMp();
                 if (i18nInstance) {
                     (this as any).setState({
@@ -419,12 +421,18 @@ export function createPage<
             },
 
             ready() {
+                if (typeof formData === 'function') {
+                    this.reRender();
+                }
                 lifetimes?.ready && lifetimes.ready.call(this);
             },
 
             detached() {
                 features.runningTree.destroyNode(this.data.oakFullpath);
-                this.unsubscribe();
+                // this.unsubscribe();
+                if (typeof formData === 'function') {
+                    this.unsubscribe();
+                }
                 lifetimes?.detached && lifetimes.detached.call(this);
             },
 
@@ -440,14 +448,21 @@ export function createPage<
 
         pageLifetimes: {
             show() {
-                this.subscribe();
-                if (this.data.oakFullpath) {
+                if (typeof formData === 'function') {
+                    this.subscribe();
                     this.reRender();
                 }
+                // this.subscribe();
+                // if (this.data.oakFullpath) {
+                //     this.reRender();
+                // }
                 pageLifetimes?.show && pageLifetimes.show.call(this);
             },
             hide() {
-                this.unsubscribe();
+                if (typeof formData === 'function') {
+                    this.unsubscribe();
+                }
+                //this.unsubscribe();
                 pageLifetimes?.hide && pageLifetimes.hide.call(this);
             },
             resize(size) {
@@ -585,14 +600,21 @@ export function createComponent<
                     this.setState({
                         oakFullpath,
                         oakEntity: entity,
+                    }, () => {
+                        //this.reRender();
                     });
+                }
+                if (typeof formData === 'function') {
                     this.reRender();
                 }
                 lifetimes?.ready && lifetimes.ready.call(this);
             },
 
             async attached() {
-                this.subscribe();
+                //this.subscribe();
+                if (typeof formData === 'function') {
+                    this.subscribe();
+                }
                 const i18nInstance = getI18nInstanceWechatMp();
                 if (i18nInstance) {
                     (this as any).setState({
@@ -604,7 +626,10 @@ export function createComponent<
             },
 
             async detached() {
-                this.unsubscribe();
+                // this.unsubscribe();
+                if (typeof formData === 'function') {
+                    this.unsubscribe();
+                }
                 lifetimes?.detached && lifetimes.detached.call(this);
             },
 
@@ -619,14 +644,21 @@ export function createComponent<
 
         pageLifetimes: {
             show() {
-                this.subscribe();
-                if (this.data.oakFullpath) {
+                // this.subscribe();
+                // if (this.data.oakFullpath) {
+                //     this.reRender();
+                // }
+                if (typeof formData === 'function') {
+                    this.subscribe();
                     this.reRender();
                 }
                 pageLifetimes?.show && pageLifetimes.show.call(this);
             },
             hide() {
-                this.unsubscribe();
+                if (typeof formData === 'function') {
+                    this.unsubscribe();
+                }
+                //this.unsubscribe();
                 pageLifetimes?.hide && pageLifetimes.hide.call(this);
             },
             resize(size) {
