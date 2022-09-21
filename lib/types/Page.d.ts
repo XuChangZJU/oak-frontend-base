@@ -164,13 +164,13 @@ export declare type OakListComponentMethods<ED extends EntityDict & BaseEntityDi
     pushNode: (path?: string, options?: Pick<CreateNodeOptions<ED, keyof ED>, 'updateData' | 'beforeExecute' | 'afterExecute'>) => Promise<void>;
     removeNode: (parent: string, path: string) => Promise<void>;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => Promise<void>;
-    getFilters: () => Promise<ED[T]['Selection']['filter'][]>;
+    getFilters: () => Promise<ED[T]['Selection']['filter'][] | undefined>;
     getFilterByName: (name: string) => Promise<ED[T]['Selection']['filter']> | undefined;
     addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => Promise<void>;
     removeNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => Promise<void>;
     removeNamedFilterByName: (name: string, refresh?: boolean) => Promise<void>;
     setNamedSorters: (sorters: NamedSorterItem<ED, T>[]) => Promise<void>;
-    getSorters: () => Promise<ED[T]['Selection']['sorter']>;
+    getSorters: () => Promise<ED[T]['Selection']['sorter'] | undefined>;
     getSorterByName: (name: string) => Promise<DeduceSorterItem<ED[T]['Schema']> | undefined>;
     addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => Promise<void>;
     removeNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => Promise<void>;

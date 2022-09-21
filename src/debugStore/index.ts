@@ -1,3 +1,4 @@
+import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 import { DebugStore } from './DebugStore';
 import {
     Checker, Trigger, StorageSchema, FormCreateData, Context, EntityDict, RowStore,
@@ -26,8 +27,8 @@ async function initDataInStore<ED extends EntityDict & BaseEntityDict, Cxt exten
 function getMaterializedData() {
     if (process.env.OAK_PLATFORM === 'wechatMp') {
         try {
-            const data = wx.getStorageSync('debugStore');
-            const stat = wx.getStorageSync('debugStoreStat');
+            const data = wx.getStorageSync(LOCAL_STORAGE_KEYS.debugStore);
+            const stat = wx.getStorageSync(LOCAL_STORAGE_KEYS.debugStoreStat);
             if (data && stat) {
                 return {
                     data,
@@ -41,10 +42,10 @@ function getMaterializedData() {
     } else if (process.env.OAK_PLATFORM === 'web') {
         try {
             const data = JSON.parse(
-                window.localStorage.getItem('debugStore') as string
+                window.localStorage.getItem(LOCAL_STORAGE_KEYS.debugStore) as string
             );
             const stat = JSON.parse(
-                window.localStorage.getItem('debugStoreStat') as string
+                window.localStorage.getItem(LOCAL_STORAGE_KEYS.debugStoreStat) as string
             );
             if (data && stat) {
                 return {
@@ -64,8 +65,8 @@ let lastMaterializedVersion = 0;
 function materializeData(data: any, stat: { create: number, update: number, remove: number, commit: number }) {
     if (process.env.OAK_PLATFORM === 'wechatMp') {
         try {
-            wx.setStorageSync('debugStore', data);
-            wx.setStorageSync('debugStoreStat', stat);
+            wx.setStorageSync(LOCAL_STORAGE_KEYS.debugStore, data);
+            wx.setStorageSync(LOCAL_STORAGE_KEYS.debugStoreStat, stat);
             lastMaterializedVersion = stat.commit;
             wx.showToast({
                 title: '数据已物化',
@@ -83,10 +84,10 @@ function materializeData(data: any, stat: { create: number, update: number, remo
      else if (process.env.OAK_PLATFORM === 'web') {
         try {
             window.localStorage.setItem(
-                'debugStore',
+                LOCAL_STORAGE_KEYS.debugStore,
                 typeof data === 'string' ? data : JSON.stringify(data)
             );
-            window.localStorage.setItem('debugStoreStat', JSON.stringify(stat));
+            window.localStorage.setItem(LOCAL_STORAGE_KEYS.debugStoreStat, JSON.stringify(stat));
             lastMaterializedVersion = stat.commit;
             console.log('物化数据', data);
             // alert('数据已物化');
@@ -100,8 +101,8 @@ function materializeData(data: any, stat: { create: number, update: number, remo
 export function clearMaterializedData() {
     if (process.env.OAK_PLATFORM === 'wechatMp') {
         try {
-            wx.removeStorageSync('debugStore');
-            wx.removeStorageSync('debugStoreStat');
+            wx.removeStorageSync(LOCAL_STORAGE_KEYS.debugStore);
+            wx.removeStorageSync(LOCAL_STORAGE_KEYS.debugStoreStat);
             lastMaterializedVersion = 0;
             wx.showToast({
                 title: '数据已清除',
@@ -118,8 +119,8 @@ export function clearMaterializedData() {
     }
      else if (process.env.OAK_PLATFORM === 'web') {
         try {
-            window.localStorage.removeItem('debugStore');
-            window.localStorage.removeItem('debugStoreStat');
+            window.localStorage.removeItem(LOCAL_STORAGE_KEYS.debugStore);
+            window.localStorage.removeItem(LOCAL_STORAGE_KEYS.debugStoreStat);
             lastMaterializedVersion = 0;
             console.log('清空数据');
             // alert('数据已物化');

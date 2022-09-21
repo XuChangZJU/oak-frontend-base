@@ -1,6 +1,7 @@
 import { EntityDict, Context, AspectWrapper } from 'oak-domain/lib/types';
 import { unset } from 'oak-domain/lib/utils/lodash';
 import { Feature } from '../types/Feature';
+import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 import { CommonAspectDict } from 'oak-common-aspect';
 
 export class LocalStorage<ED extends EntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
@@ -8,7 +9,16 @@ export class LocalStorage<ED extends EntityDict, Cxt extends Context<ED>, AD ext
 
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>) {
         super(aspectWrapper);
-        this.keys = {};
+        if (process.env.NODE_ENV === 'development') {
+            // development环境下，debugStore的数据也默认存放在localStorage中
+            this.keys = {
+                [LOCAL_STORAGE_KEYS.debugStore]: true,
+                [LOCAL_STORAGE_KEYS.debugStoreStat]: true,
+            };
+        }
+        else {
+            this.keys = {};
+        }
     }
 
     setKey(key: string) {
@@ -104,7 +114,8 @@ export class LocalStorage<ED extends EntityDict, Cxt extends Context<ED>, AD ext
         return data;
     }
 
-    saveAll(data: Record<string, any>) {
+    resetAll(data: Record<string, any>) {
+        this.clear();
         for (const k in data) {
             this.save(k, data[k]);
         }
