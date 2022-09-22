@@ -66,7 +66,7 @@ export function initialize<
             `用户定义的aspect中不能和系统aspect同名：「${intersected.join(',')}」`
         );
     }
-    const aspectDict2 = Object.assign({}, commonAspectDict, aspectDict);
+    const aspectDict2 = Object.assign({}, aspectDict, commonAspectDict);
     const checkers2 = createDynamicCheckers<ED, Cxt>(storageSchema).concat(checkers || []);
     const triggers2 = createDynamicTriggers<ED, Cxt>(storageSchema).concat(triggers || []);
     const debugStore = createDebugStore(
@@ -88,7 +88,7 @@ export function initialize<
         () => clearMaterializedData(),
     );
     
-    const wrapper: AspectWrapper<ED, Cxt, typeof aspectDict2> = {
+    const wrapper: AspectWrapper<ED, Cxt, CommonAspectDict<ED, Cxt> & AD> = {
         exec: async (name, params) => {
             const context = frontendContextBuilder(features)(cacheStore);
             const str = await context.toString();

@@ -1,4 +1,4 @@
-import { AspectWrapper, Checker, Context, EntityDict, RowStore } from 'oak-domain/lib/types';
+import { AspectWrapper, Checker, Context, EntityDict, Aspect } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
 import { CommonAspectDict } from 'oak-common-aspect';

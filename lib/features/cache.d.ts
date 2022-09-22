@@ -14,21 +14,19 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
         count?: number | undefined;
     }>;
     operate<T extends keyof ED, OP extends OperateOption>(entity: T, operation: ED[T]['Operation'], option?: OP): Promise<import("oak-domain/lib/types").OperationResult<ED> | import("oak-domain/lib/types").OperationResult<ED>[]>;
+    count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP): Promise<number>;
     private sync;
     /**
      * 前端缓存做operation只可能是测试权限，必然回滚
      * @param entity
      * @param operation
-     * @param scene
-     * @param commit
-     * @param option
      * @returns
      */
     testOperation<T extends keyof ED>(entity: T, operation: ED[T]['Operation']): Promise<boolean>;
     /**
      * 尝试在cache中重做一些动作，然后选择重做后的数据（为了实现modi）
      * @param entity
-     * @param projection
+     * @param selection
      * @param opers
      */
     tryRedoOperations<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, opers: Array<{
