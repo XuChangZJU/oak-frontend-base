@@ -20,7 +20,11 @@ export class Cache<
     private contextBuilder?: () => Cxt;
     private syncLock: RWLock;
 
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => Cxt, store: CacheStore<ED, Cxt>) {
+    constructor(
+        aspectWrapper: AspectWrapper<ED, Cxt, AD>,
+        contextBuilder: () => Cxt,
+        store: CacheStore<ED, Cxt>
+    ) {
         super(aspectWrapper);
         this.syncEventsCallbacks = [];
         this.syncLock = new RWLock();
@@ -43,7 +47,6 @@ export class Cache<
         };
     }
 
-    
     @Action
     async refresh<T extends keyof ED, OP extends SelectOption>(
         entity: T,
@@ -51,7 +54,7 @@ export class Cache<
         option?: OP,
         getCount?: true
     ) {
-        reinforceSelection(this.cacheStore!.getSchema() ,entity, selection);
+        reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
         const { result } = await this.getAspectWrapper().exec('select', {
             entity,
             selection,
@@ -65,14 +68,29 @@ export class Cache<
     async operate<T extends keyof ED, OP extends OperateOption>(
         entity: T,
         operation: ED[T]['Operation'],
-        option?: OP,        
+        option?: OP
     ) {
         const { result } = await this.getAspectWrapper().exec('operate', {
             entity,
             operation,
             option,
         });
-        
+
+        return result;
+    }
+
+    @Action
+    async count<T extends keyof ED, OP extends SelectOption>(
+        entity: T,
+        selection: ED[T]['Selection'],
+        option?: OP
+    ) {
+        reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
+        const { result } = await this.getAspectWrapper().exec('count', {
+            entity,
+            selection,
+            option,
+        });
         return result;
     }
 
@@ -92,27 +110,19 @@ export class Cache<
      * 前端缓存做operation只可能是测试权限，必然回滚
      * @param entity
      * @param operation
-     * @param scene
-     * @param commit
-     * @param option
      * @returns
      */
     async testOperation<T extends keyof ED>(
         entity: T,
-        operation: ED[T]['Operation'],
+        operation: ED[T]['Operation']
     ) {
         const context = this.contextBuilder!();
         await context.begin();
         try {
-            await this.cacheStore!.operate(
-                entity,
-                operation,
-                context,
-                {
-                    dontCollect: true,
-                    dontCreateOper: true,
-                }
-            );
+            await this.cacheStore!.operate(entity, operation, context, {
+                dontCollect: true,
+                dontCreateOper: true,
+            });
 
             await context.rollback();
         } catch (err) {
@@ -124,14 +134,18 @@ export class Cache<
 
     /**
      * 尝试在cache中重做一些动作，然后选择重做后的数据（为了实现modi）
-     * @param entity 
-     * @param projection 
-     * @param opers 
+     * @param entity
+     * @param selection
+     * @param opers
      */
-    async tryRedoOperations<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, opers: Array<{
-        entity: keyof ED,
-        operation: ED[keyof ED]['Operation']
-    }>) {
+    async tryRedoOperations<T extends keyof ED, S extends ED[T]['Selection']>(
+        entity: T,
+        selection: S,
+        opers: Array<{
+            entity: keyof ED;
+            operation: ED[keyof ED]['Operation'];
+        }>
+    ) {
         let result: SelectionResult<ED[T]['Schema'], S['data']>;
         const context = this.contextBuilder!();
         await context.begin();
@@ -149,18 +163,22 @@ export class Cache<
         }
         while (true) {
             try {
-                result = await this.cacheStore!.select(entity, selection, context, {
-                    dontCollect: true,
-                });
-    
+                result = await this.cacheStore!.select(
+                    entity,
+                    selection,
+                    context,
+                    {
+                        dontCollect: true,
+                    }
+                );
+
                 await context.rollback();
                 return result;
             } catch (err) {
                 if (err instanceof OakRowUnexistedException) {
                     const missedRows = err.getRows();
                     await this.getAspectWrapper().exec('fetchRows', missedRows);
-                }
-                else {
+                } else {
                     await context.rollback();
                     throw err;
                 }
