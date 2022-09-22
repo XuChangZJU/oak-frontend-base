@@ -406,10 +406,7 @@ export function createPage<
             },
 
             attached() {
-                // this.subscribe();
-                if (typeof formData === 'function') {
-                    this.subscribe();
-                }
+                typeof formData === 'function' && this.subscribe();
                 const i18nInstance = getI18nInstanceWechatMp();
                 if (i18nInstance) {
                     (this as any).setState({
@@ -421,9 +418,7 @@ export function createPage<
             },
 
             ready() {
-                if (typeof formData === 'function') {
-                    this.reRender();
-                }
+                typeof formData === 'function' && this.reRender();
                 lifetimes?.ready && lifetimes.ready.call(this);
             },
 
@@ -448,21 +443,12 @@ export function createPage<
 
         pageLifetimes: {
             show() {
-                if (typeof formData === 'function') {
-                    this.subscribe();
-                    this.reRender();
-                }
-                // this.subscribe();
-                // if (this.data.oakFullpath) {
-                //     this.reRender();
-                // }
+                typeof formData === 'function' && this.subscribe();
+                typeof formData === 'function' && this.reRender();
                 pageLifetimes?.show && pageLifetimes.show.call(this);
             },
             hide() {
-                if (typeof formData === 'function') {
-                    this.unsubscribe();
-                }
-                //this.unsubscribe();
+                typeof formData === 'function' && this.unsubscribe();
                 pageLifetimes?.hide && pageLifetimes.hide.call(this);
             },
             resize(size) {
@@ -567,7 +553,7 @@ export function createComponent<
                             oakFullpath: oakFullpath2,
                             oakEntity: entity as string,
                         });
-                        this.reRender();
+                        typeof formData === 'function' && this.reRender();
                     }
                 }
             },
@@ -597,24 +583,24 @@ export function createComponent<
                 const { oakPath, oakParent } = this.data;
                 if (oakParent && oakPath) {
                     const oakFullpath = `${oakParent}.${oakPath}`;
-                    this.setState({
-                        oakFullpath,
-                        oakEntity: entity,
-                    }, () => {
-                        //this.reRender();
-                    });
+                    this.setState(
+                        {
+                            oakFullpath,
+                            oakEntity: entity,
+                        },
+                        () => {
+                            typeof formData === 'function' && this.reRender();
+                        }
+                    );
+                } else {
+                    typeof formData === 'function' && this.reRender();
                 }
-                if (typeof formData === 'function') {
-                    this.reRender();
-                }
+                
                 lifetimes?.ready && lifetimes.ready.call(this);
             },
 
             async attached() {
-                //this.subscribe();
-                if (typeof formData === 'function') {
-                    this.subscribe();
-                }
+                typeof formData === 'function' && this.subscribe();
                 const i18nInstance = getI18nInstanceWechatMp();
                 if (i18nInstance) {
                     (this as any).setState({
@@ -644,21 +630,14 @@ export function createComponent<
 
         pageLifetimes: {
             show() {
-                // this.subscribe();
-                // if (this.data.oakFullpath) {
-                //     this.reRender();
-                // }
-                if (typeof formData === 'function') {
-                    this.subscribe();
-                    this.reRender();
-                }
+                typeof formData === 'function' && this.subscribe();
+                typeof formData === 'function' && this.reRender();
                 pageLifetimes?.show && pageLifetimes.show.call(this);
             },
             hide() {
                 if (typeof formData === 'function') {
                     this.unsubscribe();
                 }
-                //this.unsubscribe();
                 pageLifetimes?.hide && pageLifetimes.hide.call(this);
             },
             resize(size) {

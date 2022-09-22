@@ -403,11 +403,9 @@ export function createPage<
 
         async componentDidMount() {
             this.registerPageScroll();
-            if (typeof formData === 'function') {
-                hiddenMethods.subscribe.call(this);
-                commonMethods.reRender.call(this);
-            }
             await onLoad.call(this, this.props);
+            typeof formData === 'function' && hiddenMethods.subscribe.call(this);
+            typeof formData === 'function' && commonMethods.reRender.call(this);
             methods?.onReady && methods.onReady.call(this);
             lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
@@ -419,9 +417,7 @@ export function createPage<
             if (this.state.oakFullpath) {
                 features.runningTree.destroyNode(this.state.oakFullpath);
             }
-            if (typeof formData === 'function') {
-                hiddenMethods.unsubscribe.call(this);
-            }
+            typeof formData === 'function' && hiddenMethods.unsubscribe.call(this);
             methods?.onUnload && methods.onUnload.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
         }
@@ -580,31 +576,31 @@ export function createComponent<
 
         async componentDidMount() {
             const { oakPath, oakParent } = this.props;
+            typeof formData === 'function' && hiddenMethods.subscribe.call(this);
             if (oakParent || oakPath) {
-                const oakFullpath = `${oakParent || ''}${oakParent && oakPath ? '.' : ''}${oakPath || ''}`;
+                const oakFullpath = `${oakParent || ''}${
+                    oakParent && oakPath ? '.' : ''
+                }${oakPath || ''}`;
                 this.setState(
                     {
                         oakFullpath,
                         oakEntity: entity as any,
                     },
                     () => {
-                        //commonMethods.reRender.call(this);
+                        typeof formData === 'function' && commonMethods.reRender.call(this);
                     }
                 );
+            } else {
+                typeof formData === 'function' && commonMethods.reRender.call(this);
             }
-            if (typeof formData === 'function') {
-                hiddenMethods.subscribe.call(this);
-                commonMethods.reRender.call(this);
-            }
+            
             lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
             pageLifetimes?.show && pageLifetimes.show.call(this);
         }
 
         async componentWillUnmount() {
-            if (typeof formData === 'function') {
-                hiddenMethods.unsubscribe.call(this);
-            }
+            typeof formData === 'function' && hiddenMethods.unsubscribe.call(this);
             
             lifetimes?.detached && lifetimes.detached.call(this);
         }
@@ -647,7 +643,7 @@ export function createComponent<
                         oakFullpath: oakFullpath2,
                         oakEntity: entity as string,
                     });
-                    //commonMethods.reRender.call(this);
+                    typeof formData === 'function' && commonMethods.reRender.call(this);
                 }
             }
         }
