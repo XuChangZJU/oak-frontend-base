@@ -196,6 +196,7 @@ export type OakPageProperties = OakComponentProperties & {
     oakParentEntity: StringConstructor;
     oakActions: StringConstructor;
     newOakActions: ArrayConstructor;
+    enablePullDownRefresh: BooleanConstructor;
 };
 
 export type OakListPageProperties = {

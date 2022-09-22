@@ -429,8 +429,9 @@ export function createPage<
         render(): React.ReactNode {
             const Render = render.call(this);
             const { oakLoading } = this.state;
+            const { enablePullDownRefresh } = this.props;
 
-            if (this.props.width === 'xs') {
+            if (enablePullDownRefresh && this.props.width === 'xs') {
                 return React.cloneElement(
                     <PullToRefresh
                         onRefresh={() => {
