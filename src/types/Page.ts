@@ -328,7 +328,9 @@ type ComponentOnPropsChangeOption = {
 }
 
 export type OakComponentOnlyMethods = {
-    onPropsChanged: (options: ComponentOnPropsChangeOption) => Promise<void>;
+    onPropsChanged: (options: ComponentOnPropsChangeOption) => void;
+    registerReRender: () => void;
+    setOakActions: () => void;
 };
 
 export type OakPageMethods = {

@@ -185,7 +185,9 @@ declare type ComponentOnPropsChangeOption = {
     parent?: string;
 };
 export declare type OakComponentOnlyMethods = {
-    onPropsChanged: (options: ComponentOnPropsChangeOption) => Promise<void>;
+    onPropsChanged: (options: ComponentOnPropsChangeOption) => void;
+    registerReRender: () => void;
+    setOakActions: () => void;
 };
 export declare type OakPageMethods = {
     refresh: (extra?: any) => Promise<void>;

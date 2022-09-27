@@ -20,6 +20,7 @@ import {
     OakComponentProperties,
     OakHiddenComponentMethods,
     OakListComponentMethods,
+    OakComponentOnlyMethods,
     OakPageMethods,
     OakPageOption,
 } from './types/Page';
@@ -446,6 +447,90 @@ export function makeCommonComponentMethods<
     };
 }
 
+export function makeComponentOnlyMethods<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
+    Cxt extends Context<ED>,
+    AD extends Record<string, Aspect<ED, Cxt>>,
+    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
+    FormedData extends WechatMiniprogram.Component.DataOption,
+    IsList extends boolean,
+    TData extends WechatMiniprogram.Component.DataOption = {},
+    TProperty extends WechatMiniprogram.Component.PropertyOption = {},
+    TMethod extends WechatMiniprogram.Component.MethodOption = {}
+>(
+    options: OakComponentOption<
+        ED,
+        T,
+        Cxt,
+        AD,
+        FD,
+        FormedData,
+        IsList,
+        TData,
+        TProperty,
+        TMethod
+    >
+): OakComponentOnlyMethods &
+    ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
+    const {
+        formData,
+        entity,
+    } = options;
+    return {
+        onPropsChanged(params) {
+            const path2 = params.hasOwnProperty('path')
+                ? params.path!
+                : this.props.oakPath;
+            const parent2 = params.hasOwnProperty('parent')
+                ? params.parent!
+                : this.props.oakParent;
+            const oakFullpath2 = `${parent2 || ''}${
+                parent2 && path2 ? '.' : ''
+            }${path2 || ''}`;
+
+            if (oakFullpath2) {
+                if (oakFullpath2 !== this.state.oakFullpath) {
+                    this.setState({
+                        oakFullpath: oakFullpath2,
+                        oakEntity: entity as string,
+                    });
+                    typeof formData === 'function' && this.reRender();
+                }
+            }
+        },
+        registerReRender() {
+            const { oakPath, oakParent } = this.props;
+            if (oakParent || oakPath) {
+                const oakFullpath = `${oakParent || ''}${
+                    oakParent && oakPath ? '.' : ''
+                }${oakPath || ''}`;
+                this.setState(
+                    {
+                        oakFullpath,
+                        oakEntity: entity as any,
+                    },
+                    () => {
+                        typeof formData === 'function' &&
+                            this.reRender.call(this);
+                    }
+                );
+            } else {
+                typeof formData === 'function' && this.reRender.call(this);
+            }
+        },
+        setOakActions() {
+            const { oakActions } = this.props;
+            this.setState({
+                newOakActions:
+                    oakActions && JSON.parse(oakActions).length > 0
+                        ? JSON.parse(oakActions)
+                        : options.actions || [],
+            });      
+        },
+    };
+}
+
 export function makeListComponentMethods<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
@@ -828,13 +913,9 @@ export function makePageMethods<
                                 oakEntity: node.getEntity(),
                                 oakFullpath: path2,
                                 oakFrom,
-                                newOakActions:
-                                    oakActions &&
-                                    JSON.parse(oakActions).length > 0
-                                        ? JSON.parse(oakActions)
-                                        : options.actions || [],
                             },
                             async () => {
+                                this.setOakActions();
                                 this.refresh();
                                 options.methods?.onLoad &&
                                     (await options.methods.onLoad.call(
