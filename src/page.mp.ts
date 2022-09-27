@@ -327,7 +327,7 @@ export function createPage<
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
     exceptionRouterDict: Record<string, ExceptionHandler>
 ) {
-    const { formData, isList } = options;
+    const { formData, isList, entity, actions } = options;
     const hiddenMethods = makeHiddenComponentMethods();
     const commonMethods = makeCommonComponentMethods(
         features,
@@ -335,6 +335,7 @@ export function createPage<
         formData
     );
     const listMethods = makeListComponentMethods(features);
+    const onlyMethods = makeComponentOnlyMethods(formData, entity, actions);
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } =
         makePageMethods(features, options);
 
@@ -381,6 +382,7 @@ export function createPage<
             ...hiddenMethods,
             ...commonMethods,
             ...listMethods,
+            ...onlyMethods,
             ...restPageMethods,
             ...(methods
                 ? omit(methods, [
@@ -506,7 +508,7 @@ export function createComponent<
         formData
     );
     const listMethods = makeListComponentMethods(features);
-    const onlyMethods = makeComponentOnlyMethods(options);
+    const onlyMethods = makeComponentOnlyMethods(formData, entity, actions);
 
     return Component({
         data: Object.assign({}, data, {

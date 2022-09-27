@@ -454,29 +454,29 @@ export function makeComponentOnlyMethods<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
     FormedData extends WechatMiniprogram.Component.DataOption,
+    Proj extends ED[T]['Selection']['data'],
     IsList extends boolean,
     TData extends WechatMiniprogram.Component.DataOption = {},
     TProperty extends WechatMiniprogram.Component.PropertyOption = {},
     TMethod extends WechatMiniprogram.Component.MethodOption = {}
 >(
-    options: OakComponentOption<
+    formData: OakPageOption<
         ED,
         T,
         Cxt,
         AD,
         FD,
+        Proj,
         FormedData,
         IsList,
         TData,
         TProperty,
         TMethod
-    >
+    >['formData'],
+    entity: T | undefined,
+    actions: ED[T]['Action'][] | undefined,
 ): OakComponentOnlyMethods &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
-    const {
-        formData,
-        entity,
-    } = options;
     return {
         onPropsChanged(params) {
             const path2 = params.hasOwnProperty('path')
@@ -525,8 +525,8 @@ export function makeComponentOnlyMethods<
                 newOakActions:
                     oakActions && JSON.parse(oakActions).length > 0
                         ? JSON.parse(oakActions)
-                        : options.actions || [],
-            });      
+                        : actions || [],
+            });
         },
     };
 }
@@ -792,7 +792,11 @@ export function makePageMethods<
         },
 
         async loadMore() {
-            if (this.state.oakEntity && this.state.oakFullpath && options.isList) {
+            if (
+                this.state.oakEntity &&
+                this.state.oakFullpath &&
+                options.isList
+            ) {
                 this.setState({
                     oakMoreLoading: true,
                 });
@@ -893,7 +897,10 @@ export function makePageMethods<
                             }
                         }
                         const oakPath2 = oakPath || options.path;
-                        assert(oakPath2, '没有正确的path信息，请检查是否配置正确');
+                        assert(
+                            oakPath2,
+                            '没有正确的path信息，请检查是否配置正确'
+                        );
                         const path2 = oakParent
                             ? `${oakParent}:${oakPath2}`
                             : oakPath2;

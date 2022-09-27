@@ -287,30 +287,31 @@ export function createPage<
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
     exceptionRouterDict: Record<string, ExceptionHandler>
 ) {
-    const { formData, isList, render } = options as OakPageOption<
-        ED,
-        T,
-        Cxt,
-        AD,
-        FD,
-        Proj,
-        FormedData,
-        IsList,
-        TData,
-        TProperty,
-        TMethod
-    > & {
-        render: () => React.ReactNode &
-            ComponentThisType<
-                ED,
-                T,
-                FormedData,
-                IsList,
-                TData,
-                TProperty,
-                TMethod
-            >;
-    };
+    const { formData, isList, render, actions, entity } =
+        options as OakPageOption<
+            ED,
+            T,
+            Cxt,
+            AD,
+            FD,
+            Proj,
+            FormedData,
+            IsList,
+            TData,
+            TProperty,
+            TMethod
+        > & {
+            render: () => React.ReactNode &
+                ComponentThisType<
+                    ED,
+                    T,
+                    FormedData,
+                    IsList,
+                    TData,
+                    TProperty,
+                    TMethod
+                >;
+        };
     const hiddenMethods = makeHiddenComponentMethods();
     const commonMethods = makeCommonComponentMethods(
         features,
@@ -318,6 +319,7 @@ export function createPage<
         formData
     );
     const listMethods = makeListComponentMethods(features);
+    const onlyMethods = makeComponentOnlyMethods(formData, entity, actions);
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } =
         makePageMethods(features, options);
 
@@ -341,6 +343,18 @@ export function createPage<
             for (const m in listMethods) {
                 Object.assign(this, {
                     [m]: listMethods[m as keyof typeof listMethods]!.bind(this),
+                });
+            }
+            for (const m in hiddenMethods) {
+                Object.assign(this, {
+                    [m]: hiddenMethods[m as keyof typeof hiddenMethods]!.bind(
+                        this
+                    ),
+                });
+            }
+            for (const m in onlyMethods) {
+                Object.assign(this, {
+                    [m]: onlyMethods[m as keyof typeof onlyMethods]!.bind(this),
                 });
             }
             for (const m in restPageMethods) {
@@ -533,6 +547,7 @@ export function createComponent<
         data,
         properties,
         observers,
+        actions,
         render,
     } = options as OakComponentOption<
         ED,
@@ -564,8 +579,7 @@ export function createComponent<
         formData
     );
     const listMethods = makeListComponentMethods(features);
-    const onlyMethods = makeComponentOnlyMethods(options);
-
+    const onlyMethods = makeComponentOnlyMethods(formData, entity, actions);
     const { fn } = translateObservers(observers);
     class OakComponentWrapper extends React.PureComponent<
         ComponentProps<TProperty>,
