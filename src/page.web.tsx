@@ -441,9 +441,7 @@ export function createPage<
 
         async componentWillUnmount() {
             this.unregisterPageScroll();
-            if (this.state.oakFullpath) {
-                features.runningTree.destroyNode(this.state.oakFullpath);
-            }
+            this.state.oakFullpath && features.runningTree.destroyNode(this.state.oakFullpath);
             typeof formData === 'function' && hiddenMethods.unsubscribe.call(this);
             methods?.onUnload && methods.onUnload.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
@@ -625,23 +623,6 @@ export function createComponent<
 
         async componentDidMount() {
             typeof formData === 'function' && hiddenMethods.subscribe.call(this);
-            // const { oakPath, oakParent } = this.props;
-            // if (oakParent || oakPath) {
-            //     const oakFullpath = `${oakParent || ''}${
-            //         oakParent && oakPath ? '.' : ''
-            //     }${oakPath || ''}`;
-            //     this.setState(
-            //         {
-            //             oakFullpath,
-            //             oakEntity: entity as any,
-            //         },
-            //         () => {
-            //             typeof formData === 'function' && commonMethods.reRender.call(this);
-            //         }
-            //     );
-            // } else {
-            //     typeof formData === 'function' && commonMethods.reRender.call(this);
-            // }
             (this as any).setOakActions();
             (this as any).registerReRender();
             lifetimes?.attached && lifetimes.attached.call(this);
@@ -651,7 +632,6 @@ export function createComponent<
 
         async componentWillUnmount() {
             typeof formData === 'function' && hiddenMethods.unsubscribe.call(this);
-            
             lifetimes?.detached && lifetimes.detached.call(this);
         }
 
@@ -677,26 +657,6 @@ export function createComponent<
             }
             fn?.call(this, prevProps, prevState);
         }
-
-        // async onPropsChanged(options: { path?: string; parent?: string }) {
-        //     const path2 = options.hasOwnProperty('path')
-        //         ? options.path!
-        //         : this.props.oakPath;
-        //     const parent2 = options.hasOwnProperty('parent')
-        //         ? options.parent!
-        //         : this.props.oakParent;
-        //     const oakFullpath2 = `${parent2 || ''}${parent2 && path2 ? '.' : ''}${path2 || ''}`;
-
-        //     if (oakFullpath2) {
-        //         if (oakFullpath2 !== this.state.oakFullpath) {
-        //             this.setState({
-        //                 oakFullpath: oakFullpath2,
-        //                 oakEntity: entity as string,
-        //             });
-        //             typeof formData === 'function' && commonMethods.reRender.call(this);
-        //         }
-        //     }
-        // }
 
         render(): React.ReactNode {
             const Render = render.call(this);

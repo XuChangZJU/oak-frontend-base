@@ -1,4 +1,4 @@
-import { Breakpoints, Width } from './context';
+import { Breakpoints } from './context';
 export declare function useWidth(props?: {
     breakpoints?: Breakpoints;
-}): Width;
+}): "xs" | "sm" | "md" | "lg" | "xl" | "xxl";

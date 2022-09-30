@@ -19,7 +19,7 @@ export type Breakpoints = {
 
 export const keys: Keys = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'];
 export const values: Values = {
-    xs: 576,
+    xs: 320,
     sm: 768,
     md: 992,
     lg: 1200,

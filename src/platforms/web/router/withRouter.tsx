@@ -30,9 +30,9 @@ function getQuery(url: string) {
 const withRouter = (Component: React.ComponentType<any>, isComponent?: boolean, path?: string) => {
     const ComponentWithRouterProp = (props: any) => {
         const navigate = useNavigate();
-        const { t, i18n } = useTranslation();
-        const width = useWidth();
         const location = useLocation();
+        const width = useWidth();
+        const { t, i18n } = useTranslation();
         const { forwardedRef, ...rest } = props;
 
         let params = {};
@@ -53,7 +53,6 @@ const withRouter = (Component: React.ComponentType<any>, isComponent?: boolean, 
             />
         );
     };
-
     return React.forwardRef((props, ref) => <ComponentWithRouterProp {...props} forwardedRef={ref} />);
 };
 

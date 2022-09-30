@@ -543,24 +543,6 @@ export function createComponent<
                     callback && callback();
                 });
             },
-            // async onPropsChanged(options: { path?: string; parent?: string }) {
-            //     const path2 = options.hasOwnProperty('path')
-            //         ? options.path!
-            //         : this.data.oakPath;
-            //     const parent2 = options.hasOwnProperty('parent')
-            //         ? options.parent!
-            //         : this.data.oakParent;
-            //     if (path2 && parent2) {
-            //         const oakFullpath2 = `${parent2}.${path2}`;
-            //         if (oakFullpath2 !== this.data.oakFullpath) {
-            //             this.setState({
-            //                 oakFullpath: oakFullpath2,
-            //                 oakEntity: entity as string,
-            //             });
-            //             typeof formData === 'function' && this.reRender();
-            //         }
-            //     }
-            // },
             ...hiddenMethods,
             ...commonMethods,
             ...listMethods,
@@ -586,21 +568,6 @@ export function createComponent<
 
             async ready() {
                 typeof formData === 'function' && this.subscribe();
-                // const { oakPath, oakParent } = this.data;
-                // if (oakParent && oakPath) {
-                //     const oakFullpath = `${oakParent}.${oakPath}`;
-                //     this.setState(
-                //         {
-                //             oakFullpath,
-                //             oakEntity: entity,
-                //         },
-                //         () => {
-                //             typeof formData === 'function' && this.reRender();
-                //         }
-                //     );
-                // } else {
-                //     typeof formData === 'function' && this.reRender();
-                // }
                 this.setOakActions();
                 this.registerReRender();
                 lifetimes?.ready && lifetimes.ready.call(this);
