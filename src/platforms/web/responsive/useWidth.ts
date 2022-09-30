@@ -21,67 +21,41 @@ export function useWidth(props?: { breakpoints?: Breakpoints }) {
         breakpointsFromContext
     ) as Breakpoints;
 
-    let width: Width = 'xs';
-    const obj = breakpoints.values as Values;
+    const responsiveValues = breakpoints.values as Values;
+    const smWidth = responsiveValues['sm'];
+    const mdWidth = responsiveValues['md'];
+    const lgWidth = responsiveValues['lg'];
+    const xlWidth = responsiveValues['xl'];
+    const xxlWidth = responsiveValues['xxl'];
 
-    const obj2 = {};
-    let isFirstZero = false;
-    Object.keys(obj)
-        .sort(
-            (ele1, ele2) =>
-                obj[ele1 as keyof typeof obj] - obj[ele2 as keyof typeof obj]
-        )
-        .forEach((key, index) => {
-            const value = obj[key as keyof typeof breakpoints.values];
-            const nextKey = Object.keys(obj)[index + 1];
-            const preKey = Object.keys(obj)[index - 1];
-            let result;
-            if (index === 0) {
-                if (value === 0) {
-                    result = useMediaQuery({
-                        minWidth: obj[key as keyof typeof obj],
-                        maxWidth: obj[nextKey as keyof typeof obj] - 0.1,
-                    });
-                    isFirstZero = true;
-                } else {
-                    result = useMediaQuery({
-                        maxWidth: obj[key as keyof typeof obj] - 0.1,
-                    });
-                }
-            } else if (index === Object.keys(obj).length - 1) {
-                if (isFirstZero) {
-                    result = useMediaQuery({
-                        minWidth: obj[key as keyof typeof obj],
-                    });
-                } else {
-                    result = useMediaQuery({
-                        minWidth: obj[preKey as keyof typeof obj],
-                    });
-                }
-            } else {
-                if (isFirstZero) {
-                    result = useMediaQuery({
-                        minWidth: obj[key as keyof typeof obj],
-                        maxWidth: obj[nextKey as keyof typeof obj] - 0.1,
-                    });
-                } else {
-                    result = useMediaQuery({
-                        minWidth: obj[preKey as keyof typeof obj],
-                        maxWidth: obj[key as keyof typeof obj] - 0.1,
-                    });
-                }
-            }
+    const xxlWidthResult = useMediaQuery({
+        minWidth: xxlWidth,
+    });
+    const xlWidthResult = useMediaQuery({
+        minWidth: xlWidth,
+    });
+    const lgWidthResult = useMediaQuery({
+        minWidth: lgWidth,
+    });
+    const mdWidthResult = useMediaQuery({
+        minWidth: mdWidth,
+    });
+    const smWidthResult = useMediaQuery({
+        minWidth: smWidth,
+    });
+    
 
-            Object.assign(obj2, {
-                [key]: result,
-            });
-        });
 
-    for (let w in obj2) {
-        if (obj2[w as keyof typeof obj2]) {
-            width = w as Width;
-            break;
-        }
+    if (xxlWidthResult) {
+        return 'xxl';
+    } else if (xlWidthResult) {
+        return 'xl';
+    } else if (lgWidthResult) {
+        return 'lg';
+    } else if (mdWidthResult) {
+        return 'md';
+    } else if (smWidthResult) {
+        return 'sm';
     }
-    return width;
+    return 'xs'
 }

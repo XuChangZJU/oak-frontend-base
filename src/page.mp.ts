@@ -17,6 +17,7 @@ import {
     ComponentThisType,
     makeHiddenComponentMethods,
     makeListComponentMethods,
+    makeComponentOnlyMethods,
     makeCommonComponentMethods as makeCommon,
     makePageMethods as makePage,
 } from './page.common';
@@ -326,7 +327,7 @@ export function createPage<
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
     exceptionRouterDict: Record<string, ExceptionHandler>
 ) {
-    const { formData, isList } = options;
+    const { formData, isList, entity, actions } = options;
     const hiddenMethods = makeHiddenComponentMethods();
     const commonMethods = makeCommonComponentMethods(
         features,
@@ -334,6 +335,7 @@ export function createPage<
         formData
     );
     const listMethods = makeListComponentMethods(features);
+    const onlyMethods = makeComponentOnlyMethods(formData, entity, actions);
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } =
         makePageMethods(features, options);
 
@@ -380,6 +382,7 @@ export function createPage<
             ...hiddenMethods,
             ...commonMethods,
             ...listMethods,
+            ...onlyMethods,
             ...restPageMethods,
             ...(methods
                 ? omit(methods, [
@@ -505,6 +508,7 @@ export function createComponent<
         formData
     );
     const listMethods = makeListComponentMethods(features);
+    const onlyMethods = makeComponentOnlyMethods(formData, entity, actions);
 
     return Component({
         data: Object.assign({}, data, {
@@ -539,27 +543,10 @@ export function createComponent<
                     callback && callback();
                 });
             },
-            async onPropsChanged(options: { path?: string; parent?: string }) {
-                const path2 = options.hasOwnProperty('path')
-                    ? options.path!
-                    : this.data.oakPath;
-                const parent2 = options.hasOwnProperty('parent')
-                    ? options.parent!
-                    : this.data.oakParent;
-                if (path2 && parent2) {
-                    const oakFullpath2 = `${parent2}.${path2}`;
-                    if (oakFullpath2 !== this.data.oakFullpath) {
-                        this.setState({
-                            oakFullpath: oakFullpath2,
-                            oakEntity: entity as string,
-                        });
-                        typeof formData === 'function' && this.reRender();
-                    }
-                }
-            },
             ...hiddenMethods,
             ...commonMethods,
             ...listMethods,
+            ...onlyMethods,
             ...methods,
         },
 
@@ -580,27 +567,13 @@ export function createComponent<
             },
 
             async ready() {
-                const { oakPath, oakParent } = this.data;
-                if (oakParent && oakPath) {
-                    const oakFullpath = `${oakParent}.${oakPath}`;
-                    this.setState(
-                        {
-                            oakFullpath,
-                            oakEntity: entity,
-                        },
-                        () => {
-                            typeof formData === 'function' && this.reRender();
-                        }
-                    );
-                } else {
-                    typeof formData === 'function' && this.reRender();
-                }
-                
+                typeof formData === 'function' && this.subscribe();
+                this.setOakActions();
+                this.registerReRender();
                 lifetimes?.ready && lifetimes.ready.call(this);
             },
 
             async attached() {
-                typeof formData === 'function' && this.subscribe();
                 const i18nInstance = getI18nInstanceWechatMp();
                 if (i18nInstance) {
                     (this as any).setState({
@@ -612,10 +585,7 @@ export function createComponent<
             },
 
             async detached() {
-                // this.unsubscribe();
-                if (typeof formData === 'function') {
-                    this.unsubscribe();
-                }
+                typeof formData === 'function' && this.unsubscribe();
                 lifetimes?.detached && lifetimes.detached.call(this);
             },
 
@@ -635,9 +605,7 @@ export function createComponent<
                 pageLifetimes?.show && pageLifetimes.show.call(this);
             },
             hide() {
-                if (typeof formData === 'function') {
-                    this.unsubscribe();
-                }
+                typeof formData === 'function' && this.unsubscribe();
                 pageLifetimes?.hide && pageLifetimes.hide.call(this);
             },
             resize(size) {

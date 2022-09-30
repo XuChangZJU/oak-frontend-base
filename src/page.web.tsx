@@ -21,6 +21,7 @@ import {
     ComponentThisType,
     makeHiddenComponentMethods,
     makeListComponentMethods,
+    makeComponentOnlyMethods,
     makeCommonComponentMethods as makeCommon,
     makePageMethods as makePage,
     ComponentData,
@@ -286,30 +287,31 @@ export function createPage<
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
     exceptionRouterDict: Record<string, ExceptionHandler>
 ) {
-    const { formData, isList, render } = options as OakPageOption<
-        ED,
-        T,
-        Cxt,
-        AD,
-        FD,
-        Proj,
-        FormedData,
-        IsList,
-        TData,
-        TProperty,
-        TMethod
-    > & {
-        render: () => React.ReactNode &
-            ComponentThisType<
-                ED,
-                T,
-                FormedData,
-                IsList,
-                TData,
-                TProperty,
-                TMethod
-            >;
-    };
+    const { formData, isList, render, actions, entity } =
+        options as OakPageOption<
+            ED,
+            T,
+            Cxt,
+            AD,
+            FD,
+            Proj,
+            FormedData,
+            IsList,
+            TData,
+            TProperty,
+            TMethod
+        > & {
+            render: () => React.ReactNode &
+                ComponentThisType<
+                    ED,
+                    T,
+                    FormedData,
+                    IsList,
+                    TData,
+                    TProperty,
+                    TMethod
+                >;
+        };
     const hiddenMethods = makeHiddenComponentMethods();
     const commonMethods = makeCommonComponentMethods(
         features,
@@ -317,6 +319,7 @@ export function createPage<
         formData
     );
     const listMethods = makeListComponentMethods(features);
+    const onlyMethods = makeComponentOnlyMethods(formData, entity, actions);
     const { onLoad, onPullDownRefresh, onReachBottom, ...restPageMethods } =
         makePageMethods(features, options);
 
@@ -340,6 +343,18 @@ export function createPage<
             for (const m in listMethods) {
                 Object.assign(this, {
                     [m]: listMethods[m as keyof typeof listMethods]!.bind(this),
+                });
+            }
+            for (const m in hiddenMethods) {
+                Object.assign(this, {
+                    [m]: hiddenMethods[m as keyof typeof hiddenMethods]!.bind(
+                        this
+                    ),
+                });
+            }
+            for (const m in onlyMethods) {
+                Object.assign(this, {
+                    [m]: onlyMethods[m as keyof typeof onlyMethods]!.bind(this),
                 });
             }
             for (const m in restPageMethods) {
@@ -372,11 +387,23 @@ export function createPage<
         };
 
         registerPageScroll() {
-            window.addEventListener('scroll', this.scrollEvent);
+            const { useBodyScroll = false } = this.props;
+            if (useBodyScroll) {
+                window.addEventListener('scroll', this.scrollEvent);
+            }
+            else {
+                (this as any).lv && (this as any).lv.addEventListener('scroll', this.scrollEvent);
+            }
         }
 
         unregisterPageScroll() {
-            window.removeEventListener('scroll', this.scrollEvent);
+            const { useBodyScroll = false } = this.props;
+            if (useBodyScroll) {
+                window.removeEventListener('scroll', this.scrollEvent);
+            }
+            else {
+                (this as any).lv && (this as any).lv.removeEventListener('scroll', this.scrollEvent);
+            }
         }
 
         checkReachBottom() {
@@ -414,9 +441,7 @@ export function createPage<
 
         async componentWillUnmount() {
             this.unregisterPageScroll();
-            if (this.state.oakFullpath) {
-                features.runningTree.destroyNode(this.state.oakFullpath);
-            }
+            this.state.oakFullpath && features.runningTree.destroyNode(this.state.oakFullpath);
             typeof formData === 'function' && hiddenMethods.unsubscribe.call(this);
             methods?.onUnload && methods.onUnload.call(this);
             lifetimes?.detached && lifetimes.detached.call(this);
@@ -425,15 +450,14 @@ export function createPage<
         render(): React.ReactNode {
             const Render = render.call(this);
             const { oakLoading } = this.state;
-            const { enablePullDownRefresh } = this.props;
+            const { enablePullDownRefresh, useBodyScroll = false } = this.props;
 
             if (enablePullDownRefresh && this.props.width === 'xs') {
-                return React.cloneElement(
+                const child = React.cloneElement(
                     <PullToRefresh
                         onRefresh={() => {
                             if (methods?.onPullDownRefresh) {
                                 methods.onPullDownRefresh.call(this);
-                                return;
                             } else {
                                 onPullDownRefresh.call(this);
                             }
@@ -459,8 +483,20 @@ export function createPage<
                             ),
                         }}
                     />,
-                    {},
+                    {
+                        getScrollContainer: () => useBodyScroll ? document.body : (this as any).lv,
+                    },
                     Render
+                );
+                return useBodyScroll ? (
+                    child
+                ) : (
+                    <div
+                        ref={(el) => ((this as any).lv = el)}
+                        style={{ height: '100%', overflow: 'auto' }}
+                    >
+                        {child}
+                    </div>
                 );
             }
             return Render;
@@ -509,6 +545,7 @@ export function createComponent<
         data,
         properties,
         observers,
+        actions,
         render,
     } = options as OakComponentOption<
         ED,
@@ -540,7 +577,7 @@ export function createComponent<
         formData
     );
     const listMethods = makeListComponentMethods(features);
-
+    const onlyMethods = makeComponentOnlyMethods(formData, entity, actions);
     const { fn } = translateObservers(observers);
     class OakComponentWrapper extends React.PureComponent<
         ComponentProps<TProperty>,
@@ -561,6 +598,16 @@ export function createComponent<
                     [m]: listMethods[m as keyof typeof listMethods]!.bind(this),
                 });
             }
+            for (const m in hiddenMethods) {
+                Object.assign(this, {
+                    [m]: hiddenMethods[m as keyof typeof hiddenMethods]!.bind(this),
+                });
+            }
+            for (const m in onlyMethods) {
+                Object.assign(this, {
+                    [m]: onlyMethods[m as keyof typeof onlyMethods]!.bind(this),
+                });
+            }
             if (methods) {
                 for (const m in methods) {
                     Object.assign(this, {
@@ -575,25 +622,9 @@ export function createComponent<
         isReachBottom = false;
 
         async componentDidMount() {
-            const { oakPath, oakParent } = this.props;
             typeof formData === 'function' && hiddenMethods.subscribe.call(this);
-            if (oakParent || oakPath) {
-                const oakFullpath = `${oakParent || ''}${
-                    oakParent && oakPath ? '.' : ''
-                }${oakPath || ''}`;
-                this.setState(
-                    {
-                        oakFullpath,
-                        oakEntity: entity as any,
-                    },
-                    () => {
-                        typeof formData === 'function' && commonMethods.reRender.call(this);
-                    }
-                );
-            } else {
-                typeof formData === 'function' && commonMethods.reRender.call(this);
-            }
-            
+            (this as any).setOakActions();
+            (this as any).registerReRender();
             lifetimes?.attached && lifetimes.attached.call(this);
             lifetimes?.ready && lifetimes.ready.call(this);
             pageLifetimes?.show && pageLifetimes.show.call(this);
@@ -601,7 +632,6 @@ export function createComponent<
 
         async componentWillUnmount() {
             typeof formData === 'function' && hiddenMethods.unsubscribe.call(this);
-            
             lifetimes?.detached && lifetimes.detached.call(this);
         }
 
@@ -613,7 +643,7 @@ export function createComponent<
                 this.props.oakPath &&
                 prevProps.oakPath !== this.props.oakPath
             ) {
-                this.onPropsChanged({
+                (this as any).onPropsChanged({
                     path: this.props.oakPath,
                 });
             }
@@ -621,31 +651,11 @@ export function createComponent<
                 this.props.oakParent &&
                 prevProps.oakParent !== this.props.oakParent
             ) {
-                this.onPropsChanged({
+                (this as any).onPropsChanged({
                     parent: this.props.oakParent,
                 });
             }
             fn?.call(this, prevProps, prevState);
-        }
-
-        async onPropsChanged(options: { path?: string; parent?: string }) {
-            const path2 = options.hasOwnProperty('path')
-                ? options.path!
-                : this.props.oakPath;
-            const parent2 = options.hasOwnProperty('parent')
-                ? options.parent!
-                : this.props.oakParent;
-            const oakFullpath2 = `${parent2 || ''}${parent2 && path2 ? '.' : ''}${path2 || ''}`;
-
-            if (oakFullpath2) {
-                if (oakFullpath2 !== this.state.oakFullpath) {
-                    this.setState({
-                        oakFullpath: oakFullpath2,
-                        oakEntity: entity as string,
-                    });
-                    typeof formData === 'function' && commonMethods.reRender.call(this);
-                }
-            }
         }
 
         render(): React.ReactNode {
