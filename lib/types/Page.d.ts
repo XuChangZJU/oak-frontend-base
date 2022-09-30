@@ -176,7 +176,7 @@ export declare type OakListComponentMethods<ED extends EntityDict & BaseEntityDi
     addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => Promise<void>;
     removeNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => Promise<void>;
     removeNamedSorterByName: (name: string, refresh?: boolean) => Promise<void>;
-    getPagination: () => void;
+    getPagination: () => Pagination | undefined;
     setPageSize: (pageSize: number) => void;
     setCurrentPage: (current: number) => void;
 };

@@ -317,7 +317,7 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
         refresh?: boolean
     ) => Promise<void>;
     removeNamedSorterByName: (name: string, refresh?: boolean) => Promise<void>;
-    getPagination: () => void;
+    getPagination: () => Pagination | undefined;
     setPageSize: (pageSize: number) => void;
     setCurrentPage: (current: number) => void;
 };
