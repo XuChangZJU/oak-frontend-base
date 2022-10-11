@@ -387,22 +387,16 @@ export function createPage<
         };
 
         registerPageScroll() {
-            const { useBodyScroll = false } = this.props;
-            if (useBodyScroll) {
+            const { routeMatch = false } = this.props;
+            if (routeMatch) {
                 window.addEventListener('scroll', this.scrollEvent);
-            }
-            else {
-                (this as any).lv && (this as any).lv.addEventListener('scroll', this.scrollEvent);
             }
         }
 
         unregisterPageScroll() {
-            const { useBodyScroll = false } = this.props;
-            if (useBodyScroll) {
+            const { routeMatch = false } = this.props;
+            if (routeMatch) {
                 window.removeEventListener('scroll', this.scrollEvent);
-            }
-            else {
-                (this as any).lv && (this as any).lv.removeEventListener('scroll', this.scrollEvent);
             }
         }
 
@@ -450,10 +444,10 @@ export function createPage<
         render(): React.ReactNode {
             const Render = render.call(this);
             const { oakLoading } = this.state;
-            const { enablePullDownRefresh, useBodyScroll = false } = this.props;
+            const { enablePullDownRefresh, routeMatch = false } = this.props;
 
-            if (enablePullDownRefresh && this.props.width === 'xs') {
-                const child = React.cloneElement(
+            if (enablePullDownRefresh && routeMatch && this.props.width === 'xs') {
+                const Child = React.cloneElement(
                     <PullToRefresh
                         onRefresh={() => {
                             if (methods?.onPullDownRefresh) {
@@ -484,20 +478,11 @@ export function createPage<
                         }}
                     />,
                     {
-                        getScrollContainer: () => useBodyScroll ? document.body : (this as any).lv,
+                        getScrollContainer: () => document.body,
                     },
                     Render
                 );
-                return useBodyScroll ? (
-                    child
-                ) : (
-                    <div
-                        ref={(el) => ((this as any).lv = el)}
-                        style={{ height: '100%', overflow: 'auto' }}
-                    >
-                        {child}
-                    </div>
-                );
+                return Child;
             }
             return Render;
         }

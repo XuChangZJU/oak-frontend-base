@@ -36,8 +36,10 @@ const withRouter = (Component: React.ComponentType<any>, isComponent?: boolean, 
         const { forwardedRef, ...rest } = props;
 
         let params = {};
+        let routeMatch = false;
         if (!isComponent && location.pathname.includes(path)) {
             params = getParams(location as Location);
+            routeMatch = true;
         }
 
         return (
@@ -50,6 +52,7 @@ const withRouter = (Component: React.ComponentType<any>, isComponent?: boolean, 
                 navigate={navigate}
                 location={location}
                 ref={forwardedRef}
+                routeMatch={routeMatch}
             />
         );
     };
