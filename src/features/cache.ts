@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper, SelectionResult } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper, SelectionResult, CheckerType } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { reinforceSelection } from 'oak-domain/lib/store/selection';
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -112,18 +112,19 @@ export class Cache<
      * @param operation
      * @returns
      */
-    async testOperation<T extends keyof ED>(
+    async tryRedoOperations<T extends keyof ED>(
         entity: T,
-        operation: ED[T]['Operation']
+        operations: ED[T]['Operation'][]
     ) {
         const context = this.contextBuilder!();
         await context.begin();
         try {
-            await this.cacheStore!.operate(entity, operation, context, {
-                dontCollect: true,
-                dontCreateOper: true,
-            });
-
+            for (const operation of operations) {
+                await this.cacheStore!.operate(entity, operation, context, {
+                    dontCollect: true,
+                    dontCreateOper: true,
+                });
+            }
             await context.rollback();
         } catch (err) {
             await context.rollback();
@@ -132,13 +133,33 @@ export class Cache<
         return true;
     }
 
+    async checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) {
+        const context = this.contextBuilder!();
+        await context.begin();
+        const operation = {
+            action,
+            filter,
+            data: {},
+        } as ED[T]['Update'];
+        try {
+            await this.cacheStore!.check(entity, operation, context, checkerTypes);
+            await context.rollback();
+            return true;
+        }
+        catch(err) {
+            await context.rollback();
+            return false;
+        }
+
+    }
+
     /**
      * 尝试在cache中重做一些动作，然后选择重做后的数据（为了实现modi）
      * @param entity
      * @param selection
      * @param opers
      */
-    async tryRedoOperations<T extends keyof ED, S extends ED[T]['Selection']>(
+    async tryRedoOperationsThenSelect<T extends keyof ED, S extends ED[T]['Selection']>(
         entity: T,
         selection: S,
         opers: Array<{

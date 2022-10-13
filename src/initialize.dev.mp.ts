@@ -71,42 +71,6 @@ export function initialize<
     const i18n = getI18next(i18nOptions);
 
     Object.assign(global, {
-        OakPage: <
-            T extends keyof ED,
-            Proj extends ED[T]['Selection']['data'],
-            FormedData extends WechatMiniprogram.Component.DataOption,
-            IsList extends boolean,
-            TData extends WechatMiniprogram.Component.DataOption = {},
-            TProperty extends WechatMiniprogram.Component.PropertyOption = {},
-            TMethod extends WechatMiniprogram.Component.MethodOption = {}
-        >(
-            options: OakPageOption<
-                ED,
-                T,
-                Cxt,
-                AD,
-                FD,
-                Proj,
-                FormedData,
-                IsList,
-                TData,
-                TProperty,
-                TMethod
-            >
-        ) =>
-            createPage<
-                ED,
-                T,
-                Cxt,
-                AD,
-                FD,
-                Proj,
-                FormedData,
-                IsList,
-                TData,
-                TProperty,
-                TMethod
-            >(options, features, exceptionRouterDict),
         OakComponent: <
             T extends keyof ED,
             FormedData extends WechatMiniprogram.Component.DataOption,
