@@ -208,7 +208,8 @@ export declare type OakPageData<ED extends EntityDict & BaseEntityDict, T extend
     oakDirty: boolean;
     oakLegalActions: ED[T]['Action'][];
     oakLoading: boolean;
-    oakLoadingMore: boolean;
+    oakPullDownRefreshLoading: boolean;
+    oakMoreLoading: boolean;
     oakEntity: string;
 };
 export declare type OakComponentData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {} & OakPageData<ED, T>;

@@ -365,7 +365,8 @@ export type OakPageData<ED extends EntityDict & BaseEntityDict, T extends keyof 
     oakDirty: boolean;
     oakLegalActions: ED[T]['Action'][];
     oakLoading: boolean;
-    oakLoadingMore: boolean;
+    oakPullDownRefreshLoading: boolean;
+    oakMoreLoading: boolean;
     oakEntity: string;
 };
 

@@ -443,7 +443,7 @@ export function createPage<
 
         render(): React.ReactNode {
             const Render = render.call(this);
-            const { oakLoading } = this.state;
+            const { oakPullDownRefreshLoading } = this.state;
             const { enablePullDownRefresh, routeMatch = false } = this.props;
 
             if (enablePullDownRefresh && routeMatch && this.props.width === 'xs') {
@@ -456,7 +456,7 @@ export function createPage<
                                 onPullDownRefresh.call(this);
                             }
                         }}
-                        refreshing={oakLoading}
+                        refreshing={oakPullDownRefreshLoading}
                         distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}
                         indicator={{
                             activate: commonMethods.t.call(

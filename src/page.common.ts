@@ -764,20 +764,20 @@ export function makePageMethods<
 ): OakPageMethods &
     ComponentThisType<ED, T, FormedData, IsList, TData, TProperty, TMethod> {
     return {
-        async refresh() {
+        async refresh(pullDownRefresh: boolean) {
+            // pullDownRefresh 如果是下拉刷新的话， 传入一个标识， 直接使用oakLoading页面会出现闪动
             if (this.state.oakEntity && this.state.oakFullpath) {
                 this.setState({
                     oakLoading: true,
+                    oakPullDownRefreshLoading: pullDownRefresh,
                 });
+               
                 try {
                     await features.runningTree.refresh(this.state.oakFullpath);
                     this.setState({
                         oakLoading: false,
+                        oakPullDownRefreshLoading: false,
                     });
-                    // this.setMessage({
-                    //     type: 'success',
-                    //     content: '访问成功',
-                    // })
                 } catch (err) {
                     this.setMessage({
                         type: 'error',
@@ -788,7 +788,7 @@ export function makePageMethods<
         },
 
         async onPullDownRefresh() {
-            await this.refresh();
+            await this.refresh(true);
         },
 
         async loadMore() {
