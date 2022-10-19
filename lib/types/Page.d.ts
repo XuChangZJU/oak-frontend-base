@@ -191,6 +191,7 @@ export declare type OakComponentData<ED extends EntityDict & BaseEntityDict, T e
     oakDirty: boolean;
     oakLoading: boolean;
     oakLoadingMore: boolean;
+    oakPullDownRefreshLoading: boolean;
     oakEntity: T;
     oakIsReady: boolean;
     oakFullpath: string;

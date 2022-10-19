@@ -296,7 +296,10 @@ export type OakComponentOnlyMethods = {
     setOakActions: () => void;
 };
 
-export type OakComponentData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
+export type OakComponentData<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED
+> = {
     oakExecuting: boolean;
     oakAllowExecuting: boolean | OakUserException;
     oakFocused: {
@@ -306,6 +309,7 @@ export type OakComponentData<ED extends EntityDict & BaseEntityDict, T extends k
     oakDirty: boolean;
     oakLoading: boolean;
     oakLoadingMore: boolean;
+    oakPullDownRefreshLoading: boolean;
     oakEntity: T;
     oakIsReady: boolean;
     oakFullpath: string;

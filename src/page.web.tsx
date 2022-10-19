@@ -546,8 +546,9 @@ export function createComponent<
             this.state = Object.assign({}, data, {
                 oakLoading: false,
                 oakLoadingMore: false,
+                oakPullDownRefreshLoading: false,
                 oakIsReady: false,
-                oakExeucting: false,
+                oakExecuting: false,
                 oakDirty: false,
             }) as any;
 
@@ -556,7 +557,7 @@ export function createComponent<
 
         // todo 这里还需要根据path和location来判断自己是不是page
         private iAmThePage() {
-            return !!path;
+            return this.props.routeMatch;
         }
 
 
@@ -569,23 +570,11 @@ export function createComponent<
         };
 
         private registerPageScroll() {
-            const { useBodyScroll = false } = this.props;
-            if (useBodyScroll) {
-                window.addEventListener('scroll', this.scrollEvent);
-            }
-            else {
-                (this as any).lv && (this as any).lv.addEventListener('scroll', this.scrollEvent);
-            }
+            window.addEventListener('scroll', this.scrollEvent);
         }
 
         private unregisterPageScroll() {
-            const { useBodyScroll = false } = this.props;
-            if (useBodyScroll) {
-                window.removeEventListener('scroll', this.scrollEvent);
-            }
-            else {
-                (this as any).lv && (this as any).lv.removeEventListener('scroll', this.scrollEvent);
-            }
+            window.removeEventListener('scroll', this.scrollEvent);
         }
 
         private checkReachBottom() {
@@ -644,16 +633,18 @@ export function createComponent<
 
         render(): React.ReactNode {
             const Render = render.call(this);
-            const { oakLoading } = this.state;
-            const { useBodyScroll = false } = this.props;
+            const { oakPullDownRefreshLoading } = this.state;
+            const { enablePullDownRefresh = false } = this.props;
 
-            if (this.supportPullDownRefresh()) {
-                const child = React.cloneElement(
+            if (this.supportPullDownRefresh() && enablePullDownRefresh) {
+                const Child = React.cloneElement(
                     <PullToRefresh
-                        onRefresh={() => {
-                            this.refresh();
+                        onRefresh={async () => {
+                            (this as any).pullDownRefresh = true;
+                            await this.refresh();
+                            (this as any).pullDownRefresh = true;
                         }}
-                        refreshing={oakLoading}
+                        refreshing={oakPullDownRefreshLoading}
                         distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}
                         indicator={{
                             activate: this.t('common:ptrActivate'),
@@ -663,20 +654,11 @@ export function createComponent<
                         }}
                     />,
                     {
-                        getScrollContainer: () => useBodyScroll ? document.body : (this as any).lv,
+                        getScrollContainer: () => document.body,
                     },
                     Render
                 );
-                return useBodyScroll ? (
-                    child
-                ) : (
-                    <div
-                        ref={(el) => ((this as any).lv = el)}
-                        style={{ height: '100%', overflow: 'auto' }}
-                    >
-                        {child}
-                    </div>
-                );
+                return Child;
             }
             return Render;
         }
