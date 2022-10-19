@@ -1,6 +1,6 @@
 /// <reference types="wechat-miniprogram" />
 /// <reference types="react" />
-import { Aspect, Context, EntityDict, DeduceSorterItem, SelectRowShape, CheckerType } from "oak-domain/lib/types";
+import { Aspect, Context, EntityDict, DeduceSorterItem, SelectRowShape, CheckerType, OakUserException } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
@@ -183,7 +183,11 @@ export declare type OakComponentOnlyMethods = {
 };
 export declare type OakComponentData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakExecuting: boolean;
-    oakFocused: object;
+    oakAllowExecuting: boolean | OakUserException;
+    oakFocused: {
+        attr: string;
+        message: string;
+    };
     oakDirty: boolean;
     oakLoading: boolean;
     oakLoadingMore: boolean;

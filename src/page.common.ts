@@ -4,6 +4,7 @@ import {
     EntityDict,
     OakException,
     OakInputIllegalException,
+    OakUserException,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { subscribe as FeactureSubscribe } from './types/Feature';
@@ -168,6 +169,22 @@ export async function reRender<
         if (extra) {
             Object.assign(data, extra);
         }
+        let oakAllowExecuting: boolean | OakUserException = false;
+        try {
+            oakAllowExecuting = await this.features.runningTree.tryExecute(this.state.oakFullpath);
+        }
+        catch (err) {
+            if (err instanceof OakUserException) {
+                oakAllowExecuting = err;
+            }
+            else {
+                oakAllowExecuting = false;
+                throw err;
+            }
+        }
+        Object.assign(data, {
+            oakAllowExecuting,
+        });
         this.setState(data);
     } else {
         const data: Record<string, any> = formData
@@ -227,47 +244,41 @@ export async function execute<
         return;
     }
     this.setState({
-        oakFocused: {},
+        oakFocused: undefined,
+        oakExecuting: true,
     });
     try {
         const fullpath = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
         const result = await this.features.runningTree.execute(fullpath);
+        this.setState({
+            oakExecuting: false,
+        })
         this.setMessage({
             type: 'success',
             content: '操作成功',
         });
         return result;
     } catch (err) {
-        if (err instanceof OakException) {
+        if (err instanceof OakUserException) {
             if (err instanceof OakInputIllegalException) {
-                const attr = err.getAttributes()[0];
+                const attrs = err.getAttributes();
+                const message = err.message;
                 this.setState({
                     oakFocused: {
-                        [attr]: true,
+                        attr: attrs[0],
+                        message,
                     },
+                    oakExecuting: false,
                 });
-                this.setMessage({
-                    type: 'warning',
-                    content: err.message,
-                });
-            } else {
-                const { name } = err.constructor;
-                if (legalExceptions && legalExceptions.includes(name)) {
-                    // 如果调用时就知道有异常，直接抛出
-                    this.setState({
-                        oakExecuting: false,
-                    });
-                    throw err;
-                }
+                return;
             }
-        } else {
-            this.setMessage({
-                type: 'warning',
-                content: (err as Error).message,
-            });
         }
+        this.setMessage({
+            type: 'error',
+            content: (err as Error).message,
+        });
         throw err;
     }
 }
@@ -315,14 +326,11 @@ export async function setUpdateData<
         } as ED[T]['Update']);
     }
     else {
-        const id = await generateNewId(); 
         await this.addOperation({
             action: 'create',
             data: {
-                id,
                 [attr]: data,
             }
         } as ED[T]['CreateSingle']);
-        this.setProps({ oakId: id });
     }
 }

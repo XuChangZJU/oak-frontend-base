@@ -150,7 +150,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     addNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
     removeNamedSorterByName<T extends keyof ED>(path: string, name: string, refresh?: boolean): Promise<void>;
-    tryExecute(path: string): Promise<void>;
+    tryExecute(path: string): Promise<boolean>;
     execute(path: string): Promise<void>;
     clean(path: string): void;
     getRoot(): Record<string, SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>>;

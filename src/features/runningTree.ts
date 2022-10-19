@@ -245,7 +245,7 @@ function mergeOperation<ED extends EntityDict & BaseEntityDict, T extends keyof 
                 default: {
                     // update/remove只合并filter完全相同的项
                     const { filter: filter2, data: data2 } = oper2;
-                    const { filter} = oper as ED[T]['Remove'];
+                    const { filter } = oper as ED[T]['Remove'];
                     assert(filter && filter2, '更新动作目前应该都有谓词条件');
                     if (same(entity, schema, filter, filter2)) {
                         mergeOperationData(entity, schema, data, data2);
@@ -340,7 +340,7 @@ class ListNode<
             if (child === child2) {
                 return `${idx}`;
             }
-            idx ++;
+            idx++;
         }
 
         assert(false);
@@ -702,7 +702,7 @@ class ListNode<
                 return filter;
             })
         );
-        
+
         if (withParent) {
             const filterOfParent = (this.parent as SingleNode<ED, keyof ED, Cxt, AD>)?.getOtmFilter<T>(this);
             if (filterOfParent) {
@@ -719,7 +719,7 @@ class ListNode<
 
     async refresh(pageNumber?: number, getCount?: true, append?: boolean) {
         const { entity, pagination } = this;
-        const { currentPage, pageSize } = pagination;        
+        const { currentPage, pageSize } = pagination;
         if (append) {
             this.loadingMore = true;
         }
@@ -734,8 +734,8 @@ class ListNode<
                 {
                     data: projection,
                     filter: filters.length > 0
-                            ? combineFilters(filters)
-                            : undefined,
+                        ? combineFilters(filters)
+                        : undefined,
                     sorter,
                     indexFrom: currentPage3 * pageSize,
                     count: pageSize,
@@ -934,6 +934,11 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
         }>;
+        const [ operation ] = this.operations;
+        let id = this.id;
+        if (operation?.oper.action === 'create') {
+            id = (operation.oper.data as ED[T]['CreateSingle']['data']).id;
+        }
         operations.push(...this.operations.map(
             ele => ({
                 entity: this.entity,
@@ -943,7 +948,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         const { result } = await this.cache.tryRedoOperationsThenSelect(this.entity, {
             data: projection,
             filter: {
-                id: this.id,
+                id,
             } as any,
         }, operations);
         return result[0];
@@ -965,11 +970,21 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             beforeExecute,
             afterExecute,
         };
-        const merged = mergeOperation(this.entity, this.schema, operation, this.operations);
-        if (!merged) {
-            assert(this.operations.length === 0);   // singleNode上的merge应该不可能失败（所有的操作都是基于id的）
+        if (this.operations.length === 0) {
+            // 处理一下create
+            if (oper.action === 'create') {
+                Object.assign(oper.data, {
+                    id: await generateNewId(),
+                });
+            }
             Object.assign(oper, { id: await generateNewId() });
             this.operations.push(operation as Operation<ED, T>);
+        }
+        else {
+            // singleNode上应当有且只有一个operation，无论什么情况
+            const [current] = this.operations;
+            Object.assign(current.oper.data, oper.data);
+            mergeOperationTrigger(operation, current);
         }
         this.setDirty();
     }
@@ -1474,12 +1489,13 @@ export class RunningTree<
         const node = this.findNode(path);
         const operations = await node.composeOperations();
         if (operations) {
-            await this.cache.tryRedoOperations(node.getEntity(), operations.map(ele => ele.oper));
+            return await this.cache.tryRedoOperations(node.getEntity(), operations.map(ele => ele.oper));
         }
+        return false;
     }
 
     @Action
-    async execute(path: string) {        
+    async execute(path: string) {
         const node = this.findNode(path);
         if (!node.isDirty()) {
             return;
@@ -1488,7 +1504,7 @@ export class RunningTree<
         node.setExecuting(true);
         try {
             const operations = await node.composeOperations() as Operation<ED, keyof ED>[];
-            
+
             for (const operation of operations) {
                 operation.beforeExecute && await operation.beforeExecute();
             }

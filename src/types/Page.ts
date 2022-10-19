@@ -1,4 +1,4 @@
-import { Aspect, Context, EntityDict, DeduceSorterItem, DeduceOperation, SelectRowShape, CheckerType } from "oak-domain/lib/types";
+import { Aspect, Context, EntityDict, DeduceSorterItem, DeduceOperation, SelectRowShape, CheckerType, OakException, OakUserException } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
@@ -298,7 +298,11 @@ export type OakComponentOnlyMethods = {
 
 export type OakComponentData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakExecuting: boolean;
-    oakFocused: object;
+    oakAllowExecuting: boolean | OakUserException;
+    oakFocused: {
+        attr: string;
+        message: string;
+    };
     oakDirty: boolean;
     oakLoading: boolean;
     oakLoadingMore: boolean;
