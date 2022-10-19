@@ -72,7 +72,6 @@
   ],
   "include": [
     "src/**/*.ts",
-    "src/page.web.tsx",
   ],
   "exclude": [
     "node_modules",

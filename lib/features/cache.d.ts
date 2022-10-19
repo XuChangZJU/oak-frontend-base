@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper, SelectionResult } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper, SelectionResult, CheckerType } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -22,19 +22,20 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
      * @param operation
      * @returns
      */
-    testOperation<T extends keyof ED>(entity: T, operation: ED[T]['Operation']): Promise<boolean>;
+    tryRedoOperations<T extends keyof ED>(entity: T, operations: ED[T]['Operation'][]): Promise<boolean>;
+    checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]): Promise<boolean>;
     /**
      * 尝试在cache中重做一些动作，然后选择重做后的数据（为了实现modi）
      * @param entity
      * @param selection
      * @param opers
      */
-    tryRedoOperations<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, opers: Array<{
+    tryRedoOperationsThenSelect<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, opers: Array<{
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
     }>): Promise<SelectionResult<ED[T]["Schema"], S["data"]>>;
     get<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, params?: SelectOption): Promise<import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], S["data"]>[]>;
-    judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | string[] | 2;
+    judgeRelation(entity: keyof ED, attr: string): string | 0 | 2 | 1 | string[];
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
     getCachedData(): { [T in keyof ED]?: ED[T]["OpSchema"][] | undefined; };

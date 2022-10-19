@@ -1,5 +1,5 @@
 import { assert } from 'oak-domain/lib/utils/assert';
-import { cloneDeep, pull, set, unset } from "oak-domain/lib/utils/lodash";
+import { cloneDeep, pull, set, unset, merge } from "oak-domain/lib/utils/lodash";
 import { combineFilters, contains, repel, same } from "oak-domain/lib/store/filter";
 import { createOperationsFromModies } from 'oak-domain/lib/store/modi';
 import { judgeRelation } from "oak-domain/lib/store/relation";
@@ -31,6 +31,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
     protected loadingMore: boolean;
     protected executing: boolean;
     protected operations: Operation<ED, T>[];
+    protected modiIds: string[];        //  对象所关联的modi的id
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
         projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
@@ -45,12 +46,35 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
         this.loadingMore = false;
         this.executing = false;
         this.operations = [];
+        this.modiIds = [];
     }
 
     getEntity() {
         return this.entity;
     }
 
+    protected abstract getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string;
+
+    /**
+     * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
+     */
+    getModiIds(child: Node<ED, keyof ED, Cxt, AD>): string[] {
+        const childPath = this.getChildPath(child);
+        if (childPath.includes(':')) {
+            const { modiIds } = this;
+            // 如果是需要modi的路径，在这里应该就可以返回了，目前应该不存在modi嵌套modi
+            return modiIds;
+        }
+        const { toModi } = this.schema[this.entity];
+        if (toModi) {
+            // 如果这就是一个toModi的对象，则不用再向上查找了
+            return [];
+        }
+        if (this.parent) {
+            return this.parent.getModiIds(this);
+        }
+        return [];
+    }
 
     setDirty() {
         if (!this.dirty) {
@@ -85,8 +109,8 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
         return this.parent;
     }
 
-    async getProjection() {
-        return typeof this.projection === 'function' ? await this.projection() : this.projection;
+    protected async getProjection() {
+        return typeof this.projection === 'function' ? await this.projection() : cloneDeep(this.projection);
     }
 
     protected judgeRelation(attr: string) {
@@ -310,6 +334,18 @@ class ListNode<
 
     private syncHandler: (records: OpRecord<ED>[]) => Promise<void>;
 
+    protected getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string {
+        let idx = 0;
+        for (const child2 of this.children) {
+            if (child === child2) {
+                return `${idx}`;
+            }
+            idx ++;
+        }
+
+        assert(false);
+    }
+
     async onCacheSync(records: OpRecord<ED>[]): Promise<void> {
         // 只需要处理insert
         if (this.loading) {
@@ -342,7 +378,7 @@ class ListNode<
         if (createdIds.length > 0) {
             const currentIds = this.ids;
 
-            const { sorter, filters } = await this.constructSelection();
+            const { sorter, filters } = await this.constructSelection(true);
             filters.push({
                 id: {
                     $in: currentIds.concat(createdIds),
@@ -560,6 +596,31 @@ class ListNode<
                 }
             }
         }
+
+        // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
+        const modiIds = this.parent ? this.parent.getModiIds(this) : [];
+        const operations = modiIds.map(
+            ele => ({
+                entity: 'modi',
+                operation: {
+                    action: 'apply',
+                    data: {},
+                    filter: {
+                        id: ele,
+                    },
+                }
+            })
+        ) as Array<{
+            entity: keyof ED;
+            operation: ED[keyof ED]['Operation'];
+        }>;
+        operations.push(...this.operations.map(
+            ele => ({
+                entity: this.entity,
+                operation: ele.oper,
+            })
+        ));
+
         const { result } = await this.cache.tryRedoOperationsThenSelect(this.entity, {
             data: projection,
             filter: {
@@ -567,12 +628,7 @@ class ListNode<
                     $in: ids,
                 }
             } as any,
-        }, this.operations.map(
-            ele => ({
-                entity: this.entity,
-                operation: ele.oper,
-            })
-        ));
+        }, operations);
         return result;
     }
 
@@ -612,10 +668,19 @@ class ListNode<
         return operations;
     }
 
-    private async constructSelection() {
+    async getProjection(): Promise<ED[T]['Selection']['data']> {
+        const projection = await super.getProjection();
+        if (this.children.length > 0) {
+            const subProjection = await this.children[0].getProjection();
+            return merge(projection, subProjection);
+        }
+        return projection;
+    }
+
+    async constructSelection(withParent?: true) {
         const { filters, sorters } = this;
-        const proj = await this.getProjection();
-        assert(proj, "取数据时找不到projection信息");
+        const data = await this.getProjection();
+        assert(data, "取数据时找不到projection信息");
         const sorterArr = (
             await Promise.all(
                 sorters.map(async (ele) => {
@@ -638,11 +703,15 @@ class ListNode<
             })
         );
         
-        const filterOfParent = (this.parent as SingleNode<ED, keyof ED, Cxt, AD>)?.getOtmFilter<T>(this);
-        filterArr.push(filterOfParent as any);
+        if (withParent) {
+            const filterOfParent = (this.parent as SingleNode<ED, keyof ED, Cxt, AD>)?.getOtmFilter<T>(this);
+            if (filterOfParent) {
+                filterArr.push(filterOfParent as any);
+            }
+        }
 
         return {
-            projection: proj,
+            data,
             filters: filterArr.filter(ele => !!ele) as ED[T]['Selection']['filter'][],
             sorter: sorterArr,
         }
@@ -658,7 +727,7 @@ class ListNode<
             this.loading = true;
         }
         const currentPage3 = typeof pageNumber === 'number' ? pageNumber : currentPage;
-        const { projection, filters, sorter } = await this.constructSelection();
+        const { data: projection, filters, sorter } = await this.constructSelection(true);
         try {
             const { data, count } = await this.cache.refresh(
                 entity,
@@ -746,97 +815,15 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         parent?: Node<ED, keyof ED, Cxt, AD>) {
         super(entity, schema, cache, projection, parent);
         this.children = {};
+    }
 
-        const ownKeys: string[] = [];
-        const attrs = Object.keys(projectionShape);
-        const { toModi } = schema[entity];
-        attrs.forEach(
-            (attr) => {
-                const proj = typeof projection === 'function' ? async () => {
-                    const projection2 = await projection();
-                    return projection2[attr];
-                } : projection[attr];
-                const rel = this.judgeRelation(attr);
-                if (rel === 2) {
-                    const node = new SingleNode(attr, this.schema, this.cache, proj, projectionShape[attr], this);
-                    Object.assign(this.children, {
-                        [attr]: node,
-                    });
-                    if (toModi && attr !== 'modi$entity') {
-                        const node2 = new SingleNode(attr, this.schema, this.cache, proj, projectionShape[attr], this);
-                        Object.assign(this.children, {
-                            [`${attr}:prev`]: node2,
-                        });
-                    }
-                }
-                else if (typeof rel === 'string') {
-                    const node = new SingleNode(rel, this.schema, this.cache, proj, projectionShape[attr], this);
-                    Object.assign(this.children, {
-                        [attr]: node,
-                    });
-                    if (toModi && attr !== 'modi$entity') {
-                        const node2 = new SingleNode(attr, this.schema, this.cache, proj, projectionShape[attr], this);
-                        Object.assign(this.children, {
-                            [`${attr}:prev`]: node2,
-                        });
-                    }
-                }
-                else if (typeof rel === 'object' && rel instanceof Array) {
-                    const { data: subProjectionShape } = projectionShape[attr] as ED[keyof ED]['Selection'];
-                    const proj = typeof projection === 'function' ? async () => {
-                        const projection2 = await projection();
-                        return projection2[attr].data;
-                    } : projection[attr].data;
-                    const filter = typeof projection === 'function' ? async () => {
-                        const projection2 = await projection();
-                        return projection2[attr].filter;
-                    } : projection[attr].filter;
-                    const sorters = typeof projection === 'function' ? async () => {
-                        const projection2 = await projection();
-                        return projection2[attr].sorter;
-                    } : projection[attr].sorter;
-                    const node = new ListNode(rel[0], this.schema, this.cache, proj, subProjectionShape, this);
-                    if (filter) {
-                        node.addNamedFilter({
-                            filter,
-                        });
-                    }
-                    if (sorters && sorters instanceof Array) {
-                        // todo 没有处理projection是一个function的case
-                        sorters.forEach(
-                            ele => node.addNamedSorter({
-                                sorter: ele
-                            })
-                        );
-                    }
-                    Object.assign(this.children, {
-                        [attr]: node,
-                    });
-                    if (toModi && attr !== 'modi$entity') {
-                        const node2 = new ListNode(rel[0], this.schema, this.cache, proj, subProjectionShape, this);
-                        if (filter) {
-                            node2.addNamedFilter({
-                                filter,
-                            });
-                        }
-                        if (sorters && sorters instanceof Array) {
-                            // todo 没有处理projection是一个function的case
-                            sorters.forEach(
-                                ele => node2.addNamedSorter({
-                                    sorter: ele
-                                })
-                            );
-                        }
-                        Object.assign(this.children, {
-                            [`${attr}:prev`]: node2,
-                        });
-                    }
-                }
-                else {
-                    ownKeys.push(attr);
-                }
+    protected getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string {
+        for (const k in this.children) {
+            if (child === this.children[k]) {
+                return k;
             }
-        );
+        }
+        assert(false);
     }
 
     destroy(): void {
@@ -929,17 +916,36 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     async getFreshValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>> {
         const projection = typeof this.projection === 'function' ? await this.projection() : this.projection;
+
+        // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
+        const modiIds = this.parent ? this.parent.getModiIds(this) : [];
+        const operations = modiIds.map(
+            ele => ({
+                entity: 'modi',
+                operation: {
+                    action: 'apply',
+                    data: {},
+                    filter: {
+                        id: ele,
+                    },
+                }
+            })
+        ) as Array<{
+            entity: keyof ED;
+            operation: ED[keyof ED]['Operation'];
+        }>;
+        operations.push(...this.operations.map(
+            ele => ({
+                entity: this.entity,
+                operation: ele.oper,
+            })
+        ));
         const { result } = await this.cache.tryRedoOperationsThenSelect(this.entity, {
             data: projection,
             filter: {
                 id: this.id,
             } as any,
-        }, this.operations.map(
-            ele => ({
-                entity: this.entity,
-                operation: ele.oper
-            })
-        ));
+        }, operations);
         return result[0];
     }
 
@@ -999,12 +1005,15 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                             }
                         }
                     }
+
+                    const sliceIdx = ele.indexOf(':');
+                    const ele2 = sliceIdx > 0 ? ele.slice(0, sliceIdx) : ele;
                     return {
                         oper: {
                             id: 'dummy',        // 因为肯定会被merge掉，所以无所谓了
                             action: 'update',
                             data: {
-                                [ele]: subOper,
+                                [ele2]: subOper,
                             },
                             filter: {
                                 id: this.id,
@@ -1041,6 +1050,33 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         return operations;
     }
 
+    async getProjection() {
+        const projection = await super.getProjection();
+        for (const k in this.children) {
+            if (k.indexOf(':') === -1) {
+                const rel = this.judgeRelation(k);
+                if (rel === 2 || typeof rel === 'string') {
+                    const subProjection = await this.children[k].getProjection();
+                    Object.assign(projection, {
+                        [k]: subProjection,
+                    });
+                }
+                else {
+                    const child = this.children[k];
+                    assert(rel instanceof Array && child instanceof ListNode);
+                    const subSelection = await child.constructSelection();
+                    const subEntity = child.getEntity();
+                    Object.assign(projection, {
+                        [k]: Object.assign(subSelection, {
+                            $entity: subEntity,
+                        })
+                    });
+                }
+            }
+        }
+        return projection;
+    }
+
     async refresh() {
         const projection = await this.getProjection();
         if (this.id) {
@@ -1052,6 +1088,11 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         id: this.id,
                     },
                 } as any);
+                // 对于modi对象，在此缓存
+                if (this.schema[this.entity].toModi) {
+                    const { modi$entity } = value;
+                    this.modiIds = (modi$entity as Array<{ id: string }>).map(ele => ele.id);
+                }
                 this.loading = false;
             }
             catch (err) {
@@ -1073,7 +1114,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     getOtmFilter<T2 extends keyof ED>(childNode: ListNode<ED, keyof ED, Cxt, AD>): ED[T2]['Selection']['filter'] {
         for (const key in this.children) {
             if (childNode === this.children[key]) {
-                const rel = this.judgeRelation(key);
+                const sliceIdx = key.indexOf(':');
+                const key2 = sliceIdx > 0 ? key.slice(0, sliceIdx) : key;
+                const rel = this.judgeRelation(key2);
                 assert(rel instanceof Array);
                 if (rel[1]) {
                     // 基于普通外键的一对多
@@ -1174,7 +1217,6 @@ export class RunningTree<
                 sorters,
                 pagination
             );
-            node.refresh();
         } else {
             node = new SingleNode<ED, T, Cxt, AD>(
                 entity,
@@ -1184,15 +1226,18 @@ export class RunningTree<
                 projectionShape,
                 parentNode
             );
-            if (id) {
-                node.setId(id);
-            }
         }
         if (parentNode) {
             parentNode.addChild(path, node as any);
         } else {
             assert(!parent && !this.root[path]);
             this.root[path] = node;
+        }
+        if (isList) {
+            node.refresh();
+        }
+        else if (id) {
+            (<SingleNode<ED, T, Cxt, AD>>node).setId(id);
         }
 
         return node;

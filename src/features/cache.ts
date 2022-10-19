@@ -85,7 +85,7 @@ export class Cache<
         selection: ED[T]['Selection'],
         option?: OP
     ) {
-        reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
+        // reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
         const { result } = await this.getAspectWrapper().exec('count', {
             entity,
             selection,

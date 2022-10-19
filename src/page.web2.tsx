@@ -10,14 +10,9 @@ import { BasicFeatures } from './features';
 import { ExceptionHandler } from './types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
 import { Feature } from './types/Feature';
-import { CreateNodeOptions } from './features/runningTree';
 import {
     ComponentData,
-    ComponentFullThisType,
     ComponentProps,
-    MiniprogramStyleMethods,
-    OakCommonComponentMethods,
-    OakComponentData,
     OakComponentOption,
     OakNavigateToParameters,
 } from './types/Page2';

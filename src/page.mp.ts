@@ -12,7 +12,7 @@ import {
     OakComponentOption,
     OakPageMethods,
     OakPageOption,
-} from './types/Page';
+} from './types/Page2';
 import {
     ComponentThisType,
     makeHiddenComponentMethods,
@@ -20,7 +20,7 @@ import {
     makeComponentOnlyMethods,
     makeCommonComponentMethods as makeCommon,
     makePageMethods as makePage,
-} from './page.common';
+} from './page.common2';
 import {
     getI18nInstanceWechatMp,
     CURRENT_LOCALE_KEY,

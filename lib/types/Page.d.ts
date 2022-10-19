@@ -162,7 +162,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     execute: (action: ED[T]['Action'], legalExceptions?: Array<string>, path?: string) => Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
 };
 export declare type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
-    pushNode: (path?: string, options?: Pick<CreateNodeOptions<ED, keyof ED>, 'updateData' | 'beforeExecute' | 'afterExecute'>) => Promise<void>;
+    pushNode: (path?: string, options?: CreateNodeOptions<ED, keyof ED>) => Promise<void>;
     removeNode: (parent: string, path: string) => Promise<void>;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => Promise<void>;
     getFilters: () => Promise<ED[T]['Selection']['filter'][] | undefined>;

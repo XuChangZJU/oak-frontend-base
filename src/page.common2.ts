@@ -121,7 +121,7 @@ export async function onPathSet<
         oakFullpath: oakPath2,
         oakIsReady: true,
     });
-    await this.refresh();
+    // await this.refresh();
 }
 
 export async function reRender<
@@ -285,7 +285,7 @@ export function callPicker<
         assert(typeof relation === 'string');
         subEntity = relation;
     }
-    let url = `/pickers/${subEntity}?oakIsPicker=true&oakParentEntity=${this.state.oakEntity}&oakParent=${this.state.oakFullpath}&oakPath=${attr}`;
+    let url = `/pickers/${subEntity}?oakIsPicker=true&oakParentEntity=${this.state.oakEntity as string}&oakParent=${this.state.oakFullpath}&oakPath=${attr}`;
     for (const k in params) {
         url += `&${k}=${JSON.stringify(params[k])}`;
     }

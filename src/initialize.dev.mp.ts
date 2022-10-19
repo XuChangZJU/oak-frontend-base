@@ -19,8 +19,8 @@ import { BasicFeatures } from './features';
 import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { ExceptionHandler, ExceptionRouters } from './types/ExceptionRoute';
-import { OakComponentOption, OakPageOption } from './types/Page';
-import { createComponent, createPage } from './page.mp';
+import { OakComponentOption } from './types/Page2';
+import { createComponent } from './page.mp';
 import { initialize as initDev } from './initialize-dev';
 import { getI18next, I18nOptions } from './platforms/wechatMp/i18n';
 
@@ -73,6 +73,7 @@ export function initialize<
     Object.assign(global, {
         OakComponent: <
             T extends keyof ED,
+            Proj extends ED[T]['Selection']['data'],
             FormedData extends WechatMiniprogram.Component.DataOption,
             IsList extends boolean,
             TData extends WechatMiniprogram.Component.DataOption = {},
@@ -85,6 +86,7 @@ export function initialize<
                 Cxt,
                 AD,
                 FD,
+                Proj,
                 FormedData,
                 IsList,
                 TData,

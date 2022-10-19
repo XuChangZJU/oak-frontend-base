@@ -289,10 +289,7 @@ export type OakCommonComponentMethods<
 export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     pushNode: (
         path?: string,
-        options?: Pick<
-            CreateNodeOptions<ED, keyof ED>,
-            'updateData' | 'beforeExecute' | 'afterExecute'
-        >
+        options?: CreateNodeOptions<ED, keyof ED>
     ) => Promise<void>;
     removeNode: (parent: string, path: string) => Promise<void>;
     setFilters: (filters: NamedFilterItem<ED, T>[]) => Promise<void>;
