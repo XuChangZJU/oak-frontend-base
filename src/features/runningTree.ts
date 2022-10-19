@@ -1233,12 +1233,6 @@ export class RunningTree<
             assert(!parent && !this.root[path]);
             this.root[path] = node;
         }
-        if (isList) {
-            node.refresh();
-        }
-        else if (id) {
-            (<SingleNode<ED, T, Cxt, AD>>node).setId(id);
-        }
 
         return node;
     }

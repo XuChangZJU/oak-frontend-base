@@ -104,7 +104,7 @@ export async function onPathSet<
         '没有正确的path信息，请检查是否配置正确'
     );
 
-    await features.runningTree.createNode({
+    features.runningTree.createNode({
         path: oakPath2,
         entity: (oakEntity || entity) as T,
         isList,
@@ -113,7 +113,6 @@ export async function onPathSet<
         pagination: pagination,
         filters: filters2,
         sorters: sorters2,
-        id: oakId,
     });
 
     Object.assign(this.state, {
@@ -121,6 +120,13 @@ export async function onPathSet<
         oakFullpath: oakPath2,
         oakIsReady: true,
     });
+
+    if (isList) {
+        await features.runningTree.refresh(oakPath2);
+    }
+    else if (oakId) {
+        await features.runningTree.setId(oakPath2, oakId);
+    }
     // await this.refresh();
 }
 
