@@ -2,8 +2,9 @@ import { EntityDict, OperateOption, OperationResult, OpRecord, SelectOption } fr
 import { StorageSchema } from "oak-domain/lib/types/Storage";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { Checker, Context, Trigger } from 'oak-domain/lib/types';
+import { Checker, CheckerType, Context, Trigger } from 'oak-domain/lib/types';
 import { TreeStore } from 'oak-memory-tree-store';
+import assert from 'assert';
 
 export class CacheStore<
     ED extends EntityDict & BaseEntityDict,
@@ -77,6 +78,18 @@ export class CacheStore<
             await context.commit();
         }
         return result;
+    }
+
+    async check<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, checkerTypes?: CheckerType[]) {
+        const { action } = operation;
+        const checkers = this.executor.getCheckers(entity, action, checkerTypes);
+
+        assert(context.getCurrentTxnId());
+        if (checkers) {
+            for (const checker of checkers) {
+                await checker.fn({ operation } as any, context, {});
+            }
+        }
     }
 
     async select<

@@ -1,122 +1,112 @@
-import { EntityDict, Context, DeduceUpdateOperation, StorageSchema, OpRecord, SelectRowShape, DeduceOperation, AspectWrapper } from "oak-domain/lib/types";
+import { EntityDict, Context, StorageSchema, OpRecord, SelectRowShape, DeduceSorterItem, AspectWrapper } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
 import { Cache } from './cache';
 import { Pagination } from '../types/Pagination';
 import { Feature } from '../types/Feature';
+declare type Operation<ED extends EntityDict & BaseEntityDict, T extends keyof ED, OmitId extends boolean = false> = {
+    oper: OmitId extends true ? Omit<ED[T]['Operation'], 'id'> : ED[T]['Operation'];
+    beforeExecute?: () => Promise<void>;
+    afterExecute?: () => Promise<void>;
+};
 declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> {
     protected entity: T;
     protected schema: StorageSchema<ED>;
     protected projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>);
     protected parent?: Node<ED, keyof ED, Cxt, AD>;
-    protected action?: ED[T]['Action'];
-    protected dirty?: string;
-    protected updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'];
+    protected dirty?: boolean;
     protected cache: Cache<ED, Cxt, AD>;
-    protected refreshing: boolean;
-    private beforeExecute?;
-    private afterExecute?;
-    abstract onCacheSync(opRecords: OpRecord<ED>[]): Promise<void>;
-    abstract refreshValue(): void;
-    private syncHandler;
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data']);
+    protected loading: boolean;
+    protected loadingMore: boolean;
+    protected executing: boolean;
+    protected operations: Operation<ED, T>[];
+    protected modiIds: string[];
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: Node<ED, keyof ED, Cxt, AD>);
     getEntity(): T;
-    protected abstract setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
-    private setLocalUpdateData;
-    setUpdateData(attr: string, value: any): Promise<void>;
-    getUpdateData(): import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>;
-    setMultiUpdateData(updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data']): Promise<void>;
-    setDirty(): Promise<void>;
-    setAction(action: ED[T]['Action']): Promise<void>;
+    protected abstract getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string;
+    /**
+     * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
+     */
+    getModiIds(child: Node<ED, keyof ED, Cxt, AD>): string[];
+    setDirty(): void;
     isDirty(): boolean;
+    isLoading(): boolean;
+    isLoadingMore(): boolean;
+    isExecuting(): boolean;
+    setExecuting(executing: boolean): void;
     getParent(): Node<ED, keyof ED, Cxt, AD> | undefined;
-    getProjection(): Promise<ED[T]["Selection"]["data"]>;
-    setBeforeExecute(_beforeExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>): void;
-    setAfterExecute(_afterExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>): void;
-    getBeforeExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
-    getAfterExecute(): ((updateData: import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>, action: ED[T]["Action"]) => Promise<void>) | undefined;
-    destroy(): void;
+    protected getProjection(): Promise<ED[T]["Selection"]["data"]>;
     protected judgeRelation(attr: string): string | 0 | 2 | 1 | string[];
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }
 declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private children;
-    private newBorn;
     private filters;
     private sorters;
     private pagination;
-    private projectionShape;
+    private ids;
+    private syncHandler;
+    protected getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string;
     onCacheSync(records: OpRecord<ED>[]): Promise<void>;
     destroy(): void;
-    setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
-    refreshValue(): void;
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), projectionShape: ED[T]['Selection']['data'], parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], pagination?: Pagination);
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), projectionShape: ED[T]['Selection']['data'], parent?: Node<ED, keyof ED, Cxt, AD>, filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], pagination?: Pagination);
     getPagination(): Pagination;
-    setPagination(pagination: Pagination): void;
+    setPagination(pagination: Pagination): Promise<void>;
     getChild(path: string, newBorn?: true): SingleNode<ED, T, Cxt, AD> | undefined;
     getChildren(): SingleNode<ED, T, Cxt, AD>[];
-    getNewBorn(): SingleNode<ED, T, Cxt, AD>[];
+    addChild(path: string, node: SingleNode<ED, T, Cxt, AD>): void;
     removeChild(path: string): void;
-    setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']>[] | undefined): Promise<void>;
-    private appendValue;
     getNamedFilters(): NamedFilterItem<ED, T>[];
     getNamedFilterByName(name: string): NamedFilterItem<ED, T> | undefined;
-    setNamedFilters(filters: NamedFilterItem<ED, T>[]): void;
-    addNamedFilter(filter: NamedFilterItem<ED, T>): void;
-    removeNamedFilter(filter: NamedFilterItem<ED, T>): void;
-    removeNamedFilterByName(name: string): void;
+    setNamedFilters(filters: NamedFilterItem<ED, T>[], refresh?: boolean): Promise<void>;
+    addNamedFilter(filter: NamedFilterItem<ED, T>, refresh?: boolean): Promise<void>;
+    removeNamedFilter(filter: NamedFilterItem<ED, T>, refresh?: boolean): Promise<void>;
+    removeNamedFilterByName(name: string, refresh?: boolean): Promise<void>;
     getNamedSorters(): NamedSorterItem<ED, T>[];
     getNamedSorterByName(name: string): NamedSorterItem<ED, T> | undefined;
-    setNamedSorters(sorters: NamedSorterItem<ED, T>[]): void;
-    addNamedSorter(sorter: NamedSorterItem<ED, T>): void;
-    removeNamedSorter(sorter: NamedSorterItem<ED, T>): void;
-    removeNamedSorterByName(name: string): void;
-    getFreshValue(): Array<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined>;
-    getAction(): "update" | ED[T]["Action"];
-    composeOperation(action?: string, execute?: boolean): Promise<DeduceOperation<ED[T]['Schema']> | DeduceOperation<ED[T]['Schema']>[] | undefined>;
-    refresh(): Promise<void>;
+    setNamedSorters(sorters: NamedSorterItem<ED, T>[], refresh?: boolean): Promise<void>;
+    addNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
+    removeNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
+    removeNamedSorterByName(name: string, refresh: boolean): Promise<void>;
+    getFreshValue(): Promise<Array<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>>>;
+    addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']): Promise<void>;
+    composeOperations(): Promise<Operation<ED, T, false>[] | undefined>;
+    getProjection(): Promise<ED[T]['Selection']['data']>;
+    constructSelection(withParent?: true): Promise<{
+        data: ED[T]["Selection"]["data"];
+        filters: ED[T]["Selection"]["filter"][];
+        sorter: DeduceSorterItem<ED[T]["Schema"]>[];
+    }>;
+    refresh(pageNumber?: number, getCount?: true, append?: boolean): Promise<void>;
     loadMore(): Promise<void>;
     setCurrentPage<T extends keyof ED>(currentPage: number, append?: boolean): Promise<void>;
-    resetUpdateData(): Promise<void>;
-    pushNewBorn(options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): Promise<SingleNode<ED, T, Cxt, AD>>;
-    popNewBorn(path: string): void;
-    /**
-     * 判断传入的updateData和当前的某项是否相等
-     * @param from 当前项
-     * @param to 传入项
-     * @returns
-     */
-    private judgeTheSame;
-    setUniqueChildren(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>[]): Promise<void>;
-    toggleChild(data: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>, checked: boolean): Promise<void>;
+    clean(): void;
 }
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, AD> {
     private id?;
-    private value?;
-    private freshValue?;
     private children;
-    onCacheSync(records: OpRecord<ED>[]): Promise<void>;
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), projectionShape: ED[T]['Selection']['data'], parent?: Node<ED, keyof ED, Cxt, AD>, action?: ED[T]['Action'], updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data']);
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), projectionShape: ED[T]['Selection']['data'], parent?: Node<ED, keyof ED, Cxt, AD>);
+    protected getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string;
     destroy(): void;
     getChild(path: string): SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
+    setId(id: string): Promise<void>;
     getChildren(): {
         [K: string]: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
     };
+    addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>): void;
     removeChild(path: string): void;
-    refreshValue(): void;
-    setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']> | undefined): Promise<void>;
-    getFreshValue(ignoreRemoved?: boolean): (SelectRowShape<ED[T]["OpSchema"], ED[T]["Selection"]["data"]> & import("oak-domain/lib/types").DeduceUpdateOperationData<ED[T]["OpSchema"]>) | SelectRowShape<ED[T]["Schema"], ED[T]["Selection"]["data"]> | undefined;
-    getAction(): "create" | "update" | ED[T]["Action"];
-    composeOperation(action2?: string, execute?: boolean): Promise<DeduceUpdateOperation<ED[T]["Schema"]> | undefined>;
-    refresh(scene: string): Promise<void>;
-    resetUpdateData(attrs?: string[]): Promise<void>;
-    setForeignKey(attr: string, entity: keyof ED, id: string | undefined): Promise<void>;
+    getFreshValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>>;
+    addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']): Promise<void>;
+    composeOperations(): Promise<Operation<ED, T, false>[] | undefined>;
+    getProjection(): Promise<ED[T]["Selection"]["data"]>;
+    refresh(): Promise<void>;
+    clean(): void;
+    getOtmFilter<T2 extends keyof ED>(childNode: ListNode<ED, keyof ED, Cxt, AD>): ED[T2]['Selection']['filter'];
 }
 export declare type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     path: string;
-    parent?: string;
     entity: T;
     isList?: boolean;
     isPicker?: boolean;
@@ -124,12 +114,9 @@ export declare type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T 
     pagination?: Pagination;
     filters?: NamedFilterItem<ED, T>[];
     sorters?: NamedSorterItem<ED, T>[];
-    action?: ED[T]['Action'];
+    beforeExecute?: (operations: ED[T]['Operation'][]) => Promise<void>;
+    afterExecute?: (operations: ED[T]['Operation'][]) => Promise<void>;
     id?: string;
-    ids?: string[];
-    updateData?: DeduceUpdateOperation<ED[T]['OpSchema']>['data'];
-    beforeExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
-    afterExecute?: (updateData: DeduceUpdateOperation<ED[T]['OpSchema']>['data'], action: ED[T]['Action']) => Promise<void>;
 };
 export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
     private cache;
@@ -139,19 +126,17 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>): Promise<ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>>;
     private findNode;
     destroyNode(path: string): void;
-    private applyOperation;
-    getFreshValue(path: string): (SelectRowShape<ED[keyof ED]["OpSchema"], ED[keyof ED]["Selection"]["data"]> & import("oak-domain/lib/types").DeduceUpdateOperationData<ED[keyof ED]["OpSchema"]>) | SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | (SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | undefined)[] | undefined;
+    getFreshValue(path: string): Promise<SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]>> | Promise<SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]>[]>;
     isDirty(path: string): boolean;
-    private setUpdateDataInner;
-    setUpdateData(path: string, attr: string, value: any): Promise<void>;
-    setAction<T extends keyof ED>(path: string, action: ED[T]['Action']): Promise<void>;
-    setForeignKey(parent: string, attr: string, id: string | undefined): Promise<void>;
-    addForeignKeys(parent: string, attr: string, ids: string[]): Promise<void>;
-    setUniqueForeignKeys(parent: string, attr: string, ids: string[]): Promise<void>;
+    addOperation<T extends keyof ED>(path: string, operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): Promise<void>;
+    isLoading(path: string): boolean;
+    isLoadingMore(path: string): boolean;
+    isExecuting(path: string): boolean;
     refresh(path: string): Promise<void>;
     loadMore(path: string): Promise<void>;
     getPagination<T extends keyof ED>(path: string): Pagination;
-    setPageSize<T extends keyof ED>(path: string, pageSize: number): void;
+    setId(path: string, id: string): Promise<void>;
+    setPageSize<T extends keyof ED>(path: string, pageSize: number): Promise<void>;
     setCurrentPage<T extends keyof ED>(path: string, currentPage: number): Promise<void>;
     getNamedFilters<T extends keyof ED>(path: string): NamedFilterItem<ED, keyof ED>[];
     getNamedFilterByName<T extends keyof ED>(path: string, name: string): NamedFilterItem<ED, keyof ED> | undefined;
@@ -165,16 +150,9 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     addNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
     removeNamedSorterByName<T extends keyof ED>(path: string, name: string, refresh?: boolean): Promise<void>;
-    testAction(path: string, action: string, execute?: boolean): Promise<{
-        node: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
-        operation: DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[];
-    }>;
-    private beforeExecute;
-    execute(path: string, action: string): Promise<DeduceOperation<ED[keyof ED]["Schema"]> | DeduceOperation<ED[keyof ED]["Schema"]>[]>;
-    pushNode<T extends keyof ED>(path: string, options: Pick<CreateNodeOptions<ED, T>, 'updateData' | 'beforeExecute' | 'afterExecute'>): Promise<SingleNode<ED, keyof ED, Cxt, AD>>;
-    removeNode(parent: string, path: string): Promise<void>;
-    resetUpdateData(path: string): Promise<void>;
-    toggleNode(path: string, nodeData: Record<string, any>, checked: boolean): Promise<void>;
+    tryExecute(path: string): Promise<void>;
+    execute(path: string): Promise<void>;
+    clean(path: string): void;
     getRoot(): Record<string, SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>>;
 }
 export {};

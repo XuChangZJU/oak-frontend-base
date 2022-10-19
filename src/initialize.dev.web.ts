@@ -19,8 +19,8 @@ import { BasicFeatures } from './features';
 import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { ExceptionHandler, ExceptionRouters } from './types/ExceptionRoute';
-import { OakComponentOption, OakPageOption } from './types/Page';
-import { createComponent, createPage } from './page.web';
+import { OakComponentOption } from './types/Page';
+import { createComponent } from './page.web';
 import { initialize as initDev } from './initialize-dev';
 import { getI18next, I18nOptions } from './platforms/web/i18n';
 
@@ -72,44 +72,9 @@ export function initialize<
     const i18n = getI18next(i18nOptions);
 
     Object.assign(global, {
-        OakPage: <
-            T extends keyof ED,
-            Proj extends ED[T]['Selection']['data'],
-            FormedData extends WechatMiniprogram.Component.DataOption,
-            IsList extends boolean,
-            TData extends WechatMiniprogram.Component.DataOption = {},
-            TProperty extends WechatMiniprogram.Component.PropertyOption = {},
-            TMethod extends WechatMiniprogram.Component.MethodOption = {}
-        >(
-            options: OakPageOption<
-                ED,
-                T,
-                Cxt,
-                AD,
-                FD,
-                Proj,
-                FormedData,
-                IsList,
-                TData,
-                TProperty,
-                TMethod
-            >
-        ) =>
-            createPage<
-                ED,
-                T,
-                Cxt,
-                AD,
-                FD,
-                Proj,
-                FormedData,
-                IsList,
-                TData,
-                TProperty,
-                TMethod
-            >(options, features, exceptionRouterDict),
         OakComponent: <
             T extends keyof ED,
+            Proj extends ED[T]['Selection']['data'],
             FormedData extends WechatMiniprogram.Component.DataOption,
             IsList extends boolean,
             TData extends WechatMiniprogram.Component.DataOption = {},
@@ -122,6 +87,7 @@ export function initialize<
                 Cxt,
                 AD,
                 FD,
+                Proj,
                 FormedData,
                 IsList,
                 TData,
@@ -135,6 +101,7 @@ export function initialize<
                 Cxt,
                 AD,
                 FD,
+                Proj,
                 FormedData,
                 IsList,
                 TData,

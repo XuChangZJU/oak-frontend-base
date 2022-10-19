@@ -66,5 +66,5 @@
         "test": "ts-node ./test/test.ts",
         "prepare": "rimraf node_modules/react & rimraf node_modules/react-dom & rimraf node_modules/react-router"
     },
-    "main": "lib/index"
+    "main": "src/index"
 }
