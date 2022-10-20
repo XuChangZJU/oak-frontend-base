@@ -8,15 +8,15 @@ import URL from 'url';
 
 type Location = { state: Record<string, any>; search: string };
 
-function getParams(location: Location) {
+function getParams(location: Location, properties?: WechatMiniprogram.Component.PropertyOption) {
     const { search, state } = location;
-    const query = getQuery(search);
+    const query = getQuery(search, properties);
 
     return Object.assign({}, query, state);
 }
 
-function getQuery(url: string) {
-    let query = {};
+function getQuery(url: string, properties?: WechatMiniprogram.Component.PropertyOption) {
+    let query: Record<string, any> = {};
     if (!url) {
         return query;
     }
@@ -24,10 +24,68 @@ function getQuery(url: string) {
     if (parseUrl.query) {
         query = parseUrl.query;
     }
-    return query;
+    const query2 = {};
+    if (properties) {
+        for (const k in query) {
+            if (properties[k]) {
+                const type = typeof properties[k] === 'function' ? properties[k] : (properties[k] as any).type;
+                switch (type) {
+                    case Number: {
+                        Object.assign(query2, {
+                            [k]: Number(query[k]),
+                        });
+                        break;
+                    }
+                    case Boolean: {
+                        Object.assign(query2, {
+                            [k]: Boolean(query[k]),
+                        });
+                        break;
+                    }
+                    case Array:
+                    case Object: {
+                        Object.assign(query2, {
+                            [k]: JSON.parse(query[k]),
+                        });
+                        break;
+                    }
+                    default: {
+                        Object.assign(query2, {
+                            [k]: query[k],
+                        })
+                    }
+                }
+            }
+            else {
+                switch (k) {
+                    case 'oakIsPicker':
+                    case 'enablePullDownRefresh': {
+                        Object.assign(query2, {
+                            [k]: Boolean(query[k]),
+                        });
+                        break;
+                    }
+                    case 'oakFilters':
+                    case 'oakSorters': {
+                        Object.assign(query2, {
+                            [k]: JSON.parse(query[k]),
+                        });
+                        break;
+
+                    }
+                    default: {
+                        Object.assign(query2, {
+                            [k]: query[k],
+                        })
+                    }
+                }
+            }
+        }
+    }
+    return query2;
 }
 
-const withRouter = (Component: React.ComponentType<any>, isComponent?: boolean, path?: string) => {
+const withRouter = (Component: React.ComponentType<any>, { path, properties }: {path?: string, properties?: WechatMiniprogram.Component.PropertyOption }) => {
     const ComponentWithRouterProp = (props: any) => {
         const navigate = useNavigate();
         const location = useLocation();
@@ -37,8 +95,8 @@ const withRouter = (Component: React.ComponentType<any>, isComponent?: boolean, 
 
         let params = {};
         let routeMatch = false;
-        if (!isComponent && location.pathname.includes(path)) {
-            params = getParams(location as Location);
+        if (location.pathname.includes(path)) {
+            params = getParams(location as Location, properties);
             routeMatch = true;
         }
 

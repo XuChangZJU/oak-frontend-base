@@ -178,15 +178,15 @@ export type OakComponentProperties = {
     oakEntity: StringConstructor;
     oakPath: StringConstructor;
     oakId: StringConstructor;
-    oakProjection: StringConstructor;
+    oakProjection: ObjectConstructor;
     oakFrom: StringConstructor;
     oakParentEntity: StringConstructor;
     enablePullDownRefresh: BooleanConstructor;
 };
 
 export type OakListComponentProperties = {
-    oakFilters: StringConstructor;
-    oakSorters: StringConstructor;
+    oakFilters: ObjectConstructor;
+    oakSorters: ObjectConstructor;
     oakIsPicker: BooleanConstructor;
 }
 

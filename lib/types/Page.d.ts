@@ -90,14 +90,14 @@ export declare type OakComponentProperties = {
     oakEntity: StringConstructor;
     oakPath: StringConstructor;
     oakId: StringConstructor;
-    oakProjection: StringConstructor;
+    oakProjection: ObjectConstructor;
     oakFrom: StringConstructor;
     oakParentEntity: StringConstructor;
     enablePullDownRefresh: BooleanConstructor;
 };
 export declare type OakListComponentProperties = {
-    oakFilters: StringConstructor;
-    oakSorters: StringConstructor;
+    oakFilters: ObjectConstructor;
+    oakSorters: ObjectConstructor;
     oakIsPicker: BooleanConstructor;
 };
 export declare type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {

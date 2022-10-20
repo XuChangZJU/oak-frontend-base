@@ -663,5 +663,5 @@ export function createComponent<
             return Render;
         }
     };
-    return withRouter(OakComponentWrapper, false, option.path);
+    return withRouter(OakComponentWrapper, option);
 }

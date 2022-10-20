@@ -1393,7 +1393,7 @@ export class RunningTree<
     ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        node.setNamedFilters(filters, refresh);
+        await node.setNamedFilters(filters, refresh);
     }
 
     @Action
