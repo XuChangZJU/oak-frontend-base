@@ -772,16 +772,15 @@ class ListNode<
             )
         );
 
-        const operations: Operation<ED, T>[] = [];
+        const operations: Operation<ED, T>[] = cloneDeep(this.operations);
         for (const oper of childOperations) {
             if (oper) {
-                const merged = this.operations.length > 0 && tryMergeOperationToExisted(this.entity, this.schema, oper[0], this.operations);
+                const merged = this.operations.length > 0 && tryMergeOperationToExisted(this.entity, this.schema, oper[0], operations);
                 if (!merged) {
                     operations.push(oper[0]);
                 }
             }
         }
-        operations.push(...this.operations);
         return operations;
     }
 
@@ -1181,19 +1180,31 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         const operations: Operation<ED, T>[] = [];
         if (this.operations.length > 0) {
             assert(this.operations.length === 1);
-            operations.push(this.operations[0]);
+            // 这里不能直接改this.operations，只能克隆一个新的
+            operations.push(cloneDeep(this.operations[0]));
         }
         else {
-            operations.push({
-                oper: {
-                    id: await generateNewId(),
-                    action: 'update',
-                    data: {},
-                    filter: {
-                        id: this.id,
-                    } as any,
-                }
-            });
+            if (this.id) {
+                operations.push({
+                    oper: {
+                        id: await generateNewId(),
+                        action: 'update',
+                        data: {},
+                        filter: {
+                            id: this.id,
+                        } as any,
+                    }
+                });
+            }
+            else {
+                operations.push({
+                    oper: {
+                        id: await generateNewId(),
+                        action: 'create',
+                        data: {},                        
+                    }
+                })
+            }
         }
         for (const oper of childOperations) {
             if (oper) {
