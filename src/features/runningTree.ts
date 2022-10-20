@@ -599,7 +599,7 @@ class ListNode<
     async setNamedFilters(filters: NamedFilterItem<ED, T>[], refresh?: boolean) {
         this.filters = filters;
         if (refresh) {
-            await this.refresh(0, true);
+            await this.refresh(1, true);
         }
     }
 
@@ -614,7 +614,7 @@ class ListNode<
             this.filters.push(filter);
         }
         if (refresh) {
-            await this.refresh(0, true);
+            await this.refresh(1, true);
         }
     }
 
@@ -627,7 +627,7 @@ class ListNode<
             this.filters.splice(fIndex, 1);
         }
         if (refresh) {
-            await this.refresh(0, true);
+            await this.refresh(1, true);
         }
     }
 
@@ -638,7 +638,7 @@ class ListNode<
             this.filters.splice(fIndex, 1);
         }
         if (refresh) {
-            await this.refresh(0, true);
+            await this.refresh(1, true);
         }
     }
 
@@ -654,7 +654,7 @@ class ListNode<
     async setNamedSorters(sorters: NamedSorterItem<ED, T>[], refresh?: boolean) {
         this.sorters = sorters;
         if (refresh) {
-            await this.refresh(0, true);
+            await this.refresh(1, true);
         }
     }
 
@@ -669,7 +669,7 @@ class ListNode<
             this.sorters.push(sorter);
         }
         if (refresh) {
-            await this.refresh(0, true);
+            await this.refresh(1, true);
         }
     }
 
@@ -682,7 +682,7 @@ class ListNode<
             this.sorters.splice(fIndex, 1);
         }
         if (refresh) {
-            await this.refresh(0, true);
+            await this.refresh(1, true);
         }
     }
 
@@ -693,7 +693,7 @@ class ListNode<
             this.sorters.splice(fIndex, 1);
         }
         if (refresh) {
-            await this.refresh(0, true);
+            await this.refresh(1, true);
         }
     }
 
