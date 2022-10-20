@@ -1215,17 +1215,15 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         const ele2 = sliceIdx > 0 ? ele.slice(0, sliceIdx) : ele;
                         if (this.id) {
                             return {
-                                oper: {
-                                    id: 'dummy',        // 因为肯定会被merge掉，所以无所谓了
-                                    action: 'update',
-                                    data: {
-                                        [ele2]: subOper,
-                                    },
-                                    filter: {
-                                        id: this.id,
-                                    }
+                                id: 'dummy',        // 因为肯定会被merge掉，所以无所谓了
+                                action: 'update',
+                                data: {
+                                    [ele2]: subOper,
                                 },
-                            } as Operation<ED, keyof ED>;
+                                filter: {
+                                    id: this.id,
+                                }
+                            } as ED[T]['Operation'];
                         }
                         else {
                             return {
@@ -1268,7 +1266,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         for (const oper of childOperations) {
             if (oper) {
-                mergeOperationOper(this.entity, this.schema, oper as ED[T]['Operation'], operations[0]); // SingleNode貌似不可能不merge成功
+                mergeOperationOper(this.entity, this.schema, oper, operations[0]); // SingleNode貌似不可能不merge成功
             }
         }
         await repairOperations(this.entity, this.schema, operations);
