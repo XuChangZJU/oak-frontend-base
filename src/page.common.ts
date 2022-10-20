@@ -258,7 +258,7 @@ export async function execute<
         const fullpath = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        const result = await this.features.runningTree.execute<T>(fullpath);
+        const result = await this.features.runningTree.execute(fullpath);
         this.setState({
             oakExecuting: false,
         })

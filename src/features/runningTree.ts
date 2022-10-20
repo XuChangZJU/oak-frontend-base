@@ -54,6 +54,8 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
     }
 
     protected abstract getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string;
+    abstract doBeforeTrigger(): Promise<void>;
+    abstract doAfterTrigger(): Promise<void>;
 
     /**
      * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
@@ -200,7 +202,7 @@ function mergeOperationOper<ED extends EntityDict & BaseEntityDict, T extends ke
     if (action === into.action) {
         switch (action) {
             case 'create': {
-                if (dataTo instanceof Array) {                    
+                if (dataTo instanceof Array) {
                     if (data instanceof Array) {
                         data.forEach(
                             ele => assert(ele.id)
@@ -256,7 +258,7 @@ function mergeOperationOper<ED extends EntityDict & BaseEntityDict, T extends ke
             }
         }
         else if (action === 'remove') {
-            assert (into.action === 'create');
+            assert(into.action === 'create');
             // create和remove动作相抵消
             const { data: operData } = into;
             if (operData instanceof Array) {
@@ -281,7 +283,7 @@ function mergeOperationOper<ED extends EntityDict & BaseEntityDict, T extends ke
             }
         }
     }
-    assert (false); // merge必须成功
+    assert(false); // merge必须成功
 }
 
 function mergeOperationTrigger<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
@@ -414,7 +416,7 @@ function tryMergeOperationToExisted<ED extends EntityDict & BaseEntityDict, T ex
         index,
         eliminated,
     } = findOperationToMerge(entity, schema, oper, existedOperations);
-    
+
     if (index) {
         // 可以合并
         const origin = existed.find(ele => ele.oper === index);
@@ -763,27 +765,76 @@ class ListNode<
         this.setDirty();
     }
 
+    async doBeforeTrigger(): Promise<void> {
+        for (const operation of this.operations) {
+            if (operation.beforeExecute) {
+                await operation.beforeExecute();
+            }
+        }
+
+        for (const child of this.children) {
+            await child.doBeforeTrigger();
+        }
+    }
+
+    async doAfterTrigger(): Promise<void> {
+        for (const operation of this.operations) {
+            if (operation.afterExecute) {
+                await operation.afterExecute();
+            }
+        }
+
+        for (const child of this.children) {
+            await child.doAfterTrigger();
+        }
+    }
+
     async composeOperations() {
         if (!this.dirty) {
             return;
         }
         const childOperations = await Promise.all(
             this.children.map(
-                async ele => await ele.composeOperations()
+                async ele => {
+                    const subOper = await ele.composeOperations();
+                    if (subOper) {
+                        return subOper[0];
+                    }
+                }
             )
         );
 
-        const operations: Operation<ED, T>[] = cloneDeep(this.operations);
+        const operations: ED[T]['Operation'][] = cloneDeep(this.operations.map(ele => ele.oper));
         for (const oper of childOperations) {
             if (oper) {
-                const merged = this.operations.length > 0 && tryMergeOperationToExisted(this.entity, this.schema, oper[0], operations);
-                if (!merged) {
-                    operations.push(oper[0]);
+                const {
+                    index,
+                    eliminated,
+                } = findOperationToMerge(this.entity, this.schema, oper, operations);
+                if (index) {
+                    // 可以合并
+                    const result = mergeOperationOper(this.entity, this.schema, oper, index);
+                    if (result) {
+                        // 说明相互抵消了
+                        pull(operations, index);
+                    }
+                    else {
+                    }
+                }
+                else {
+                    operations.push(oper);
+                }
+
+
+                for (const eli of eliminated) {
+                    if (eli) {
+                        pull(operations, eli);
+                    }
                 }
             }
         }
 
-        await repairOperations(this.entity, this.schema, operations.map(ele => ele.oper));
+        await repairOperations(this.entity, this.schema, operations);
         return operations;
     }
 
@@ -1053,7 +1104,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
         }>;
-        const [ operation ] = this.operations;
+        const [operation] = this.operations;
         let id = this.id;
         if (operation?.oper.action === 'create') {
             id = (operation.oper.data as ED[T]['CreateSingle']['data']).id;
@@ -1071,6 +1122,34 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             } as any,
         }, operations);
         return result[0];
+    }
+
+
+    async doBeforeTrigger(): Promise<void> {
+        for (const operation of this.operations) {
+            if (operation.beforeExecute) {
+                await operation.beforeExecute();
+            }
+        }
+
+        for (const k in this.children) {
+            const child = this.children[k];
+            await child.doBeforeTrigger();
+        }
+    }
+
+
+    async doAfterTrigger(): Promise<void> {
+        for (const operation of this.operations) {
+            if (operation.afterExecute) {
+                await operation.afterExecute();
+            }
+        }
+
+        for (const k in this.children) {
+            const child = this.children[k];
+            await child.doAfterTrigger();
+        }
     }
 
     async addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']) {
@@ -1120,26 +1199,14 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 async (ele) => {
                     const child = this.children[ele];
                     const childOperations = await child!.composeOperations();
-                    let subOper, subBe, subAe;
+                    let subOper;
                     if (childOperations) {
                         if (child instanceof SingleNode) {
-                            subOper = childOperations[0].oper;
-                            subBe = childOperations[0].beforeExecute;
-                            subAe = childOperations[0].afterExecute;
+                            subOper = childOperations[0];
                         }
                         else {
                             assert(child instanceof ListNode);
-                            subOper = childOperations.map(ele => ele.oper);
-                            subBe = async () => {
-                                for (const o of childOperations) {
-                                    o.beforeExecute && await o.beforeExecute();
-                                }
-                            };
-                            subAe = async () => {
-                                for (const o of childOperations) {
-                                    o.afterExecute && await o.afterExecute();
-                                }
-                            }
+                            subOper = childOperations;
                         }
                     }
 
@@ -1158,64 +1225,53 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                                         id: this.id,
                                     }
                                 },
-                                beforeExecute: subBe,
-                                afterExecute: subAe,
                             } as Operation<ED, keyof ED>;
                         }
                         else {
                             return {
-                                oper: {
-                                    id: 'dummy',        // 因为肯定会被merge掉，所以无所谓了
-                                    action: 'create',
-                                    data: {
-                                        [ele2]: subOper,
-                                    },
+                                id: 'dummy',        // 因为肯定会被merge掉，所以无所谓了
+                                action: 'create',
+                                data: {
+                                    [ele2]: subOper,
                                 },
-                                beforeExecute: subBe,
-                                afterExecute: subAe,
-                            } as Operation<ED, keyof ED>;
+                            } as ED[T]['Operation'];
                         }
                     }
                 }
             )
         );
 
-        const operations: Operation<ED, T>[] = [];
+        const operations: ED[T]['Operation'][] = [];
         if (this.operations.length > 0) {
             assert(this.operations.length === 1);
             // 这里不能直接改this.operations，只能克隆一个新的
-            operations.push(cloneDeep(this.operations[0]));
+            operations.push(cloneDeep(this.operations[0].oper));
         }
         else {
             if (this.id) {
                 operations.push({
-                    oper: {
-                        id: await generateNewId(),
-                        action: 'update',
-                        data: {},
-                        filter: {
-                            id: this.id,
-                        } as any,
-                    }
+                    id: await generateNewId(),
+                    action: 'update',
+                    data: {},
+                    filter: {
+                        id: this.id,
+                    } as any,
                 });
             }
             else {
                 operations.push({
-                    oper: {
-                        id: await generateNewId(),
-                        action: 'create',
-                        data: {},                        
-                    }
-                })
+                    id: await generateNewId(),
+                    action: 'create',
+                    data: {},
+                });
             }
         }
         for (const oper of childOperations) {
             if (oper) {
-                const merged = tryMergeOperationToExisted(this.entity, this.schema, oper, operations);
-                assert(merged);     // SingleNode貌似不可能不merge成功
+                mergeOperationOper(this.entity, this.schema, oper as ED[T]['Operation'], operations[0]); // SingleNode貌似不可能不merge成功
             }
         }
-        await repairOperations(this.entity, this.schema, operations.map(ele => ele.oper));
+        await repairOperations(this.entity, this.schema, operations);
         return operations;
     }
 
@@ -1351,10 +1407,10 @@ async function repairOperations<ED extends EntityDict & BaseEntityDict, T extend
     }
     for (const operation of operations) {
         if (!operation.id) {
-            operation.id = await generateNewId();            
+            operation.id = await generateNewId();
         }
         const { data } = operation as ED[T]['Create'];
-        
+
         if (data instanceof Array) {
             for (const d of data) {
                 await repairData(entity, d);
@@ -1675,36 +1731,32 @@ export class RunningTree<
         const node = this.findNode(path);
         const operations = await node.composeOperations();
         if (operations) {
-            return await this.cache.tryRedoOperations(node.getEntity(), operations.map(ele => ele.oper));
+            return await this.cache.tryRedoOperations(node.getEntity(), operations);
         }
         return false;
     }
 
     @Action
-    async execute<T extends keyof ED>(path: string) {
+    async execute(path: string) {
         const node = this.findNode(path);
         assert(node.isDirty());
 
         node.setExecuting(true);
         try {
-            const operations = await node.composeOperations() as Operation<ED, T>[];
+            await node.doBeforeTrigger();
+            const operations = await node.composeOperations();
 
-            for (const operation of operations) {
-                operation.beforeExecute && await operation.beforeExecute();
-            }
             await this.getAspectWrapper().exec('operate', {
                 entity: node.getEntity() as string,
-                operation: operations.map(ele => ele.oper),
+                operation: operations!.filter(ele => !!ele),
             });
 
-            for (const operation of operations) {
-                operation.afterExecute && await operation.afterExecute();
-            }
+            await node.doAfterTrigger();
 
             // 清空缓存
             node.clean();
             node.setExecuting(false);
-            return operations.map(ele => ele.oper);
+            return operations;
         }
         catch (err) {
             node.setExecuting(false);
