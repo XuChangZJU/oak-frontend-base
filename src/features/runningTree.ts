@@ -1495,15 +1495,13 @@ export class RunningTree<
     }
 
     @Action
-    async execute(path: string) {
+    async execute<T extends keyof ED>(path: string) {
         const node = this.findNode(path);
-        if (!node.isDirty()) {
-            return;
-        }
+        assert(node.isDirty());
 
         node.setExecuting(true);
         try {
-            const operations = await node.composeOperations() as Operation<ED, keyof ED>[];
+            const operations = await node.composeOperations() as Operation<ED, T>[];
 
             for (const operation of operations) {
                 operation.beforeExecute && await operation.beforeExecute();
@@ -1520,7 +1518,7 @@ export class RunningTree<
             // 清空缓存
             node.clean();
             node.setExecuting(false);
-            return;
+            return operations.map(ele => ele.oper);
         }
         catch (err) {
             node.setExecuting(false);

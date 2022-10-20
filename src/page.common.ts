@@ -246,9 +246,9 @@ export async function execute<
     T extends keyof ED,
     Cxt extends Context<ED>>(
         this: ComponentFullThisType<ED, T, Cxt>,
-        legalExceptions?: Array<string>, path?: string) {
+        path?: string) {
     if (this.state.oakExecuting) {
-        return;
+        throw new Error('请仔细设计按钮状态，不要允许重复点击！');
     }
     this.setState({
         oakFocused: undefined,
@@ -258,7 +258,7 @@ export async function execute<
         const fullpath = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        const result = await this.features.runningTree.execute(fullpath);
+        const result = await this.features.runningTree.execute<T>(fullpath);
         this.setState({
             oakExecuting: false,
         })
@@ -279,7 +279,7 @@ export async function execute<
                     },
                     oakExecuting: false,
                 });
-                return;
+                throw err;
             }
         }
         this.setMessage({

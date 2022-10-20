@@ -148,7 +148,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     cleanOperation: () => void;
     t(key: string, params?: object): string;
     callPicker: (attr: string, params: Record<string, any>) => void;
-    execute: () => Promise<void>;
+    execute: () => Promise<ED[T]['Operation'][]>;
     checkOperation: (ntity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => Promise<boolean>;
     tryExecute: () => Promise<void>;
     refresh: (extra?: any) => Promise<void>;
