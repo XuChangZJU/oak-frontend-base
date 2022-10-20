@@ -49,7 +49,7 @@ abstract class OakComponentBase<
     }
 
     onPathSet() {
-        onPathSet.call(this as any, this.option as any);
+        return onPathSet.call(this as any, this.option as any);
     }
 
     triggerEvent<DetailType = any>(
@@ -600,12 +600,12 @@ export function createComponent<
             this.isReachBottom = isCurrentReachBottom;
         }
 
-        componentDidMount() {
+        async componentDidMount() {
             this.registerPageScroll();
             this.subscribe();
             const { oakPath } = this.props;
             if (oakPath || this.iAmThePage() && path) {
-                this.onPathSet();
+                await this.onPathSet();
             }
             else {
                 this.reRender();
