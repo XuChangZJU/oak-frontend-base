@@ -1646,7 +1646,7 @@ export class RunningTree<
     ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        node.addNamedFilter(filter, refresh);
+        return node.addNamedFilter(filter, refresh);
     }
 
     @Action
@@ -1657,7 +1657,7 @@ export class RunningTree<
     ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        node.removeNamedFilter(filter, refresh);
+        return node.removeNamedFilter(filter, refresh);
     }
 
     @Action
@@ -1668,7 +1668,7 @@ export class RunningTree<
     ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        node.removeNamedFilterByName(name, refresh);
+        return node.removeNamedFilterByName(name, refresh);
     }
 
     getNamedSorters<T extends keyof ED>(path: string) {
@@ -1691,7 +1691,7 @@ export class RunningTree<
     ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        node.setNamedSorters(sorters, refresh);
+        return node.setNamedSorters(sorters, refresh);
     }
 
     @Action
@@ -1702,7 +1702,7 @@ export class RunningTree<
     ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        node.addNamedSorter(sorter, refresh);
+        return node.addNamedSorter(sorter, refresh);
     }
 
     @Action
@@ -1713,7 +1713,7 @@ export class RunningTree<
     ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        node.removeNamedSorter(sorter, refresh);
+        return node.removeNamedSorter(sorter, refresh);
     }
 
     @Action
@@ -1724,7 +1724,7 @@ export class RunningTree<
     ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        node.removeNamedSorterByName(name, refresh);
+        return node.removeNamedSorterByName(name, refresh);
     }
 
     async tryExecute(path: string) {
