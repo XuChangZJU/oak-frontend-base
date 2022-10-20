@@ -1141,22 +1141,39 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         }
                     }
 
-                    const sliceIdx = ele.indexOf(':');
-                    const ele2 = sliceIdx > 0 ? ele.slice(0, sliceIdx) : ele;
-                    return {
-                        oper: {
-                            id: 'dummy',        // 因为肯定会被merge掉，所以无所谓了
-                            action: 'update',
-                            data: {
-                                [ele2]: subOper,
-                            },
-                            filter: {
-                                id: this.id,
-                            }
-                        },
-                        beforeExecute: subBe,
-                        afterExecute: subAe,
-                    } as Operation<ED, keyof ED>;
+                    if (subOper) {
+                        const sliceIdx = ele.indexOf(':');
+                        const ele2 = sliceIdx > 0 ? ele.slice(0, sliceIdx) : ele;
+                        if (this.id) {
+                            return {
+                                oper: {
+                                    id: 'dummy',        // 因为肯定会被merge掉，所以无所谓了
+                                    action: 'update',
+                                    data: {
+                                        [ele2]: subOper,
+                                    },
+                                    filter: {
+                                        id: this.id,
+                                    }
+                                },
+                                beforeExecute: subBe,
+                                afterExecute: subAe,
+                            } as Operation<ED, keyof ED>;
+                        }
+                        else {
+                            return {
+                                oper: {
+                                    id: 'dummy',        // 因为肯定会被merge掉，所以无所谓了
+                                    action: 'create',
+                                    data: {
+                                        [ele2]: subOper,
+                                    },
+                                },
+                                beforeExecute: subBe,
+                                afterExecute: subAe,
+                            } as Operation<ED, keyof ED>;
+                        }
+                    }
                 }
             )
         );
@@ -1179,8 +1196,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             });
         }
         for (const oper of childOperations) {
-            const merged = tryMergeOperationToExisted(this.entity, this.schema, oper, operations);
-            assert(merged);     // SingleNode貌似不可能不merge成功
+            if (oper) {
+                const merged = tryMergeOperationToExisted(this.entity, this.schema, oper, operations);
+                assert(merged);     // SingleNode貌似不可能不merge成功
+            }
         }
         return operations;
     }
