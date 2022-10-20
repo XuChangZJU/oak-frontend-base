@@ -85,7 +85,7 @@ export async function onPathSet<
     } else if (sorters) {
         for (const ele of sorters) {
             const { sorter, '#name': name } = ele;
-            sorters.push({
+            sorters2.push({
                 sorter:
                     typeof sorter === 'function'
                         ? () =>
