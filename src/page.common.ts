@@ -321,7 +321,6 @@ export function callPicker<
     });
 }
 
-
 export async function setUpdateData<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
@@ -341,6 +340,27 @@ export async function setUpdateData<
             data: {
                 [attr]: data,
             }
+        } as ED[T]['CreateSingle']);
+    }
+}
+
+export async function setMultiAttrUpdateData<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
+    Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>, data: Record<string, any>) {
+    for (const key in data) {
+        assert(key.indexOf('.') === -1, 'setMultiAttrUpdateData只能设置当前对象属性，子层对象请写完整的addOperation');
+    }
+    if (this.props.oakId) {
+        return this.addOperation({
+            action: 'update',
+            data,
+        } as ED[T]['Update']);
+    }
+    else {
+        await this.addOperation({
+            action: 'create',
+            data,
         } as ED[T]['CreateSingle']);
     }
 }

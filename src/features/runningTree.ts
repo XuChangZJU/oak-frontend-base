@@ -1072,15 +1072,18 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     async addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']) {
-        if (!oper.filter) {
-            Object.assign(oper, {
-                filter: {
-                    id: this.id,
-                },
-            });
-        }
-        else {
-            assert(oper.filter.id === this.id);
+        if (oper.action !== 'create') {
+            assert(this.id);
+            if (!oper.filter) {
+                Object.assign(oper, {
+                    filter: {
+                        id: this.id,
+                    },
+                });
+            }
+            else {
+                assert(oper.filter.id === this.id);
+            }
         }
         const operation = {
             oper,

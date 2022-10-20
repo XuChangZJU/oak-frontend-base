@@ -19,7 +19,7 @@ import {
 
 import {
     subscribe, unsubscribe, onPathSet, reRender, refresh,
-    loadMore, execute, callPicker, setUpdateData
+    loadMore, execute, callPicker, setUpdateData, setMultiAttrUpdateData
 } from './page.common';
 import { MessageProps } from './types/Message';
 import { NotificationProps } from './types/Notification';
@@ -279,6 +279,10 @@ abstract class OakComponentBase<
 
     setUpdateData(attr: string, data: any) {
         return setUpdateData.call(this as any, attr, data);
+    }
+
+    setMultiAttrUpdateData(data: Record<string, any>) {
+        return setMultiAttrUpdateData.call(this as any, data);
     }
 
     loadMore() {
