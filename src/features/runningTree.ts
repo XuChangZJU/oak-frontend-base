@@ -1509,7 +1509,7 @@ export class RunningTree<
     async refresh(path: string) {
         const node = this.findNode(path);
         if (node instanceof ListNode) {
-            await node.refresh(0, true);
+            await node.refresh(1, true);
         }
         else {
             assert(node instanceof SingleNode);
