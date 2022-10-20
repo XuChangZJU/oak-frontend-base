@@ -25,59 +25,58 @@ function getQuery(url: string, properties?: WechatMiniprogram.Component.Property
         query = parseUrl.query;
     }
     const query2 = {};
-    if (properties) {
-        for (const k in query) {
-            if (properties[k]) {
-                const type = typeof properties[k] === 'function' ? properties[k] : (properties[k] as any).type;
-                switch (type) {
-                    case Number: {
-                        Object.assign(query2, {
-                            [k]: Number(query[k]),
-                        });
-                        break;
-                    }
-                    case Boolean: {
-                        Object.assign(query2, {
-                            [k]: Boolean(query[k]),
-                        });
-                        break;
-                    }
-                    case Array:
-                    case Object: {
-                        Object.assign(query2, {
-                            [k]: JSON.parse(query[k]),
-                        });
-                        break;
-                    }
-                    default: {
-                        Object.assign(query2, {
-                            [k]: query[k],
-                        })
-                    }
+    
+    for (const k in query) {
+        if (properties && properties[k]) {
+            const type = typeof properties[k] === 'function' ? properties[k] : (properties[k] as any).type;
+            switch (type) {
+                case Number: {
+                    Object.assign(query2, {
+                        [k]: Number(query[k]),
+                    });
+                    break;
+                }
+                case Boolean: {
+                    Object.assign(query2, {
+                        [k]: Boolean(query[k]),
+                    });
+                    break;
+                }
+                case Array:
+                case Object: {
+                    Object.assign(query2, {
+                        [k]: JSON.parse(query[k]),
+                    });
+                    break;
+                }
+                default: {
+                    Object.assign(query2, {
+                        [k]: query[k],
+                    })
                 }
             }
-            else {
-                switch (k) {
-                    case 'oakIsPicker':
-                    case 'enablePullDownRefresh': {
-                        Object.assign(query2, {
-                            [k]: Boolean(query[k]),
-                        });
-                        break;
-                    }
-                    case 'oakFilters':
-                    case 'oakSorters': {
-                        Object.assign(query2, {
-                            [k]: JSON.parse(query[k]),
-                        });
-                        break;
+        }
+        else {
+            switch (k) {
+                case 'oakIsPicker':
+                case 'enablePullDownRefresh': {
+                    Object.assign(query2, {
+                        [k]: Boolean(query[k]),
+                    });
+                    break;
+                }
+                case 'oakFilters':
+                case 'oakSorters': {
+                    Object.assign(query2, {
+                        [k]: JSON.parse(query[k]),
+                    });
+                    break;
 
-                    }
-                    default: {
-                        Object.assign(query2, {
-                            [k]: query[k],
-                        })
-                    }
+                }
+                default: {
+                    Object.assign(query2, {
+                        [k]: query[k],
+                    })
                 }
             }
         }
