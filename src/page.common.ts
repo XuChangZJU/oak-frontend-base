@@ -282,6 +282,9 @@ export async function execute<
                 throw err;
             }
         }
+        this.setState({
+            oakExecuting: false,
+        });
         this.setMessage({
             type: 'error',
             content: (err as Error).message,

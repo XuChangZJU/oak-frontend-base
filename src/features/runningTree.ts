@@ -147,17 +147,33 @@ function mergeOperationData<ED extends EntityDict & BaseEntityDict, T extends ke
         else {
             const rel = judgeRelation(schema, entity, attr);
             if (rel === 2) {
-                const result = mergeOperation(attr, schema, from[attr] as any, [into[attr] as any]);
-                assert(result);
+                /**
+                 * 多对一的关系，这里不可能from是remove吧
+                 */
+                const result = mergeOperationOper(attr, schema, (from[attr] as any), (into[attr] as any));
+                assert(!result);
             }
             else if (typeof rel === 'string') {
-                const result = mergeOperation(rel, schema, from[attr] as any, [into[attr] as any]);
-                assert(result);
+                const result = mergeOperationOper(rel, schema, (from[attr] as any), (into[attr] as any));
+                assert(!result);
             }
             else if (rel instanceof Array) {
-                const [entity2] = rel;
-                const result = mergeOperation(entity2, schema, from[attr] as any, [into[attr] as any]);
-                assert(result);
+                // 这种情况还不是很清楚，感觉不太可能跑的到 by Xc
+                assert(false);
+                /* const [entity2] = rel;
+                const {
+                    index,
+                    eliminated,
+                } = findOperationToMerge(entity2, schema, from[attr] as any, into[attr] as any);
+                if (!index) {
+                    (into[attr] as any).push(from[attr]);
+                }
+                else {
+                    const result2 = mergeOperationOper(entity2, schema, from[attr] as any, index);
+                    if (result2) {
+                        pull(from[attr] as any, index);
+                    }
+                } */
             }
             else {
                 into[attr] = from[attr];
@@ -166,157 +182,258 @@ function mergeOperationData<ED extends EntityDict & BaseEntityDict, T extends ke
     }
 }
 
+/**
+ * 确定两个Operation要merge
+ * @param entity 
+ * @param schema 
+ * @param from 
+ * @param into 
+ */
+function mergeOperationOper<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
+    entity: T,
+    schema: StorageSchema<ED>,
+    from: Omit<ED[T]['Operation'], 'id'>,
+    into: ED[T]['Operation']
+) {
+    const { action, data, filter } = from;
+    const { data: dataTo } = into;
+    if (action === into.action) {
+        switch (action) {
+            case 'create': {
+                if (dataTo instanceof Array) {                    
+                    if (data instanceof Array) {
+                        data.forEach(
+                            ele => assert(ele.id)
+                        );
+                        dataTo.push(...data);
+                    }
+                    else {
+                        assert(data.id);
+                        dataTo.push(data as ED[T]['CreateSingle']['data']);
+                    }
+                }
+                else if (!(data instanceof Array) && !data.id) {
+                    // 特殊情况，其实就是单次create
+                    mergeOperationData(entity, schema, data, dataTo);
+                }
+                else {
+                    const data3 = [dataTo] as ED[T]['CreateMulti']['data'];
+                    if (data instanceof Array) {
+                        data3.push(...data);
+                    }
+                    else {
+                        data3.push(data as ED[T]['CreateSingle']['data']);
+                    }
+                    Object.assign(into, {
+                        data: data3,
+                    });
+                }
+                return false;
+            }
+            default: {
+                mergeOperationData(entity, schema, data, dataTo);
+                return false;
+            }
+        }
+    }
+    else {
+        if (action === 'update' && into.action === 'create') {
+            // 更新刚create的数据，直接加在上面
+            const { data: operData } = into;
+            if (operData instanceof Array) {
+                for (const operData2 of operData) {
+                    if (operData2.id === filter!.id) {
+                        mergeOperationData(entity, schema, data, operData2);
+                        return false;
+                    }
+                }
+            }
+            else {
+                if (operData.id === filter!.id) {
+                    mergeOperationData(entity, schema, data, operData);
+                    return false;
+                }
+            }
+        }
+        else if (action === 'remove') {
+            assert (into.action === 'create');
+            // create和remove动作相抵消
+            const { data: operData } = into;
+            if (operData instanceof Array) {
+                for (const operData2 of operData) {
+                    if (operData2.id === filter!.id) {
+                        if (operData.length > 0) {
+                            Object.assign(into, {
+                                data: pull(operData, operData2)
+                            });
+                            return false;
+                        }
+                        else {
+                            return true;
+                        }
+                    }
+                }
+            }
+            else {
+                if (operData.id === filter!.id) {
+                    return true;
+                }
+            }
+        }
+    }
+    assert (false); // merge必须成功
+}
+
 function mergeOperationTrigger<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
     from: Operation<ED, T, true>,
     to: Operation<ED, T>
 ) {
     const { beforeExecute: be1, afterExecute: ae1 } = from;
-    const { beforeExecute: be2, afterExecute: ae2 } = to;
 
     if (be1) {
-        if (be2) {
-            to.beforeExecute = async () => {
-                await be1();
-                await be2();
-            };
-        }
-        else {
-            to.beforeExecute = be1;
-        }
+        assert(!to.beforeExecute);
+        to.beforeExecute = be1;
     }
     if (ae1) {
-        if (ae2) {
-            to.afterExecute = async () => {
-                await ae1();
-                await ae2();
-            };
-        }
-        else {
-            to.afterExecute = ae1;
-        }
+        assert(!to.afterExecute);
+        to.afterExecute = ae1;
     }
 }
-/**
- * 尝试将operation行为merge到现有的operation中去
- * @param operation 
- * @param operations 
- * @return 是否merge成功
- */
-function mergeOperation<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
+
+function findOperationToMerge<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
     entity: T,
     schema: StorageSchema<ED>,
-    operation: Operation<ED, T, true>,
-    operations: Operation<ED, T>[]
-) {
-    const { oper } = operation;
-    const { action, data } = oper;
-    let idx = 0;
-    let result = false;
-    for (const operIter of operations) {
-        const { oper: oper2 } = operIter;
-        if (action === oper2.action) {
+    from: Omit<ED[T]['Operation'], 'id'>,
+    existed: ED[T]['Operation'][]
+): {
+    index: ED[T]['Operation'] | undefined;
+    eliminated: ED[T]['Operation'][];
+} {
+    const { action, filter } = from;
+    const eliminated: ED[T]['Operation'][] = [];
+    for (const toOperation of existed) {
+        if (action === toOperation.action) {
             switch (action) {
                 case 'create': {
-                    const { data: data2 } = oper2 as ED[T]['Create'];
-                    if (data2 instanceof Array) {
-                        if (data instanceof Array) {
-                            data2.push(...data);
-                        }
-                        else {
-                            data2.push(data as ED[T]['CreateSingle']['data']);
-                        }
-                    }
-                    else {
-                        const data3 = [data2] as ED[T]['CreateMulti']['data'];
-                        if (data instanceof Array) {
-                            data3.push(...data);
-                        }
-                        else {
-                            data3.push(data as ED[T]['CreateSingle']['data']);
-                        }
-                        Object.assign(oper2, {
-                            data: data3,
-                        });
-                    }
-                    // 如果需要，merge execute事件
-                    mergeOperationTrigger(operation, operIter);
-                    return true;
+                    return {
+                        index: toOperation,
+                        eliminated,
+                    };
                 }
                 default: {
                     // update/remove只合并filter完全相同的项
-                    const { filter: filter2, data: data2 } = oper2;
-                    const { filter } = oper as ED[T]['Remove'];
+                    const { filter: filter2, data: data2 } = toOperation;
                     assert(filter && filter2, '更新动作目前应该都有谓词条件');
                     if (same(entity, schema, filter, filter2)) {
-                        mergeOperationData(entity, schema, data, data2);
-                        mergeOperationTrigger(operation, operIter);
-                        return true;
+                        return {
+                            index: toOperation,
+                            eliminated,
+                        };
                     }
                 }
             }
         }
         else {
-            const { data, filter } = oper;
-            if (action === 'update' && oper2.action === 'create') {
+            if (action === 'update' && toOperation.action === 'create') {
                 // 更新刚create的数据，直接加在上面
-                const { data: operData } = oper2;
+                const { data: operData } = toOperation;
                 if (operData instanceof Array) {
                     for (const operData2 of operData) {
                         if (operData2.id === filter!.id) {
-                            mergeOperationData(entity, schema, data, operData2);
-                            mergeOperationTrigger(operation, operIter);
-                            return true;
+                            return {
+                                index: toOperation,
+                                eliminated,
+                            };
                         }
                     }
                 }
                 else {
                     if (operData.id === filter!.id) {
-                        mergeOperationData(entity, schema, data, operData);
-                        mergeOperationTrigger(operation, operIter);
-                        return true;
+                        return {
+                            index: toOperation,
+                            eliminated,
+                        };
                     }
                 }
             }
             else if (action === 'remove') {
-                if (oper2.action === 'create') {
+                if (toOperation.action === 'create') {
                     // create和remove动作相抵消
-                    const { data: operData } = oper2;
+                    const { data: operData } = toOperation;
                     if (operData instanceof Array) {
                         for (const operData2 of operData) {
                             if (operData2.id === filter!.id) {
-                                if (operData.length > 0) {
-                                    Object.assign(operIter, {
-                                        data: pull(operData, operData2)
-                                    });
-                                }
-                                else {
-                                    operations.splice(idx, 1);
-                                }
-                                result = true;
+                                return {
+                                    index: toOperation,
+                                    eliminated,
+                                };
                             }
                         }
                     }
                     else {
                         if (operData.id === filter!.id) {
-                            operations.splice(idx, 1);
-                            result = true;
+                            return {
+                                index: toOperation,
+                                eliminated,
+                            };
                         }
                     }
                 }
                 else {
                     // update，此时把相同id的update直接去掉
-                    const { filter: operFilter } = oper2;
+                    const { filter: operFilter } = toOperation;
                     if (filter?.id === operFilter?.id) {
-                        operations.splice(idx, 1);
-                        continue;   // 这里不能返回true
+                        eliminated.push(toOperation);
                     }
                 }
             }
         }
-        idx++;
+    }
+    // 到这儿说明merge不了
+    return {
+        index: undefined,
+        eliminated,
+    };
+}
+/**
+ * 尝试将operation行为merge到现有的operation中去
+ * @param operation 
+ * @param existed 
+ * @return 是否merge成功
+ */
+function tryMergeOperationToExisted<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
+    entity: T,
+    schema: StorageSchema<ED>,
+    operation: Operation<ED, T, true>,
+    existed: Operation<ED, T>[]
+) {
+    const { oper } = operation;
+    // 有动作的operation是不能合并的
+    const existedOperations = existed.filter(ele => !ele.afterExecute && !ele.beforeExecute).map(ele => ele.oper);
+    const {
+        index,
+        eliminated,
+    } = findOperationToMerge(entity, schema, oper, existedOperations);
+    
+    if (index) {
+        // 可以合并
+        const origin = existed.find(ele => ele.oper === index);
+        assert(origin);
+        const result = mergeOperationOper(entity, schema, oper, index);
+        if (result) {
+            // 说明相互抵消了
+            pull(existed, origin);
+        }
+        else {
+            mergeOperationTrigger(operation, origin);
+        }
+    }
+    for (const eli of eliminated) {
+        const origin = existed.find(ele => ele.oper === eli);
+        pull(existed, origin);
     }
 
-    return result;
+    return !!index;
 }
 
 class ListNode<
@@ -638,7 +755,7 @@ class ListNode<
             beforeExecute,
             afterExecute,
         }
-        const merged = mergeOperation(this.entity, this.schema, operation, this.operations);
+        const merged = tryMergeOperationToExisted(this.entity, this.schema, operation, this.operations);
         if (!merged) {
             this.operations.push(operation);
         }
@@ -658,7 +775,7 @@ class ListNode<
         const operations: Operation<ED, T>[] = [];
         for (const oper of childOperations) {
             if (oper) {
-                const merged = this.operations.length > 0 && mergeOperation(this.entity, this.schema, oper[0], this.operations);
+                const merged = this.operations.length > 0 && tryMergeOperationToExisted(this.entity, this.schema, oper[0], this.operations);
                 if (!merged) {
                     operations.push(oper[0]);
                 }
@@ -1059,7 +1176,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             });
         }
         for (const oper of childOperations) {
-            const merged = mergeOperation(this.entity, this.schema, oper, operations);
+            const merged = tryMergeOperationToExisted(this.entity, this.schema, oper, operations);
             assert(merged);     // SingleNode貌似不可能不merge成功
         }
         return operations;

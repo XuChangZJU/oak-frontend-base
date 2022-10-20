@@ -3,7 +3,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { reinforceSelection } from 'oak-domain/lib/store/selection';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Action, Feature } from '../types/Feature';
-import { pull } from 'oak-domain/lib/utils/lodash';
+import { cloneDeep, pull } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { RWLock } from 'oak-domain/lib/utils/concurrent';
 import { OakRowUnexistedException } from 'oak-domain/lib/types/Exception';
@@ -120,7 +120,7 @@ export class Cache<
         await context.begin();
         try {
             for (const operation of operations) {
-                await this.cacheStore!.operate(entity, operation, context, {
+                await this.cacheStore!.operate(entity, cloneDeep(operation), context, {
                     dontCollect: true,
                     dontCreateOper: true,
                 });
@@ -173,7 +173,7 @@ export class Cache<
         for (const oper of opers) {
             await this.cacheStore!.operate(
                 oper.entity,
-                oper.operation,
+                cloneDeep(oper.operation),
                 context,
                 {
                     dontCollect: true,
