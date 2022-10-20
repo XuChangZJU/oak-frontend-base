@@ -128,7 +128,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
 }
 
 const DEFAULT_PAGINATION: Pagination = {
-    currentPage: 0,
+    currentPage: 1,
     pageSize: 20,
     append: true,
     more: true,
@@ -845,7 +845,7 @@ class ListNode<
         else {
             this.loading = true;
         }
-        const currentPage3 = typeof pageNumber === 'number' ? pageNumber : currentPage;
+        const currentPage3 = typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
         const { data: projection, filters, sorter } = await this.constructSelection(true);
         try {
             const { data, count } = await this.cache.refresh(
@@ -862,7 +862,7 @@ class ListNode<
                 undefined,
                 getCount
             );
-            this.pagination.currentPage = currentPage;
+            this.pagination.currentPage = currentPage3 + 1;
             this.pagination.more = data.length === pageSize;
             if (append) {
                 this.loadingMore = false;
