@@ -751,13 +751,14 @@ class ListNode<
 
     async addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']) {
         const operation = {
-            oper: Object.assign(oper, { id: await generateNewId() }),
+            oper,
             beforeExecute,
             afterExecute,
         }
         const merged = tryMergeOperationToExisted(this.entity, this.schema, operation, this.operations);
         if (!merged) {
-            this.operations.push(operation);
+            Object.assign(oper, { id: await generateNewId() })
+            this.operations.push(operation as Operation<ED, T>);
         }
         this.setDirty();
     }
@@ -781,6 +782,8 @@ class ListNode<
                 }
             }
         }
+
+        await repairOperations(this.entity, this.schema, operations.map(ele => ele.oper));
         return operations;
     }
 
@@ -1212,6 +1215,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 assert(merged);     // SingleNode貌似不可能不merge成功
             }
         }
+        await repairOperations(this.entity, this.schema, operations.map(ele => ele.oper));
         return operations;
     }
 
@@ -1328,6 +1332,38 @@ function analyzePath(path: string) {
     return {
         path,
     };
+}
+
+async function repairOperations<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(entity: T, schema: StorageSchema<ED>, operations: ED[T]['Operation'][]) {
+    async function repairData<T2 extends keyof ED>(entity2: T2, data: ED[T2]['CreateSingle']['data']) {
+        for (const attr in data) {
+            const rel = judgeRelation(schema, entity2, attr);
+            if (rel === 2) {
+                await repairOperations(attr, schema, [data[attr]]);
+            }
+            else if (typeof rel === 'string') {
+                await repairOperations(rel, schema, [data[attr]]);
+            }
+            else if (rel instanceof Array) {
+                await repairOperations(rel[0], schema, (data[attr] as any) instanceof Array ? data[attr] : [data[attr]]);
+            }
+        }
+    }
+    for (const operation of operations) {
+        if (!operation.id) {
+            operation.id = await generateNewId();            
+        }
+        const { data } = operation as ED[T]['Create'];
+        
+        if (data instanceof Array) {
+            for (const d of data) {
+                await repairData(entity, d);
+            }
+        }
+        else {
+            await repairData(entity, data);
+        }
+    }
 }
 
 export class RunningTree<

@@ -45,7 +45,7 @@ export function subscribe(callback: () => any) {
             result = await method.apply(this, params);
         }
         catch (err) {
-            console.error(err, method.name);
+            // console.error(err, method.name);
             mActionStackDepth--;
             throw err;
         }

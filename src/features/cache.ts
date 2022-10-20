@@ -182,6 +182,7 @@ export class Cache<
                 }
             );
         }
+        reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
         while (true) {
             try {
                 result = await this.cacheStore!.select(
