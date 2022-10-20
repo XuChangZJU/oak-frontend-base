@@ -143,7 +143,6 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     }) => Promise<void>;
     redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) => Promise<void>;
     setProps: (props: Record<string, any>, usingState?: true) => void;
-    resetUpdateData: () => void;
     addOperation: (operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => Promise<void>;
     cleanOperation: () => void;
     t(key: string, params?: object): string;

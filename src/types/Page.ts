@@ -243,7 +243,6 @@ export type OakCommonComponentMethods<
             disableNamespace?: boolean
         ) => Promise<void>;
         setProps: (props: Record<string, any>, usingState?: true) => void;
-        resetUpdateData: () => void;
         addOperation: (operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => Promise<void>;
         cleanOperation: () => void;
         
