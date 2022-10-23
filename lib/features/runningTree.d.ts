@@ -21,7 +21,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     protected loadingMore: boolean;
     protected executing: boolean;
     protected operations: Operation<ED, T>[];
-    protected modiIds: string[];
+    protected modies: BaseEntityDict['modi']['OpSchema'][];
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: Node<ED, keyof ED, Cxt, AD>);
     getEntity(): T;
     protected abstract getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string;
@@ -30,7 +30,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     /**
      * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
      */
-    getModiIds(child: Node<ED, keyof ED, Cxt, AD>): string[];
+    getModies(child: Node<ED, keyof ED, Cxt, AD>): BaseEntityDict['modi']['OpSchema'][];
     setDirty(): void;
     isDirty(): boolean;
     isLoading(): boolean;
@@ -39,7 +39,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     setExecuting(executing: boolean): void;
     getParent(): Node<ED, keyof ED, Cxt, AD> | undefined;
     protected getProjection(): Promise<ED[T]["Selection"]["data"]>;
-    protected judgeRelation(attr: string): string | 0 | 2 | 1 | string[];
+    protected judgeRelation(attr: string): string | 0 | 2 | string[] | 1;
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }
@@ -101,7 +101,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     };
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>): void;
     removeChild(path: string): void;
-    getFreshValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>>;
+    getFreshValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined>;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
     addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']): Promise<void>;
@@ -129,10 +129,10 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     private schema;
     private root;
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, AD>, schema: StorageSchema<ED>);
-    createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>): Promise<ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>>;
+    createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>): Promise<ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD> | undefined>;
     private findNode;
     destroyNode(path: string): void;
-    getFreshValue(path: string): Promise<SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]>> | Promise<SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]>[]>;
+    getFreshValue(path: string): Promise<SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]> | undefined> | Promise<SelectRowShape<ED[keyof ED]["Schema"], ED[keyof ED]["Selection"]["data"]>[]> | undefined;
     isDirty(path: string): boolean;
     addOperation<T extends keyof ED>(path: string, operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): Promise<void>;
     isLoading(path: string): boolean;
@@ -157,7 +157,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): Promise<void>;
     removeNamedSorterByName<T extends keyof ED>(path: string, name: string, refresh?: boolean): Promise<void>;
     tryExecute(path: string): Promise<boolean>;
-    execute(path: string): Promise<ED[keyof ED]["Operation"][] | undefined>;
+    execute(path: string, operation?: ED[keyof ED]['Operation']): Promise<ED[keyof ED]["Operation"][] | undefined>;
     clean(path: string): void;
     getRoot(): Record<string, SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>>;
 }

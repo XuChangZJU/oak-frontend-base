@@ -54,7 +54,7 @@ interface ComponentOption<
         '#name'?: string;
     }>;
     formData?: (options: {
-        data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
+        data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj> | undefined;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
     }) => Promise<FormedData>;
@@ -163,6 +163,7 @@ export type OakComponentOption<
             show?(): void;
             hide?(): void;
         };
+        actions?: ED[T]['Action'][];
         observers: Record<string, (...args: any[]) => any>;
     }> &
     Partial<{
@@ -182,6 +183,8 @@ export type OakComponentProperties = {
     oakFrom: StringConstructor;
     oakParentEntity: StringConstructor;
     enablePullDownRefresh: BooleanConstructor;
+    oakAutoUnmount: BooleanConstructor;
+    oakActions: ArrayConstructor;
 };
 
 export type OakListComponentProperties = {
@@ -230,6 +233,7 @@ export type OakCommonComponentMethods<
         setMessage: (data: MessageProps) => void;
         consumeMessage: () => MessageProps | undefined;
         reRender: (extra?: Record<string, any>) => Promise<void>;
+        getFreshValue: (path?: string) => Promise<ED[keyof ED]['Schema'][] | ED[keyof ED]['Schema'] | undefined>;
         navigateTo: <T2 extends keyof ED>(
             options: { url: string } & OakNavigateToParameters<ED, T2>,
             state?: Record<string, any>,
@@ -248,7 +252,7 @@ export type OakCommonComponentMethods<
         
         t(key: string, params?: object): string;
         callPicker: (attr: string, params: Record<string, any>) => void;
-        execute: () => Promise<ED[T]['Operation'][]>;
+        execute: (operation?: ED[T]['Operation']) => Promise<ED[T]['Operation'][]>;
         checkOperation: (ntity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => Promise<boolean>;
         tryExecute: () => Promise<void>;
         refresh: (extra?: any) => Promise<void>;
@@ -313,6 +317,7 @@ export type OakComponentData<
     oakEntity: T;
     oakIsReady: boolean;
     oakFullpath: string;
+    oakLegalActions?: ED[T]['Action'][];
 };
 
 export type MakeOakComponent<

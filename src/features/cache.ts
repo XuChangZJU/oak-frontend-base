@@ -123,6 +123,7 @@ export class Cache<
                 await this.cacheStore!.operate(entity, cloneDeep(operation), context, {
                     dontCollect: true,
                     dontCreateOper: true,
+                    dontCreateModi: true,
                 });
             }
             await context.rollback();
@@ -178,7 +179,7 @@ export class Cache<
                 {
                     dontCollect: true,
                     dontCreateOper: true,
-                    blockTrigger: true,
+                    dontCreateModi: true,
                 }
             );
         }

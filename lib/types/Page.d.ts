@@ -38,7 +38,7 @@ interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyo
         '#name'?: string;
     }>;
     formData?: (options: {
-        data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj>;
+        data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj> | undefined;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
     }) => Promise<FormedData>;
@@ -79,6 +79,7 @@ export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T
         show?(): void;
         hide?(): void;
     };
+    actions?: ED[T]['Action'][];
     observers: Record<string, (...args: any[]) => any>;
 }> & Partial<{
     wechatMp: {
@@ -94,6 +95,8 @@ export declare type OakComponentProperties = {
     oakFrom: StringConstructor;
     oakParentEntity: StringConstructor;
     enablePullDownRefresh: BooleanConstructor;
+    oakAutoUnmount: BooleanConstructor;
+    oakActions: ArrayConstructor;
 };
 export declare type OakListComponentProperties = {
     oakFilters: ObjectConstructor;
@@ -135,6 +138,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     setMessage: (data: MessageProps) => void;
     consumeMessage: () => MessageProps | undefined;
     reRender: (extra?: Record<string, any>) => Promise<void>;
+    getFreshValue: (path?: string) => Promise<ED[keyof ED]['Schema'][] | ED[keyof ED]['Schema'] | undefined>;
     navigateTo: <T2 extends keyof ED>(options: {
         url: string;
     } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) => Promise<void>;
@@ -147,7 +151,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     cleanOperation: () => void;
     t(key: string, params?: object): string;
     callPicker: (attr: string, params: Record<string, any>) => void;
-    execute: () => Promise<ED[T]['Operation'][]>;
+    execute: (operation?: ED[T]['Operation']) => Promise<ED[T]['Operation'][]>;
     checkOperation: (ntity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => Promise<boolean>;
     tryExecute: () => Promise<void>;
     refresh: (extra?: any) => Promise<void>;
@@ -195,6 +199,7 @@ export declare type OakComponentData<ED extends EntityDict & BaseEntityDict, T e
     oakEntity: T;
     oakIsReady: boolean;
     oakFullpath: string;
+    oakLegalActions?: ED[T]['Action'][];
 };
 export declare type MakeOakComponent<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>> = <T extends keyof ED, Proj extends ED[T]['Selection']['data'], FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption>(options: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod>) => React.ComponentType<any>;
 export {};

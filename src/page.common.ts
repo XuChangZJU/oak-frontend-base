@@ -128,6 +128,9 @@ export async function onPathSet<
     else if (oakId) {
         await features.runningTree.setId(oakPath2, oakId);
     }
+    else if (oakEntity || entity) {
+        this.reRender();
+    }
     else {
         // 啥都没有也要为了oakFullpath刷新一次
         this.setState({
@@ -198,6 +201,28 @@ export async function reRender<
         Object.assign(data, {
             oakAllowExecuting,
         });
+
+        const actions: ED[T]['Action'][] = this.props.oakActions || option.actions;
+        if (actions && actions.length > 0) {
+            assert(this.props.oakId);       // actions必须配合id来使用
+            const testResult = await Promise.all(
+                actions.map(
+                    async ele => ({
+                        action: ele,
+                        result: await this.checkOperation(this.state.oakEntity, ele, { id: this.props.oakId }, ['user', 'row']),
+                    })
+                )
+            );
+            const oakLegalActions = testResult.filter(
+                ele => ele.result
+            ).map(
+                ele => ele.action
+            );
+            Object.assign(data, {
+                oakLegalActions,
+            });
+        }
+
         this.setState(data);
     } else {
         const data: Record<string, any> = formData
@@ -252,7 +277,7 @@ export async function execute<
     T extends keyof ED,
     Cxt extends Context<ED>>(
         this: ComponentFullThisType<ED, T, Cxt>,
-        path?: string) {
+        operation?: ED[T]['Operation']) {
     if (this.state.oakExecuting) {
         throw new Error('请仔细设计按钮状态，不要允许重复点击！');
     }
@@ -261,10 +286,10 @@ export async function execute<
         oakExecuting: true,
     });
     try {
-        const fullpath = path
+        /* const fullpath = path
             ? `${this.state.oakFullpath}.${path}`
-            : this.state.oakFullpath;
-        const result = await this.features.runningTree.execute(fullpath);
+            : this.state.oakFullpath; */
+        const result = await this.features.runningTree.execute(this.state.oakFullpath, operation);
         this.setState({
             oakExecuting: false,
         })
@@ -277,13 +302,19 @@ export async function execute<
         if (err instanceof OakUserException) {
             if (err instanceof OakInputIllegalException) {
                 const attrs = err.getAttributes();
+                const entity = err.getEntity();
                 const message = err.message;
-                this.setState({
+                /* this.setState({
                     oakFocused: {
                         attr: attrs[0],
                         message,
                     },
                     oakExecuting: false,
+                }); */
+                const attrNames = attrs.map(attr => this.t(`${entity}:attr.${attr}`)).filter(ele => !!ele);
+                this.setMessage({
+                    type: 'error',
+                    content: attrNames.length > 0 ? `「${attrNames.join(',')}」${message}` : message,
                 });
                 throw err;
             }

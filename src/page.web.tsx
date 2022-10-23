@@ -261,16 +261,22 @@ abstract class OakComponentBase<
         return callPicker.call(this as any, attr, params);
     }
 
-    execute() {
-        return execute.call(this as any);
+    execute(operation?: ED[T]['Operation']) {
+        return execute.call(this as any, operation);
+    }
+
+    getFreshValue(path?: string) {
+        const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        return this.features.runningTree.getFreshValue(path2) as Promise<ED[keyof ED]['Schema'][] | ED[keyof ED]['Schema'] | undefined>;
     }
 
     checkOperation(entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) {
         return this.features.cache.checkOperation(entity, action, filter, checkerTypes);
     }
 
-    tryExecute() {
-        return this.features.runningTree.tryExecute(this.state.oakFullpath);
+    tryExecute(path?: string) {
+        const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        return this.features.runningTree.tryExecute(path2);
     }
 
     refresh() {
@@ -617,18 +623,18 @@ export function createComponent<
         }
 
         componentWillUnmount() {
-            this.state.oakFullpath && this.features.runningTree.destroyNode(this.state.oakFullpath);
+            this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && this.features.runningTree.destroyNode(this.state.oakFullpath);
             lifetimes?.detached && lifetimes.detached.call(this);
             this.unsubscribe();
             this.unregisterPageScroll();
         }
 
-        componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
+        async componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
             if (!prevProps.oakPath && this.props.oakPath) {
-                this.onPathSet();
+                await this.onPathSet();
             }
             if (this.props.oakId !== prevProps.oakId) {
-                this.setId(this.props.oakId);
+                await this.setId(this.props.oakId);
             }
             // todo 这里似乎还可能对oakProjection这些东西加以更新，等遇到再添加 by Xc
 

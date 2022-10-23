@@ -31,7 +31,8 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
     protected loadingMore: boolean;
     protected executing: boolean;
     protected operations: Operation<ED, T>[];
-    protected modiIds: string[];        //  对象所关联的modi的id
+    protected modies: BaseEntityDict['modi']['OpSchema'][];        //  对象所关联的modi
+
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
         projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
@@ -46,7 +47,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
         this.loadingMore = false;
         this.executing = false;
         this.operations = [];
-        this.modiIds = [];
+        this.modies = [];
     }
 
     getEntity() {
@@ -60,12 +61,12 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
     /**
      * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
      */
-    getModiIds(child: Node<ED, keyof ED, Cxt, AD>): string[] {
+    getModies(child: Node<ED, keyof ED, Cxt, AD>): BaseEntityDict['modi']['OpSchema'][] {
         const childPath = this.getChildPath(child);
-        if (childPath.includes(':')) {
-            const { modiIds } = this;
+        if (childPath.includes(':next')) {
+            const { modies } = this;
             // 如果是需要modi的路径，在这里应该就可以返回了，目前应该不存在modi嵌套modi
-            return modiIds;
+            return modies;
         }
         const { toModi } = this.schema[this.entity];
         if (toModi) {
@@ -73,7 +74,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
             return [];
         }
         if (this.parent) {
-            return this.parent.getModiIds(this);
+            return this.parent.getModies(this);
         }
         return [];
     }
@@ -160,22 +161,40 @@ function mergeOperationData<ED extends EntityDict & BaseEntityDict, T extends ke
                 assert(!result);
             }
             else if (rel instanceof Array) {
-                // 这种情况还不是很清楚，感觉不太可能跑的到 by Xc
-                assert(false);
-                /* const [entity2] = rel;
-                const {
-                    index,
-                    eliminated,
-                } = findOperationToMerge(entity2, schema, from[attr] as any, into[attr] as any);
-                if (!index) {
-                    (into[attr] as any).push(from[attr]);
+                /**
+                 * 两个一对多的list要合并，直接合并list就可以了，前端设计上应该不可能出现两个一对多的list相交的case
+                 * $extraFile$XXX:1     $extraFile$XXX:2
+                 */
+                // (into[attr] as unknown as ED[keyof ED]['Operation'][]).push(...(from[attr] as unknown as ED[keyof ED]['Operation'][]));
+                const [entity2] = rel;
+                const mergeInner = (item: ED[keyof ED]['Operation']) => {
+                    const {
+                        index,
+                        eliminated,
+                    } = findOperationToMerge(entity2, schema, item, into[attr] as any);
+                    if (!index) {
+                        (into[attr] as any).push(item);
+                    }
+                    else {
+                        const result2 = mergeOperationOper(entity2, schema, item, index);
+                        if (result2) {
+                            pull(into[attr] as any, index);
+                        }
+                    }
+
+                    for (const eli of eliminated) {
+                        pull((into[attr] as unknown as ED[keyof ED]['Operation'][]), eli);
+                    }
+                };
+                if (from[attr] instanceof Array) {
+                    for (const operation of from[attr] as unknown as ED[keyof ED]['Operation'][]) {
+                        mergeInner(operation);
+                    }
                 }
                 else {
-                    const result2 = mergeOperationOper(entity2, schema, from[attr] as any, index);
-                    if (result2) {
-                        pull(from[attr] as any, index);
-                    }
-                } */
+                    assert(false);      // 前台感觉是跑不出这个case的
+                    mergeInner(from[attr] as unknown as ED[keyof ED]['Operation']);
+                }
             }
             else {
                 into[attr] = from[attr];
@@ -202,33 +221,20 @@ function mergeOperationOper<ED extends EntityDict & BaseEntityDict, T extends ke
     if (action === into.action) {
         switch (action) {
             case 'create': {
+                /**
+                 * 前端的页面设计，如果要merge两个create动作，要么都是single，要么都是array
+                 * 不应该出现array和single并存的case
+                 */
                 if (dataTo instanceof Array) {
-                    if (data instanceof Array) {
-                        data.forEach(
-                            ele => assert(ele.id)
-                        );
-                        dataTo.push(...data);
-                    }
-                    else {
-                        assert(data.id);
-                        dataTo.push(data as ED[T]['CreateSingle']['data']);
-                    }
-                }
-                else if (!(data instanceof Array) && !data.id) {
-                    // 特殊情况，其实就是单次create
-                    mergeOperationData(entity, schema, data, dataTo);
+                    assert (data instanceof Array); 
+                    data.forEach(
+                        ele => assert(ele.id)
+                    );
+                    dataTo.push(...data);
                 }
                 else {
-                    const data3 = [dataTo] as ED[T]['CreateMulti']['data'];
-                    if (data instanceof Array) {
-                        data3.push(...data);
-                    }
-                    else {
-                        data3.push(data as ED[T]['CreateSingle']['data']);
-                    }
-                    Object.assign(into, {
-                        data: data3,
-                    });
+                    assert(!(data instanceof Array));
+                    mergeOperationData(entity, schema, data, dataTo);
                 }
                 return false;
             }
@@ -313,14 +319,19 @@ function findOperationToMerge<ED extends EntityDict & BaseEntityDict, T extends 
 } {
     const { action, filter } = from;
     const eliminated: ED[T]['Operation'][] = [];
+    if (action === 'create') {
+        // action不可能和当前已经的某个动作发生merge
+        return {
+            index: undefined,
+            eliminated,            
+        };
+    }
     for (const toOperation of existed) {
         if (action === toOperation.action) {
             switch (action) {
                 case 'create': {
-                    return {
-                        index: toOperation,
-                        eliminated,
-                    };
+                    // 两个create不可能merge，如果是many to one，则不用走到这里判断
+                    break;
                 }
                 default: {
                     // update/remove只合并filter完全相同的项
@@ -717,19 +728,8 @@ class ListNode<
         }
 
         // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
-        const modiIds = this.parent ? this.parent.getModiIds(this) : [];
-        const operations = modiIds.map(
-            ele => ({
-                entity: 'modi',
-                operation: {
-                    action: 'apply',
-                    data: {},
-                    filter: {
-                        id: ele,
-                    },
-                }
-            })
-        ) as Array<{
+        const modies = this.parent ? this.parent.getModies(this) : [];
+        const operations = createOperationsFromModies(modies) as Array<{
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
         }>;
@@ -1084,23 +1084,12 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     } */
 
 
-    async getFreshValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>> {
+    async getFreshValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined> {
         const projection = typeof this.projection === 'function' ? await this.projection() : this.projection;
 
         // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
-        const modiIds = this.parent ? this.parent.getModiIds(this) : [];
-        const operations = modiIds.map(
-            ele => ({
-                entity: 'modi',
-                operation: {
-                    action: 'apply',
-                    data: {},
-                    filter: {
-                        id: ele,
-                    },
-                }
-            })
-        ) as Array<{
+        const modies = this.parent ? this.parent.getModies(this) : [];
+        const operations = createOperationsFromModies(modies) as Array<{
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
         }>;
@@ -1109,19 +1098,21 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (operation?.oper.action === 'create') {
             id = (operation.oper.data as ED[T]['CreateSingle']['data']).id;
         }
-        operations.push(...this.operations.map(
-            ele => ({
-                entity: this.entity,
-                operation: ele.oper,
-            })
-        ));
-        const { result } = await this.cache.tryRedoOperationsThenSelect(this.entity, {
-            data: projection,
-            filter: {
-                id,
-            } as any,
-        }, operations);
-        return result[0];
+        if (id) {
+            operations.push(...this.operations.map(
+                ele => ({
+                    entity: this.entity,
+                    operation: ele.oper,
+                })
+            ));
+            const { result } = await this.cache.tryRedoOperationsThenSelect(this.entity, {
+                data: projection,
+                filter: {
+                    id,
+                } as any,
+            }, operations);
+            return result[0];
+        }
     }
 
 
@@ -1183,9 +1174,8 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         else {
             // singleNode上应当有且只有一个operation，无论什么情况
-            const [current] = this.operations;
-            Object.assign(current.oper.data, oper.data);
-            mergeOperationTrigger(operation, current);
+            const result = mergeOperationOper(this.entity, this.schema, oper, this.operations[0].oper);
+            assert(!result);
         }
         this.setDirty();
     }
@@ -1314,7 +1304,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 // 对于modi对象，在此缓存
                 if (this.schema[this.entity].toModi) {
                     const { modi$entity } = value;
-                    this.modiIds = (modi$entity as Array<{ id: string }>).map(ele => ele.id);
+                    this.modies = modi$entity as Array<BaseEntityDict['modi']['OpSchema']>;
                 }
                 this.loading = false;
             }
@@ -1457,6 +1447,10 @@ export class RunningTree<
         } = options;
         let node: ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>;
         const { parent, path } = analyzePath(fullPath);
+        if (this.findNode(fullPath)) {
+            return;
+        }
+
         const parentNode = parent ? this.findNode(parent) : undefined;
         const projectionShape =
             typeof projection === 'function' ? await projection() : projection;
@@ -1500,6 +1494,9 @@ export class RunningTree<
         let node = this.root[paths[0]];
         let iter = 1;
         while (iter < paths.length && node) {
+            if (!node) {
+                return;
+            }
             const childPath = paths[iter];
             iter++;
             node = node.getChild(childPath)!;
@@ -1545,17 +1542,17 @@ export class RunningTree<
     }
 
     isLoading(path: string) {
-        const node = this.findNode(path);
+        const node = this.findNode(path)!;
         return node.isLoading();
     }
 
     isLoadingMore(path: string) {
-        const node = this.findNode(path);
+        const node = this.findNode(path)!;
         return node.isLoadingMore();
     }
 
     isExecuting(path: string) {
-        const node = this.findNode(path);
+        const node = this.findNode(path)!;
         return node.isExecuting();
     }
 
@@ -1726,17 +1723,20 @@ export class RunningTree<
     }
 
     async tryExecute(path: string) {
-        const node = this.findNode(path);
+        const node = this.findNode(path)!;
         const operations = await node.composeOperations();
-        if (operations) {
+        if (operations && operations.length > 0) {
             return await this.cache.tryRedoOperations(node.getEntity(), operations);
         }
         return false;
     }
 
     @Action
-    async execute(path: string) {
-        const node = this.findNode(path);
+    async execute(path: string, operation?: ED[keyof ED]['Operation']) {
+        const node = this.findNode(path)!;
+        if (operation) {
+            await node.addOperation(operation);
+        }
         assert(node.isDirty());
 
         node.setExecuting(true);
@@ -1764,7 +1764,7 @@ export class RunningTree<
 
     @Action
     clean(path: string) {
-        const node = this.findNode(path);
+        const node = this.findNode(path)!;
 
         node.clean();
     }
