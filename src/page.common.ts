@@ -40,96 +40,93 @@ export async function onPathSet<
         this: ComponentFullThisType<ED, T, Cxt>,
         option: OakComponentOption<ED, T, Cxt, any, any, any, any, any, {}, {}, {}>) {
     const { props, state } = this;
-    const { oakEntity, oakPath, oakProjection, oakIsPicker, oakFilters, oakSorters, oakId } = props;
+    const { oakPath, oakProjection, oakIsPicker, oakFilters, oakSorters, oakId } = props;
     const { entity, path, projection, isList, filters, sorters, pagination } = option;
     const { features } = this;
 
-    const filters2: NamedFilterItem<ED, T>[] = [];
-    if (oakFilters) {
-        // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
-        const oakFilters2 = typeof oakFilters === 'string' ? JSON.parse(oakFilters) : oakFilters;
-        filters2.push(...oakFilters2);
-    } else if (filters) {
-        for (const ele of filters) {
-            const { filter, '#name': name } = ele;
-            filters2.push({
-                filter:
-                    typeof filter === 'function'
-                        ? () =>
-                            filter({
-                                features,
-                                props,
-                                state
-                            })
-                        : filter,
-                ['#name']: name,
-            });
-        }
-    }
-    let proj = oakProjection && (typeof oakProjection === 'string' ? JSON.parse(oakProjection) : oakProjection);
-    if (!proj && projection) {
-        proj = typeof projection === 'function'
-            ? () =>
-                projection({
-                    features,
-                    props,
-                    state,
-                })
-            : projection;
-    }
-    let sorters2: NamedSorterItem<ED, T>[] = [];
-    if (oakSorters) {
-        // 这里在跳页面的时候用this.navigate应该可以限制传过来的sorter的格式
-        const oakSorters2 = typeof oakSorters === 'string' ? JSON.parse(oakSorters) : oakSorters;
-        sorters2.push(...oakSorters2);
-    } else if (sorters) {
-        for (const ele of sorters) {
-            const { sorter, '#name': name } = ele;
-            sorters2.push({
-                sorter:
-                    typeof sorter === 'function'
-                        ? () =>
-                            sorter({
-                                features,
-                                props,
-                                state,
-                            })
-                        : sorter,
-                ['#name']: name,
-            });
-        }
-    }
     const oakPath2 = oakPath || path;
-    assert(
-        oakPath2,
-        '没有正确的path信息，请检查是否配置正确'
-    );
+    if (entity) {
+        const entity2 = entity instanceof Function ? entity.call(this) : entity;
+        const filters2: NamedFilterItem<ED, T>[] = [];
+        if (oakFilters) {
+            // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
+            const oakFilters2 = typeof oakFilters === 'string' ? JSON.parse(oakFilters) : oakFilters;
+            filters2.push(...oakFilters2);
+        } else if (filters) {
+            for (const ele of filters) {
+                const { filter, '#name': name } = ele;
+                filters2.push({
+                    filter:
+                        typeof filter === 'function'
+                            ? () =>
+                                filter({
+                                    features,
+                                    props,
+                                    state
+                                })
+                            : filter,
+                    ['#name']: name,
+                });
+            }
+        }
+        let proj = oakProjection && (typeof oakProjection === 'string' ? JSON.parse(oakProjection) : oakProjection);
+        if (!proj && projection) {
+            proj = typeof projection === 'function'
+                ? () =>
+                    projection({
+                        features,
+                        props,
+                        state,
+                    })
+                : projection;
+        }
+        let sorters2: NamedSorterItem<ED, T>[] = [];
+        if (oakSorters) {
+            // 这里在跳页面的时候用this.navigate应该可以限制传过来的sorter的格式
+            const oakSorters2 = typeof oakSorters === 'string' ? JSON.parse(oakSorters) : oakSorters;
+            sorters2.push(...oakSorters2);
+        } else if (sorters) {
+            for (const ele of sorters) {
+                const { sorter, '#name': name } = ele;
+                sorters2.push({
+                    sorter:
+                        typeof sorter === 'function'
+                            ? () =>
+                                sorter({
+                                    features,
+                                    props,
+                                    state,
+                                })
+                            : sorter,
+                    ['#name']: name,
+                });
+            }
+        }
+        assert(
+            oakPath2,
+            '没有正确的path信息，请检查是否配置正确'
+        );
+    
+        await features.runningTree.createNode({
+            path: oakPath2,
+            entity: entity2,
+            isList,
+            isPicker: oakIsPicker,
+            projection: proj,
+            pagination: pagination,
+            filters: filters2,
+            sorters: sorters2,
+            id: oakId,
+        });
 
-    await features.runningTree.createNode({
-        path: oakPath2,
-        entity: (oakEntity || entity) as T,
-        isList,
-        isPicker: oakIsPicker,
-        projection: proj,
-        pagination: pagination,
-        filters: filters2,
-        sorters: sorters2,
-    });
+        Object.assign(this.state, {
+            oakEntity: entity2,
+            oakFullpath: oakPath2,
+            oakIsReady: true,
+        });
 
-    Object.assign(this.state, {
-        oakEntity: (oakEntity || entity) as T,
-        oakFullpath: oakPath2,
-        oakIsReady: true,
-    });
-
-    if (isList) {
-        await features.runningTree.refresh(oakPath2);
-    }
-    else if (oakId) {
-        await features.runningTree.setId(oakPath2, oakId);
-    }
-    else if (oakEntity || entity) {
-        this.reRender();
+        // runningTree的node创建出来应当就可以refresh了
+        await this.refresh();
     }
     else {
         // 啥都没有也要为了oakFullpath刷新一次

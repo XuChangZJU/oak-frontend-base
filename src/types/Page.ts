@@ -27,7 +27,7 @@ interface ComponentOption<
     IsList extends boolean,
     TProperty extends WechatMiniprogram.Component.PropertyOption = {},
     > {
-    entity?: T;
+    entity?: T | (() => T);
     path?: string;
     isList: IsList;
     projection?: Proj | ((options: {
@@ -176,7 +176,6 @@ export type OakComponentOption<
 
 
 export type OakComponentProperties = {
-    oakEntity: StringConstructor;
     oakPath: StringConstructor;
     oakId: StringConstructor;
     oakProjection: ObjectConstructor;
