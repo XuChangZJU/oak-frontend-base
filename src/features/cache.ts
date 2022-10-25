@@ -123,6 +123,7 @@ export class Cache<
                 await this.cacheStore!.operate(entity, cloneDeep(operation), context, {
                     dontCollect: true,
                     dontCreateOper: true,
+                    blockTrigger: true,
                     dontCreateModi: true,
                 });
             }

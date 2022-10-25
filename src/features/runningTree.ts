@@ -61,6 +61,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
     protected abstract getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string;
     abstract doBeforeTrigger(): Promise<void>;
     abstract doAfterTrigger(): Promise<void>;
+    abstract checkIfClean(): void;
 
     /**
      * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
@@ -478,6 +479,21 @@ class ListNode<
         }
 
         assert(false);
+    }
+
+    checkIfClean(): void {
+        if (this.operations.length > 0) {
+            return;
+        }
+        for (const child of this.children) {
+            if (child.isDirty()) {
+                return;
+            }
+        }
+        if (this.isDirty()) {
+            this.dirty = false;
+            this.parent?.checkIfClean();
+        }
     }
 
     async onCacheSync(records: OpRecord<ED>[]): Promise<void> {
@@ -1014,6 +1030,21 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         assert(false);
     }
 
+    checkIfClean(): void {
+        if (this.operations.length > 0) {
+            return;
+        }
+        for (const k in this.children) {
+            if (this.children[k].isDirty()) {
+                return;
+            }
+        }
+        if (this.isDirty()) {
+            this.dirty = false;
+            this.parent?.checkIfClean();
+        }
+    }
+
     destroy(): void {
         for (const k in this.children) {
             this.children[k].destroy();
@@ -1502,7 +1533,8 @@ class VirtualNode {
                         mergeOperationOper(this.children[ele].getEntity(), this.children[ele].getSchema(), operation[0], operationDict[idx][0]);
                     }
                     else {
-                        assert(false);
+                        console.warn('发生virtualNode上的list页面的动作merge，请查看');
+                        operationDict[idx].push(...operation);
                     }
                 }
                 else {
@@ -1536,6 +1568,14 @@ class VirtualNode {
         for (const ele in this.children) {
             this.children[ele].clean();
         }
+    }
+    checkIfClean() {
+        for (const ele in this.children) {
+            if (this.children[k].isDirty()) {
+                return;
+            }
+        }
+        this.dirty = false;
     }
 }
 
