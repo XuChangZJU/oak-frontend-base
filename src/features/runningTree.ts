@@ -848,6 +848,7 @@ class ListNode<
 
     async constructSelection(withParent?: true) {
         const { filters, sorters } = this;
+        let disabled = false;
         const data = await this.getProjection();
         assert(data, "取数据时找不到projection信息");
         const sorterArr = (
@@ -877,9 +878,13 @@ class ListNode<
             if (filterOfParent) {
                 filterArr.push(filterOfParent as any);
             }
+            else {
+                disabled = true;
+            }
         }
 
         return {
+            disabled,
             data,
             filters: filterArr.filter(ele => !!ele) as ED[T]['Selection']['filter'][],
             sorter: sorterArr,
@@ -896,52 +901,54 @@ class ListNode<
             this.loading = true;
         }
         const currentPage3 = typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
-        const { data: projection, filters, sorter } = await this.constructSelection(true);
-        try {
-            const { data, count } = await this.cache.refresh(
-                entity,
-                {
-                    data: projection,
-                    filter: filters.length > 0
-                        ? combineFilters(filters)
-                        : undefined,
-                    sorter,
-                    indexFrom: currentPage3 * pageSize,
-                    count: pageSize,
-                },
-                undefined,
-                getCount
-            );
-            this.pagination.currentPage = currentPage3 + 1;
-            this.pagination.more = data.length === pageSize;
-            if (append) {
-                this.loadingMore = false;
+        const { data: projection, filters, sorter, disabled } = await this.constructSelection(true);
+        if (!disabled) {
+            try {
+                const { data, count } = await this.cache.refresh(
+                    entity,
+                    {
+                        data: projection,
+                        filter: filters.length > 0
+                            ? combineFilters(filters)
+                            : undefined,
+                        sorter,
+                        indexFrom: currentPage3 * pageSize,
+                        count: pageSize,
+                    },
+                    undefined,
+                    getCount
+                );
+                this.pagination.currentPage = currentPage3 + 1;
+                this.pagination.more = data.length === pageSize;
+                if (append) {
+                    this.loadingMore = false;
+                }
+                else {
+                    this.loading = false;
+                }
+                if (getCount) {
+                    this.pagination.total = count;
+                }
+    
+                const ids = data.map(
+                    ele => ele.id!
+                ) as string[];
+                if (append) {
+                    this.ids = this.ids.concat(ids)
+                }
+                else {
+                    this.ids = ids;
+                }
             }
-            else {
-                this.loading = false;
+            catch (err) {
+                if (append) {
+                    this.loadingMore = false;
+                }
+                else {
+                    this.loading = false;
+                }
+                throw err;
             }
-            if (getCount) {
-                this.pagination.total = count;
-            }
-
-            const ids = data.map(
-                ele => ele.id!
-            ) as string[];
-            if (append) {
-                this.ids = this.ids.concat(ids)
-            }
-            else {
-                this.ids = ids;
-            }
-        }
-        catch (err) {
-            if (append) {
-                this.loadingMore = false;
-            }
-            else {
-                this.loading = false;
-            }
-            throw err;
         }
     }
 
