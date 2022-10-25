@@ -113,13 +113,13 @@ export class Cache<
      * @returns
      */
     async tryRedoOperations<T extends keyof ED>(
-        entity: T,
-        operations: ED[T]['Operation'][]
+        operations: (ED[T]['Operation'] & { entity: T })[]
     ) {
         const context = this.contextBuilder!();
         await context.begin();
         try {
             for (const operation of operations) {
+                const { entity } = operation;
                 await this.cacheStore!.operate(entity, cloneDeep(operation), context, {
                     dontCollect: true,
                     dontCreateOper: true,

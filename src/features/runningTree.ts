@@ -1,5 +1,5 @@
 import { assert } from 'oak-domain/lib/utils/assert';
-import { cloneDeep, pull, set, unset, merge } from "oak-domain/lib/utils/lodash";
+import { cloneDeep, pull, set, unset, merge, uniq } from "oak-domain/lib/utils/lodash";
 import { combineFilters, contains, repel, same } from "oak-domain/lib/store/filter";
 import { createOperationsFromModies } from 'oak-domain/lib/store/modi';
 import { judgeRelation } from "oak-domain/lib/store/relation";
@@ -24,7 +24,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
     // protected fullPath: string;
     protected schema: StorageSchema<ED>;
     protected projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>);      // 只在Page层有
-    protected parent?: Node<ED, keyof ED, Cxt, AD>;
+    protected parent?: Node<ED, keyof ED, Cxt, AD> | VirtualNode;
     protected dirty?: boolean;
     protected cache: Cache<ED, Cxt, AD>;
     protected loading: boolean;
@@ -36,7 +36,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
         projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
-        parent?: Node<ED, keyof ED, Cxt, AD>) {
+        parent?: Node<ED, keyof ED, Cxt, AD> | VirtualNode) {
         this.entity = entity;
         this.schema = schema;
         this.cache = cache;
@@ -52,6 +52,10 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
 
     getEntity() {
         return this.entity;
+    }
+
+    getSchema() {
+        return this.schema;
     }
 
     protected abstract getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string;
@@ -545,7 +549,7 @@ class ListNode<
         projection:
             | ED[T]['Selection']['data']
             | (() => Promise<ED[T]['Selection']['data']>),
-        parent?: Node<ED, keyof ED, Cxt, AD>,
+        parent?: Node<ED, keyof ED, Cxt, AD> | VirtualNode,
         filters?: NamedFilterItem<ED, T>[],
         sorters?: NamedSorterItem<ED, T>[],
         pagination?: Pagination
@@ -795,9 +799,10 @@ class ListNode<
         const childOperations = await Promise.all(
             this.children.map(
                 async ele => {
-                    const subOper = await ele.composeOperations();
-                    if (subOper) {
-                        return subOper[0];
+                    const childOpertaions = await ele.composeOperations();
+                    if (childOpertaions) {
+                        assert(childOperations.length === 1);
+                        return childOpertaions[0];
                     }
                 }
             )
@@ -834,7 +839,11 @@ class ListNode<
         }
 
         await repairOperations(this.entity, this.schema, operations);
-        return operations;
+        return operations.map(
+            ele => Object.assign(ele, {
+                entity: this.entity,
+            })
+        );
     }
 
     async getProjection(): Promise<ED[T]['Selection']['data']> {
@@ -873,8 +882,9 @@ class ListNode<
             })
         );
 
-        if (withParent) {
-            const filterOfParent = (this.parent as SingleNode<ED, keyof ED, Cxt, AD>)?.getParentFilter<T>(this);
+        if (withParent && this.parent && !(this.parent instanceof VirtualNode)) {
+            assert(this.parent instanceof SingleNode);
+            const filterOfParent = this.parent.getParentFilter<T>(this);
             if (filterOfParent) {
                 filterArr.push(filterOfParent as any);
             }
@@ -894,16 +904,16 @@ class ListNode<
     async refresh(pageNumber?: number, getCount?: true, append?: boolean) {
         const { entity, pagination } = this;
         const { currentPage, pageSize } = pagination;
-        if (append) {
-            this.loadingMore = true;
-        }
-        else {
-            this.loading = true;
-        }
         const currentPage3 = typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
         const { data: projection, filters, sorter, disabled } = await this.constructSelection(true);
         if (!disabled) {
             try {
+                if (append) {
+                    this.loadingMore = true;
+                }
+                else {
+                    this.loading = true;
+                }
                 const { data, count } = await this.cache.refresh(
                     entity,
                     {
@@ -929,7 +939,7 @@ class ListNode<
                 if (getCount) {
                     this.pagination.total = count;
                 }
-    
+
                 const ids = data.map(
                     ele => ele.id!
                 ) as string[];
@@ -987,7 +997,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
         projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
-        parent?: Node<ED, keyof ED, Cxt, AD>, id?: string) {
+        parent?: Node<ED, keyof ED, Cxt, AD> | VirtualNode, id?: string) {
         super(entity, schema, cache, projection, parent);
         this.children = {};
         if (id) {
@@ -1262,7 +1272,11 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             }
         }
         await repairOperations(this.entity, this.schema, operations);
-        return operations;
+        return operations.map(
+            ele => Object.assign(ele, {
+                entity: this.entity,
+            })
+        );
     }
 
     private getFilter() {
@@ -1274,8 +1288,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         else if (this.getParent()) {
             const parent = this.getParent();
-            if (parent) {
-                assert(parent instanceof SingleNode);
+            if (parent && parent instanceof SingleNode) {
                 filter = parent.getParentFilter(this);
             }
         }
@@ -1360,8 +1373,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         else if (this.getParent()) {
             const parent = this.getParent();
-            assert(parent instanceof SingleNode);
-            return parent.getParentFilter(this);
+            if (parent instanceof SingleNode) {
+                filter = parent.getParentFilter(this);
+            }
         }
         if (filter) {
             for (const key in this.children) {
@@ -1422,12 +1436,115 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 }
 
+class VirtualNode {
+    private dirty: boolean;
+    private children: Record<string, SingleNode<any, any, any, any> | ListNode<any, any, any, any>>;
+    constructor() {
+        this.dirty = false;
+        this.children = {};
+    }
+    getModies(child: any): BaseEntityDict['modi']['OpSchema'][] {
+        return []
+    }
+    setDirty() {
+        this.dirty = true;
+    }
+    addChild(
+        path: string, child: SingleNode<any, any, any, any> | ListNode<any, any, any, any>) {
+        // 规范virtualNode子结点的命名路径和类型，entity的singleNode必须被命名为entity或entity:number，ListNode必须被命名为entitys或entitys:number
+        assert(!this.children[path]);
+        const entity = child.getEntity() as string;
+        if (child instanceof SingleNode) {
+            assert(path === entity || path.startsWith(`${entity}:`), `oakPath「${path}」不符合命名规范，请以「${entity}」为命名起始标识`);
+        }
+        else {
+            assert(path === entity || path.startsWith(`${entity}s:`), `oakPath「${path}」不符合命名规范，请以「${entity}s」为命名起始标识`);
+        }
+        this.children[path] = child;
+    }
+    getChild(path: string) {
+        return this.children[path] as SingleNode<any, any, any, any> | ListNode<any, any, any, any> | undefined;
+    }
+    getParent() {
+        return undefined;
+    }
+    destroy() {
+        for (const k in this.children) {
+            this.children[k].destroy();
+        }
+    }
+    async getFreshValue() {
+        return undefined;
+    }
+    isDirty() {
+        return this.dirty;
+    }
+    async refresh() {
+        return Promise.all(
+            Object.keys(this.children).map(
+                ele => this.children[ele].refresh()
+            )
+        );
+    }
+    async composeOperations() {
+        /**
+         * 当一个virtualNode有多个子结点，而这些子结点的前缀一致时，标识这些子结点其实是指向同一个对象，此时需要合并
+         */
+        const operationss = [];
+        const operationDict: Record<string, any> = {};
+        for (const ele in this.children) {
+            const operation = await this.children[ele].composeOperations();
+            if (operation) {
+                const idx = ele.indexOf(':') !== -1 ? ele.slice(0, ele.indexOf(':')) : ele;
+                if (operationDict[idx]) {
+                    // 需要合并这两个子结点的动作
+                    if (this.children[ele] instanceof SingleNode) {
+                        mergeOperationOper(this.children[ele].getEntity(), this.children[ele].getSchema(), operation[0], operationDict[idx][0]);
+                    }
+                    else {
+                        assert(false);
+                    }
+                }
+                else {
+                    operationDict[idx] = operation;
+                }
+            }
+        }
+        for (const k in operationDict) {
+            operationss.push(...operationDict[k]);
+        }
+
+        return operationss;
+    }
+    setExecuting(executing: boolean) {
+        for (const ele in this.children) {
+            this.children[ele].setExecuting(executing);
+        }
+    }
+    async doBeforeTrigger() {
+        for (const ele in this.children) {
+            await this.children[ele].doBeforeTrigger();
+        }
+    }
+    async doAfterTrigger() {
+        for (const ele in this.children) {
+            await this.children[ele].doAfterTrigger();
+        }
+    }
+    clean() {
+        this.dirty = false;
+        for (const ele in this.children) {
+            this.children[ele].clean();
+        }
+    }
+}
+
 export type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     path: string;
-    entity: T;
+    entity?: T;
     isList?: boolean;
     isPicker?: boolean;
-    projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>);
+    projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>);
     pagination?: Pagination;
     filters?: NamedFilterItem<ED, T>[];
     sorters?: NamedSorterItem<ED, T>[];
@@ -1491,7 +1608,7 @@ export class RunningTree<
     private schema: StorageSchema<ED>;
     private root: Record<
         string,
-        SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>
+        SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD> | VirtualNode
     >;
 
     constructor(
@@ -1517,36 +1634,42 @@ export class RunningTree<
             isPicker,
             id,
         } = options;
-        let node: ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD>;
+        let node: ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD> | VirtualNode;
         const { parent, path } = analyzePath(fullPath);
         if (this.findNode(fullPath)) {
             if (process.env.NODE_ENV === 'development') {
-                console.log(`创建node时发现已有结点，注意合法重用。「${fullPath}」`);
+                console.error(`创建node时发现已有结点，不能重用。「${fullPath}」`);
             }
             return;
         }
 
         const parentNode = parent ? this.findNode(parent) : undefined;
-        if (isList) {
-            node = new ListNode<ED, T, Cxt, AD>(
-                entity,
-                this.schema!,
-                this.cache,
-                projection,
-                parentNode,
-                filters,
-                sorters,
-                pagination
-            );
-        } else {
-            node = new SingleNode<ED, T, Cxt, AD>(
-                entity,
-                this.schema!,
-                this.cache,
-                projection,
-                parentNode,
-                id
-            );
+        if (entity) {
+            if (isList) {
+                node = new ListNode<ED, T, Cxt, AD>(
+                    entity,
+                    this.schema!,
+                    this.cache,
+                    projection!,
+                    parentNode,
+                    filters,
+                    sorters,
+                    pagination
+                );
+            } else {
+                node = new SingleNode<ED, T, Cxt, AD>(
+                    entity,
+                    this.schema!,
+                    this.cache,
+                    projection!,
+                    parentNode,
+                    id
+                );
+            }
+        }
+        else {
+            node = new VirtualNode();
+            assert (!parentNode);
         }
         if (parentNode) {
             parentNode.addChild(path, node as any);
@@ -1609,22 +1732,25 @@ export class RunningTree<
     @Action
     async addOperation<T extends keyof ED>(path: string, operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
         const node = this.findNode(path);
-        assert(node);
+        assert(node && (node instanceof SingleNode || node instanceof ListNode));
         await node.addOperation(operation, beforeExecute, afterExecute);
     }
 
     isLoading(path: string) {
-        const node = this.findNode(path)!;
+        const node = this.findNode(path);
+        assert(node && (node instanceof SingleNode || node instanceof ListNode));
         return node.isLoading();
     }
 
     isLoadingMore(path: string) {
-        const node = this.findNode(path)!;
+        const node = this.findNode(path);
+        assert(node && (node instanceof SingleNode || node instanceof ListNode));
         return node.isLoadingMore();
     }
 
     isExecuting(path: string) {
-        const node = this.findNode(path)!;
+        const node = this.findNode(path);
+        assert(node && (node instanceof SingleNode || node instanceof ListNode));
         return node.isExecuting();
     }
 
@@ -1797,8 +1923,8 @@ export class RunningTree<
     async tryExecute(path: string) {
         const node = this.findNode(path)!;
         const operations = await node.composeOperations();
-        if (operations && operations.length > 0) {
-            return await this.cache.tryRedoOperations(node.getEntity(), operations);
+        if (operations) {
+            return await this.cache.tryRedoOperations(operations);
         }
         return false;
     }
@@ -1807,6 +1933,7 @@ export class RunningTree<
     async execute(path: string, operation?: ED[keyof ED]['Operation']) {
         const node = this.findNode(path)!;
         if (operation) {
+            assert(node instanceof ListNode || node instanceof SingleNode);
             await node.addOperation(operation);
         }
         assert(node.isDirty());
@@ -1814,11 +1941,18 @@ export class RunningTree<
         node.setExecuting(true);
         try {
             await node.doBeforeTrigger();
-            const operations = await node.composeOperations();
+            const operations = (await node.composeOperations())!;
+
+            // 这里理论上virtualNode下面可以有多个不同的entity的组件，但实际中不应当出现这样的设计
+            const entities = uniq(
+                operations.filter(ele => !!ele).map(
+                    ele => ele.entity
+                ));
+            assert(entities.length === 1);
 
             await this.getAspectWrapper().exec('operate', {
-                entity: node.getEntity() as string,
-                operation: operations!.filter(ele => !!ele),
+                entity: entities[0],
+                operation: operations.filter(ele => !!ele),
             });
 
             await node.doAfterTrigger();

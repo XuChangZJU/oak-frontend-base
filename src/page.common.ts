@@ -106,7 +106,7 @@ export async function onPathSet<
             oakPath2,
             '没有正确的path信息，请检查是否配置正确'
         );
-    
+
         await features.runningTree.createNode({
             path: oakPath2,
             entity: entity2,
@@ -125,16 +125,18 @@ export async function onPathSet<
             oakIsReady: true,
         });
 
-        // runningTree的node创建出来应当就可以refresh了
-        await this.refresh();
     }
     else {
-        // 啥都没有也要为了oakFullpath刷新一次
-        this.setState({
+        Object.assign(this.state, {
             oakFullpath: oakPath2,
+            oakIsReady: true,
         });
+        // 创建virtualNode
+        await features.runningTree.createNode({
+            path: oakPath2 as string,
+        });    
     }
-    // await this.refresh();
+    await this.refresh();
 }
 
 export async function reRender<
