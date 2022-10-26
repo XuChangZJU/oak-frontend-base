@@ -22,7 +22,9 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
      * @param operation
      * @returns
      */
-    tryRedoOperations<T extends keyof ED>(entity: T, operations: ED[T]['Operation'][]): Promise<boolean>;
+    tryRedoOperations<T extends keyof ED>(operations: (ED[T]['Operation'] & {
+        entity: T;
+    })[]): Promise<boolean>;
     checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]): Promise<boolean>;
     /**
      * 尝试在cache中重做一些动作，然后选择重做后的数据（为了实现modi）

@@ -206,13 +206,13 @@ abstract class OakComponentBase<
 
     setProps(props: Record<string, any>, usingState?: true) {
         const url = window.location.pathname;
+        const search = window.location.search;
         if (usingState) {
-            return this.props.navigate(url, { replace: true, state: props });
+            return this.props.navigate(`${url}${search}`, { replace: true, state: props });
         }
         else {
             // 这里nodejs的url用不了，先简单写一个
             let url2: string;
-            const search = window.location.search;
             if (!search) {
                 let search = '';
                 for (const k in props) {

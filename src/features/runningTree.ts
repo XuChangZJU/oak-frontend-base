@@ -1489,7 +1489,7 @@ class VirtualNode {
             assert(path === entity || path.startsWith(`${entity}:`), `oakPath「${path}」不符合命名规范，请以「${entity}」为命名起始标识`);
         }
         else {
-            assert(path === entity || path.startsWith(`${entity}s:`), `oakPath「${path}」不符合命名规范，请以「${entity}s」为命名起始标识`);
+            assert(path === `${entity}s` || path.startsWith(`${entity}s:`), `oakPath「${path}」不符合命名规范，请以「${entity}s」为命名起始标识`);
         }
         this.children[path] = child;
     }
@@ -1570,7 +1570,7 @@ class VirtualNode {
         }
     }
     checkIfClean() {
-        for (const ele in this.children) {
+        for (const k in this.children) {
             if (this.children[k].isDirty()) {
                 return;
             }

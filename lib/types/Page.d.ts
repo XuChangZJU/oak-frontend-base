@@ -11,7 +11,7 @@ import { NotificationProps } from './Notification';
 import { MessageProps } from './Message';
 declare type RowSelected<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Proj extends ED[T]['Selection']['data'] = Required<ED[T]['Selection']['data']>> = SelectRowShape<ED[T]['Schema'], Proj> | undefined;
 interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>, Proj extends ED[T]['Selection']['data'], FormedData extends Record<string, any>, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption = {}> {
-    entity?: T;
+    entity?: T | (() => T);
     path?: string;
     isList: IsList;
     projection?: Proj | ((options: {
@@ -88,7 +88,6 @@ export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T
     };
 }> & ThisType<ComponentPublicThisType<ED, T, Cxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>>;
 export declare type OakComponentProperties = {
-    oakEntity: StringConstructor;
     oakPath: StringConstructor;
     oakId: StringConstructor;
     oakProjection: ObjectConstructor;
@@ -157,6 +156,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     refresh: (extra?: any) => Promise<void>;
     setUpdateData: (data: string, attr: any) => Promise<void>;
     setMultiAttrUpdateData: (data: Record<string, any>) => Promise<void>;
+    setId: (id: string) => Promise<void>;
 };
 export declare type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     loadMore: () => Promise<void>;
