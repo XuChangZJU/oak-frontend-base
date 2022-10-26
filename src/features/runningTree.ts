@@ -1301,7 +1301,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 operations.push({
                     id: await generateNewId(),
                     action: 'create',
-                    data: {},
+                    data: {
+                        id: await generateNewId(),
+                    },
                 });
             }
         }
