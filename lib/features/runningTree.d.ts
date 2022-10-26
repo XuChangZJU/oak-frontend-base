@@ -103,6 +103,8 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     destroy(): void;
     getChild(path: string): SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
     setId(id: string): Promise<void>;
+    unsetId(): void;
+    getId(): string | undefined;
     getChildren(): {
         [K: string]: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
     };
@@ -172,6 +174,8 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     loadMore(path: string): Promise<void>;
     getPagination<T extends keyof ED>(path: string): Pagination;
     setId(path: string, id: string): Promise<void>;
+    unsetId(path: string): void;
+    getId(path: string): string | undefined;
     setPageSize<T extends keyof ED>(path: string, pageSize: number): Promise<void>;
     setCurrentPage<T extends keyof ED>(path: string, currentPage: number): Promise<void>;
     getNamedFilters<T extends keyof ED>(path: string): NamedFilterItem<ED, keyof ED>[];

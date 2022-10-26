@@ -157,6 +157,8 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     setUpdateData: (data: string, attr: any) => Promise<void>;
     setMultiAttrUpdateData: (data: Record<string, any>) => Promise<void>;
     setId: (id: string) => Promise<void>;
+    unsetId: () => void;
+    getId: () => string | undefined;
 };
 export declare type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     loadMore: () => Promise<void>;

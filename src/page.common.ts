@@ -229,7 +229,9 @@ export async function reRender<
                 features,
                 props: this.props,
             } as any)
-            : {};
+            : {
+                __now: Date.now(),          // 如果没有任何state被set，可能会不触发重渲染
+            };
         if (extra) {
             Object.assign(data, extra);
         }

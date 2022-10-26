@@ -1060,6 +1060,14 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         await this.refresh();
     }
 
+    unsetId() {
+        this.id = undefined;
+    }
+
+    getId() {
+        return this.id;
+    }
+
     getChildren() {
         return this.children;
     }
@@ -1824,6 +1832,19 @@ export class RunningTree<
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
         return node.setId(id);
+    }
+
+    @Action
+    unsetId(path: string) {
+        const node = this.findNode(path);
+        assert(node instanceof SingleNode);
+        node.unsetId();
+    }
+
+    getId(path: string) {
+        const node = this.findNode(path);
+        assert(node instanceof SingleNode);
+        return node.getId();
     }
 
     @Action

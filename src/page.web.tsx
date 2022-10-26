@@ -295,8 +295,16 @@ abstract class OakComponentBase<
         return loadMore.call(this as any);
     }
 
-    protected setId(id: string) {
+    setId(id: string) {
         return this.features.runningTree.setId(this.state.oakFullpath, id);
+    }
+
+    unsetId() {
+        return this.features.runningTree.unsetId(this.state.oakFullpath);
+    }
+
+    getId() {
+        return this.features.runningTree.getId(this.state.oakFullpath);
     }
 
     async setFilters(filters: NamedFilterItem<ED, T>[]) {
