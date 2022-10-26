@@ -243,7 +243,7 @@ export async function refresh<
     Cxt extends Context<ED>>(
         this: ComponentFullThisType<ED, T, Cxt>
     ) {
-    if (this.state.oakEntity && this.state.oakFullpath) {
+    if (this.state.oakFullpath) {
         try {
             await this.features.runningTree.refresh(this.state.oakFullpath);
         } catch (err) {
