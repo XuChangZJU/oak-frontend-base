@@ -864,10 +864,11 @@ class ListNode<
 
     async getProjection(): Promise<ED[T]['Selection']['data']> {
         const projection = await super.getProjection();
-        if (this.children.length > 0) {
+        // List必须自主决定Projection
+        /* if (this.children.length > 0) {
             const subProjection = await this.children[0].getProjection();
             return merge(projection, subProjection);
-        }
+        } */
         return projection;
     }
 
