@@ -622,17 +622,17 @@ export function createComponent<
         async componentDidMount() {
             this.registerPageScroll();
             this.subscribe();
+            lifetimes?.attached && lifetimes.attached.call(this);
             const { oakPath } = this.props;
             if (oakPath || this.iAmThePage() && path) {
                 await this.onPathSet();
+                lifetimes?.ready && lifetimes.ready.call(this);
+                lifetimes?.show && lifetimes.show.call(this);
             }
             else {
                 this.reRender();
             }
 
-            lifetimes?.attached && lifetimes.attached.call(this);
-            lifetimes?.ready && lifetimes.ready.call(this);
-            lifetimes?.show && lifetimes.show.call(this);
         }
 
         componentWillUnmount() {
@@ -645,6 +645,8 @@ export function createComponent<
         async componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
             if (!prevProps.oakPath && this.props.oakPath) {
                 await this.onPathSet();
+                lifetimes?.ready && lifetimes.ready.call(this);
+                lifetimes?.show && lifetimes.show.call(this);
             }
             if (this.props.oakId !== prevProps.oakId) {
                 await this.setId(this.props.oakId);
