@@ -593,7 +593,6 @@ class ListNode<
 
     getChild(
         path: string,
-        newBorn?: true
     ): SingleNode<ED, T, Cxt, AD> | undefined {
         const idx = parseInt(path, 10);
         assert(typeof idx === 'number');
@@ -806,6 +805,18 @@ class ListNode<
 
         for (const child of this.children) {
             await child.doAfterTrigger();
+        }
+    }
+
+    getParentFilter(childNode: SingleNode<ED, T, Cxt, AD>): ED[T]['Selection']['filter'] | undefined {
+        let idx = 0;
+        while (idx < this.ids.length) {
+            if (this.children[idx] === childNode) {
+                return {
+                    id: this.ids[idx],
+                }
+            }
+            idx ++;
         }
     }
 
@@ -1331,7 +1342,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         else if (this.getParent()) {
             const parent = this.getParent();
-            if (parent && parent instanceof SingleNode) {
+            if (parent && (parent instanceof SingleNode || parent instanceof ListNode)) {
                 filter = parent.getParentFilter(this);
             }
         }
@@ -1375,6 +1386,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     async refresh() {
+        if (this.parent instanceof ListNode) {
+            assert(this.parent.getEntity() === this.entity);
+            return;
+        }
         const projection = await this.getProjection();
         const filter = this.getFilter();
         if (filter) {
@@ -1416,7 +1431,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         else if (this.getParent()) {
             const parent = this.getParent();
-            if (parent instanceof SingleNode) {
+            if (parent instanceof SingleNode || parent instanceof ListNode) {
                 filter = parent.getParentFilter(this);
             }
         }

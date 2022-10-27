@@ -59,7 +59,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: Node<ED, keyof ED, Cxt, AD> | VirtualNode, filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], pagination?: Pagination);
     getPagination(): Pagination;
     setPagination(pagination: Pagination): Promise<void>;
-    getChild(path: string, newBorn?: true): SingleNode<ED, T, Cxt, AD> | undefined;
+    getChild(path: string): SingleNode<ED, T, Cxt, AD> | undefined;
     getChildren(): SingleNode<ED, T, Cxt, AD>[];
     addChild(path: string, node: SingleNode<ED, T, Cxt, AD>): void;
     removeChild(path: string): void;
@@ -79,6 +79,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']): Promise<void>;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
+    getParentFilter(childNode: SingleNode<ED, T, Cxt, AD>): ED[T]['Selection']['filter'] | undefined;
     composeOperations(): Promise<(ED[T]["Operation"] & {
         entity: T;
     })[] | undefined>;
