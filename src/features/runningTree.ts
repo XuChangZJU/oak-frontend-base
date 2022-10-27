@@ -223,35 +223,54 @@ function mergeOperationOper<ED extends EntityDict & BaseEntityDict, T extends ke
 ) {
     const { action, data, filter } = from;
     const { data: dataTo } = into;
-    if (action === into.action) {
-        switch (action) {
-            case 'create': {
-                /**
-                 * 前端的页面设计，如果要merge两个create动作，要么都是single，要么都是array
-                 * 不应该出现array和single并存的case
-                 */
-                if (dataTo instanceof Array) {
-                    assert(data instanceof Array);
-                    data.forEach(
-                        ele => assert(ele.id)
-                    );
-                    dataTo.push(...data);
+    if (action === 'create') {
+        assert(into.action === 'create');
+        /**
+         * 前端的页面设计，如果要merge两个create动作，要么都是single，要么都是array
+         * 不应该出现array和single并存的case
+         */
+        if (dataTo instanceof Array) {
+            assert(data instanceof Array);
+            data.forEach(
+                ele => assert(ele.id)
+            );
+            dataTo.push(...data);
+        }
+        else {
+            assert(!(data instanceof Array));
+            mergeOperationData(entity, schema, data, dataTo);
+        }
+        return false;
+    }
+    else if (action === 'remove') {
+        assert(into.action === 'create');
+        // create和remove动作相抵消
+        const { data: operData } = into;
+        if (operData instanceof Array) {
+            for (const operData2 of operData) {
+                if (operData2.id === filter!.id) {
+                    if (operData.length > 0) {
+                        Object.assign(into, {
+                            data: pull(operData, operData2)
+                        });
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
                 }
-                else {
-                    assert(!(data instanceof Array));
-                    mergeOperationData(entity, schema, data, dataTo);
-                }
-                return false;
             }
-            default: {
-                mergeOperationData(entity, schema, data, dataTo);
-                return false;
+        }
+        else {
+            // 当前action都是update
+            if (operData.id === filter!.id) {
+                return true;
             }
         }
     }
     else {
-        if (action === 'update' && into.action === 'create') {
-            // 更新刚create的数据，直接加在上面
+        assert(into.action !== 'remove');
+        if (into.action === 'create') {
             const { data: operData } = into;
             if (operData instanceof Array) {
                 for (const operData2 of operData) {
@@ -268,32 +287,19 @@ function mergeOperationOper<ED extends EntityDict & BaseEntityDict, T extends ke
                 }
             }
         }
-        else if (action === 'remove') {
-            assert(into.action === 'create');
-            // create和remove动作相抵消
-            const { data: operData } = into;
-            if (operData instanceof Array) {
-                for (const operData2 of operData) {
-                    if (operData2.id === filter!.id) {
-                        if (operData.length > 0) {
-                            Object.assign(into, {
-                                data: pull(operData, operData2)
-                            });
-                            return false;
-                        }
-                        else {
-                            return true;
-                        }
-                    }
+        else {
+            mergeOperationData(entity, schema, data, dataTo);
+            if (action !== 'update') {
+                assert(into.action === 'update');
+                if (process.env.NODE_ENV === 'development') {
+                    console.warn(`合并了${action}到update动作，请确认合理性`);
                 }
+                into.action = action;
             }
-            else {
-                if (operData.id === filter!.id) {
-                    return true;
-                }
-            }
+            return false;
         }
     }
+
     assert(false); // merge必须成功
 }
 
@@ -528,13 +534,12 @@ class ListNode<
         if (createdIds.length > 0) {
             const currentIds = this.ids;
 
-            const { sorter, filters } = await this.constructSelection(true);
-            filters.push({
+            const { sorter, filter } = await this.constructSelection(true);
+            const filter2 = combineFilters([filter, {
                 id: {
                     $in: currentIds.concat(createdIds),
                 },
-            });
-            const filter = combineFilters(filters);
+            }]);
 
             const value = await this.cache.get(
                 this.entity,
@@ -542,7 +547,7 @@ class ListNode<
                     data: {
                         id: 1,
                     },
-                    filter,
+                    filter: filter2,
                     sorter,
                 },
                 { obscure: true }
@@ -732,16 +737,16 @@ class ListNode<
     >> {
         const projection = typeof this.projection === 'function' ? await this.projection() : this.projection;
         // 在createOperation中的数据也是要返回的
-        const ids = [...this.ids];
+        const createdIds: string[] = [];
         for (const operation of this.operations) {
             const { oper } = operation;
             if (oper.action === 'create') {
                 const { data } = oper;
                 if (data instanceof Array) {
-                    ids.push(...data.map(ele => ele.id));
+                    createdIds.push(...data.map(ele => ele.id));
                 }
                 else {
-                    ids.push(data.id);
+                    createdIds.push(data.id);
                 }
             }
         }
@@ -759,14 +764,25 @@ class ListNode<
             })
         ));
 
-        const { result } = await this.cache.tryRedoOperationsThenSelect(this.entity, {
-            data: projection,
-            filter: {
-                id: {
-                    $in: ids,
+        // 如果有modi，则不能以ids作为当前对象，需要向上层获得filter应用了modi之后再找过
+        const selection = await this.constructSelection(true);
+        if (modies.length === 0) {
+            Object.assign(selection, {
+                filter: {
+                    id: {
+                        $in: createdIds.concat(this.ids),
+                    }
                 }
-            } as any,
-        }, operations);
+            });
+        }
+        else if (createdIds.length > 0) {
+            const { filter } = selection;
+            Object.assign(selection, {
+                filter: combineFilters([filter, { id: { $in: createdIds } }], true),
+            });
+        }
+
+        const { result } = await this.cache.tryRedoOperationsThenSelect(this.entity, selection, operations);
         return result;
     }
 
@@ -816,7 +832,7 @@ class ListNode<
                     id: this.ids[idx],
                 }
             }
-            idx ++;
+            idx++;
         }
     }
 
@@ -922,10 +938,12 @@ class ListNode<
             }
         }
 
+        const filters2 = filterArr.filter(ele => !!ele);
+        const filter = filters2.length > 0 ? combineFilters<ED, T>(filters2) : undefined;
         return {
             disabled,
             data,
-            filters: filterArr.filter(ele => !!ele) as ED[T]['Selection']['filter'][],
+            filter,
             sorter: sorterArr,
         }
     }
@@ -934,7 +952,7 @@ class ListNode<
         const { entity, pagination } = this;
         const { currentPage, pageSize } = pagination;
         const currentPage3 = typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
-        const { data: projection, filters, sorter, disabled } = await this.constructSelection(true);
+        const { data: projection, filter, sorter, disabled } = await this.constructSelection(true);
         if (!disabled) {
             try {
                 if (append) {
@@ -947,9 +965,7 @@ class ListNode<
                     entity,
                     {
                         data: projection,
-                        filter: filters.length > 0
-                            ? combineFilters(filters)
-                            : undefined,
+                        filter,
                         sorter,
                         indexFrom: currentPage3 * pageSize,
                         count: pageSize,
@@ -1175,6 +1191,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 data: projection,
                 filter,
             }, operations);
+            this.id = result[0].id as string;
             return result[0];
         }
     }
@@ -1208,8 +1225,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     async addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']) {
-        if (oper.action !== 'create') {
-            assert(this.id);
+        if (this.id) {
+            if (oper.action === 'create') {
+                oper.action = 'update';
+            }
             if (!oper.filter) {
                 Object.assign(oper, {
                     filter: {
@@ -1476,14 +1495,14 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         if (rel[1]) {
                             // 基于普通外键的一对多
                             return {
-                                [rel[1]]: this.id!,
+                                [rel[1]]: filter.id,
                             } as any;
                         }
                         else {
                             // 基于entity/entityId的一对多
                             return {
                                 entity: this.entity,
-                                entityId: this.id,
+                                entityId: filter.id,
                             } as any;
                         }
                     }
@@ -1736,7 +1755,7 @@ export class RunningTree<
         }
         else {
             node = new VirtualNode();
-            assert (!parentNode);
+            assert(!parentNode);
         }
         if (parentNode) {
             parentNode.addChild(path, node as any);

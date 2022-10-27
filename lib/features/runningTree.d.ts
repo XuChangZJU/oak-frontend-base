@@ -87,7 +87,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     constructSelection(withParent?: true): Promise<{
         disabled: boolean;
         data: ED[T]["Selection"]["data"];
-        filters: ED[T]["Selection"]["filter"][];
+        filter: ED[T]["Selection"]["filter"] | undefined;
         sorter: DeduceSorterItem<ED[T]["Schema"]>[];
     }>;
     refresh(pageNumber?: number, getCount?: true, append?: boolean): Promise<void>;
