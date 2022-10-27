@@ -597,8 +597,9 @@ class ListNode<
     ): SingleNode<ED, T, Cxt, AD> | undefined {
         const idx = parseInt(path, 10);
         assert(typeof idx === 'number');
-        assert(idx < this.children.length);
-        return this.children[idx];
+        if (idx < this.children.length) {
+            return this.children[idx];
+        }
     }
 
     getChildren() {
