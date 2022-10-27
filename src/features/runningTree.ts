@@ -1986,10 +1986,16 @@ export class RunningTree<
     async tryExecute(path: string) {
         const node = this.findNode(path)!;
         const operations = await node.composeOperations();
-        if (operations) {
+        if (operations && operations.length > 0) {
             return await this.cache.tryRedoOperations(operations);
         }
         return false;
+    }
+
+    async getOperations(path: string) {
+        const node = this.findNode(path)!;
+        const operations = await node.composeOperations();
+        return operations;
     }
 
     @Action
@@ -2036,6 +2042,10 @@ export class RunningTree<
         const node = this.findNode(path)!;
 
         node.clean();
+        const parent = node.getParent();
+        if (parent) {
+            parent.checkIfClean();
+        }
     }
 
     getRoot() {

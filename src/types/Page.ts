@@ -253,7 +253,8 @@ export type OakCommonComponentMethods<
         callPicker: (attr: string, params: Record<string, any>) => void;
         execute: (operation?: ED[T]['Operation']) => Promise<ED[T]['Operation'][]>;
         checkOperation: (ntity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => Promise<boolean>;
-        tryExecute: () => Promise<void>;
+        tryExecute: (path?: string) => Promise<boolean>;
+        getOperations: (path?: string) => Promise<ED[T]['Operation'][] | undefined>;
         refresh: (extra?: any) => Promise<void>;
         setUpdateData: (data: string, attr: any) => Promise<void>;
         setMultiAttrUpdateData: (data: Record<string, any>) => Promise<void>;

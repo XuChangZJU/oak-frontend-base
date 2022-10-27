@@ -279,6 +279,11 @@ abstract class OakComponentBase<
         return this.features.runningTree.tryExecute(path2);
     }
 
+    getOperations<T extends keyof ED>(path?: string): Promise<ED[T]['Operation'][] | undefined> {
+        const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        return this.features.runningTree.getOperations(path2);
+    }
+
     refresh() {
         return refresh.call(this as any);
     }
