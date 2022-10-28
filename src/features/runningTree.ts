@@ -1191,7 +1191,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 data: projection,
                 filter,
             }, operations);
-            this.id = result[0].id as string;
+            this.id = result[0]?.id as string | undefined;
             return result[0];
         }
     }
