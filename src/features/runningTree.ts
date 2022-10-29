@@ -30,7 +30,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
     protected loadingMore: boolean;
     protected executing: boolean;
     protected operations: Operation<ED, T>[];
-    protected modies: BaseEntityDict['modi']['OpSchema'][];        //  对象所关联的modi
+    protected modiIds: string[];        //  对象所关联的modi
 
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
@@ -46,7 +46,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
         this.loadingMore = false;
         this.executing = false;
         this.operations = [];
-        this.modies = [];
+        this.modiIds = [];
     }
 
     getEntity() {
@@ -65,12 +65,31 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
     /**
      * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
      */
-    getModies(child: Node<ED, keyof ED, Cxt, AD>): BaseEntityDict['modi']['OpSchema'][] {
+    async getActiveModies(child: Node<ED, keyof ED, Cxt, AD>): Promise<BaseEntityDict['modi']['OpSchema'][] | undefined> {
         const childPath = this.getChildPath(child);
         if (childPath.includes(':next')) {
-            const { modies } = this;
+            const { modiIds } = this;
             // 如果是需要modi的路径，在这里应该就可以返回了，目前应该不存在modi嵌套modi
-            return modies;
+            if (modiIds.length > 0) {
+                const modies = await this.cache.get('modi', {
+                    data: {
+                        id: 1,
+                        targetEntity: 1,
+                        entity: 1,
+                        entityId: 1,
+                        action: 1,
+                        data: 1,
+                        filter: 1,
+                    },
+                    filter: {
+                        id: {
+                            $in: modiIds,
+                        },
+                        iState: 'active',
+                    }
+                });
+                return modies as BaseEntityDict['modi']['OpSchema'][];
+            }
         }
         const { toModi } = this.schema[this.entity];
         if (toModi) {
@@ -78,7 +97,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
             return [];
         }
         if (this.parent) {
-            return this.parent.getModies(this);
+            return this.parent.getActiveModies(this);
         }
         return [];
     }
@@ -781,11 +800,11 @@ class ListNode<
         }
 
         // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
-        const modies = this.parent ? this.parent.getModies(this) : [];
-        const operations = createOperationsFromModies(modies) as Array<{
+        const modies = this.parent && await this.parent.getActiveModies(this);
+        const operations = modies ? createOperationsFromModies(modies) as Array<{
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
-        }>;
+        }> : [];
         operations.push(...this.operations.map(
             ele => ({
                 entity: this.entity,
@@ -795,7 +814,7 @@ class ListNode<
 
         // 如果有modi，则不能以ids作为当前对象，需要向上层获得filter应用了modi之后再找过
         const selection = await this.constructSelection(true);
-        if (modies.length === 0) {
+        if (!modies) {
             Object.assign(selection, {
                 filter: {
                     id: {
@@ -807,7 +826,7 @@ class ListNode<
         else if (createdIds.length > 0) {
             const { filter } = selection;
             Object.assign(selection, {
-                filter: combineFilters([filter, { id: { $in: createdIds } }], true),
+                filter: combineFilters([filter, { id: { $in: createdIds } }].filter(ele => !!ele), true),
             });
         }
 
@@ -932,6 +951,7 @@ class ListNode<
     async constructSelection(withParent?: true) {
         const { filters, sorters } = this;
         const data = await this.getProjection();
+        let validParentFilter = true;
         assert(data, "取数据时找不到projection信息");
         const sorterArr = (
             await Promise.all(
@@ -954,11 +974,16 @@ class ListNode<
             })
         );
 
-        if (withParent && this.parent && !(this.parent instanceof VirtualNode)) {
-            assert(this.parent instanceof SingleNode);
-            const filterOfParent = await this.parent.getParentFilter<T>(this);
-            if (filterOfParent) {
-                filterArr.push(filterOfParent as any);
+        if (withParent && this.parent) {
+            if (this.parent instanceof SingleNode) {
+                const filterOfParent = await this.parent.getParentFilter<T>(this);
+                if (filterOfParent) {
+                    filterArr.push(filterOfParent as any);
+                }
+                else {
+                    // 说明有父结点但是却没有相应的约束，此时不应该去refresh(是一个insert动作)
+                    validParentFilter = false;
+                }
             }
         }
 
@@ -968,6 +993,7 @@ class ListNode<
             data,
             filter,
             sorter: sorterArr,
+            validParentFilter,
         }
     }
 
@@ -975,50 +1001,53 @@ class ListNode<
         const { entity, pagination } = this;
         const { currentPage, pageSize } = pagination;
         const currentPage3 = typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
-        const { data: projection, filter, sorter } = await this.constructSelection(true);
-        try {
-            this.setLoading(true);
-            if (append) {
-                this.loadingMore = true;
+        const { data: projection, filter, sorter, validParentFilter } = await this.constructSelection(true);
+        // 若不存在有效的父过滤条件（父有值或本结点就是顶层结点），则不能刷新
+        if (validParentFilter) {
+            try {
+                this.setLoading(true);
+                if (append) {
+                    this.loadingMore = true;
+                }
+                const { data, count } = await this.cache.refresh(
+                    entity,
+                    {
+                        data: projection,
+                        filter,
+                        sorter,
+                        indexFrom: currentPage3 * pageSize,
+                        count: pageSize,
+                    },
+                    undefined,
+                    getCount
+                );
+                this.pagination.currentPage = currentPage3 + 1;
+                this.pagination.more = data.length === pageSize;
+                this.setLoading(false);
+                if (append) {
+                    this.loadingMore = false;
+                }
+                if (getCount) {
+                    this.pagination.total = count;
+                }
+    
+                const ids = data.map(
+                    ele => ele.id!
+                ) as string[];
+                if (append) {
+                    this.ids = (this.ids || []).concat(ids)
+                }
+                else {
+                    this.ids = ids;
+                }
             }
-            const { data, count } = await this.cache.refresh(
-                entity,
-                {
-                    data: projection,
-                    filter,
-                    sorter,
-                    indexFrom: currentPage3 * pageSize,
-                    count: pageSize,
-                },
-                undefined,
-                getCount
-            );
-            this.pagination.currentPage = currentPage3 + 1;
-            this.pagination.more = data.length === pageSize;
-            this.setLoading(false);
-            if (append) {
-                this.loadingMore = false;
+            catch (err) {
+                this.setLoading(false);
+                if (append) {
+                    this.loadingMore = false;
+                }
+                throw err;
             }
-            if (getCount) {
-                this.pagination.total = count;
-            }
-
-            const ids = data.map(
-                ele => ele.id!
-            ) as string[];
-            if (append) {
-                this.ids = (this.ids || []).concat(ids)
-            }
-            else {
-                this.ids = ids;
-            }
-        }
-        catch (err) {
-            this.setLoading(false);
-            if (append) {
-                this.loadingMore = false;
-            }
-            throw err;
         }
     }
 
@@ -1136,11 +1165,11 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         const projection = await this.getProjection(false);
 
         // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
-        const modies = this.parent ? this.parent.getModies(this) : [];
-        const operations = createOperationsFromModies(modies) as Array<{
+        const modies = this.parent && await this.parent.getActiveModies(this);
+        const operations = modies ? createOperationsFromModies(modies) as Array<{
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
-        }>;
+        }> : [];
         let filter = this.id && { id: this.id } as ED[T]['Selection']['filter'];
         if (!filter) {
             // 可能是create
@@ -1396,7 +1425,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             // 对于modi对象，在此缓存
             if (this.schema[this.entity].toModi && value) {
                 const { modi$entity } = value;
-                this.modies = modi$entity as Array<BaseEntityDict['modi']['OpSchema']>;
+                if (modi$entity.length > 0) {
+                    this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id)
+                }
             }
             this.setLoading(false);
         }
@@ -1466,8 +1497,8 @@ class VirtualNode {
         this.dirty = false;
         this.children = {};
     }
-    getModies(child: any): BaseEntityDict['modi']['OpSchema'][] {
-        return []
+    async getActiveModies(child: any): Promise<undefined> {
+        return;
     }
     setDirty() {
         this.dirty = true;

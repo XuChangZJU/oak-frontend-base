@@ -21,7 +21,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     protected loadingMore: boolean;
     protected executing: boolean;
     protected operations: Operation<ED, T>[];
-    protected modies: BaseEntityDict['modi']['OpSchema'][];
+    protected modiIds: string[];
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: Node<ED, keyof ED, Cxt, AD> | VirtualNode);
     getEntity(): T;
     getSchema(): StorageSchema<ED>;
@@ -32,7 +32,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     /**
      * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
      */
-    getModies(child: Node<ED, keyof ED, Cxt, AD>): BaseEntityDict['modi']['OpSchema'][];
+    getActiveModies(child: Node<ED, keyof ED, Cxt, AD>): Promise<BaseEntityDict['modi']['OpSchema'][] | undefined>;
     setDirty(): void;
     isDirty(): boolean;
     isLoading(): boolean;
@@ -91,6 +91,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
         data: ED[T]["Selection"]["data"];
         filter: ED[T]["Selection"]["filter"] | undefined;
         sorter: DeduceSorterItem<ED[T]["Schema"]>[];
+        validParentFilter: boolean;
     }>;
     refresh(pageNumber?: number, getCount?: true, append?: boolean): Promise<void>;
     loadMore(): Promise<void>;
@@ -121,7 +122,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     composeOperations(): Promise<(ED[T]["Operation"] & {
         entity: T;
     })[] | undefined>;
-    getProjection(): Promise<ED[T]["Selection"]["data"]>;
+    getProjection(withDecendants?: boolean): Promise<ED[keyof ED]["Selection"]["data"]>;
     refresh(): Promise<void>;
     clean(): void;
     getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, AD>): Promise<ED[T2]['Selection']['filter'] | undefined>;
@@ -130,10 +131,10 @@ declare class VirtualNode {
     private dirty;
     private children;
     constructor();
-    getModies(child: any): BaseEntityDict['modi']['OpSchema'][];
+    getActiveModies(child: any): Promise<undefined>;
     setDirty(): void;
     addChild(path: string, child: SingleNode<any, any, any, any> | ListNode<any, any, any, any>): void;
-    getChild(path: string): SingleNode<any, any, any, any> | ListNode<any, any, any, any> | undefined;
+    getChild(path: string): ListNode<any, any, any, any> | SingleNode<any, any, any, any> | undefined;
     getParent(): undefined;
     destroy(): void;
     getFreshValue(): Promise<undefined>;
