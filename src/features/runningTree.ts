@@ -1133,7 +1133,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     async getFreshValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined> {
-        const projection = typeof this.projection === 'function' ? await this.projection() : this.projection;
+        const projection = await this.getProjection(false);
 
         // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
         const modies = this.parent ? this.parent.getModies(this) : [];
@@ -1324,39 +1324,41 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         );
     }
 
-    async getProjection() {
+    async getProjection(withDecendants?: boolean) {
         if (this.parent && this.parent instanceof ListNode) {
             return this.parent.getProjection();
         }
         const projection = await super.getProjection();
-        for (const k in this.children) {
-            if (k.indexOf(':') === -1) {
-                const rel = this.judgeRelation(k);
-                if (rel === 2) {
-                    const subProjection = await this.children[k].getProjection();
-                    Object.assign(projection, {
-                        entity: 1,
-                        entityId: 1,
-                        [k]: subProjection,
-                    });
-                }
-                else if (typeof rel === 'string') {
-                    const subProjection = await this.children[k].getProjection();
-                    Object.assign(projection, {
-                        [`${k}Id`]: 1,
-                        [k]: subProjection,
-                    });
-                }
-                else {
-                    const child = this.children[k];
-                    assert(rel instanceof Array && child instanceof ListNode);
-                    const subSelection = await child.constructSelection();
-                    const subEntity = child.getEntity();
-                    Object.assign(projection, {
-                        [k]: Object.assign(subSelection, {
-                            $entity: subEntity,
-                        })
-                    });
+        if (withDecendants) {
+            for (const k in this.children) {
+                if (k.indexOf(':') === -1) {
+                    const rel = this.judgeRelation(k);
+                    if (rel === 2) {
+                        const subProjection = await this.children[k].getProjection(true);
+                        Object.assign(projection, {
+                            entity: 1,
+                            entityId: 1,
+                            [k]: subProjection,
+                        });
+                    }
+                    else if (typeof rel === 'string') {
+                        const subProjection = await this.children[k].getProjection(true);
+                        Object.assign(projection, {
+                            [`${k}Id`]: 1,
+                            [k]: subProjection,
+                        });
+                    }
+                    else {
+                        const child = this.children[k];
+                        assert(rel instanceof Array && child instanceof ListNode);
+                        const subSelection = await child.constructSelection();
+                        const subEntity = child.getEntity();
+                        Object.assign(projection, {
+                            [k]: Object.assign(subSelection, {
+                                $entity: subEntity,
+                            })
+                        });
+                    }
                 }
             }
         }
