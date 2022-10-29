@@ -94,7 +94,7 @@ const withRouter = (Component: React.ComponentType<any>, { path, properties }: {
 
         let params = {};
         let routeMatch = false;
-        if (location.pathname.includes(path)) {
+        if (path && location.pathname.toLowerCase().includes(path.toLowerCase())) {
             params = getParams(location as Location, properties);
             routeMatch = true;
         }
