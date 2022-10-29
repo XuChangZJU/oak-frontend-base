@@ -7,7 +7,6 @@ import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, CheckerType, Context, DeduceSorterItem, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
-import { ExceptionHandler } from './types/ExceptionRoute';
 import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
 import { Feature } from './types/Feature';
 import {
@@ -29,7 +28,7 @@ abstract class OakComponentBase<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends Record<string, any>,
     IsList extends boolean,
@@ -530,7 +529,6 @@ export function createComponent<
         TMethod
     >,
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
-    exceptionRouterDict: Record<string, ExceptionHandler>,
 ) {
     const {
         data, projection, properties, entity, methods, lifetimes, observers, render, path

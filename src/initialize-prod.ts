@@ -37,7 +37,7 @@ export function initialize<
     ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature>
 >(
     storageSchema: StorageSchema<ED>,
     createFeatures: (

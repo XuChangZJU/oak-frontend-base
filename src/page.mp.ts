@@ -5,7 +5,6 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
 import { BasicFeatures } from './features';
-import { ExceptionHandler } from './types/ExceptionRoute';
 import { Feature } from './types/Feature';
 import {
     OakCommonComponentMethods,
@@ -33,7 +32,7 @@ function makeCommonComponentMethods<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
+    FD extends Record<string, Featur,
     FormedData extends WechatMiniprogram.Component.DataOption,
     Proj extends ED[T]['Selection']['data'],
     IsList extends boolean,
@@ -42,7 +41,6 @@ function makeCommonComponentMethods<
     TMethod extends WechatMiniprogram.Component.MethodOption = {}
 >(
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
-    exceptionRouterDict: Record<string, ExceptionHandler>,
     formData: OakPageOption<
         ED,
         T,
@@ -244,7 +242,7 @@ function makePageMethods<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature,
     FormedData extends WechatMiniprogram.Component.DataOption,
     Proj extends ED[T]['Selection']['data'],
     IsList extends boolean,
@@ -303,7 +301,7 @@ export function createPage<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean,
@@ -324,8 +322,7 @@ export function createPage<
         TProperty,
         TMethod
     >,
-    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
-    exceptionRouterDict: Record<string, ExceptionHandler>
+    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD
 ) {
     const { formData, isList, entity, actions } = options;
     const hiddenMethods = makeHiddenComponentMethods();
@@ -466,7 +463,7 @@ export function createComponent<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature>,
     FormedData extends WechatMiniprogram.Component.DataOption,
     IsList extends boolean,
     TData extends WechatMiniprogram.Component.DataOption = {},
@@ -485,8 +482,7 @@ export function createComponent<
         TProperty,
         TMethod
     >,
-    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
-    exceptionRouterDict: Record<string, ExceptionHandler>
+    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD
 ) {
     const {
         formData,
@@ -504,7 +500,6 @@ export function createComponent<
     const hiddenMethods = makeHiddenComponentMethods();
     const commonMethods = makeCommonComponentMethods(
         features,
-        exceptionRouterDict,
         formData
     );
     const listMethods = makeListComponentMethods(features);

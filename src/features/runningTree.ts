@@ -77,6 +77,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
                         targetEntity: 1,
                         entity: 1,
                         entityId: 1,
+                        iState: 1,
                         action: 1,
                         data: 1,
                         filter: 1,
@@ -1666,20 +1667,22 @@ export class RunningTree<
     ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature<ED, Cxt, AD> {
+    >  extends Feature {
     private cache: Cache<ED, Cxt, AD>;
     private schema: StorageSchema<ED>;
     private root: Record<
         string,
         SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD> | VirtualNode
     >;
+    private aspectWrapper: AspectWrapper<ED, Cxt, AD>;
 
     constructor(
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         cache: Cache<ED, Cxt, AD>,
         schema: StorageSchema<ED>
     ) {
-        super(aspectWrapper);
+        super();
+        this.aspectWrapper = aspectWrapper;
         this.cache = cache;
         this.schema = schema;
         this.root = {};
@@ -2032,7 +2035,7 @@ export class RunningTree<
                 ));
             assert(entities.length === 1);
 
-            await this.getAspectWrapper().exec('operate', {
+            await this.aspectWrapper.exec('operate', {
                 entity: entities[0],
                 operation: operations.filter(ele => !!ele),
             });

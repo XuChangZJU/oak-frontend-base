@@ -1,6 +1,6 @@
 
 export * from './types/Feature';
-export * from './types/ExceptionRoute';
+export * from './types/ExceptionHandler';
 export { BasicFeatures } from  './features';
 export * from './features/cache';
 export * from './features/localStorage';

@@ -42,7 +42,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     setExecuting(executing: boolean): void;
     getParent(): Node<ED, keyof ED, Cxt, AD> | VirtualNode | undefined;
     protected getProjection(): Promise<ED[T]["Selection"]["data"]>;
-    protected judgeRelation(attr: string): string | 0 | 2 | string[] | 1;
+    protected judgeRelation(attr: string): string | 0 | string[] | 2 | 1;
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }
@@ -160,10 +160,11 @@ export declare type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T 
     afterExecute?: (operations: ED[T]['Operation'][]) => Promise<void>;
     id?: string;
 };
-export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
+export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private cache;
     private schema;
     private root;
+    private aspectWrapper;
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, AD>, schema: StorageSchema<ED>);
     createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>): Promise<VirtualNode | ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD> | undefined>;
     private findNode;

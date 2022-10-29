@@ -12,8 +12,9 @@ export class Cache<
     ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Feature<ED, Cxt, AD> {
+> extends Feature {
     cacheStore?: CacheStore<ED, Cxt>;
+    private aspectWrapper: AspectWrapper<ED, Cxt, AD>;
     private syncEventsCallbacks: Array<
         (opRecords: OpRecord<ED>[]) => Promise<void>
     >;
@@ -25,7 +26,8 @@ export class Cache<
         contextBuilder: () => Cxt,
         store: CacheStore<ED, Cxt>
     ) {
-        super(aspectWrapper);
+        super();
+        this.aspectWrapper = aspectWrapper;
         this.syncEventsCallbacks = [];
         this.syncLock = new RWLock();
 
@@ -55,7 +57,7 @@ export class Cache<
         getCount?: true
     ) {
         reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
-        const { result } = await this.getAspectWrapper().exec('select', {
+        const { result } = await this.aspectWrapper.exec('select', {
             entity,
             selection,
             option,
@@ -70,7 +72,7 @@ export class Cache<
         operation: ED[T]['Operation'],
         option?: OP
     ) {
-        const { result } = await this.getAspectWrapper().exec('operate', {
+        const { result } = await this.aspectWrapper.exec('operate', {
             entity,
             operation,
             option,
@@ -86,7 +88,7 @@ export class Cache<
         option?: OP
     ) {
         // reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
-        const { result } = await this.getAspectWrapper().exec('count', {
+        const { result } = await this.aspectWrapper.exec('count', {
             entity,
             selection,
             option,
@@ -202,7 +204,7 @@ export class Cache<
             } catch (err) {
                 if (err instanceof OakRowUnexistedException) {
                     const missedRows = err.getRows();
-                    await this.getAspectWrapper().exec('fetchRows', missedRows);
+                    await this.aspectWrapper.exec('fetchRows', missedRows);
                 } else {
                     await context.rollback();
                     throw err;

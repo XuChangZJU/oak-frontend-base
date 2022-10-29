@@ -18,7 +18,6 @@ import { Feature } from './types/Feature';
 import { BasicFeatures } from './features';
 import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { ExceptionHandler, ExceptionRouters } from './types/ExceptionRoute';
 import { OakComponentOption } from './types/Page';
 import { createComponent } from './page.web';
 import { initialize as initDev } from './initialize-dev';
@@ -28,7 +27,7 @@ export function initialize<
     ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature>
 >(
     storageSchema: StorageSchema<ED>,
     createFeatures: (
@@ -38,7 +37,6 @@ export function initialize<
     frontendContextBuilder: (features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>) => (store: RowStore<ED, Cxt>) => Cxt,
     backendContextBuilder: (contextStr?: string) => (store: RowStore<ED, Cxt>) =>  Promise<Cxt>,
     aspectDict: AD,
-    exceptionRouters: ExceptionRouters = [],
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, Cxt>>,
     watchers?: Array<Watcher<ED, keyof ED, Cxt>>,
@@ -60,13 +58,6 @@ export function initialize<
         initialData,
         actionDict
     );
-
-    const exceptionRouterDict: Record<string, ExceptionHandler> = {};
-    for (const router of exceptionRouters) {
-        Object.assign(exceptionRouterDict, {
-            [router[0].name]: router[1],
-        });
-    }
 
     // 初始化i8n配置
     const i18n = getI18next(i18nOptions);
@@ -107,7 +98,7 @@ export function initialize<
                 TData,
                 TProperty,
                 TMethod
-            >(options, features, exceptionRouterDict),
+            >(options, features),
     });
 
     return {

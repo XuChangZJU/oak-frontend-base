@@ -1,10 +1,7 @@
-import { EntityDict, Context, AspectWrapper } from 'oak-domain/lib/types';
 import { Feature } from '../types/Feature';
-import { CommonAspectDict } from 'oak-common-aspect';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-export declare class LocalStorage<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
+export declare class LocalStorage extends Feature {
     keys: Record<string, boolean>;
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>);
+    constructor();
     setKey(key: string): void;
     unsetKey(key: string): void;
     save(key: string, item: any): void;

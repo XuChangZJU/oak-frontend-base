@@ -1,15 +1,12 @@
-import { EntityDict, Context, AspectWrapper } from 'oak-domain/lib/types';
 import { unset } from 'oak-domain/lib/utils/lodash';
-import { Feature } from '../types/Feature';
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
-import { CommonAspectDict } from 'oak-common-aspect';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { Feature } from '../types/Feature';
 
-export class LocalStorage<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature<ED, Cxt, AD> {
+export class LocalStorage  extends Feature{
     keys: Record<string, boolean>;
 
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>) {
-        super(aspectWrapper);
+    constructor() {
+        super();
         if (process.env.NODE_ENV === 'development') {
             // development环境下，debugStore的数据也默认存放在localStorage中
             this.keys = {

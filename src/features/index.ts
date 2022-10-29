@@ -12,6 +12,7 @@ import { LocalStorage } from './localStorage';
 import { Notification } from './notification';
 import { Message } from './message';
 import { CacheStore } from '../cacheStore/CacheStore';
+import { Navigator } from './navigator';
 
 export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> (
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
@@ -19,13 +20,14 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends C
         contextBuilder: () => Cxt,
         store: CacheStore<ED, Cxt>) {
     const cache = new Cache<ED, Cxt, AD>(aspectWrapper, contextBuilder, store);
-    const location = new Location(aspectWrapper);
+    const location = new Location();
     const runningTree = new RunningTree<ED, Cxt, AD>(aspectWrapper, cache, storageSchema);
     const locales = new Locales(aspectWrapper);
-    const eventBus = new EventBus(aspectWrapper);
-    const localStorage = new LocalStorage(aspectWrapper);
-    const notification = new Notification(aspectWrapper);
-    const message = new Message(aspectWrapper);
+    const eventBus = new EventBus();
+    const localStorage = new LocalStorage();
+    const notification = new Notification();
+    const message = new Message();
+    const navigator = new Navigator();
     return {
         cache,
         location,
@@ -35,6 +37,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends C
         localStorage,
         notification,
         message,
+        navigator,
     };
 }
 
@@ -44,11 +47,12 @@ export type BasicFeatures<
     AD extends CommonAspectDict<ED, Cxt>
 > = {
     cache: Cache<ED, Cxt, AD>;
-    location: Location<ED, Cxt, AD>;
+    location: Location;
     runningTree: RunningTree<ED, Cxt, AD>;
     locales: Locales<ED, Cxt, AD>;
-    eventBus: EventBus<ED, Cxt, AD>;
-    localStorage: LocalStorage<ED, Cxt, AD>;
-    notification: Notification<ED, Cxt, AD>;
-    message: Message<ED, Cxt, AD>;
+    eventBus: EventBus;
+    localStorage: LocalStorage;
+    notification: Notification;
+    message: Message;
+    navigator: Navigator;
 };

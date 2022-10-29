@@ -1,24 +1,9 @@
 import { pull } from 'oak-domain/lib/utils/lodash';
-import { EntityDict, Aspect, AspectWrapper, Context } from 'oak-domain/lib/types';
-import { CommonAspectDict } from 'oak-common-aspect';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-
-
-
-export abstract class Feature<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> {
-    private aspectWrapper: AspectWrapper<ED, Cxt, AD>;
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>) {
-        this.aspectWrapper = aspectWrapper;
-    }
-
-    protected getAspectWrapper() {
-        return this.aspectWrapper!;
-    }
-}
-
 
 const mCallbacks: Array<() => any> = [];
 let mActionStackDepth = 0;
+
+export abstract class Feature {};
 
 export function subscribe(callback: () => any) {
     mCallbacks.push(callback);
