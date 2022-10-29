@@ -7,7 +7,7 @@ export declare function onPathSet<ED extends EntityDict & BaseEntityDict, T exte
 export declare function reRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>, option: OakComponentOption<ED, T, Cxt, any, any, any, any, any, {}, {}, {}>, extra?: Record<string, any>): Promise<void>;
 export declare function refresh<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>): Promise<void>;
 export declare function loadMore<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>): Promise<void>;
-export declare function execute<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>, operation?: ED[T]['Operation']): Promise<any[] | (ED[keyof ED]["Operation"] & {
+export declare function execute<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>, operation?: ED[T]['Operation'], path?: string): Promise<any[] | (ED[keyof ED]["Operation"] & {
     entity: keyof ED;
 })[]>;
 export declare function callPicker<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>, attr: string, params?: Record<string, any>): void;

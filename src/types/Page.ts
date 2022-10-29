@@ -246,12 +246,12 @@ export type OakCommonComponentMethods<
             disableNamespace?: boolean
         ) => Promise<void>;
         setProps: (props: Record<string, any>, usingState?: true) => void;
-        addOperation: (operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => Promise<void>;
-        cleanOperation: () => void;
+        addOperation: (operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => Promise<void>;
+        cleanOperation: (path?: string) => void;
         
         t(key: string, params?: object): string;
         callPicker: (attr: string, params: Record<string, any>) => void;
-        execute: (operation?: ED[T]['Operation']) => Promise<ED[T]['Operation'][]>;
+        execute: (operation?: ED[T]['Operation'], path?: string) => Promise<ED[T]['Operation'][]>;
         checkOperation: (ntity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => Promise<boolean>;
         tryExecute: (path?: string) => Promise<boolean>;
         getOperations: (path?: string) => Promise<ED[T]['Operation'][] | undefined>;

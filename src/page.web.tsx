@@ -244,12 +244,14 @@ abstract class OakComponentBase<
         }
     }
 
-    addOperation(operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        return this.features.runningTree.addOperation(this.state.oakFullpath, operation, beforeExecute, afterExecute);
+    addOperation(operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) {
+        const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        return this.features.runningTree.addOperation(path2, operation, beforeExecute, afterExecute);
     }
 
-    cleanOperation() {
-        return this.features.runningTree.clean(this.state.oakFullpath);
+    cleanOperation(path?: string) {
+        const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        return this.features.runningTree.clean(tpath2);
     }
 
     t(key: string, params?: object) {

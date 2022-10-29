@@ -313,7 +313,7 @@ function mergeOperationOper<ED extends EntityDict & BaseEntityDict, T extends ke
         else {
             mergeOperationData(entity, schema, data, dataTo);
             if (action !== 'update') {
-                assert(into.action === 'update');
+                assert(into.action === 'update' || into.action === action);
                 if (process.env.NODE_ENV === 'development') {
                     console.warn(`合并了${action}到update动作，请确认合理性`);
                 }
