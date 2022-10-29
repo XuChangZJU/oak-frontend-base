@@ -1325,6 +1325,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     async getProjection() {
+        if (this.parent && this.parent instanceof ListNode) {
+            return this.parent.getProjection();
+        }
         const projection = await super.getProjection();
         for (const k in this.children) {
             if (k.indexOf(':') === -1) {
