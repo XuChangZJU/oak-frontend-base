@@ -815,24 +815,27 @@ class ListNode<
 
         // 如果有modi，则不能以ids作为当前对象，需要向上层获得filter应用了modi之后再找过
         const selection = await this.constructSelection(true);
-        if (!modies) {
-            Object.assign(selection, {
-                filter: {
-                    id: {
-                        $in: createdIds.concat(this.ids || []),
+        if (selection.validParentFilter) {
+            if (!modies) {
+                Object.assign(selection, {
+                    filter: {
+                        id: {
+                            $in: createdIds.concat(this.ids || []),
+                        }
                     }
-                }
-            });
+                });
+            }
+            else if (createdIds.length > 0) {
+                const { filter } = selection;
+                Object.assign(selection, {
+                    filter: combineFilters([filter, { id: { $in: createdIds } }].filter(ele => !!ele), true),
+                });
+            }
+    
+            const { result } = await this.cache.tryRedoOperationsThenSelect(this.entity, selection, operations);
+            return result;
         }
-        else if (createdIds.length > 0) {
-            const { filter } = selection;
-            Object.assign(selection, {
-                filter: combineFilters([filter, { id: { $in: createdIds } }].filter(ele => !!ele), true),
-            });
-        }
-
-        const { result } = await this.cache.tryRedoOperationsThenSelect(this.entity, selection, operations);
-        return result;
+        return [];
     }
 
     async addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']) {
