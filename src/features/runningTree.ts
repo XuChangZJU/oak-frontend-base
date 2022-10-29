@@ -8,7 +8,6 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
-import { generateMockId } from "../utils/mockId";
 import { Cache } from './cache';
 import { Pagination } from '../types/Pagination';
 import { Action, Feature } from '../types/Feature';
@@ -99,6 +98,10 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
 
     isLoading() {
         return this.loading;
+    }
+
+    protected setLoading(loading: boolean) {
+        this.loading = loading;
     }
 
     isLoadingMore() {
@@ -471,11 +474,11 @@ class ListNode<
     private filters: NamedFilterItem<ED, T>[];
     private sorters: NamedSorterItem<ED, T>[];
     private pagination: Pagination;
-    private ids: string[];
+    private ids: string[] | undefined;
 
     private syncHandler: (records: OpRecord<ED>[]) => Promise<void>;
 
-    protected getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string {
+    protected getChildPath(child: SingleNode<ED, T, Cxt, AD>): string {
         let idx = 0;
         for (const child2 of this.children) {
             if (child === child2) {
@@ -485,6 +488,26 @@ class ListNode<
         }
 
         assert(false);
+    }
+
+    getMyId(child: SingleNode<ED, T, Cxt, AD>): string {
+        let idx = 0;
+        for (const child2 of this.children) {
+            if (child === child2) {
+                return this.ids![idx];
+            }
+            idx++;
+        }
+
+        assert(false);
+    }
+
+
+    setLoading(loading: boolean) {
+        super.setLoading(loading);
+        this.children.forEach(
+            ele => ele.setLoading(loading)
+        );
     }
 
     checkIfClean(): void {
@@ -507,22 +530,21 @@ class ListNode<
         if (this.loading) {
             return;
         }
-        const createdIds: string[] = [];
+        let needRefresh = false;
         for (const record of records) {
             const { a } = record;
             switch (a) {
                 case 'c': {
-                    const { e, d } = record as CreateOpResult<ED, T>;
+                    const { e } = record as CreateOpResult<ED, T>;
                     if (e === this.entity) {
-                        if (d instanceof Array) {
-                            d.forEach((dd) => {
-                                const { id } = dd;
-                                createdIds.push(id);
-                            });
-                        } else {
-                            const { id } = d;
-                            createdIds.push(id);
-                        }
+                        needRefresh = true;
+                    }
+                    break;
+                }
+                case 'r': {
+                    const { e } = record as RemoveOpResult<ED, T>;
+                    if (e === this.entity) {
+                        needRefresh = true;
                     }
                     break;
                 }
@@ -530,29 +552,38 @@ class ListNode<
                     break;
                 }
             }
+            if (needRefresh) {
+                break;
+            }
         }
-        if (createdIds.length > 0) {
-            const currentIds = this.ids;
-
-            const { sorter, filter } = await this.constructSelection(true);
-            const filter2 = combineFilters([filter, {
-                id: {
-                    $in: currentIds.concat(createdIds),
-                },
-            }]);
-
-            const value = await this.cache.get(
-                this.entity,
-                {
-                    data: {
-                        id: 1,
+        /**
+         * 这样处理可能会导致对B对象的删除或插入影响到A对象的list结果，当A的filter存在in B的查询时
+         * 典型的例子如userRelationList中对user的查询
+         * filter是： {
+                    id: {
+                        $in: {
+                            entity: `user${entityStr}`,
+                            data: {
+                                userId: 1,
+                            },
+                            filter: {
+                                [`${entity}Id`]: entityId,
+                            },
+                        },
                     },
-                    filter: filter2,
-                    sorter,
+                }
+            此时对userRelation的删除动作就会导致user不会被移出list
+         */
+        if (needRefresh) {
+            const { filter, sorter } = await this.constructSelection(true);
+            const result = await this.cache.get(this.getEntity(), {
+                data: {
+                    id: 1,
                 },
-                { obscure: true }
-            );
-            this.ids = (value.map(ele => ele.id as unknown as string));
+                filter,
+                sorter
+            });
+            this.ids = result.map(ele => ele.id) as unknown as string[];
         }
     }
 
@@ -580,7 +611,6 @@ class ListNode<
         this.filters = filters || [];
         this.sorters = sorters || [];
         this.pagination = pagination || DEFAULT_PAGINATION;
-        this.ids = [];
 
         this.syncHandler = (records) => this.onCacheSync(records);
         this.cache.bindOnSync(this.syncHandler);
@@ -735,7 +765,6 @@ class ListNode<
     async getFreshValue(): Promise<Array<
         SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']>
     >> {
-        const projection = typeof this.projection === 'function' ? await this.projection() : this.projection;
         // 在createOperation中的数据也是要返回的
         const createdIds: string[] = [];
         for (const operation of this.operations) {
@@ -770,7 +799,7 @@ class ListNode<
             Object.assign(selection, {
                 filter: {
                     id: {
-                        $in: createdIds.concat(this.ids),
+                        $in: createdIds.concat(this.ids || []),
                     }
                 }
             });
@@ -826,10 +855,10 @@ class ListNode<
 
     getParentFilter(childNode: SingleNode<ED, T, Cxt, AD>): ED[T]['Selection']['filter'] | undefined {
         let idx = 0;
-        while (idx < this.ids.length) {
+        while (idx < this.ids!.length) {
             if (this.children[idx] === childNode) {
                 return {
-                    id: this.ids[idx],
+                    id: this.ids![idx],
                 }
             }
             idx++;
@@ -902,7 +931,6 @@ class ListNode<
 
     async constructSelection(withParent?: true) {
         const { filters, sorters } = this;
-        let disabled = false;
         const data = await this.getProjection();
         assert(data, "取数据时找不到projection信息");
         const sorterArr = (
@@ -911,9 +939,8 @@ class ListNode<
                     const { sorter } = ele;
                     if (typeof sorter === 'function') {
                         return await sorter();
-                    } else {
-                        return sorter;
                     }
+                    return sorter;
                 })
             )
         ).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
@@ -933,15 +960,11 @@ class ListNode<
             if (filterOfParent) {
                 filterArr.push(filterOfParent as any);
             }
-            else {
-                disabled = true;
-            }
         }
 
         const filters2 = filterArr.filter(ele => !!ele);
         const filter = filters2.length > 0 ? combineFilters<ED, T>(filters2) : undefined;
         return {
-            disabled,
             data,
             filter,
             sorter: sorterArr,
@@ -952,58 +975,50 @@ class ListNode<
         const { entity, pagination } = this;
         const { currentPage, pageSize } = pagination;
         const currentPage3 = typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
-        const { data: projection, filter, sorter, disabled } = await this.constructSelection(true);
-        if (!disabled) {
-            try {
-                if (append) {
-                    this.loadingMore = true;
-                }
-                else {
-                    this.loading = true;
-                }
-                const { data, count } = await this.cache.refresh(
-                    entity,
-                    {
-                        data: projection,
-                        filter,
-                        sorter,
-                        indexFrom: currentPage3 * pageSize,
-                        count: pageSize,
-                    },
-                    undefined,
-                    getCount
-                );
-                this.pagination.currentPage = currentPage3 + 1;
-                this.pagination.more = data.length === pageSize;
-                if (append) {
-                    this.loadingMore = false;
-                }
-                else {
-                    this.loading = false;
-                }
-                if (getCount) {
-                    this.pagination.total = count;
-                }
+        const { data: projection, filter, sorter } = await this.constructSelection(true);
+        try {
+            this.setLoading(true);
+            if (append) {
+                this.loadingMore = true;
+            }
+            const { data, count } = await this.cache.refresh(
+                entity,
+                {
+                    data: projection,
+                    filter,
+                    sorter,
+                    indexFrom: currentPage3 * pageSize,
+                    count: pageSize,
+                },
+                undefined,
+                getCount
+            );
+            this.pagination.currentPage = currentPage3 + 1;
+            this.pagination.more = data.length === pageSize;
+            this.setLoading(false);
+            if (append) {
+                this.loadingMore = false;
+            }
+            if (getCount) {
+                this.pagination.total = count;
+            }
 
-                const ids = data.map(
-                    ele => ele.id!
-                ) as string[];
-                if (append) {
-                    this.ids = this.ids.concat(ids)
-                }
-                else {
-                    this.ids = ids;
-                }
+            const ids = data.map(
+                ele => ele.id!
+            ) as string[];
+            if (append) {
+                this.ids = (this.ids || []).concat(ids)
             }
-            catch (err) {
-                if (append) {
-                    this.loadingMore = false;
-                }
-                else {
-                    this.loading = false;
-                }
-                throw err;
+            else {
+                this.ids = ids;
             }
+        }
+        catch (err) {
+            this.setLoading(false);
+            if (append) {
+                this.loadingMore = false;
+            }
+            throw err;
         }
     }
 
@@ -1059,6 +1074,13 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         assert(false);
     }
 
+    setLoading(loading: boolean) {
+        super.setLoading(loading);
+        for (const k in this.children) {
+            this.children[k].setLoading(loading);
+        }
+    }
+
     checkIfClean(): void {
         if (this.operations.length > 0) {
             return;
@@ -1110,66 +1132,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         unset(this.children, path);
     }
 
-    /* async setValue(value: SelectRowShape<ED[T]['OpSchema'], ED[T]['Selection']['data']> | undefined) {
-        let value2 = value && Object.assign({}, value);
-        this.id = value2 && value2.id as string;
-        const attrs = Object.keys(this.children);
-        if (attrs.includes('modi$entity')) {
-            // 说明这个对象关联了modi，所以这个对象的子对象必须要显示modi应用后的值，同时将当前的值记录在attr:prev属性
-            if (value2) {
-                if (value2.modi$entity && value2.modi$entity.length > 0) {
-                    const entityOperations = createOperationsFromModies(value2.modi$entity as any);
-                    const { projection, id, entity } = this;
-                    const projection2 = typeof projection === 'function' ? await projection() : projection;
-
-                    const { result: [value3] } = await this.cache.tryRedoOperations(entity, {
-                        data: projection2,
-                        filter: {
-                            id: id!,
-                        } as any,
-                    }, entityOperations);
-
-                    for (const attr in value3) {
-                        if (attr !== 'modi$entity' && this.children[attr]) {
-                            // 如果有子结点，就用modi应用后的结点替代原来的结点，
-                            Object.assign(value2, {
-                                [attr]: value3[attr],
-                                [`${attr}:prev`]: value2[attr],
-                            });
-                        }
-                    }
-                }
-            }
-        }
-        for (const attr of attrs) {
-            const node = this.children[attr];
-            if (value2 && value2[attr]) {
-                await node.setValue(value2[attr] as any);
-                if (node instanceof ListNode) {
-                    const rel = this.judgeRelation(attr);
-                    assert(rel instanceof Array);
-                    const filter = rel[1] ? {
-                        [rel[1]]: value2.id!,
-                    } : {
-                        entityId: value2.id!,
-                    };
-
-                    node.removeNamedFilterByName('inherent:parentId');
-                    node.addNamedFilter({
-                        filter,
-                        "#name": 'inherent:parentId',
-                    });
-                }
-            }
-            else {
-                await node.setValue(undefined);
-            }
-        }
-        this.value = value2;
-        this.refreshValue();
-    } */
-
-
     async getFreshValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined> {
         const projection = typeof this.projection === 'function' ? await this.projection() : this.projection;
 
@@ -1179,7 +1141,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
         }>;
-        const filter = this.getFilter();
+        const filter = this.getFilter(modies.length > 0 ? true : false);
         if (filter) {
             operations.push(...this.operations.map(
                 ele => ({
@@ -1191,7 +1153,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 data: projection,
                 filter,
             }, operations);
-            // this.id = result[0]?.id as string | undefined;
             return result[0];
         }
     }
@@ -1352,25 +1313,27 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         );
     }
 
-    private getFilter() {
+    private getFilter(refresh: boolean) {
         let filter: ED[T]['Selection']['filter'] = undefined;
         if (this.id) {
             filter = {
                 id: this.id,
             };
         }
-        else if (this.getParent()) {
-            const parent = this.getParent();
-            if (parent && (parent instanceof SingleNode || parent instanceof ListNode)) {
-                filter = parent.getParentFilter(this);
+        else {
+            if (refresh) {
+                const parent = this.getParent();
+                if (parent && (parent instanceof SingleNode || parent instanceof ListNode)) {
+                    filter = parent.getParentFilter(this);
+                }
             }
-        }
-        if (!filter) {
-            const [operation] = this.operations;
-            if (operation?.oper.action === 'create') {
-                const id = (operation.oper.data as ED[T]['CreateSingle']['data']).id;
-                filter = {
-                    id,
+            else {
+                const [operation] = this.operations;
+                if (operation?.oper.action === 'create') {
+                    const id = (operation.oper.data as ED[T]['CreateSingle']['data']).id;
+                    filter = {
+                        id,
+                    }
                 }
             }
         }
@@ -1382,9 +1345,18 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         for (const k in this.children) {
             if (k.indexOf(':') === -1) {
                 const rel = this.judgeRelation(k);
-                if (rel === 2 || typeof rel === 'string') {
+                if (rel === 2) {
                     const subProjection = await this.children[k].getProjection();
                     Object.assign(projection, {
+                        entity: 1,
+                        entityId: 1,
+                        [k]: subProjection,
+                    });
+                }
+                else if (typeof rel === 'string') {
+                    const subProjection = await this.children[k].getProjection();
+                    Object.assign(projection, {
+                        [`${k}Id`]: 1,
                         [k]: subProjection,
                     });
                 }
@@ -1407,26 +1379,29 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     async refresh() {
         if (this.parent instanceof ListNode) {
             assert(this.parent.getEntity() === this.entity);
+            const id = this.parent.getMyId(this);
+            this.id = id;
             return;
         }
         const projection = await this.getProjection();
-        const filter = this.getFilter();
+        const filter = this.getFilter(true);
         if (filter) {
-            this.loading = true;
+            this.setLoading(true);
             try {
                 const { data: [value] } = await this.cache.refresh(this.entity, {
                     data: projection,
                     filter,
                 } as any);
                 // 对于modi对象，在此缓存
-                if (this.schema[this.entity].toModi) {
+                if (this.schema[this.entity].toModi && value) {
                     const { modi$entity } = value;
                     this.modies = modi$entity as Array<BaseEntityDict['modi']['OpSchema']>;
                 }
-                this.loading = false;
+                this.setLoading(false);
+                this.id = value?.id as string;     // refresh除根结点只会在第一次构建时建立，之后的id只会被父亲set改变
             }
             catch (err) {
-                this.loading = false;
+                this.setLoading(false);
                 throw err;
             }
         }
