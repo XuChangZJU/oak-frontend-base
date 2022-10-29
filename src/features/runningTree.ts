@@ -853,7 +853,7 @@ class ListNode<
         }
     }
 
-    getParentFilter(childNode: SingleNode<ED, T, Cxt, AD>): ED[T]['Selection']['filter'] | undefined {
+    async getParentFilter(childNode: SingleNode<ED, T, Cxt, AD>): Promise<ED[T]['Selection']['filter'] | undefined> {
         let idx = 0;
         while (idx < this.ids!.length) {
             if (this.children[idx] === childNode) {
@@ -956,7 +956,7 @@ class ListNode<
 
         if (withParent && this.parent && !(this.parent instanceof VirtualNode)) {
             assert(this.parent instanceof SingleNode);
-            const filterOfParent = this.parent.getParentFilter<T>(this);
+            const filterOfParent = await this.parent.getParentFilter<T>(this);
             if (filterOfParent) {
                 filterArr.push(filterOfParent as any);
             }
@@ -1141,7 +1141,18 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
         }>;
-        const filter = this.getFilter(modies.length > 0 ? true : false);
+        let filter = this.id && { id: this.id } as ED[T]['Selection']['filter'];
+        if (!filter) {
+            // 可能是create
+            const createOper = this.operations.find(
+                (ele) => ele.oper.action === 'create'
+            ) as { oper: ED[T]['CreateSingle'] };
+            if (createOper) {
+                filter = {
+                    id: createOper.oper.data.id
+                };
+            }
+        }
         if (filter) {
             operations.push(...this.operations.map(
                 ele => ({
@@ -1313,33 +1324,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         );
     }
 
-    private getFilter(refresh: boolean) {
-        let filter: ED[T]['Selection']['filter'] = undefined;
-        if (this.id) {
-            filter = {
-                id: this.id,
-            };
-        }
-        else {
-            if (refresh) {
-                const parent = this.getParent();
-                if (parent && (parent instanceof SingleNode || parent instanceof ListNode)) {
-                    filter = parent.getParentFilter(this);
-                }
-            }
-            else {
-                const [operation] = this.operations;
-                if (operation?.oper.action === 'create') {
-                    const id = (operation.oper.data as ED[T]['CreateSingle']['data']).id;
-                    filter = {
-                        id,
-                    }
-                }
-            }
-        }
-        return filter;
-    }
-
     async getProjection() {
         const projection = await super.getProjection();
         for (const k in this.children) {
@@ -1377,33 +1361,43 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     async refresh() {
-        if (this.parent instanceof ListNode) {
-            assert(this.parent.getEntity() === this.entity);
-            const id = this.parent.getMyId(this);
-            this.id = id;
+        // SingleNode如果是非根结点，其id应该在第一次refresh的时候来确定
+        if (!this.id) {
+            if (this.parent instanceof ListNode) {
+                assert(this.parent.getEntity() === this.entity);
+                const id = this.parent.getMyId(this);
+                this.id = id;
+                return;
+            }
+            else if (this.parent instanceof SingleNode) {
+                const parentFilter = await this.parent.getParentFilter(this);
+                if (parentFilter) {
+                    const { id } = parentFilter;
+                    this.id = id;
+                }
+            }
+        }
+        if (!this.id) {
             return;
         }
         const projection = await this.getProjection();
-        const filter = this.getFilter(true);
-        if (filter) {
-            this.setLoading(true);
-            try {
-                const { data: [value] } = await this.cache.refresh(this.entity, {
-                    data: projection,
-                    filter,
-                } as any);
-                // 对于modi对象，在此缓存
-                if (this.schema[this.entity].toModi && value) {
-                    const { modi$entity } = value;
-                    this.modies = modi$entity as Array<BaseEntityDict['modi']['OpSchema']>;
-                }
-                this.setLoading(false);
-                this.id = value?.id as string;     // refresh除根结点只会在第一次构建时建立，之后的id只会被父亲set改变
+        const filter = { id: this.id };
+        this.setLoading(true);
+        try {
+            const { data: [value] } = await this.cache.refresh(this.entity, {
+                data: projection,
+                filter,
+            } as any);
+            // 对于modi对象，在此缓存
+            if (this.schema[this.entity].toModi && value) {
+                const { modi$entity } = value;
+                this.modies = modi$entity as Array<BaseEntityDict['modi']['OpSchema']>;
             }
-            catch (err) {
-                this.setLoading(false);
-                throw err;
-            }
+            this.setLoading(false);
+        }
+        catch (err) {
+            this.setLoading(false);
+            throw err;
         }
     }
 
@@ -1416,75 +1410,47 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
     }
 
-    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, AD>): ED[T2]['Selection']['filter'] | undefined {
-        let filter: ED[T]['Selection']['filter'] = undefined;
-        if (this.id) {
-            filter = {
-                id: this.id,
-            };
+    async getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, AD>): Promise<ED[T2]['Selection']['filter'] | undefined> {
+        if (!this.id) {
+            return;
         }
-        else if (this.getParent()) {
-            const parent = this.getParent();
-            if (parent instanceof SingleNode || parent instanceof ListNode) {
-                filter = parent.getParentFilter(this);
-            }
-        }
-        if (filter) {
-            for (const key in this.children) {
-                if (childNode === this.children[key]) {
-                    const sliceIdx = key.indexOf(':');
-                    const key2 = sliceIdx > 0 ? key.slice(0, sliceIdx) : key;
-                    const rel = this.judgeRelation(key2);
-                    if (rel === 2) {
-                        // 基于entity/entityId的多对一
+        const value = (await this.getFreshValue())!;
+
+        for (const key in this.children) {
+            if (childNode === this.children[key]) {
+                const sliceIdx = key.indexOf(':');
+                const key2 = sliceIdx > 0 ? key.slice(0, sliceIdx) : key;
+                const rel = this.judgeRelation(key2);
+                if (rel === 2) {
+                    // 基于entity/entityId的多对一
+                    return {
+                        id: value.entityId,
+                    };
+                }
+                else if (typeof rel === 'string') {
+                    return {
+                        id: value[`${rel}Id`],
+                    };
+                }
+                else {
+                    assert(rel instanceof Array);
+                    if (rel[1]) {
+                        // 基于普通外键的一对多
                         return {
-                            id: {
-                                $in: {
-                                    entity: this.entity,
-                                    data: {
-                                        entityId: 1,
-                                    },
-                                    filter: {
-                                        entity: key,
-                                        ...filter,
-                                    },
-                                },
-                            },
-                        };
-                    }
-                    else if (typeof rel === 'string') {
-                        return {
-                            id: {
-                                $in: {
-                                    entity: this.entity,
-                                    data: {
-                                        [`${rel}Id`]: 1,
-                                    },
-                                    filter,
-                                },
-                            },
+                            [rel[1]]: this.id,
                         };
                     }
                     else {
-                        assert(rel instanceof Array);
-                        if (rel[1]) {
-                            // 基于普通外键的一对多
-                            return {
-                                [rel[1]]: filter.id,
-                            } as any;
-                        }
-                        else {
-                            // 基于entity/entityId的一对多
-                            return {
-                                entity: this.entity,
-                                entityId: filter.id,
-                            } as any;
-                        }
+                        // 基于entity/entityId的一对多
+                        return {
+                            entity: this.entity,
+                            entityId: this.id,
+                        };
                     }
                 }
             }
-            assert(false);
         }
+        assert(false);
     }
 }
 

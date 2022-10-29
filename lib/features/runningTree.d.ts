@@ -36,6 +36,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     setDirty(): void;
     isDirty(): boolean;
     isLoading(): boolean;
+    protected setLoading(loading: boolean): void;
     isLoadingMore(): boolean;
     isExecuting(): boolean;
     setExecuting(executing: boolean): void;
@@ -52,7 +53,9 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     private pagination;
     private ids;
     private syncHandler;
-    protected getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string;
+    protected getChildPath(child: SingleNode<ED, T, Cxt, AD>): string;
+    getMyId(child: SingleNode<ED, T, Cxt, AD>): string;
+    setLoading(loading: boolean): void;
     checkIfClean(): void;
     onCacheSync(records: OpRecord<ED>[]): Promise<void>;
     destroy(): void;
@@ -79,13 +82,12 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']): Promise<void>;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
-    getParentFilter(childNode: SingleNode<ED, T, Cxt, AD>): ED[T]['Selection']['filter'] | undefined;
+    getParentFilter(childNode: SingleNode<ED, T, Cxt, AD>): Promise<ED[T]['Selection']['filter'] | undefined>;
     composeOperations(): Promise<(ED[T]["Operation"] & {
         entity: T;
     })[] | undefined>;
     getProjection(): Promise<ED[T]['Selection']['data']>;
     constructSelection(withParent?: true): Promise<{
-        disabled: boolean;
         data: ED[T]["Selection"]["data"];
         filter: ED[T]["Selection"]["filter"] | undefined;
         sorter: DeduceSorterItem<ED[T]["Schema"]>[];
@@ -100,6 +102,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     private children;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: Node<ED, keyof ED, Cxt, AD> | VirtualNode, id?: string);
     protected getChildPath(child: Node<ED, keyof ED, Cxt, AD>): string;
+    setLoading(loading: boolean): void;
     checkIfClean(): void;
     destroy(): void;
     getChild(path: string): SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>;
@@ -118,11 +121,10 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     composeOperations(): Promise<(ED[T]["Operation"] & {
         entity: T;
     })[] | undefined>;
-    private getFilter;
     getProjection(): Promise<ED[T]["Selection"]["data"]>;
     refresh(): Promise<void>;
     clean(): void;
-    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, AD>): ED[T2]['Selection']['filter'] | undefined;
+    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, AD>): Promise<ED[T2]['Selection']['filter'] | undefined>;
 }
 declare class VirtualNode {
     private dirty;
