@@ -53,8 +53,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     private pagination;
     private ids;
     private syncHandler;
-    protected getChildPath(child: SingleNode<ED, T, Cxt, AD>): string;
-    getMyId(child: SingleNode<ED, T, Cxt, AD>): string;
+    getChildPath(child: SingleNode<ED, T, Cxt, AD>): string;
     setLoading(loading: boolean): void;
     checkIfClean(): void;
     onCacheSync(records: OpRecord<ED>[]): Promise<void>;
@@ -63,7 +62,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     getPagination(): Pagination;
     setPagination(pagination: Pagination): Promise<void>;
     getChild(path: string): SingleNode<ED, T, Cxt, AD> | undefined;
-    getChildren(): SingleNode<ED, T, Cxt, AD>[];
+    getChildren(): Record<string, SingleNode<ED, T, Cxt, AD>>;
     addChild(path: string, node: SingleNode<ED, T, Cxt, AD>): void;
     removeChild(path: string): void;
     getNamedFilters(): NamedFilterItem<ED, T>[];

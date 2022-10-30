@@ -489,7 +489,7 @@ class ListNode<
     Cxt extends Context<ED>,
     AD extends CommonAspectDict<ED, Cxt>
     > extends Node<ED, T, Cxt, AD> {
-    private children: SingleNode<ED, T, Cxt, AD>[];
+    private children: Record<string, SingleNode<ED, T, Cxt, AD>>;
 
     private filters: NamedFilterItem<ED, T>[];
     private sorters: NamedSorterItem<ED, T>[];
@@ -498,44 +498,31 @@ class ListNode<
 
     private syncHandler: (records: OpRecord<ED>[]) => Promise<void>;
 
-    protected getChildPath(child: SingleNode<ED, T, Cxt, AD>): string {
+    getChildPath(child: SingleNode<ED, T, Cxt, AD>): string {
         let idx = 0;
-        for (const child2 of this.children) {
-            if (child === child2) {
-                return `${idx}`;
+        for (const k in this.children) {
+            if (this.children[k] === child) {
+                return k;
             }
             idx++;
         }
 
         assert(false);
     }
-
-    getMyId(child: SingleNode<ED, T, Cxt, AD>): string {
-        let idx = 0;
-        for (const child2 of this.children) {
-            if (child === child2) {
-                return this.ids![idx];
-            }
-            idx++;
-        }
-
-        assert(false);
-    }
-
 
     setLoading(loading: boolean) {
         super.setLoading(loading);
-        this.children.forEach(
-            ele => ele.setLoading(loading)
-        );
+        for (const k in this.children) {
+            this.children[k].setLoading(loading);
+        }
     }
 
     checkIfClean(): void {
         if (this.operations.length > 0) {
             return;
         }
-        for (const child of this.children) {
-            if (child.isDirty()) {
+        for (const k in this.children) {
+            if (this.children[k].isDirty()) {
                 return;
             }
         }
@@ -604,13 +591,14 @@ class ListNode<
                 sorter
             });
             this.ids = result.map(ele => ele.id) as unknown as string[];
+            // 此时有可能原来的children上的id发生了变化
         }
     }
 
     destroy(): void {
         this.cache.unbindOnSync(this.syncHandler);
-        for (const child of this.children) {
-            child.destroy();
+        for (const k in this.children) {
+            this.children[k].destroy();
         }
     }
 
@@ -627,7 +615,7 @@ class ListNode<
         pagination?: Pagination
     ) {
         super(entity, schema, cache, projection, parent);
-        this.children = [];
+        this.children = {};
         this.filters = filters || [];
         this.sorters = sorters || [];
         this.pagination = pagination || DEFAULT_PAGINATION;
@@ -649,11 +637,7 @@ class ListNode<
     getChild(
         path: string,
     ): SingleNode<ED, T, Cxt, AD> | undefined {
-        const idx = parseInt(path, 10);
-        assert(typeof idx === 'number');
-        if (idx < this.children.length) {
-            return this.children[idx];
-        }
+        return this.children[path];
     }
 
     getChildren() {
@@ -661,15 +645,13 @@ class ListNode<
     }
 
     addChild(path: string, node: SingleNode<ED, T, Cxt, AD>) {
-        const idx = parseInt(path, 10);
-        assert(typeof idx === 'number');
-        this.children[idx] = node;
+        assert(!this.children[path]);
+        assert(path.length > 10, 'List的path改成了id');
+        this.children[path] = node;
     }
 
     removeChild(path: string) {
-        const idx = parseInt(path, 10);
-        assert(typeof idx === 'number');
-        this.children.splice(idx, 1);
+        unset(this.children, path);
     }
 
     getNamedFilters() {
@@ -859,8 +841,8 @@ class ListNode<
             }
         }
 
-        for (const child of this.children) {
-            await child.doBeforeTrigger();
+        for (const k in this.children) {
+            await this.children[k].doBeforeTrigger();
         }
     }
 
@@ -871,8 +853,8 @@ class ListNode<
             }
         }
 
-        for (const child of this.children) {
-            await child.doAfterTrigger();
+        for (const k in this.children) {
+            await this.children[k].doAfterTrigger();
         }
     }
 
@@ -893,9 +875,10 @@ class ListNode<
             return;
         }
         const childOperations = await Promise.all(
-            this.children.map(
+            Object.keys(this.children).map(
                 async ele => {
-                    const childOpertaions = await ele.composeOperations();
+                    const child = this.children[ele];
+                    const childOpertaions = await child.composeOperations();
                     if (childOpertaions) {
                         assert(childOperations.length === 1);
                         return childOpertaions[0];
@@ -1073,8 +1056,8 @@ class ListNode<
         this.dirty = undefined;
         this.operations = [];
 
-        for (const child of this.children) {
-            child.clean();
+        for (const k in this.children) {
+            this.children[k].clean();
         }
     }
 }
@@ -1403,7 +1386,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (!this.id) {
             if (this.parent instanceof ListNode) {
                 assert(this.parent.getEntity() === this.entity);
-                const id = this.parent.getMyId(this);
+                const id = this.parent.getChildPath(this);
                 this.id = id;
                 return;
             }
