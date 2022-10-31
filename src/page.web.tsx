@@ -251,7 +251,7 @@ abstract class OakComponentBase<
 
     cleanOperation(path?: string) {
         const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-        return this.features.runningTree.clean(tpath2);
+        return this.features.runningTree.clean(path2);
     }
 
     t(key: string, params?: object) {
@@ -509,7 +509,7 @@ export function createComponent<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends Record<string, any>,
     IsList extends boolean,
@@ -659,9 +659,9 @@ export function createComponent<
         render(): React.ReactNode {
             const Render = render.call(this);
             const { oakPullDownRefreshLoading } = this.state;
-            const { enablePullDownRefresh = false } = this.props;
+            const { oakDisablePulldownRefresh = false } = this.props;
 
-            if (this.supportPullDownRefresh() && enablePullDownRefresh) {
+            if (this.supportPullDownRefresh() && !oakDisablePulldownRefresh) {
                 const Child = React.cloneElement(
                     <PullToRefresh
                         onRefresh={async () => {

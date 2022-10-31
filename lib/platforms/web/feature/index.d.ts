@@ -7,7 +7,7 @@ import { Feature } from './../../../types/Feature';
 declare type ED = EntityDict & BaseEntityDict;
 declare type Cxt = Context<ED>;
 declare type AD = Record<string, Aspect<ED, Cxt>> & CommonAspectDict<ED, Cxt>;
-declare type FD = Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>;
+declare type FD = Record<string, Feature>;
 declare type features = BasicFeatures<ED, Cxt, AD> & FD;
 declare const FeatureProvider: React.FC<{
     features: features;

@@ -59,7 +59,7 @@ function getQuery(url: string, properties?: WechatMiniprogram.Component.Property
         else {
             switch (k) {
                 case 'oakIsPicker':
-                case 'enablePullDownRefresh': {
+                case 'oakDisablePulldownRefresh': {
                     Object.assign(query2, {
                         [k]: Boolean(query[k]),
                     });

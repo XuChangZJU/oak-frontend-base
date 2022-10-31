@@ -9,7 +9,7 @@ import { Feature, subscribe } from './../../../types/Feature';
 type ED = EntityDict & BaseEntityDict;
 type Cxt = Context<ED>;
 type AD = Record<string, Aspect<ED, Cxt>> & CommonAspectDict<ED, Cxt>;
-type FD = Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>;
+type FD = Record<string, Feature>;
 type features = BasicFeatures<ED, Cxt, AD> & FD;
 
 const FeatureContext = React.createContext<{ features: features }>({

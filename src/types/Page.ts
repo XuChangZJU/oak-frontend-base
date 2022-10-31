@@ -21,7 +21,7 @@ interface ComponentOption<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends Record<string, any>,
     IsList extends boolean,
@@ -96,7 +96,7 @@ export type ComponentPublicThisType<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature>,
     FormedData extends Record<string, any>,
     IsList extends boolean,
     TData extends Record<string, any> = {},
@@ -141,7 +141,7 @@ export type OakComponentOption<
     T extends keyof ED,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>,
+    FD extends Record<string, Feature>,
     Proj extends ED[T]['Selection']['data'],
     FormedData extends Record<string, any>,
     IsList extends boolean,
@@ -181,7 +181,7 @@ export type OakComponentProperties = {
     oakProjection: ObjectConstructor;
     oakFrom: StringConstructor;
     oakParentEntity: StringConstructor;
-    enablePullDownRefresh: BooleanConstructor;
+    oakDisablePulldownRefresh: BooleanConstructor;
     oakAutoUnmount: BooleanConstructor;
     oakActions: ArrayConstructor;
 };
@@ -327,7 +327,7 @@ export type MakeOakComponent<
     ED extends EntityDict & BaseEntityDict,
     Cxt extends Context<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>>
+    FD extends Record<string, Feature>
     > = <
         T extends keyof ED,
         Proj extends ED[T]['Selection']['data'],
