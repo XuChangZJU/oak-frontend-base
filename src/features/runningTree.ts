@@ -30,7 +30,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
     protected loadingMore: boolean;
     protected executing: boolean;
     protected operations: Operation<ED, T>[];
-    protected modiIds: string[];        //  对象所关联的modi
+    protected modiIds: string[] | undefined;        //  对象所关联的modi
 
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>,
@@ -46,7 +46,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
         this.loadingMore = false;
         this.executing = false;
         this.operations = [];
-        this.modiIds = [];
+        this.modiIds  = undefined;
     }
 
     getEntity() {
@@ -70,7 +70,7 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
         if (childPath.includes(':next')) {
             const { modiIds } = this;
             // 如果是需要modi的路径，在这里应该就可以返回了，目前应该不存在modi嵌套modi
-            if (modiIds.length > 0) {
+            if (modiIds && modiIds.length > 0) {
                 const modies = await this.cache.get('modi', {
                     data: {
                         id: 1,
@@ -91,16 +91,17 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
                 });
                 return modies as BaseEntityDict['modi']['OpSchema'][];
             }
+            return [];
         }
         const { toModi } = this.schema[this.entity];
         if (toModi) {
             // 如果这就是一个toModi的对象，则不用再向上查找了
-            return [];
+            return;
         }
         if (this.parent) {
             return this.parent.getActiveModies(this);
         }
-        return [];
+        return;
     }
 
     setDirty() {
@@ -797,8 +798,8 @@ class ListNode<
 
         // 如果有modi，则不能以ids作为当前对象，需要向上层获得filter应用了modi之后再找过
         const selection = await this.constructSelection(true);
-        if (selection.validParentFilter) {
-            if (!modies) {
+        if (selection.validParentFilter || createdIds.length > 0) {
+            if (undefined === modies) {
                 Object.assign(selection, {
                     filter: {
                         id: {
@@ -1412,9 +1413,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             // 对于modi对象，在此缓存
             if (this.schema[this.entity].toModi && value) {
                 const { modi$entity } = value;
-                if (modi$entity.length > 0) {
-                    this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id)
-                }
+                this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id)
             }
             this.setLoading(false);
         }

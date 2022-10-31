@@ -21,7 +21,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     protected loadingMore: boolean;
     protected executing: boolean;
     protected operations: Operation<ED, T>[];
-    protected modiIds: string[];
+    protected modiIds: string[] | undefined;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: Node<ED, keyof ED, Cxt, AD> | VirtualNode);
     getEntity(): T;
     getSchema(): StorageSchema<ED>;
