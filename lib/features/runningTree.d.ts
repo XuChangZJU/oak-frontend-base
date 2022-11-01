@@ -42,7 +42,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     setExecuting(executing: boolean): void;
     getParent(): Node<ED, keyof ED, Cxt, AD> | VirtualNode | undefined;
     protected getProjection(): Promise<ED[T]["Selection"]["data"]>;
-    protected judgeRelation(attr: string): string | 0 | string[] | 2 | 1;
+    protected judgeRelation(attr: string): string | 0 | 1 | 2 | string[];
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }

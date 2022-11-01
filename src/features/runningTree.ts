@@ -1169,6 +1169,12 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     id: createOper.oper.data.id
                 };
             }
+            // 还可能是来自父级的外键
+            const { parent } = this;
+            if (parent instanceof ListNode || parent instanceof SingleNode) {
+                filter = parent.getParentFilter(this);
+            }
+            
         }
         if (filter) {
             operations.push(...this.operations.map(
@@ -1238,8 +1244,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             // 处理一下create
             this.operations.push(operation as Operation<ED, T>);
             if (oper.action === 'create') {
+                const id = await generateNewId();
                 Object.assign(oper.data, {
-                    id: await generateNewId(),
+                    id,
                 });
             }
             Object.assign(oper, { id: await generateNewId() });
@@ -1432,11 +1439,11 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
     }
 
-    async getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, AD>): Promise<ED[T2]['Selection']['filter'] | undefined> {
-        if (!this.id) {
+    async getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, AD>): Promise<ED[T2]['Selection']['filter'] | undefined> {        
+        const value = (await this.getFreshValue())!;
+        if (!value) {
             return;
         }
-        const value = (await this.getFreshValue())!;
 
         for (const key in this.children) {
             if (childNode === this.children[key]) {

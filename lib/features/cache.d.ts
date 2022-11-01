@@ -38,7 +38,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
         operation: ED[keyof ED]['Operation'];
     }>): Promise<SelectionResult<ED[T]["Schema"], S["data"]>>;
     get<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, params?: SelectOption): Promise<import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], S["data"]>[]>;
-    judgeRelation(entity: keyof ED, attr: string): string | 0 | string[] | 2 | 1;
+    judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | 2 | string[];
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;
     getCachedData(): { [T in keyof ED]?: ED[T]["OpSchema"][] | undefined; };

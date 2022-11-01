@@ -38,6 +38,191 @@ const OakProperties = {
     oakDisablePulldownRefresh: Boolean,
 };
 
+type EDD = EntityDict & BaseEntityDict;
+type Cxt = Context<EntityDict & BaseEntityDict>;
+type ADD = Record<string, Aspect<EDD, Cxt>>;
+type FDD = Record<string, Feature>;
+const oakBehavior = Behavior<
+    WechatMiniprogram.Component.DataOption,
+    WechatMiniprogram.Component.PropertyOption,
+    WechatMiniprogram.Component.MethodOption,
+    {
+        state: Record<string, any>;
+        props: {
+            oakId: string;
+            oakPath: string;
+            oakFilters: string;
+            oakSorters: string;
+            oakIsPicker: boolean;
+            oakParentEntity: string;
+            oakFrom: string;
+            oakActions: string;
+            oakAutoUnmount: boolean;
+            oakDisablePulldownRefresh: boolean;
+        } & Record<string, any>;
+        features: BasicFeatures<EDD, Cxt, ADD & CommonAspectDict<EDD, Cxt>> & FDD;
+        subscribed: (() => void) | undefined;
+        options: OakComponentOption<
+            EDD,
+            keyof EDD,
+            Cxt,
+            ADD,
+            FDD,
+            EDD[keyof EDD]['Selection']['data'],
+            Record<string, any>,
+            boolean,
+            Record<string, any>,
+            Record<string, any>,
+            Record<string, Function>
+        >
+    }>({
+        methods: {
+            iAmThePage() {
+                const pages = getCurrentPages();
+                if (pages[0] === this as any) {
+                    return true;
+                }
+                return false;
+            },
+            subscribe() {
+                this.subscribed = FeactureSubscribe(() => this.reRender());
+            },
+            unsubscribe() {
+                if (this.subscribed) {
+                    this.subscribed();
+                    this.subscribed = undefined;
+                }
+            },
+            setState(data: Record<string, any>, callback: () => void) {
+                this.setData(data, () => {
+                    this.state = this.data;
+                    callback && callback.call(this);
+                });
+            },
+            reRender() {
+                reRender.call(this as any, this.option as any);
+            },
+            async onLoad(query: Record<string, any>) {
+                /**
+                 * 小程序以props传递数据，和以页面间参数传递数据的处理不一样，都在这里处理
+                 * 目前处理的还不是很完善，在实际处理中再做
+                 */
+                const { properties, path } = this.options;
+                const assignProps = (data: Record<string, any>, property: string, type: String | Boolean | Number | Object) => {
+                    if (data[property]) {
+                        let value = data[property];
+                        if (typeof data[property] === 'string' && type !== String) {
+                            switch (type) {
+                                case Boolean: {
+                                    value = new Boolean(data[property]);
+                                    break;
+                                }
+                                case Number: {
+                                    value = new Number(data[property]);
+                                    break;
+                                }
+                                case Object: {
+                                    value = JSON.parse(data[property]);
+                                    break;
+                                }
+                                default: {
+                                    assert(false);
+                                }
+                            }
+                        }
+                        Object.assign(this.props, {
+                            [property]: value,
+                        });
+                    }
+                };
+                if (properties) {
+                    for (const key in properties) {
+                        if (query[key]) {
+                            assignProps(query, key, properties[key]!);
+                        }
+                        else {
+                            assignProps(this.data, key, properties[key]!);
+                        }
+                    }
+                }
+                for (const key in OakProperties) {
+                    if (query[key]) {
+                        assignProps(query, key, OakProperties[key as keyof typeof OakProperties]!);
+                    }
+                    else {
+                        assignProps(this.data, key, OakProperties[key as keyof typeof OakProperties]!);
+                    }
+                }
+                if (this.props.oakPath || (this.iAmThePage() && path)) {
+                    await onPathSet.call(this as any, this.option as any);
+                }
+                else {
+                    this.reRender();
+                }
+            },
+        },
+        observers: {
+            async oakPath(data) {
+                if (data) {
+                    await onPathSet.call(this as any, this.option as any);
+                }
+            }
+        },
+        pageLifetimes: {
+            show() {
+                const { show } = this.options.lifetimes || {};
+                this.subscribe();
+                this.reRender();
+                show && show.call(this);
+            },
+            hide() {
+                const { hide } = this.options.lifetimes || {};
+                this.unsubscribe();
+                hide && hide.call(this);
+            }
+        },
+        lifetimes: {
+            created() {
+                const { setData } = this;
+                this.state = this.data;
+                this.setData = (data, callback) => {
+                    setData.call(this, data, () => {
+                        this.state = this.data;
+                        callback && callback.call(this);
+                    });
+                };
+            },
+            attached() {
+                const { attached } = this.options.lifetimes || {};
+                const i18nInstance = getI18nInstanceWechatMp();
+                if (i18nInstance) {
+                    (this as any).setState({
+                        [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
+                        [CURRENT_LOCALE_DATA]: i18nInstance.translations,
+                    });
+                }
+                attached && attached.call(this);
+            },
+            detached() {
+                const { detached } = this.options.lifetimes || {};
+                this.unsubscribe();
+                detached && detached.call(this);
+            },
+            ready() {
+                const { ready } = this.options.lifetimes || {};
+                ready && ready.call(this);
+            },
+            moved() {
+                const { moved } = this.options.lifetimes || {};
+                moved && moved.call(this);                
+            },
+            error(err: Error) {
+                const { error } = this.options.lifetimes || {};
+                error && error.call(this, err);
+            }
+        },
+    })
+
 export function createComponent<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
@@ -97,102 +282,30 @@ export function createComponent<
             } & Record<string, any>;
             features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
             subscribed: (() => void) | undefined;
+            option: OakComponentOption<
+                ED,
+                T,
+                Cxt,
+                AD,
+                FD,
+                Proj,
+                FormedData,
+                IsList,
+                TData,
+                TProperty,
+                TMethod
+            >;
         }>({
+            behaviors: [oakBehavior],
             data: Object.assign({}, data, {
                 oakFullpath: '',
             }),
             properties: Object.assign({}, properties, OakProperties),
             methods: {
-                iAmThePage() {
-                    const pages = getCurrentPages();
-                    if (pages[0] === this as any) {
-                        return true;
-                    }
-                    return false;
-                },
-                subscribe() {
-                    this.subscribed = FeactureSubscribe(() => this.reRender());
-                },
-                unsubscribe() {
-                    if (this.subscribed) {
-                        this.subscribed();
-                        this.subscribed = undefined;
-                    }
-                },
-                setState(data: Record<string, any>, callback: () => void) {
-                    this.setData(data, () => {
-                        this.state = this.data;
-                        callback && callback.call(this);
-                    });
-                },
-                reRender() {
-                    reRender.call(this as any, option as any);
-                },
-                async onLoad(query: Record<string, any>) {
-                    /**
-                     * 小程序以props传递数据，和以页面间参数传递数据的处理不一样，都在这里处理
-                     * 目前处理的还不是很完善，在实际处理中再做
-                     */
-                    const assignProps = (data: Record<string, any>, property: string, type: String | Boolean | Number | Object) => {
-                        if (data[property]) {
-                            let value = data[property];
-                            if (typeof data[property] === 'string' && type !== String) {
-                                switch (type) {
-                                    case Boolean: {
-                                        value = new Boolean(data[property]);
-                                        break;
-                                    }
-                                    case Number: {
-                                        value = new Number(data[property]);
-                                        break;
-                                    }
-                                    case Object: {
-                                        value = JSON.parse(data[property]);
-                                        break;
-                                    }
-                                    default: {
-                                        assert(false);
-                                    }
-                                }
-                            }
-                            Object.assign(this.props, {
-                                [property]: value,
-                            });
-                        }
-                    };
-                    if (properties) {
-                        for (const key in properties) {
-                            if (query[key]) {
-                                assignProps(query, key, properties[key]!);
-                            }
-                            else {
-                                assignProps(this.data, key, properties[key]!);
-                            }
-                        }                        
-                    }
-                    for (const key in OakProperties) {
-                        if (query[key]) {
-                            assignProps(query, key, OakProperties[key as keyof typeof OakProperties]!);
-                        }
-                        else {
-                            assignProps(this.data, key, OakProperties[key as keyof typeof OakProperties]!);
-                        }
-                    }
-                    if (this.props.oakPath || (this.iAmThePage() && path)) {
-                        await onPathSet.call(this as any, option as any);
-                    }
-                    else {
-                        this.reRender();
-                    }
-                },
                 ...methods,
             },
             observers: {
-                async oakPath(data) {
-                    if (data) {
-                        await onPathSet.call(this as any, option as any);
-                    }
-                }
+                ...observers,
             },
             pageLifetimes: {
                 show() {
@@ -207,32 +320,10 @@ export function createComponent<
             },
             lifetimes: {
                 created() {
-                    const { setData } = this;
-                    this.state = this.data;
+                    this.option = option;
                     this.features = features;
-                    this.setData = (data, callback) => {
-                        setData.call(this, data, () => {
-                            this.state = this.data;
-                            callback && callback.call(this);
-                        });
-                    };
                     created && created.call(this);
                 },
-                attached() {
-                    const i18nInstance = getI18nInstanceWechatMp();
-                    if (i18nInstance) {
-                        (this as any).setState({
-                            [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
-                            [CURRENT_LOCALE_DATA]: i18nInstance.translations,
-                        });
-                    }
-                    attached && attached.call(this);
-                },
-                detached() {
-                    this.unsubscribe();
-                    detached && detached.call(this);
-                },
-                ...restLifetimes,
             },
-        })
+        });
 }
