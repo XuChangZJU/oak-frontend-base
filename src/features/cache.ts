@@ -171,7 +171,6 @@ export class Cache<
             operation: ED[keyof ED]['Operation'];
         }>
     ) {
-        let result: SelectionResult<ED[T]['Schema'], S['data']>;
         const context = this.contextBuilder!();
         await context.begin();
         for (const oper of opers) {
@@ -188,9 +187,21 @@ export class Cache<
             );
         }
         reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
+        try {
+            const result = await this.getInner(entity, selection, context);
+            await context.rollback();
+            return result;
+        }
+        catch (err) {
+            await context.rollback();
+            throw err;
+        }
+    }
+
+    private async getInner<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, context: Cxt) {        
         while (true) {
             try {
-                result = await this.cacheStore!.select(
+                const { result } = await this.cacheStore!.select(
                     entity,
                     selection,
                     context,
@@ -198,15 +209,12 @@ export class Cache<
                         dontCollect: true,
                     }
                 );
-
-                await context.rollback();
                 return result;
             } catch (err) {
                 if (err instanceof OakRowUnexistedException) {
                     const missedRows = err.getRows();
                     await this.aspectWrapper.exec('fetchRows', missedRows);
                 } else {
-                    await context.rollback();
                     throw err;
                 }
             }
@@ -219,13 +227,8 @@ export class Cache<
         params?: SelectOption
     ) {
         const context = this.contextBuilder!();
-        const { result } = await this.cacheStore!.select(
-            entity,
-            selection,
-            context,
-            {}
-        );
-        return result;
+        
+        return this.getInner(entity, selection, context);
     }
 
     judgeRelation(entity: keyof ED, attr: string) {

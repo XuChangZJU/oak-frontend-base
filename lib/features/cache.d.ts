@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper, SelectionResult, CheckerType } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper, CheckerType } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -36,7 +36,8 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends C
     tryRedoOperationsThenSelect<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, opers: Array<{
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
-    }>): Promise<SelectionResult<ED[T]["Schema"], S["data"]>>;
+    }>): Promise<import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], S["data"]>[]>;
+    private getInner;
     get<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, params?: SelectOption): Promise<import("oak-domain/lib/types").SelectRowShape<ED[T]["Schema"], S["data"]>[]>;
     judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | 2 | string[];
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>): void;

@@ -86,7 +86,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
         entity: T;
     })[] | undefined>;
     getProjection(): Promise<ED[T]['Selection']['data']>;
-    constructSelection(withParent?: true): Promise<{
+    constructSelection(withParent?: true, disableOperation?: boolean): Promise<{
         data: ED[T]["Selection"]["data"];
         filter: ED[T]["Selection"]["filter"] | undefined;
         sorter: DeduceSorterItem<ED[T]["Schema"]>[];
@@ -114,7 +114,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     };
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>): void;
     removeChild(path: string): void;
-    getFreshValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined>;
+    getFreshValue(disableOperation?: boolean): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined>;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
     addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']): Promise<void>;
@@ -124,7 +124,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     getProjection(withDecendants?: boolean): Promise<ED[keyof ED]["Selection"]["data"]>;
     refresh(): Promise<void>;
     clean(): void;
-    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, AD>): Promise<ED[T2]['Selection']['filter'] | undefined>;
+    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, AD>, disableOperation?: boolean): Promise<ED[T2]['Selection']['filter'] | undefined>;
 }
 declare class VirtualNode {
     private dirty;

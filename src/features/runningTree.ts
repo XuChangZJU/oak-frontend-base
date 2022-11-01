@@ -583,7 +583,8 @@ class ListNode<
             此时对userRelation的删除动作就会导致user不会被移出list
          */
         if (needRefresh) {
-            const { filter, sorter } = await this.constructSelection(true);
+            // 这里因为operation还没被移除掉(execute还没有结束)，所以同步的时候不能计算动态的operation产生的id
+            const { filter, sorter } = await this.constructSelection(true, true);
             const result = await this.cache.get(this.getEntity(), {
                 data: {
                     id: 1,
@@ -815,7 +816,7 @@ class ListNode<
                 });
             }
     
-            const { result } = await this.cache.tryRedoOperationsThenSelect(this.entity, selection, operations);
+            const result = await this.cache.tryRedoOperationsThenSelect(this.entity, selection, operations);
             return result;
         }
         return [];
@@ -936,7 +937,7 @@ class ListNode<
         return projection;
     }
 
-    async constructSelection(withParent?: true) {
+    async constructSelection(withParent?: true, disableOperation?: boolean) {
         const { filters, sorters } = this;
         const data = await this.getProjection();
         let validParentFilter = true;
@@ -964,7 +965,7 @@ class ListNode<
 
         if (withParent && this.parent) {
             if (this.parent instanceof SingleNode) {
-                const filterOfParent = await this.parent.getParentFilter<T>(this);
+                const filterOfParent = await this.parent.getParentFilter<T>(this, disableOperation);
                 if (filterOfParent) {
                     filterArr.push(filterOfParent as any);
                 }
@@ -1149,7 +1150,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         unset(this.children, path);
     }
 
-    async getFreshValue(): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined> {
+    async getFreshValue(disableOperation?: boolean): Promise<SelectRowShape<ED[T]['Schema'], ED[T]['Selection']['data']> | undefined> {
         const projection = await this.getProjection(false);
 
         // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
@@ -1159,31 +1160,35 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             operation: ED[keyof ED]['Operation'];
         }> : [];
         let filter = this.id && { id: this.id } as ED[T]['Selection']['filter'];
-        if (!filter) {
+        if (!filter && !disableOperation) {
             // 可能是create
             const createOper = this.operations.find(
                 (ele) => ele.oper.action === 'create'
             ) as { oper: ED[T]['CreateSingle'] };
             if (createOper) {
+                assert(createOper.oper.data.id);
                 filter = {
                     id: createOper.oper.data.id
                 };
-            }
+            }            
+        }
+        if (!filter) {
             // 还可能是来自父级的外键
             const { parent } = this;
             if (parent instanceof ListNode || parent instanceof SingleNode) {
-                filter = parent.getParentFilter(this);
+                filter = await parent.getParentFilter(this, disableOperation);
             }
-            
         }
         if (filter) {
-            operations.push(...this.operations.map(
-                ele => ({
-                    entity: this.entity,
-                    operation: ele.oper,
-                })
-            ));
-            const { result } = await this.cache.tryRedoOperationsThenSelect(this.entity, {
+            if (!disableOperation) {
+                operations.push(...this.operations.map(
+                    ele => ({
+                        entity: this.entity,
+                        operation: ele.oper,
+                    })
+                ));
+            }
+            const result = await this.cache.tryRedoOperationsThenSelect(this.entity, {
                 data: projection,
                 filter,
             }, operations);
@@ -1439,8 +1444,8 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
     }
 
-    async getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, AD>): Promise<ED[T2]['Selection']['filter'] | undefined> {        
-        const value = (await this.getFreshValue())!;
+    async getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, AD>, disableOperation?: boolean): Promise<ED[T2]['Selection']['filter'] | undefined> {        
+        const value = (await this.getFreshValue(disableOperation))!;
         if (!value) {
             return;
         }
@@ -1452,28 +1457,34 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 const rel = this.judgeRelation(key2);
                 if (rel === 2) {
                     // 基于entity/entityId的多对一
-                    return {
-                        id: value.entityId,
-                    };
+                    if (value.entityId && value.entity === childNode.getEntity()) {
+                        return {
+                            id: value.entityId,
+                        };
+                    }
+                    return undefined;
                 }
                 else if (typeof rel === 'string') {
-                    return {
-                        id: value[`${rel}Id`],
-                    };
+                    if (value[`${rel}Id`]) {
+                        return {
+                            id: value[`${rel}Id`],
+                        };
+                    }
+                    return undefined;
                 }
                 else {
                     assert(rel instanceof Array);
                     if (rel[1]) {
                         // 基于普通外键的一对多
                         return {
-                            [rel[1]]: this.id,
+                            [rel[1]]: value.id,
                         };
                     }
                     else {
                         // 基于entity/entityId的一对多
                         return {
                             entity: this.entity,
-                            entityId: this.id,
+                            entityId: value.id,
                         };
                     }
                 }

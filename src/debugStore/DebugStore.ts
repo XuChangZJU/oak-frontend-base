@@ -1,15 +1,15 @@
 import { EntityDict, SelectOption, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateOption, SelectionResult, SelectRowShape } from "oak-domain/lib/types";
-import { TreeStore } from 'oak-memory-tree-store';
+import { TreeStore, TreeStoreOperateOption, TreeStoreSelectOption } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { RWLock } from 'oak-domain/lib/utils/concurrent';
 
-interface DebugStoreOperateOption extends OperateOption {
+interface DebugStoreOperateOption extends TreeStoreOperateOption {
     noLock?: true;
 };
 
-interface DebugStoreSelectOption extends SelectOption {
+interface DebugStoreSelectOption extends TreeStoreSelectOption {
     noLock?: true;
 };
 
@@ -21,6 +21,26 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Cont
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
         this.rwLock = new RWLock();
     }
+
+    protected async updateAbjointRow<T extends keyof ED, OP extends DebugStoreOperateOption>(
+        entity: T,
+        operation: ED[T]['CreateSingle'] | ED[T]['Update'] | ED[T]['Remove'],
+        context: Cxt,
+        option?: OP) {
+            // 对于create动作，没有值的属性要置NULL
+            const { action, data } = operation;
+            if (action === 'create') {
+                const { attributes } = this.getSchema()[entity];
+                for (const key in attributes) {
+                    if (data[key] === undefined) {
+                        Object.assign(data, {
+                            [key]: null,
+                        });
+                    }
+                }
+            }
+            return super.updateAbjointRow(entity, operation, context, option);
+        }
 
     protected async cascadeUpdate<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, option: OP) {        
         if (!option.blockTrigger) {
