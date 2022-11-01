@@ -1705,14 +1705,17 @@ export class RunningTree<
         } = options;
         let node: ListNode<ED, T, Cxt, AD> | SingleNode<ED, T, Cxt, AD> | VirtualNode;
         const { parent, path } = analyzePath(fullPath);
+        const parentNode = parent ? this.findNode(parent) : undefined;
         if (this.findNode(fullPath)) {
-            if (process.env.NODE_ENV === 'development') {
+            // 目前只有一种情况合法，即parentNode是list，列表中的位置移动引起的重用
+            if (parentNode instanceof ListNode) {
+            }
+            else if  (process.env.NODE_ENV === 'development') {
                 console.error(`创建node时发现已有结点，不能重用。「${fullPath}」`);
             }
             return;
         }
 
-        const parentNode = parent ? this.findNode(parent) : undefined;
         if (entity) {
             if (isList) {
                 node = new ListNode<ED, T, Cxt, AD>(

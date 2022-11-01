@@ -643,7 +643,8 @@ export function createComponent<
         }
 
         async componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
-            if (!prevProps.oakPath && this.props.oakPath) {
+            if (prevProps.oakPath !== this.props.oakPath) {
+                assert(this.props.oakPath);
                 await this.onPathSet();
                 lifetimes?.ready && lifetimes.ready.call(this);
                 lifetimes?.show && lifetimes.show.call(this);
