@@ -861,7 +861,7 @@ class ListNode<
     }
 
     async getParentFilter(childNode: SingleNode<ED, T, Cxt, AD>): Promise<ED[T]['Selection']['filter'] | undefined> {
-        let idx = 0;
+        /* let idx = 0;
         while (idx < this.ids!.length) {
             if (this.children[idx] === childNode) {
                 return {
@@ -869,6 +869,13 @@ class ListNode<
                 }
             }
             idx++;
+        } */
+        for(const id in this.children) {
+            if (this.children[id] === childNode) {
+                return {
+                    id,
+                };
+            }
         }
     }
 
@@ -1174,7 +1181,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         if (!filter) {
             // 还可能是来自父级的外键
-            const { parent } = this;
+            const parent = this.getParent();
             if (parent instanceof ListNode || parent instanceof SingleNode) {
                 filter = await parent.getParentFilter(this, disableOperation);
             }
@@ -1399,8 +1406,8 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (!this.id) {
             if (this.parent instanceof ListNode) {
                 assert(this.parent.getEntity() === this.entity);
-                const id = this.parent.getChildPath(this);
-                this.id = id;
+                // id = this.parent.getChildPath(this);
+                // this.id = id;
                 return;
             }
             else if (this.parent instanceof SingleNode) {
