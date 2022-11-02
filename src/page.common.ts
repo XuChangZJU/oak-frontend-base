@@ -291,7 +291,7 @@ export async function execute<
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
         const result = await this.features.runningTree.execute(fullpath, operation);        
-        this.setMessage({
+        await this.setMessage({
             type: 'success',
             content: '操作成功',
         });

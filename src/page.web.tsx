@@ -114,7 +114,7 @@ abstract class OakComponentBase<
     }
 
     setMessage(data: MessageProps) {
-        this.features.message.setMessage(data);
+        return this.features.message.setMessage(data);
     }
 
     consumeMessage() {
