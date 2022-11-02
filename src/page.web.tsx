@@ -636,10 +636,10 @@ export function createComponent<
         }
 
         componentWillUnmount() {
-            this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && this.features.runningTree.destroyNode(this.state.oakFullpath);
-            lifetimes?.detached && lifetimes.detached.call(this);
             this.unsubscribe();
             this.unregisterPageScroll();
+            this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && this.features.runningTree.destroyNode(this.state.oakFullpath);
+            lifetimes?.detached && lifetimes.detached.call(this);
         }
 
         async componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
