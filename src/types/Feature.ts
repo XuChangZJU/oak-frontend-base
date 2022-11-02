@@ -31,6 +31,9 @@ export function subscribe(callback: () => any) {
             if (result instanceof Promise) {
                 await result;
             }
+            else {
+                console.error(`方法${method.name}被定义为action但不是异步函数，可能会引起对象解构和重渲染之间的不正确同步`);
+            }
         }
         catch (err) {
             // console.error(err, method.name);

@@ -6,7 +6,7 @@ export class Message  extends Feature{
     private data?: MessageProps;
 
     @Action
-    setMessage(data: MessageProps) {
+    async setMessage(data: MessageProps) {
         this.data = data;
     }
 
