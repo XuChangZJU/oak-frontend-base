@@ -134,7 +134,7 @@ export async function onPathSet<
         // 创建virtualNode
         await features.runningTree.createNode({
             path: oakPath2 as string,
-        });    
+        });
     }
     await this.refresh();
 }
@@ -159,13 +159,36 @@ export async function reRender<
         const oakLoadingMore = this.features.runningTree.isLoadingMore(this.state.oakFullpath);
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
 
+        let oakLegalActions: ED[T]['Action'][] = [];
+        const actions: ED[T]['Action'][] = this.props.oakActions || option.actions;
+        if (actions && actions.length > 0) {
+            assert(this.props.oakId);       // actions必须配合id来使用
+            const testResult = await Promise.all(
+                actions.map(
+                    async ele => ({
+                        action: ele,
+                        result: await this.checkOperation(this.state.oakEntity, ele, { id: this.props.oakId }, ['user', 'row']),
+                    })
+                )
+            );
+            oakLegalActions = testResult.filter(
+                ele => ele.result
+            ).map(
+                ele => ele.action
+            );
+        }
         const data: Record<string, any> = formData
             ? await formData.call(this, {
                 data: rows as any,
                 features,
                 props: this.props,
+                legalActions: oakLegalActions,
             })
             : {};
+
+        Object.assign(data, {
+            oakLegalActions,
+        });
         for (const k in data) {
             if (data[k] === undefined) {
                 Object.assign(data, {
@@ -200,27 +223,6 @@ export async function reRender<
         Object.assign(data, {
             oakAllowExecuting,
         });
-
-        const actions: ED[T]['Action'][] = this.props.oakActions || option.actions;
-        if (actions && actions.length > 0) {
-            assert(this.props.oakId);       // actions必须配合id来使用
-            const testResult = await Promise.all(
-                actions.map(
-                    async ele => ({
-                        action: ele,
-                        result: await this.checkOperation(this.state.oakEntity, ele, { id: this.props.oakId }, ['user', 'row']),
-                    })
-                )
-            );
-            const oakLegalActions = testResult.filter(
-                ele => ele.result
-            ).map(
-                ele => ele.action
-            );
-            Object.assign(data, {
-                oakLegalActions,
-            });
-        }
 
         this.setState(data);
     } else {
@@ -278,7 +280,7 @@ export async function execute<
     T extends keyof ED,
     Cxt extends Context<ED>>(
         this: ComponentFullThisType<ED, T, Cxt>,
-        operation?: ED[T]['Operation'],
+        operation?: Omit<ED[T]['Operation'], 'id'>,
         path?: string) {
     if (this.state.oakExecuting) {
         throw new Error('请仔细设计按钮状态，不要允许重复点击！');
@@ -290,7 +292,7 @@ export async function execute<
         const fullpath = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        const result = await this.features.runningTree.execute(fullpath, operation);        
+        const result = await this.features.runningTree.execute(fullpath, operation);
         await this.setMessage({
             type: 'success',
             content: '操作成功',

@@ -46,7 +46,7 @@ export class Navigator extends Feature {
             (resolve, reject) => {
                 wx.navigateTo({
                     url,
-                    success: () => resolve(void),
+                    success: () => resolve(undefined),
                     fail: (err) => reject(err)
                 })
             }
@@ -59,7 +59,7 @@ export class Navigator extends Feature {
             (resolve, reject) => {
                 wx.redirectTo({
                     url,
-                    success: () => resolve(void),
+                    success: () => resolve(undefined),
                     fail: (err) => reject(err)
                 })
             }
@@ -71,7 +71,7 @@ export class Navigator extends Feature {
             (resolve, reject) => {
                 wx.navigateBack({
                     delta,
-                    success: () => resolve(void),
+                    success: () => resolve(undefined),
                     fail: (err) => reject(err)
                 })
             }

@@ -2028,7 +2028,7 @@ export class RunningTree<
     }
 
     @Action
-    async execute(path: string, operation?: ED[keyof ED]['Operation']) {
+    async execute<T extends keyof ED>(path: string, operation?: Omit<ED[T]['Operation'], 'id'>) {
         const node = this.findNode(path)!;
         if (operation) {
             assert(node instanceof ListNode || node instanceof SingleNode);
