@@ -178,7 +178,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     loadMore(path: string): Promise<void>;
     getPagination<T extends keyof ED>(path: string): Pagination;
     setId(path: string, id: string): Promise<void>;
-    unsetId(path: string): void;
+    unsetId(path: string): Promise<void>;
     getId(path: string): string | undefined;
     setPageSize<T extends keyof ED>(path: string, pageSize: number): Promise<void>;
     setCurrentPage<T extends keyof ED>(path: string, currentPage: number): Promise<void>;
@@ -201,7 +201,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     execute(path: string, operation?: ED[keyof ED]['Operation']): Promise<any[] | (ED[keyof ED]["Operation"] & {
         entity: keyof ED;
     })[]>;
-    clean(path: string): void;
+    clean(path: string): Promise<void>;
     getRoot(): Record<string, VirtualNode | SingleNode<ED, keyof ED, Cxt, AD> | ListNode<ED, keyof ED, Cxt, AD>>;
 }
 export {};

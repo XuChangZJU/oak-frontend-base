@@ -134,7 +134,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     };
     setNotification: (data: NotificationProps) => void;
     consumeNotification: () => NotificationProps | undefined;
-    setMessage: (data: MessageProps) => void;
+    setMessage: (data: MessageProps) => Promise<void>;
     consumeMessage: () => MessageProps | undefined;
     reRender: (extra?: Record<string, any>) => Promise<void>;
     getFreshValue: (path?: string) => Promise<ED[keyof ED]['Schema'][] | ED[keyof ED]['Schema'] | undefined>;

@@ -1859,14 +1859,14 @@ export class RunningTree<
     }
 
     @Action
-    setId(path: string, id: string) {
+    async setId(path: string, id: string) {
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
         return node.setId(id);
     }
 
     @Action
-    unsetId(path: string) {
+    async unsetId(path: string) {
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
         node.unsetId();
@@ -2067,7 +2067,7 @@ export class RunningTree<
     }
 
     @Action
-    clean(path: string) {
+    async clean(path: string) {
         const node = this.findNode(path)!;
 
         node.clean();
