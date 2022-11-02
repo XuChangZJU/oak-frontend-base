@@ -22,12 +22,15 @@ export function subscribe(callback: () => any) {
     const method = descriptor.value!;
     descriptor.value = async function (...params: any[]) {
         mActionStackDepth++;
-        if (mActionStackDepth > 20) {
+        if (mActionStackDepth > 1000) {
             console.error(`action[${method.name}]调用的层级超过了20，请检查是否存在无限递归`);
         }
         let result;
         try {
-            result = await method.apply(this, params);
+            result = method.apply(this, params);
+            if (result instanceof Promise) {
+                await result;
+            }
         }
         catch (err) {
             // console.error(err, method.name);
