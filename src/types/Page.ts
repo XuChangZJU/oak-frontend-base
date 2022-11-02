@@ -57,6 +57,7 @@ interface ComponentOption<
         data: IsList extends true ? RowSelected<ED, T, Proj>[] : RowSelected<ED, T, Proj> | undefined;
         features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
+        legalActions: ED[T]['Action'][];
     }) => Promise<FormedData>;
     ns?: T | T[];
 };
