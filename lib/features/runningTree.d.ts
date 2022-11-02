@@ -198,7 +198,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     getOperations(path: string): Promise<any[] | (ED[keyof ED]["Operation"] & {
         entity: keyof ED;
     })[] | undefined>;
-    execute(path: string, operation?: ED[keyof ED]['Operation']): Promise<any[] | (ED[keyof ED]["Operation"] & {
+    execute<T extends keyof ED>(path: string, operation?: Omit<ED[T]['Operation'], 'id'>): Promise<any[] | (ED[keyof ED]["Operation"] & {
         entity: keyof ED;
     })[]>;
     clean(path: string): Promise<void>;

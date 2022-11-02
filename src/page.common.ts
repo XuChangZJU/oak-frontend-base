@@ -280,7 +280,7 @@ export async function execute<
     T extends keyof ED,
     Cxt extends Context<ED>>(
         this: ComponentFullThisType<ED, T, Cxt>,
-        operation?: ED[T]['Operation'],
+        operation?: Omit<ED[T]['Operation'], 'id'>,
         path?: string) {
     if (this.state.oakExecuting) {
         throw new Error('请仔细设计按钮状态，不要允许重复点击！');

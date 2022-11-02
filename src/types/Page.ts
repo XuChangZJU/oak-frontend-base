@@ -252,7 +252,7 @@ export type OakCommonComponentMethods<
         
         t(key: string, params?: object): string;
         callPicker: (attr: string, params: Record<string, any>) => void;
-        execute: (operation?: ED[T]['Operation'], path?: string) => Promise<ED[T]['Operation'][]>;
+        execute: (operation?: Omit<ED[T]['Operation'], 'id'>, path?: string) => Promise<ED[T]['Operation'][]>;
         checkOperation: (ntity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => Promise<boolean>;
         tryExecute: (path?: string) => Promise<boolean>;
         getOperations: (path?: string) => Promise<ED[T]['Operation'][] | undefined>;
