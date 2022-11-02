@@ -8,8 +8,8 @@ export declare class Navigator extends Feature {
      * @param history
      */
     setHistory(history: BrowserHistory): void;
-    getLocation(): import("history").Location;
-    navigateTo(url: string, state?: Record<string, any>): void;
-    redirectTo(url: string, state?: Record<string, any>): void;
-    naviateBack(delta: number): void;
+    getLocation(): any;
+    navigateTo(url: string, state?: Record<string, any>): Promise<void>;
+    redirectTo(url: string, state?: Record<string, any>): Promise<void>;
+    navigateBack(delta?: number): Promise<void>;
 }

@@ -887,10 +887,10 @@ class ListNode<
             Object.keys(this.children).map(
                 async ele => {
                     const child = this.children[ele];
-                    const childOpertaions = await child.composeOperations();
-                    if (childOpertaions) {
+                    const childOperations = await child.composeOperations();
+                    if (childOperations) {
                         assert(childOperations.length === 1);
-                        return childOpertaions[0];
+                        return childOperations[0];
                     }
                 }
             )
