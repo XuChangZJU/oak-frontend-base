@@ -203,7 +203,7 @@ abstract class OakComponentBase<
         return this.props.navigate(url2, { replace: true, state });
     }
 
-    setProps(props: Record<string, any>, usingState?: true) {
+    /* setProps(props: Record<string, any>, usingState?: true) {
         const url = window.location.pathname;
         const search = window.location.search;
         if (usingState) {
@@ -242,7 +242,7 @@ abstract class OakComponentBase<
             }
             return this.props.navigate(url2, { replace: true });
         }
-    }
+    } */
 
     addOperation(operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) {
         const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;

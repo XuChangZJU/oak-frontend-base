@@ -1,23 +1,19 @@
 /// <reference path="../node_modules/@types/wechat-miniprogram/index.d.ts" />
 import assert from 'assert';
-import React from 'react';
-import { withRouter, PullToRefresh } from './platforms/web';
-import { get } from 'oak-domain/lib/utils/lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { Aspect, CheckerType, Context, DeduceSorterItem, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, Context, DeduceSorterItem, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
-import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
 import { Feature, subscribe as FeactureSubscribe } from './types/Feature';
 import {
-    ComponentData,
-    ComponentProps,
+    OakCommonComponentMethods,
     OakComponentOption,
-    OakNavigateToParameters,
+    OakListComponentMethods,
+    OakHiddenComponentMethods,
 } from './types/Page';
 
 import {
-    subscribe, unsubscribe, onPathSet, reRender, refresh,
+    onPathSet, reRender, refresh,
     loadMore, execute, callPicker, setUpdateData, setMultiAttrUpdateData
 } from './page.common';
 import { MessageProps } from './types/Message';
@@ -45,7 +41,13 @@ type FDD = Record<string, Feature>;
 const oakBehavior = Behavior<
     WechatMiniprogram.Component.DataOption,
     WechatMiniprogram.Component.PropertyOption,
-    WechatMiniprogram.Component.MethodOption,
+    OakCommonComponentMethods<EDD, keyof EDD> & OakListComponentMethods<EDD, keyof EDD> & OakHiddenComponentMethods &{
+        iAmThePage: () => boolean;
+        setState: (data: Record<string, any>, callback: () => void) => void;
+        onLoad: (query: Record<string, any>) => Promise<void>;
+        onPullDownRefresh: () => Promise<void>;
+        onReachBottom: () => Promise<void>;
+    },
     {
         state: Record<string, any>;
         props: {
@@ -62,7 +64,7 @@ const oakBehavior = Behavior<
         } & Record<string, any>;
         features: BasicFeatures<EDD, Cxt, ADD & CommonAspectDict<EDD, Cxt>> & FDD;
         subscribed: (() => void) | undefined;
-        options: OakComponentOption<
+        option: OakComponentOption<
             EDD,
             keyof EDD,
             Cxt,
@@ -77,6 +79,23 @@ const oakBehavior = Behavior<
         >
     }>({
         methods: {
+            t(key: string, params?: object) {
+                //  common: {
+                //        GREETING: 'Hello {{name}}, nice to see you.',
+                //   },
+                // t('common:GREETING', {name: "John Doe" })
+                const i18nInstance = getI18nInstanceWechatMp();
+                if (!i18nInstance) {
+                    throw new Error(
+                        '[i18n] ensure run initI18nWechatMp() in app.js before using I18n library'
+                    );
+                }
+                return i18nInstance.getString(key, params);
+            },
+            
+            resolveInput(input, keys) {
+                throw new Error('方法已经失效，请自主处理');
+            },
             iAmThePage() {
                 const pages = getCurrentPages();
                 if (pages[0] === this as any) {
@@ -84,30 +103,35 @@ const oakBehavior = Behavior<
                 }
                 return false;
             },
+
             subscribe() {
                 this.subscribed = FeactureSubscribe(() => this.reRender());
             },
+
             unsubscribe() {
                 if (this.subscribed) {
                     this.subscribed();
                     this.subscribed = undefined;
                 }
             },
+
             setState(data: Record<string, any>, callback: () => void) {
                 this.setData(data, () => {
                     this.state = this.data;
                     callback && callback.call(this);
                 });
             },
+
             reRender() {
-                reRender.call(this as any, this.option as any);
+                return reRender.call(this as any, this.option as any);
             },
+
             async onLoad(query: Record<string, any>) {
                 /**
                  * 小程序以props传递数据，和以页面间参数传递数据的处理不一样，都在这里处理
                  * 目前处理的还不是很完善，在实际处理中再做
                  */
-                const { properties, path } = this.options;
+                const { properties, path } = this.option;
                 const assignProps = (data: Record<string, any>, property: string, type: String | Boolean | Number | Object) => {
                     if (data[property]) {
                         let value = data[property];
@@ -160,23 +184,322 @@ const oakBehavior = Behavior<
                     this.reRender();
                 }
             },
+
+            async onPullDownRefresh() {
+                if (!this.state.oakLoading && this.iAmThePage()) {
+                    await this.refresh();
+                }
+                await wx.stopPullDownRefresh();
+            },
+
+            async onReachBottom() {
+                if (!this.state.oakLoadingMore && this.iAmThePage() && this.option.isList) {
+                    await this.loadMore();
+                }
+            },
+
+            sub(type: string, callback: Function) {
+                this.features.eventBus.sub(type, callback);
+            },
+
+            unsub(type: string, callback: Function) {
+                this.features.eventBus.unsub(type, callback);
+            },
+
+            pub(type: string, option?: any) {
+                this.features.eventBus.pub(type, option);
+            },
+
+            unsubAll(type: string) {
+                this.features.eventBus.unsubAll(type);
+            },
+
+            save(key: string, item: any) {
+                this.features.localStorage.save(key, item);
+            },
+
+            load(key: string) {
+                return this.features.localStorage.load(key);
+            },
+
+            clear() {
+                this.features.localStorage.clear();
+            },
+
+            setNotification(data: NotificationProps) {
+                this.features.notification.setNotification(data);
+            },
+
+            consumeNotification() {
+                return this.features.notification.consumeNotification();
+            },
+
+            setMessage(data: MessageProps) {
+                return this.features.message.setMessage(data);
+            },
+
+            consumeMessage() {
+                return this.features.message.consumeMessage();
+            },
+
+            navigateBack(option) {
+                return this.features.navigator.navigateBack(option?.delta);
+            },
+
+            navigateTo(option, state) {
+                const { url, ...rest } = option;
+
+                return this.features.navigator.navigateTo(url, {
+                    ...state,
+                    ...rest,
+                });
+            },
+
+            redirectTo(option, state) {
+                const { url, ...rest } = option;
+
+                return this.features.navigator.redirectTo(url, {
+                    ...state,
+                    ...rest,
+                });
+            },
+
+            addOperation(operation, beforeExecute, afterExecute, path) {
+                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                return this.features.runningTree.addOperation(path2, operation, beforeExecute, afterExecute);
+            },
+        
+            cleanOperation(path) {
+                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                return this.features.runningTree.clean(path2);
+            },
+
+            callPicker(attr: string, params: Record<string, any> = {}) {
+                return callPicker.call(this as any, attr, params);
+            },
+        
+            execute(operation) {
+                return execute.call(this as any, operation);
+            },
+        
+            getFreshValue(path?: string) {
+                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                return this.features.runningTree.getFreshValue(path2) as Promise<EDD[keyof EDD]['Schema'][] | EDD[keyof EDD]['Schema'] | undefined>;
+            },
+        
+            checkOperation(entity, action, filter, checkerTypes) {
+                return this.features.cache.checkOperation(entity, action, filter, checkerTypes);
+            },
+        
+            tryExecute(path?: string) {
+                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                return this.features.runningTree.tryExecute(path2);
+            },
+        
+            getOperations<T extends keyof EDD>(path?: string): Promise<EDD[T]['Operation'][] | undefined> {
+                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                return this.features.runningTree.getOperations(path2);
+            },
+        
+            refresh() {
+                return refresh.call(this as any);
+            },
+        
+            setUpdateData(attr: string, data: any) {
+                return setUpdateData.call(this as any, attr, data);
+            },
+        
+            setMultiAttrUpdateData(data: Record<string, any>) {
+                return setMultiAttrUpdateData.call(this as any, data);
+            },
+        
+            loadMore() {
+                return loadMore.call(this as any);
+            },
+        
+            setId(id: string) {
+                return this.features.runningTree.setId(this.state.oakFullpath, id);
+            },
+        
+            unsetId() {
+                return this.features.runningTree.unsetId(this.state.oakFullpath);
+            },
+        
+            getId() {
+                return this.features.runningTree.getId(this.state.oakFullpath);
+            },
+        
+            async setFilters(filters) {
+                await this.features.runningTree.setNamedFilters(
+                    this.state.oakFullpath,
+                    filters
+                );
+            },
+        
+            async getFilters() {
+                if (this.state.oakFullpath) {
+                    const namedFilters = this.features.runningTree.getNamedFilters(
+                        this.state.oakFullpath
+                    );
+                    const filters = await Promise.all(
+                        namedFilters.map(({ filter }) => {
+                            if (typeof filter === 'function') {
+                                return filter();
+                            }
+                            return filter;
+                        })
+                    );
+                    return filters;
+                }
+            },
+        
+            async getFilterByName(name: string) {
+                if (this.state.oakFullpath) {
+                    const filter = this.features.runningTree.getNamedFilterByName(
+                        this.state.oakFullpath,
+                        name
+                    );
+                    if (filter?.filter) {
+                        if (typeof filter.filter === 'function') {
+                            return filter.filter();
+                        }
+                        return filter.filter;
+                    }
+                }
+            },
+        
+            async addNamedFilter(namedFilter, refresh) {
+                await this.features.runningTree.addNamedFilter(
+                    this.state.oakFullpath,
+                    namedFilter,
+                    refresh
+                );
+            },
+        
+            async removeNamedFilter(namedFilter, refresh) {
+                await this.features.runningTree.removeNamedFilter(
+                    this.state.oakFullpath,
+                    namedFilter,
+                    refresh
+                );
+            },
+        
+            async removeNamedFilterByName(name, refresh) {
+                await this.features.runningTree.removeNamedFilterByName(
+                    this.state.oakFullpath,
+                    name,
+                    refresh
+                );
+            },
+        
+            async setNamedSorters(namedSorters) {
+                await this.features.runningTree.setNamedSorters(
+                    this.state.oakFullpath,
+                    namedSorters
+                );
+            },
+        
+            async getSorters() {
+                if (this.state.oakFullpath) {
+                    const namedSorters = this.features.runningTree.getNamedSorters(
+                        this.state.oakFullpath
+                    );
+                    const sorters = (
+                        await Promise.all(
+                            namedSorters.map(({ sorter }) => {
+                                if (typeof sorter === 'function') {
+                                    return sorter();
+                                }
+                                return sorter;
+                            })
+                        )
+                    ).filter((ele) => !!ele) as DeduceSorterItem<EDD[keyof EDD]['Schema']>[];
+                    return sorters;
+                }
+            },
+        
+            async getSorterByName(name) {
+                if (this.state.oakFullpath) {
+                    const sorter = this.features.runningTree.getNamedSorterByName(
+                        this.state.oakFullpath,
+                        name
+                    );
+                    if (sorter?.sorter) {
+                        if (typeof sorter.sorter === 'function') {
+                            return sorter.sorter();
+                        }
+                        return sorter.sorter;
+                    }
+                }
+            },
+        
+            async addNamedSorter(namedSorter, refresh) {
+                await this.features.runningTree.addNamedSorter(
+                    this.state.oakFullpath,
+                    namedSorter,
+                    refresh
+                );
+            },
+        
+            async removeNamedSorter(namedSorter, refresh) {
+                await this.features.runningTree.removeNamedSorter(
+                    this.state.oakFullpath,
+                    namedSorter,
+                    refresh
+                );
+            },
+        
+            async removeNamedSorterByName(name, refresh) {
+                await this.features.runningTree.removeNamedSorterByName(
+                    this.state.oakFullpath,
+                    name,
+                    refresh
+                );
+            },
+        
+            getPagination() {
+                if (this.state.oakFullpath) {
+                    return this.features.runningTree.getPagination(this.state.oakFullpath);
+                }
+            },
+        
+            setPageSize(pageSize) {
+                this.features.runningTree.setPageSize(
+                    this.state.oakFullpath,
+                    pageSize
+                );
+            },
+        
+            setCurrentPage(currentPage) {
+                assert(currentPage !== 0);
+        
+                if (this.state.oakEntity && this.state.oakFullpath) {
+                    this.features.runningTree.setCurrentPage(
+                        this.state.oakFullpath,
+                        currentPage
+                    );
+                }
+            },
         },
         observers: {
             async oakPath(data) {
                 if (data) {
                     await onPathSet.call(this as any, this.option as any);
                 }
+            },
+            async oakId(data) {
+                await this.setId(data);
             }
         },
         pageLifetimes: {
             show() {
-                const { show } = this.options.lifetimes || {};
+                const { show } = this.option.lifetimes || {};
                 this.subscribe();
                 this.reRender();
                 show && show.call(this);
             },
             hide() {
-                const { hide } = this.options.lifetimes || {};
+                const { hide } = this.option.lifetimes || {};
                 this.unsubscribe();
                 hide && hide.call(this);
             }
@@ -193,7 +516,7 @@ const oakBehavior = Behavior<
                 };
             },
             attached() {
-                const { attached } = this.options.lifetimes || {};
+                const { attached } = this.option.lifetimes || {};
                 const i18nInstance = getI18nInstanceWechatMp();
                 if (i18nInstance) {
                     (this as any).setState({
@@ -204,20 +527,21 @@ const oakBehavior = Behavior<
                 attached && attached.call(this);
             },
             detached() {
-                const { detached } = this.options.lifetimes || {};
                 this.unsubscribe();
+                this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && this.features.runningTree.destroyNode(this.state.oakFullpath);
+                const { detached } = this.option.lifetimes || {};
                 detached && detached.call(this);
             },
             ready() {
-                const { ready } = this.options.lifetimes || {};
+                const { ready } = this.option.lifetimes || {};
                 ready && ready.call(this);
             },
             moved() {
-                const { moved } = this.options.lifetimes || {};
-                moved && moved.call(this);                
+                const { moved } = this.option.lifetimes || {};
+                moved && moved.call(this);
             },
             error(err: Error) {
-                const { error } = this.options.lifetimes || {};
+                const { error } = this.option.lifetimes || {};
                 error && error.call(this, err);
             }
         },
@@ -252,15 +576,15 @@ export function createComponent<
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
 ) {
     const {
-        path,
         data,
         properties,
         methods,
+        wechatMp,
         lifetimes,
         observers,
-        actions
     } = option;
     const { attached, show, hide, created, detached, ...restLifetimes } = lifetimes || {};
+    const { options, externalClasses } = wechatMp || {};
 
     return Component<
         WechatMiniprogram.Component.DataOption,
@@ -296,6 +620,8 @@ export function createComponent<
                 TMethod
             >;
         }>({
+            externalClasses,
+            options,
             behaviors: [oakBehavior],
             data: Object.assign({}, data, {
                 oakFullpath: '',

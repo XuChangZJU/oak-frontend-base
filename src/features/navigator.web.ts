@@ -2,7 +2,7 @@ import { createBrowserHistory, BrowserHistory } from 'history';
 import { Feature } from '../types/Feature';
 
 
-export class Navigator  extends Feature{
+export class Navigator extends Feature{
     history: BrowserHistory;
 
     constructor() {
@@ -22,15 +22,15 @@ export class Navigator  extends Feature{
         return this.history.location;
     }
 
-    navigateTo(url: string, state?: Record<string, any>) {
+    async navigateTo(url: string, state?: Record<string, any>) {
         this.history.push(url, state);
     }
 
-    redirectTo(url: string, state?: Record<string, any>) {
+    async redirectTo(url: string, state?: Record<string, any>) {
         this.history.replace(url, state);
     }
 
-    naviateBack(delta: number) {
+    async navigateBack(delta: number = 1) {
         this.history.go(0 - delta);
     }
 }

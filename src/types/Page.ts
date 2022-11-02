@@ -245,7 +245,7 @@ export type OakCommonComponentMethods<
             state?: Record<string, any>,
             disableNamespace?: boolean
         ) => Promise<void>;
-        setProps: (props: Record<string, any>, usingState?: true) => void;
+        // setProps: (props: Record<string, any>, usingState?: true) => void;
         addOperation: (operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => Promise<void>;
         cleanOperation: (path?: string) => void;
         
