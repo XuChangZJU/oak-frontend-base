@@ -538,6 +538,9 @@ class ListNode<
         if (this.loading) {
             return;
         }
+        if (!this.ids) {
+            return;
+        }
         let needRefresh = false;
         for (const record of records) {
             const { a } = record;
