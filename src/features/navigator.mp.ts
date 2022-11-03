@@ -21,9 +21,12 @@ export class Navigator extends Feature {
             assert(false, 'url两边不需要加上/pages和/index');
         }
         const pathname2 = `/pages${pathname}/index`;
-        let search2 = search || '?';
+        let search2 = search;
         if (state) {
             for (const param in state) {
+                if (!search2) {
+                    search2 = '?';
+                }
                 if (state[param] !== undefined) {
                     search2 += `&${param}=${typeof state[param] === 'string'
                         ? state[param]
@@ -45,7 +48,7 @@ export class Navigator extends Feature {
         return new Promise(
             (resolve, reject) => {
                 wx.navigateTo({
-                    url,
+                    url: url2,
                     success: () => resolve(undefined),
                     fail: (err) => reject(err)
                 })
@@ -58,7 +61,7 @@ export class Navigator extends Feature {
         return new Promise(
             (resolve, reject) => {
                 wx.redirectTo({
-                    url,
+                    url: url2,
                     success: () => resolve(undefined),
                     fail: (err) => reject(err)
                 })

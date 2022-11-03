@@ -13,3 +13,4 @@ export declare function execute<ED extends EntityDict & BaseEntityDict, T extend
 export declare function callPicker<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>, attr: string, params?: Record<string, any>): void;
 export declare function setUpdateData<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>, attr: string, data: any): Promise<void>;
 export declare function setMultiAttrUpdateData<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>, data: Record<string, any>): Promise<void>;
+export declare function destroyNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>): void;

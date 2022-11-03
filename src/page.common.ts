@@ -13,6 +13,7 @@ import {
     OakComponentOption,
     ComponentFullThisType,
 } from './types/Page';
+import { unset } from 'oak-domain/lib/utils/lodash';
 
 export function subscribe<
     ED extends EntityDict & BaseEntityDict,
@@ -225,7 +226,7 @@ export async function reRender<
         });
 
         this.setState(data);
-    } else {
+    } else if (this.state.oakFullpath) {
         const data: Record<string, any> = formData
             ? await formData.call(this, {
                 features,
@@ -397,4 +398,14 @@ export async function setMultiAttrUpdateData<
             data,
         } as ED[T]['CreateSingle']);
     }
+}
+
+export function destroyNode<
+ED extends EntityDict & BaseEntityDict,
+T extends keyof ED,
+Cxt extends Context<ED>>(
+    this: ComponentFullThisType<ED, T, Cxt>) {
+    assert(this.state.oakFullpath);
+    this.features.runningTree.destroyNode(this.state.oakFullpath);
+    unset(this.state, ['oakFullpath', 'oakEntity']);
 }

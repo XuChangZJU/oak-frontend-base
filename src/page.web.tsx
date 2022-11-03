@@ -18,7 +18,8 @@ import {
 
 import {
     subscribe, unsubscribe, onPathSet, reRender, refresh,
-    loadMore, execute, callPicker, setUpdateData, setMultiAttrUpdateData
+    loadMore, execute, callPicker, setUpdateData, setMultiAttrUpdateData,
+    destroyNode,
 } from './page.common';
 import { MessageProps } from './types/Message';
 import { NotificationProps } from './types/Notification';
@@ -638,7 +639,7 @@ export function createComponent<
         componentWillUnmount() {
             this.unsubscribe();
             this.unregisterPageScroll();
-            this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && this.features.runningTree.destroyNode(this.state.oakFullpath);
+            this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && destroyNode.call(this as any);
             lifetimes?.detached && lifetimes.detached.call(this);
         }
 

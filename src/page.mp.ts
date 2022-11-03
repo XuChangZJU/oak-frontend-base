@@ -14,7 +14,8 @@ import {
 
 import {
     onPathSet, reRender, refresh,
-    loadMore, execute, callPicker, setUpdateData, setMultiAttrUpdateData
+    loadMore, execute, callPicker, setUpdateData, setMultiAttrUpdateData,
+    destroyNode,
 } from './page.common';
 import { MessageProps } from './types/Message';
 import { NotificationProps } from './types/Notification';
@@ -51,16 +52,16 @@ const oakBehavior = Behavior<
     {
         state: Record<string, any>;
         props: {
-            oakId: string;
-            oakPath: string;
-            oakFilters: string;
-            oakSorters: string;
-            oakIsPicker: boolean;
-            oakParentEntity: string;
-            oakFrom: string;
-            oakActions: string;
-            oakAutoUnmount: boolean;
-            oakDisablePulldownRefresh: boolean;
+            oakId?: string;
+            oakPath?: string;
+            oakFilters?: string;
+            oakSorters?: string;
+            oakIsPicker?: boolean;
+            oakParentEntity?: string;
+            oakFrom?: string;
+            oakActions?: string;
+            oakAutoUnmount?: boolean;
+            oakDisablePulldownRefresh?: boolean;
         } & Record<string, any>;
         features: BasicFeatures<EDD, Cxt, ADD & CommonAspectDict<EDD, Cxt>> & FDD;
         subscribed: (() => void) | undefined;
@@ -93,19 +94,36 @@ const oakBehavior = Behavior<
                 return i18nInstance.getString(key, params);
             },
             
-            resolveInput(input, keys) {
-                throw new Error('方法已经失效，请自主处理');
+            resolveInput(input: WechatMiniprogram.CustomEvent, keys) {
+                const { currentTarget, detail } = input;
+                const { dataset } = currentTarget;
+                const { value } = detail;
+                const result = {
+                    dataset,
+                    value,
+                };
+                if (keys) {
+                    keys.forEach((k) =>
+                        Object.assign(result, {
+                            [k]: detail[k],
+                        })
+                    );
+                }
+                return result;
             },
+
             iAmThePage() {
                 const pages = getCurrentPages();
-                if (pages[0] === this as any) {
+                if (pages[pages.length - 1] === this as any) {
                     return true;
                 }
                 return false;
             },
 
             subscribe() {
-                this.subscribed = FeactureSubscribe(() => this.reRender());
+                if (!this.subscribed) {
+                    this.subscribed = FeactureSubscribe(() => this.reRender());
+                }
             },
 
             unsubscribe() {
@@ -164,7 +182,7 @@ const oakBehavior = Behavior<
                         if (query[key]) {
                             assignProps(query, key, properties[key]!);
                         }
-                        else {
+                        else if (this.data) {
                             assignProps(this.data, key, properties[key]!);
                         }
                     }
@@ -173,7 +191,7 @@ const oakBehavior = Behavior<
                     if (query[key]) {
                         assignProps(query, key, OakProperties[key as keyof typeof OakProperties]!);
                     }
-                    else {
+                    else if (this.data) {
                         assignProps(this.data, key, OakProperties[key as keyof typeof OakProperties]!);
                     }
                 }
@@ -508,9 +526,11 @@ const oakBehavior = Behavior<
             created() {
                 const { setData } = this;
                 this.state = this.data;
+                this.props = this.data;
                 this.setData = (data, callback) => {
                     setData.call(this, data, () => {
                         this.state = this.data;
+                        this.props = this.data;
                         callback && callback.call(this);
                     });
                 };
@@ -528,7 +548,7 @@ const oakBehavior = Behavior<
             },
             detached() {
                 this.unsubscribe();
-                this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && this.features.runningTree.destroyNode(this.state.oakFullpath);
+                this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && destroyNode.call(this as any);
                 const { detached } = this.option.lifetimes || {};
                 detached && detached.call(this);
             },
