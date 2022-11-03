@@ -538,6 +538,9 @@ class ListNode<
         if (this.loading) {
             return;
         }
+        if (!this.ids) {
+            return;
+        }
         let needRefresh = false;
         for (const record of records) {
             const { a } = record;
@@ -1254,7 +1257,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         };
         if (this.operations.length === 0) {
             // 处理一下create
-            this.operations.push(operation as Operation<ED, T>);
             if (oper.action === 'create') {
                 const id = await generateNewId();
                 Object.assign(oper.data, {
@@ -1262,6 +1264,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 });
             }
             Object.assign(oper, { id: await generateNewId() });
+            this.operations.push(operation as Operation<ED, T>);
         }
         else {
             // singleNode上应当有且只有一个operation，无论什么情况
