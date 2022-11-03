@@ -123,14 +123,12 @@ export async function onPathSet<
         Object.assign(this.state, {
             oakEntity: entity2,
             oakFullpath: oakPath2,
-            oakIsReady: true,
         });
 
     }
     else {
         Object.assign(this.state, {
             oakFullpath: oakPath2,
-            oakIsReady: true,
         });
         // 创建virtualNode
         await features.runningTree.createNode({

@@ -319,7 +319,6 @@ export type OakComponentData<
     oakLoadingMore: boolean;
     oakPullDownRefreshLoading: boolean;
     oakEntity: T;
-    oakIsReady: boolean;
     oakFullpath: string;
     oakLegalActions?: ED[T]['Action'][];
 };

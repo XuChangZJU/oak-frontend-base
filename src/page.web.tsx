@@ -534,7 +534,7 @@ export function createComponent<
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
 ) {
     const {
-        data, projection, properties, entity, methods, lifetimes, observers, render, path
+        data, projection, properties, entity, methods, lifetimes, observers, Render, path
     } = option as OakComponentOption<
         ED,
         T,
@@ -548,22 +548,35 @@ export function createComponent<
         TProperty,
         TMethod
     > & {
-        render: () => React.ReactNode;
+        Render: React.ComponentType<any>;
     };
 
 
     const { fn } = translateObservers(observers);
+    const props = {} as Record<string, any>;
     class OakComponentWrapper extends OakComponentBase<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod> {
         features = features;
         option = option;
         isReachBottom = false;
+        methodProps: Record<string, Function>;
 
         constructor(props: ComponentProps<IsList, TProperty>) {
             super(props);
+            const methodProps: Record<string, Function> = {
+                t: (key: string, params?: object) => this.t(key, params),
+                execute: async (data: Record<string, any>) => {
+                    await this.setMultiAttrUpdateData(data);
+                    await this.execute();
+                },
+                tryExecute: async (data: Record<string, any>, path?: string) => this.tryExecute(path),
+            };            
             if (methods) {
                 for (const m in methods) {
                     Object.assign(this, {
-                        [m]: methods[m as keyof typeof methods]!.bind(this),
+                        [m]: (...args: any) => methods[m].call(this, ...args),
+                    });
+                    Object.assign(methodProps, {
+                        [m]: (...args: any) => methods[m].call(this, ...args),
                     });
                 }
             }
@@ -571,10 +584,10 @@ export function createComponent<
                 oakLoading: false,
                 oakLoadingMore: false,
                 oakPullDownRefreshLoading: false,
-                oakIsReady: false,
                 oakExecuting: false,
                 oakDirty: false,
             }) as any;
+            this.methodProps = methodProps;
 
             lifetimes?.created && lifetimes.created.call(this);
         }
@@ -583,7 +596,6 @@ export function createComponent<
         private iAmThePage() {
             return this.props.routeMatch;
         }
-
 
         private supportPullDownRefresh() {
             return this.props.width === 'xs' && this.iAmThePage();
@@ -659,7 +671,6 @@ export function createComponent<
         }
 
         render(): React.ReactNode {
-            const Render = render.call(this);
             const { oakPullDownRefreshLoading } = this.state;
             const { oakDisablePulldownRefresh = false } = this.props;
 
@@ -683,11 +694,11 @@ export function createComponent<
                     {
                         getScrollContainer: () => document.body,
                     },
-                    Render
+                    <Render method={this.methodProps} data={this.state}/>
                 );
                 return Child;
             }
-            return Render;
+            return <Render method={this.methodProps} data={this.state}/>;
         }
     };
     return withRouter(OakComponentWrapper, option);
