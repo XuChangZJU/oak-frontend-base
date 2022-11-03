@@ -29,7 +29,6 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
     protected loading: boolean;
     protected loadingMore: boolean;
     protected executing: boolean;
-    protected operations: Operation<ED, T>[];
     protected modiIds: string[] | undefined;        //  对象所关联的modi
 
 
@@ -45,7 +44,6 @@ abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, 
         this.loading = false;
         this.loadingMore = false;
         this.executing = false;
-        this.operations = [];
         this.modiIds  = undefined;
     }
 
@@ -491,6 +489,11 @@ class ListNode<
     AD extends CommonAspectDict<ED, Cxt>
     > extends Node<ED, T, Cxt, AD> {
     private children: Record<string, SingleNode<ED, T, Cxt, AD>>;
+    private updates: Record<string, {
+        operation: ED[T]['CreateSingle'] | ED[T]['Update'] | ED[T]['Remove'],
+        beforeExecute?: () => Promise<void>;
+        afterExecute?: () => Promise<void>;
+    }>;
 
     private filters: NamedFilterItem<ED, T>[];
     private sorters: NamedSorterItem<ED, T>[];
@@ -519,7 +522,7 @@ class ListNode<
     }
 
     checkIfClean(): void {
-        if (this.operations.length > 0) {
+        if (Object.keys(this.updates).length > 0) {
             return;
         }
         for (const k in this.children) {
@@ -624,6 +627,7 @@ class ListNode<
         this.filters = filters || [];
         this.sorters = sorters || [];
         this.pagination = pagination || DEFAULT_PAGINATION;
+        this.updates = {};
 
         this.syncHandler = (records) => this.onCacheSync(records);
         this.cache.bindOnSync(this.syncHandler);
@@ -774,16 +778,12 @@ class ListNode<
     >> {
         // 在createOperation中的数据也是要返回的
         const createdIds: string[] = [];
-        for (const operation of this.operations) {
-            const { oper } = operation;
-            if (oper.action === 'create') {
-                const { data } = oper;
-                if (data instanceof Array) {
-                    createdIds.push(...data.map(ele => ele.id));
-                }
-                else {
-                    createdIds.push(data.id);
-                }
+        for (const k in this.updates) {
+            const { operation } = this.updates[k];
+            if (operation.action === 'create') {
+                const { data } = operation;
+                assert(!(data instanceof Array));
+                createdIds.push(data.id);                
             }
         }
 
@@ -793,10 +793,10 @@ class ListNode<
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
         }> : [];
-        operations.push(...this.operations.map(
+        operations.push(...Object.keys(this.updates).map(
             ele => ({
                 entity: this.entity,
-                operation: ele.oper,
+                operation: this.updates[ele].operation,
             })
         ));
 
@@ -825,24 +825,72 @@ class ListNode<
         return [];
     }
 
-    async addOperation(oper: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: Operation<ED, T>['beforeExecute'], afterExecute?: Operation<ED, T>['afterExecute']) {
-        const operation = {
-            oper,
+    async addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute: () => Promise<void>, afterExecute: () => Promise<void>) {
+        assert(Object.keys(this.children).length === 0, ``);
+        const id = await generateNewId();
+        assert(!this.updates[id]);
+        this.updates[id] = {
             beforeExecute,
             afterExecute,
+            operation: {
+                id: await generateNewId(),
+                action: 'create',
+                data: Object.assign(item, { id }),
+            },
+        };
+        this.setDirty();
+    }
+
+    async removeItem(id: string, beforeExecute: () => Promise<void>, afterExecute: () => Promise<void>) {
+        this.updates[id] = {
+            beforeExecute,
+            afterExecute,
+            operation: {
+                id: await generateNewId(),
+                action: 'remove',
+                data: {},
+                filter: {
+                    id,
+                },
+            } as ED[T]['Remove'],
+        };
+        this.setDirty();
+    }
+
+    async recoverItem(id: string) {
+        const { operation } = this.updates[id];
+        assert(operation.action === 'remove');
+        unset(this.updates, id);
+    }
+
+    async updateItem(data: ED[T]['Update']['data'], id: string, beforeExecute: () => Promise<void>, afterExecute: () => Promise<void>) {
+        if (this.updates[id]) {
+            const { operation } = this.updates[id];
+            const { data: dataOrigin } = operation;
+            merge(dataOrigin, data);
         }
-        const merged = tryMergeOperationToExisted(this.entity, this.schema, operation, this.operations);
-        if (!merged) {
-            Object.assign(oper, { id: await generateNewId() })
-            this.operations.push(operation as Operation<ED, T>);
+        else {
+            this.updates[id] = {
+                beforeExecute,
+                afterExecute,
+                operation: {
+                    id: await generateNewId(),
+                    action: 'update',
+                    data,
+                    filter: {
+                        id,
+                    },
+                } as ED[T]['Update'],
+            };
         }
         this.setDirty();
     }
 
     async doBeforeTrigger(): Promise<void> {
-        for (const operation of this.operations) {
-            if (operation.beforeExecute) {
-                await operation.beforeExecute();
+        for (const k in this.updates) {
+            const update = this.updates[k];
+            if (update.beforeExecute) {
+                await update.beforeExecute();
             }
         }
 
@@ -852,9 +900,10 @@ class ListNode<
     }
 
     async doAfterTrigger(): Promise<void> {
-        for (const operation of this.operations) {
-            if (operation.afterExecute) {
-                await operation.afterExecute();
+        for (const k in this.updates) {
+            const update = this.updates[k];
+            if (update.afterExecute) {
+                await update.afterExecute();
             }
         }
 
