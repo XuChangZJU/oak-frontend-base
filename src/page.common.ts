@@ -226,7 +226,7 @@ export async function reRender<
         });
 
         this.setState(data);
-    } else if (this.state.oakFullpath) {
+    } else {
         const data: Record<string, any> = formData
             ? await formData.call(this, {
                 features,
