@@ -4,7 +4,7 @@ import React from 'react';
 import { withRouter, PullToRefresh } from './platforms/web';
 import { get } from 'oak-domain/lib/utils/lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { Aspect, CheckerType, Context, DeduceSorterItem, EntityDict } from 'oak-domain/lib/types';
+import { Action, Aspect, CheckerType, Context, DeduceSorterItem, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
@@ -14,11 +14,14 @@ import {
     ComponentProps,
     OakComponentOption,
     OakNavigateToParameters,
+    WebComponentCommonMethodNames,
+    WebComponentListMethodNames,
+    WebComponentSingleMethodNames,
 } from './types/Page';
 
 import {
     subscribe, unsubscribe, onPathSet, reRender, refresh,
-    loadMore, execute, callPicker, setUpdateData, setMultiAttrUpdateData,
+    loadMore, execute, callPicker,
     destroyNode,
 } from './page.common';
 import { MessageProps } from './types/Message';
@@ -38,7 +41,7 @@ abstract class OakComponentBase<
     TMethod extends WechatMiniprogram.Component.MethodOption
     > extends React.PureComponent<ComponentProps<IsList, TProperty>, ComponentData<ED, T, FormedData, TData>> {
     abstract features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
-    abstract option: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod>;
+    abstract oakOption: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod>;
 
     subscribe() {
         subscribe.call(this as any);
@@ -49,7 +52,7 @@ abstract class OakComponentBase<
     }
 
     onPathSet() {
-        return onPathSet.call(this as any, this.option as any);
+        return onPathSet.call(this as any, this.oakOption as any);
     }
 
     triggerEvent<DetailType = any>(
@@ -123,10 +126,10 @@ abstract class OakComponentBase<
     }
 
     reRender(extra?: Record<string, any>) {
-        return reRender.call(this as any, this.option as any, extra);
+        return reRender.call(this as any, this.oakOption as any, extra);
     }
 
-    navigateTo(options: { url: string } & OakNavigateToParameters<ED, T>, state?: Record<string, any>, disableNamespace?: boolean) {
+    navigateTo<T2 extends keyof ED>(options: { url: string } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) {
         const { url, ...rest } = options;
         let url2 = url.includes('?')
             ? url.concat(
@@ -158,7 +161,7 @@ abstract class OakComponentBase<
         return this.props.navigate(url2, { replace: false, state });
     }
 
-    navigateBack(option: { delta?: number }) {
+    navigateBack(option?: { delta?: number }) {
         const { delta } = option || {};
         return new Promise((resolve, reject) => {
             try {
@@ -170,7 +173,7 @@ abstract class OakComponentBase<
         });
     }
 
-    redirectTo(options: { url: string } & OakNavigateToParameters<ED, T>, state?: Record<string, any>, disableNamespace?: boolean) {
+    redirectTo<T2 extends keyof ED>(options: { url: string } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) {
         const { url, ...rest } = options;
         let url2 = url.includes('?')
             ? url.concat(
@@ -245,12 +248,35 @@ abstract class OakComponentBase<
         }
     } */
 
-    addOperation(operation: Omit<ED[T]['Operation'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) {
-        const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-        return this.features.runningTree.addOperation(path2, operation, beforeExecute, afterExecute);
+    addItem<T extends keyof ED>(data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+        return this.features.runningTree.addItem(this.state.oakFullpath, data, beforeExecute, afterExecute);
     }
 
-    cleanOperation(path?: string) {
+    removeItem(id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+        return this.features.runningTree.removeItem(this.state.oakFullpath, id, beforeExecute, afterExecute);
+    }
+
+    updateItem<T extends keyof ED>(data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+        return this.features.runningTree.updateItem(this.state.oakFullpath, data, id, action, beforeExecute, afterExecute);
+    }
+
+    recoverItem(id: string) {
+        return this.features.runningTree.recoverItem(this.state.oakFullpath, id);
+    }
+
+    create<T extends keyof ED>(data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+        return this.features.runningTree.create(this.state.oakFullpath, data, beforeExecute, afterExecute);
+    }
+
+    update<T extends keyof ED>(data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+        return this.features.runningTree.update(this.state.oakFullpath, data, action, beforeExecute, afterExecute);
+    }
+
+    remove(beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+        return this.features.runningTree.remove(this.state.oakFullpath, beforeExecute, afterExecute);
+    }
+
+    clean(path?: string) {
         const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
         return this.features.runningTree.clean(path2);
     }
@@ -263,12 +289,12 @@ abstract class OakComponentBase<
         return callPicker.call(this as any, attr, params);
     }
 
-    execute(operation?: ED[T]['Operation']) {
-        return execute.call(this as any, operation);
+    execute(data?: ED[T]['Update']['data'] | Record<string, ED[T]['Update']['data']>) {
+        return execute.call(this as any, data);
     }
 
     getFreshValue(path?: string) {
-        const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
         return this.features.runningTree.getFreshValue(path2) as Promise<ED[keyof ED]['Schema'][] | ED[keyof ED]['Schema'] | undefined>;
     }
 
@@ -288,14 +314,6 @@ abstract class OakComponentBase<
 
     refresh() {
         return refresh.call(this as any);
-    }
-
-    setUpdateData(attr: string, data: any) {
-        return setUpdateData.call(this as any, attr, data);
-    }
-
-    setMultiAttrUpdateData(data: Record<string, any>) {
-        return setMultiAttrUpdateData.call(this as any, data);
     }
 
     loadMore() {
@@ -534,7 +552,7 @@ export function createComponent<
     features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
 ) {
     const {
-        data, projection, properties, entity, methods, lifetimes, observers, Render, path
+        data, methods, lifetimes, observers, getRender, path
     } = option as OakComponentOption<
         ED,
         T,
@@ -548,28 +566,121 @@ export function createComponent<
         TProperty,
         TMethod
     > & {
-        Render: React.ComponentType<any>;
+        getRender: () => React.ComponentType<any>;
     };
 
 
     const { fn } = translateObservers(observers);
-    const props = {} as Record<string, any>;
     class OakComponentWrapper extends OakComponentBase<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod> {
         features = features;
-        option = option;
+        oakOption = option;
         isReachBottom = false;
         methodProps: Record<string, Function>;
 
         constructor(props: ComponentProps<IsList, TProperty>) {
             super(props);
-            const methodProps: Record<string, Function> = {
+            const methodProps: Record<WebComponentCommonMethodNames, Function> = {
                 t: (key: string, params?: object) => this.t(key, params),
-                execute: async (data: Record<string, any>) => {
-                    await this.setMultiAttrUpdateData(data);
-                    await this.execute();
+                execute: (data: Record<string, any>) => {
+                    return this.execute(data);
                 },
-                tryExecute: async (data: Record<string, any>, path?: string) => this.tryExecute(path),
-            };            
+                refresh: () => {
+                    return this.refresh();
+                },
+                setNotification: (data: NotificationProps) => {
+                    return this.setNotification(data);
+                },
+                setMessage: (data: MessageProps) => {
+                    return this.setMessage(data);
+                },
+                navigateTo: <T2 extends keyof ED>(
+                    options: { url: string } & OakNavigateToParameters<ED, T2>,
+                    state?: Record<string, any>,
+                    disableNamespace?: boolean
+                ) => {
+                    return this.navigateTo(options, state, disableNamespace);
+                },
+                navigateBack: (options?: { delta: number }) => {
+                    return this.navigateBack(options);
+                },
+                redirectTo: <T2 extends keyof ED>(
+                    options: Parameters<typeof wx.redirectTo>[0] &
+                        OakNavigateToParameters<ED, T2>,
+                    state?: Record<string, any>,
+                    disableNamespace?: boolean
+                ) => {
+                    return this.redirectTo(options, state, disableNamespace);
+                },
+                clean: (path?: string) => {
+                    return this.clean(path);
+                }
+            };
+            if (option.isList) {
+                Object.assign(methodProps, {
+                    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
+                        return this.addItem(data, beforeExecute, afterExecute);
+                    },
+                    removeItem: (id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
+                        return this.removeItem(id, beforeExecute, afterExecute);
+                    },
+                    updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
+                        return this.updateItem(data, id, action, beforeExecute, afterExecute);
+                    },
+                    setFilters: (filters: NamedFilterItem<ED, T>[]) => {
+                        return this.setFilters(filters);
+                    },
+                    addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => {
+                        return this.addNamedFilter(filter, refresh);
+                    },
+                    removeNamedFilter: (
+                        filter: NamedFilterItem<ED, T>,
+                        refresh?: boolean
+                    ) => {
+                        return this.removeNamedFilter(filter, refresh);
+                    },
+                    removeNamedFilterByName: (name: string, refresh?: boolean) => {
+                        return this.removeNamedFilterByName(name, refresh);
+                    },
+                    setNamedSorters: (sorters: NamedSorterItem<ED, T>[]) => {
+                        return this.setNamedSorters(sorters);
+                    },
+                    addNamedSorter: (sorter: NamedSorterItem<ED, T>, refresh?: boolean) => {
+                        return this.addNamedSorter(sorter, refresh);
+                    },
+                    removeNamedSorter: (
+                        sorter: NamedSorterItem<ED, T>,
+                        refresh?: boolean
+                    ) => {
+                        return this.removeNamedSorter(sorter, refresh);
+                    },
+                    removeNamedSorterByName: (name: string, refresh?: boolean) => {
+                        return this.removeNamedSorterByName(name, refresh);
+                    },
+                    setPageSize: (pageSize: number) => {
+                        return this.setPageSize(pageSize);
+                    },
+                    setCurrentPage: (current: number) => {
+                        return this.setCurrentPage(current);
+                    },
+                    loadMore: () => {
+                        return this.loadMore();
+                    }
+                } as Record<WebComponentListMethodNames, Function>);
+            }
+            else {
+                Object.assign(methodProps, {
+                    create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
+                        return this.create(data, beforeExecute, afterExecute);
+                    },
+                    update: (data: ED[T]['Update']['data'], action: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
+                        return this.update(data, action, beforeExecute, afterExecute);
+                    },
+                    remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
+                        return this.remove(beforeExecute, afterExecute);
+                    },
+                } as Record<WebComponentSingleMethodNames, Function>);
+            }
+
             if (methods) {
                 for (const m in methods) {
                     Object.assign(this, {
@@ -673,6 +784,7 @@ export function createComponent<
         render(): React.ReactNode {
             const { oakPullDownRefreshLoading } = this.state;
             const { oakDisablePulldownRefresh = false } = this.props;
+            const Render = getRender.call(this);
 
             if (this.supportPullDownRefresh() && !oakDisablePulldownRefresh) {
                 const Child = React.cloneElement(
@@ -694,11 +806,17 @@ export function createComponent<
                     {
                         getScrollContainer: () => document.body,
                     },
-                    <Render method={this.methodProps} data={this.state}/>
+                    <Render methods={this.methodProps} data={{
+                        ...this.state,
+                        ...this.props,
+                    }} />
                 );
                 return Child;
             }
-            return <Render method={this.methodProps} data={this.state}/>;
+            return <Render methods={this.methodProps} data={{
+                ...this.state,
+                ...this.props,
+            }}/>;
         }
     };
     return withRouter(OakComponentWrapper, option);

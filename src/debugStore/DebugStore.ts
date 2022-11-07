@@ -22,26 +22,6 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Cont
         this.rwLock = new RWLock();
     }
 
-    protected async updateAbjointRow<T extends keyof ED, OP extends DebugStoreOperateOption>(
-        entity: T,
-        operation: ED[T]['CreateSingle'] | ED[T]['Update'] | ED[T]['Remove'],
-        context: Cxt,
-        option?: OP) {
-            // 对于create动作，没有值的属性要置NULL
-            const { action, data } = operation;
-            if (action === 'create') {
-                const { attributes } = this.getSchema()[entity];
-                for (const key in attributes) {
-                    if (data[key] === undefined) {
-                        Object.assign(data, {
-                            [key]: null,
-                        });
-                    }
-                }
-            }
-            return super.updateAbjointRow(entity, operation, context, option);
-        }
-
     protected async cascadeUpdate<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, option: OP) {        
         if (!option.blockTrigger) {
             await this.executor.preOperation(entity, operation, context, option);

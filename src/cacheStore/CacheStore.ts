@@ -6,9 +6,7 @@ import { Checker, CheckerType, Context, Trigger } from 'oak-domain/lib/types';
 import { TreeStore, TreeStoreOperateOption } from 'oak-memory-tree-store';
 import assert from 'assert';
 
-interface CachStoreOperation extends TreeStoreOperateOption {
-    inSync?: boolean;
-};
+interface CachStoreOperation extends TreeStoreOperateOption {};
 
 export class CacheStore<
     ED extends EntityDict & BaseEntityDict,
@@ -30,24 +28,6 @@ export class CacheStore<
         );
         this.getFullDataFn = getFullDataFn;
         this.resetInitialDataFn = resetInitialDataFn;
-    }
-
-    protected async updateAbjointRow<T extends keyof ED>(entity: T, operation: DeduceCreateSingleOperation<ED[T]['Schema']> | DeduceUpdateOperation<ED[T]['Schema']> | DeduceRemoveOperation<ED[T]['Schema']>, context: Cxt, option?: CachStoreOperation): Promise<number> {
-        if (!option?.inSync) {
-            // 如果不是同步，需要补齐所有的null属性
-            const { action, data } = operation;
-            if (action === 'create') {
-                const { attributes } = this.getSchema()[entity];
-                for (const key in attributes) {
-                    if (data[key] === undefined) {
-                        Object.assign(data, {
-                            [key]: null,
-                        });
-                    }
-                }
-            }
-        }
-        return super.updateAbjointRow(entity, operation, context, option);
     }
 
     async operate<T extends keyof ED, OP extends TreeStoreOperateOption>(
@@ -89,9 +69,7 @@ export class CacheStore<
         let result;
 
         try {
-            result = await super.sync<CachStoreOperation>(opRecords, context, {
-                inSync: true,
-            });
+            result = await super.sync<CachStoreOperation>(opRecords, context, {});
         } catch (err) {
             if (autoCommit) {
                 await context.rollback();
