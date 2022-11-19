@@ -1,19 +1,25 @@
-import { Action, Feature } from '../types/Feature';
+import { Feature } from '../types/Feature';
 
-export class Location  extends Feature{
+export class Location extends Feature {
     private latitude?: number;
     private longitude?: number;
     private lastTimestamp?: number;
-    async get(acceptableLatency: number = 10000) {
-        if (
-            this.lastTimestamp &&
-            Date.now() - this.lastTimestamp < acceptableLatency
-        ) {
-            return {
-                latitude: this.latitude!,
-                longitude: this.longitude!,
-            };
-        }
+    private acceptableLatency: number;
+
+    constructor(acceptableLatency?: number) {
+        super();
+        this.acceptableLatency = acceptableLatency || 1000;
+    }
+
+    get() {
+        return {
+            latitude: this.latitude!,
+            longitude: this.longitude!,
+            lastTimestamp: this.lastTimestamp!,
+        };
+    }
+
+    async refresh() {
         if (process.env.OAK_PLATFORM === 'wechatMp') {
             // 小程序平台
             const result = await wx.getLocation({
@@ -22,12 +28,8 @@ export class Location  extends Feature{
             this.latitude = result.latitude;
             this.longitude = result.longitude;
             this.lastTimestamp = Date.now();
-
-            return {
-                latitude: this.latitude!,
-                longitude: this.longitude!,
-            };
-        } else {
+        }
+        else {
             const getGeolocation = () =>
                 new Promise((resolve, reject) => {
                     if (navigator.geolocation) {
@@ -73,15 +75,7 @@ export class Location  extends Feature{
             this.lastTimestamp = Date.now();
             this.latitude = result.latitude!;
             this.longitude = result.longitude!;
-            return {
-                latitude: this.latitude!,
-                longitude: this.longitude!,
-            };
         }
-    }
-
-    @Action
-    async refresh() {
-        return await this.get();
+        this.publish();
     }
 }

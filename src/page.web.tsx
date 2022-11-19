@@ -4,7 +4,7 @@ import React from 'react';
 import { withRouter, PullToRefresh } from './platforms/web';
 import { get } from 'oak-domain/lib/utils/lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { Action, Aspect, CheckerType, Context, DeduceSorterItem, EntityDict } from 'oak-domain/lib/types';
+import { Action, Aspect, CheckerType, DeduceSorterItem, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
@@ -20,35 +20,35 @@ import {
 } from './types/Page';
 
 import {
-    subscribe, unsubscribe, onPathSet, reRender, refresh,
-    loadMore, execute, callPicker,
+    onPathSet, reRender, refresh,
+    loadMore, execute,
     destroyNode,
 } from './page.common';
 import { MessageProps } from './types/Message';
 import { NotificationProps } from './types/Notification';
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 
 abstract class OakComponentBase<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    Cxt extends Context<ED>,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>,
-    Proj extends ED[T]['Selection']['data'],
     FormedData extends Record<string, any>,
     IsList extends boolean,
     TData extends WechatMiniprogram.Component.DataOption,
     TProperty extends WechatMiniprogram.Component.PropertyOption,
     TMethod extends WechatMiniprogram.Component.MethodOption
     > extends React.PureComponent<ComponentProps<IsList, TProperty>, ComponentData<ED, T, FormedData, TData>> {
-    abstract features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
-    abstract oakOption: OakComponentOption<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod>;
+    abstract features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
+    abstract oakOption: OakComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>;
 
-    subscribe() {
-        subscribe.call(this as any);
-    }
-
-    unsubscribe() {
-        unsubscribe.call(this as any);
+    setDisablePulldownRefresh(able: boolean) {
+        this.setState({
+            oakDisablePulldownRefresh: able,
+        } as any);
     }
 
     onPathSet() {
@@ -249,53 +249,49 @@ abstract class OakComponentBase<
     } */
 
     addItem<T extends keyof ED>(data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        return this.features.runningTree.addItem(this.state.oakFullpath, data, beforeExecute, afterExecute);
+        this.features.runningTree.addItem(this.state.oakFullpath, data, beforeExecute, afterExecute);
     }
 
     removeItem(id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        return this.features.runningTree.removeItem(this.state.oakFullpath, id, beforeExecute, afterExecute);
+        this.features.runningTree.removeItem(this.state.oakFullpath, id, beforeExecute, afterExecute);
     }
 
     updateItem<T extends keyof ED>(data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        return this.features.runningTree.updateItem(this.state.oakFullpath, data, id, action, beforeExecute, afterExecute);
+        this.features.runningTree.updateItem(this.state.oakFullpath, data, id, action, beforeExecute, afterExecute);
     }
 
     recoverItem(id: string) {
-        return this.features.runningTree.recoverItem(this.state.oakFullpath, id);
+        this.features.runningTree.recoverItem(this.state.oakFullpath, id);
     }
 
-    create<T extends keyof ED>(data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        return this.features.runningTree.create(this.state.oakFullpath, data, beforeExecute, afterExecute);
-    }
+    /* create<T extends keyof ED>(data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+        this.features.runningTree.create(this.state.oakFullpath, data, beforeExecute, afterExecute);
+    } */
 
     update<T extends keyof ED>(data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        return this.features.runningTree.update(this.state.oakFullpath, data, action, beforeExecute, afterExecute);
+        this.features.runningTree.update(this.state.oakFullpath, data, action, beforeExecute, afterExecute);
     }
 
     remove(beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        return this.features.runningTree.remove(this.state.oakFullpath, beforeExecute, afterExecute);
+        this.features.runningTree.remove(this.state.oakFullpath, beforeExecute, afterExecute);
     }
 
     clean(path?: string) {
         const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-        return this.features.runningTree.clean(path2);
+        this.features.runningTree.clean(path2);
     }
 
     t(key: string, params?: object) {
         return this.props.t(key, params);
     }
 
-    callPicker(attr: string, params: Record<string, any> = {}) {
-        return callPicker.call(this as any, attr, params);
-    }
-
-    execute(data?: ED[T]['Update']['data'] | Record<string, ED[T]['Update']['data']>) {
-        return execute.call(this as any, data);
+    execute(action?: ED[T]['Action']) {
+        return execute.call(this as any, action);
     }
 
     getFreshValue(path?: string) {
         const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-        return this.features.runningTree.getFreshValue(path2) as Promise<ED[keyof ED]['Schema'][] | ED[keyof ED]['Schema'] | undefined>;
+        return this.features.runningTree.getFreshValue(path2);
     }
 
     checkOperation(entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) {
@@ -307,7 +303,7 @@ abstract class OakComponentBase<
         return this.features.runningTree.tryExecute(path2);
     }
 
-    getOperations<T extends keyof ED>(path?: string): Promise<ED[T]['Operation'][] | undefined> {
+    getOperations<T extends keyof ED>(path?: string) {
         const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
         return this.features.runningTree.getOperations(path2);
     }
@@ -332,26 +328,24 @@ abstract class OakComponentBase<
         return this.features.runningTree.getId(this.state.oakFullpath);
     }
 
-    async setFilters(filters: NamedFilterItem<ED, T>[]) {
-        await this.features.runningTree.setNamedFilters(
+    setFilters(filters: NamedFilterItem<ED, T>[]) {
+        this.features.runningTree.setNamedFilters(
             this.state.oakFullpath,
             filters
         );
     }
 
-    async getFilters() {
+    getFilters() {
         if (this.state.oakFullpath) {
             const namedFilters = this.features.runningTree.getNamedFilters(
                 this.state.oakFullpath
             );
-            const filters = await Promise.all(
-                namedFilters.map(({ filter }) => {
-                    if (typeof filter === 'function') {
-                        return filter();
-                    }
-                    return filter;
-                })
-            );
+            const filters = namedFilters.map(({ filter }) => {
+                if (typeof filter === 'function') {
+                    return filter();
+                }
+                return filter;
+            });
             return filters;
         }
     }
@@ -371,57 +365,53 @@ abstract class OakComponentBase<
         }
     }
 
-    async addNamedFilter(namedFilter: NamedFilterItem<ED, T>, refresh?: boolean) {
-        await this.features.runningTree.addNamedFilter(
+    addNamedFilter(namedFilter: NamedFilterItem<ED, T>, refresh?: boolean) {
+        this.features.runningTree.addNamedFilter(
             this.state.oakFullpath,
             namedFilter,
             refresh
         );
     }
 
-    async removeNamedFilter(namedFilter: NamedFilterItem<ED, T>, refresh?: boolean) {
-        await this.features.runningTree.removeNamedFilter(
+    removeNamedFilter(namedFilter: NamedFilterItem<ED, T>, refresh?: boolean) {
+        this.features.runningTree.removeNamedFilter(
             this.state.oakFullpath,
             namedFilter,
             refresh
         );
     }
 
-    async removeNamedFilterByName(name: string, refresh?: boolean) {
-        await this.features.runningTree.removeNamedFilterByName(
+    removeNamedFilterByName(name: string, refresh?: boolean) {
+        this.features.runningTree.removeNamedFilterByName(
             this.state.oakFullpath,
             name,
             refresh
         );
     }
 
-    async setNamedSorters(namedSorters: NamedSorterItem<ED, T>[]) {
-        await this.features.runningTree.setNamedSorters(
+    setNamedSorters(namedSorters: NamedSorterItem<ED, T>[]) {
+        this.features.runningTree.setNamedSorters(
             this.state.oakFullpath,
             namedSorters
         );
     }
 
-    async getSorters() {
+    getSorters() {
         if (this.state.oakFullpath) {
             const namedSorters = this.features.runningTree.getNamedSorters(
                 this.state.oakFullpath
             );
-            const sorters = (
-                await Promise.all(
-                    namedSorters.map(({ sorter }) => {
-                        if (typeof sorter === 'function') {
-                            return sorter();
-                        }
-                        return sorter;
-                    })
-                )
-            ).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
+            const sorters = namedSorters.map(({ sorter }) => {
+                if (typeof sorter === 'function') {
+                    return sorter();
+                }
+                return sorter;
+            }).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
             return sorters;
         }
     }
 
-    async getSorterByName(name: string) {
+    getSorterByName(name: string) {
         if (this.state.oakFullpath) {
             const sorter = this.features.runningTree.getNamedSorterByName(
                 this.state.oakFullpath,
@@ -436,24 +426,24 @@ abstract class OakComponentBase<
         }
     }
 
-    async addNamedSorter(namedSorter: NamedSorterItem<ED, T>, refresh?: boolean) {
-        await this.features.runningTree.addNamedSorter(
+    addNamedSorter(namedSorter: NamedSorterItem<ED, T>, refresh?: boolean) {
+        this.features.runningTree.addNamedSorter(
             this.state.oakFullpath,
             namedSorter,
             refresh
         );
     }
 
-    async removeNamedSorter(namedSorter: NamedSorterItem<ED, T>, refresh?: boolean) {
-        await this.features.runningTree.removeNamedSorter(
+    removeNamedSorter(namedSorter: NamedSorterItem<ED, T>, refresh?: boolean) {
+        this.features.runningTree.removeNamedSorter(
             this.state.oakFullpath,
             namedSorter,
             refresh
         );
     }
 
-    async removeNamedSorterByName(name: string, refresh?: boolean) {
-        await this.features.runningTree.removeNamedSorterByName(
+    removeNamedSorterByName(name: string, refresh?: boolean) {
+        this.features.runningTree.removeNamedSorterByName(
             this.state.oakFullpath,
             name,
             refresh
@@ -526,10 +516,10 @@ const DEFAULT_REACH_BOTTOM_DISTANCE = 50;
 export function createComponent<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    Cxt extends Context<ED>,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>,
-    Proj extends ED[T]['Selection']['data'],
     FormedData extends Record<string, any>,
     IsList extends boolean,
     TData extends Record<string, any> = {},
@@ -540,16 +530,16 @@ export function createComponent<
         ED,
         T,
         Cxt,
+        FrontCxt,
         AD,
         FD,
-        Proj,
         FormedData,
         IsList,
         TData,
         TProperty,
         TMethod
     >,
-    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
+    features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD,
 ) {
     const {
         data, methods, lifetimes, observers, getRender, path
@@ -557,9 +547,9 @@ export function createComponent<
         ED,
         T,
         Cxt,
+        FrontCxt,
         AD,
         FD,
-        Proj,
         FormedData,
         IsList,
         TData,
@@ -571,18 +561,20 @@ export function createComponent<
 
 
     const { fn } = translateObservers(observers);
-    class OakComponentWrapper extends OakComponentBase<ED, T, Cxt, AD, FD, Proj, FormedData, IsList, TData, TProperty, TMethod> {
+    class OakComponentWrapper extends OakComponentBase<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod> {
         features = features;
         oakOption = option;
         isReachBottom = false;
+        subscribed: Array<() => void> = [];
         methodProps: Record<string, Function>;
 
         constructor(props: ComponentProps<IsList, TProperty>) {
             super(props);
             const methodProps: Record<WebComponentCommonMethodNames, Function> = {
+                setDisablePulldownRefresh: (able: boolean) => this.setDisablePulldownRefresh(able),
                 t: (key: string, params?: object) => this.t(key, params),
-                execute: (data: Record<string, any>) => {
-                    return this.execute(data);
+                execute: (action?: ED[T]['Action']) => {
+                    return this.execute(action);
                 },
                 refresh: () => {
                     return this.refresh();
@@ -669,9 +661,9 @@ export function createComponent<
             }
             else {
                 Object.assign(methodProps, {
-                    create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
+                    /* create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
                         return this.create(data, beforeExecute, afterExecute);
-                    },
+                    }, */
                     update: (data: ED[T]['Update']['data'], action: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
                         return this.update(data, action, beforeExecute, afterExecute);
                     },
@@ -709,7 +701,9 @@ export function createComponent<
         }
 
         private supportPullDownRefresh() {
-            return this.props.width === 'xs' && this.iAmThePage();
+            const { oakDisablePulldownRefresh = false } = this.props;
+            const { oakDisablePulldownRefresh: disable2 } = this.state;
+            return this.props.width === 'xs' && this.iAmThePage() && !oakDisablePulldownRefresh && !disable2;
         }
 
         private scrollEvent = () => {
@@ -743,38 +737,48 @@ export function createComponent<
             this.isReachBottom = isCurrentReachBottom;
         }
 
-        async componentDidMount() {
+        componentDidMount() {
             this.registerPageScroll();
-            this.subscribe();
+            if (option.entity) {
+                this.subscribed.push(
+                    features.cache.subscribe(() => this.reRender())
+                );
+            }
             lifetimes?.attached && lifetimes.attached.call(this);
             const { oakPath } = this.props;
             if (oakPath || this.iAmThePage() && path) {
-                await this.onPathSet();
+                this.onPathSet();
                 lifetimes?.ready && lifetimes.ready.call(this);
                 lifetimes?.show && lifetimes.show.call(this);
             }
             else {
+                if (!option.entity) {
+                    lifetimes?.ready && lifetimes.ready.call(this);
+                    lifetimes?.show && lifetimes.show.call(this);
+                }
                 this.reRender();
             }
 
         }
 
         componentWillUnmount() {
-            this.unsubscribe();
+            this.subscribed.forEach(
+                ele => ele()
+            );
             this.unregisterPageScroll();
             this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && destroyNode.call(this as any);
             lifetimes?.detached && lifetimes.detached.call(this);
         }
 
-        async componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
+        componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
             if (prevProps.oakPath !== this.props.oakPath) {
                 assert(this.props.oakPath);
-                await this.onPathSet();
+                this.onPathSet();
                 lifetimes?.ready && lifetimes.ready.call(this);
-                lifetimes?.show && lifetimes.show.call(this);
+                // lifetimes?.show && lifetimes.show.call(this);
             }
             if (this.props.oakId !== prevProps.oakId) {
-                await this.setId(this.props.oakId);
+                this.setId(this.props.oakId);
             }
             // todo 这里似乎还可能对oakProjection这些东西加以更新，等遇到再添加 by Xc
 
@@ -783,10 +787,9 @@ export function createComponent<
 
         render(): React.ReactNode {
             const { oakPullDownRefreshLoading } = this.state;
-            const { oakDisablePulldownRefresh = false } = this.props;
             const Render = getRender.call(this);
 
-            if (this.supportPullDownRefresh() && !oakDisablePulldownRefresh) {
+            if (this.supportPullDownRefresh()) {
                 const Child = React.cloneElement(
                     <PullToRefresh
                         onRefresh={async () => {
@@ -816,7 +819,7 @@ export function createComponent<
             return <Render methods={this.methodProps} data={{
                 ...this.state,
                 ...this.props,
-            }}/>;
+            }} />;
         }
     };
     return withRouter(OakComponentWrapper, option);

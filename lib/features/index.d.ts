@@ -1,4 +1,4 @@
-import { AspectWrapper, Context, EntityDict } from 'oak-domain/lib/types';
+import { AspectWrapper, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Cache } from './cache';
@@ -12,10 +12,12 @@ import { Notification } from './notification';
 import { Message } from './message';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { Navigator } from './navigator';
-export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>>(aspectWrapper: AspectWrapper<ED, Cxt, AD>, storageSchema: StorageSchema<ED>, contextBuilder: () => Cxt, store: CacheStore<ED, Cxt>): {
-    cache: Cache<ED, Cxt, AD>;
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>>(aspectWrapper: AspectWrapper<ED, Cxt, AD>, storageSchema: StorageSchema<ED>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>): {
+    cache: Cache<ED, Cxt, FrontCxt, AD>;
     location: Location;
-    runningTree: RunningTree<ED, Cxt, AD>;
+    runningTree: RunningTree<ED, Cxt, FrontCxt, AD>;
     locales: Locales<ED, Cxt, AD>;
     eventBus: EventBus;
     localStorage: LocalStorage;
@@ -23,10 +25,10 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
     message: Message;
     navigator: Navigator;
 };
-export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> = {
-    cache: Cache<ED, Cxt, AD>;
+export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> = {
+    cache: Cache<ED, Cxt, FrontCxt, AD>;
     location: Location;
-    runningTree: RunningTree<ED, Cxt, AD>;
+    runningTree: RunningTree<ED, Cxt, FrontCxt, AD>;
     locales: Locales<ED, Cxt, AD>;
     eventBus: EventBus;
     localStorage: LocalStorage;

@@ -19,6 +19,8 @@ import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
 import { createDynamicCheckers } from 'oak-domain/lib/checkers';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 
 /**
  * @param storageSchema
@@ -35,27 +37,26 @@ import { createDynamicCheckers } from 'oak-domain/lib/checkers';
  */
 export function initialize<
     ED extends EntityDict & BaseEntityDict,
-    Cxt extends Context<ED>,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>
 >(
     storageSchema: StorageSchema<ED>,
     createFeatures: (
-        aspectWrapper: AspectWrapper<ED, Cxt, AD>,
-        basicFeatures: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>,
+        basicFeatures: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>,
     ) => FD,
-    frontendContextBuilder: (features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>) => (store: RowStore<ED, Cxt>) => Cxt,
-    connector: Connector<ED, Cxt>,
-    checkers?: Array<Checker<ED, keyof ED, Cxt>>,
+    frontendContextBuilder: (features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>) => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
+    connector: Connector<ED, Cxt, FrontCxt>,
+    checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
-    const checkers2 = createDynamicCheckers<ED, Cxt>(storageSchema).concat(checkers || []);
+    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED>(storageSchema));
 
-    const features = {} as FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
+    const features = {} as FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
 
     const cacheStore = new CacheStore(
         storageSchema,
-        () => frontendContextBuilder(features)
     );
     
     const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
@@ -70,7 +71,7 @@ export function initialize<
     };
 
     const basicFeatures = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder(features)(cacheStore), cacheStore);
-    const userDefinedfeatures = createFeatures(wrapper, basicFeatures);
+    const userDefinedfeatures = createFeatures(basicFeatures);
 
     const intersected = intersection(Object.keys(basicFeatures), Object.keys(userDefinedfeatures));
     if (intersected.length > 0) {

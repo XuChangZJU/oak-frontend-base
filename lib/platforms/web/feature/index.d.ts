@@ -14,7 +14,7 @@ declare const FeatureProvider: React.FC<{
     children: React.ReactNode;
 }>;
 declare const useFeature: () => {
-    features: features;
+    features: any;
 };
 declare function useFormData<Value>(useHook: (options: {
     features: features;

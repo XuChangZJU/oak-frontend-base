@@ -24,6 +24,9 @@ import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { DebugStore } from './debugStore/DebugStore';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 
 /**
  * @param storageSchema
@@ -40,20 +43,20 @@ import { CacheStore } from './cacheStore/CacheStore';
  */
 export function initialize<
     ED extends EntityDict & BaseEntityDict,
-    Cxt extends Context<ED>,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>
 >(
     storageSchema: StorageSchema<ED>,
     createFeatures: (
-        aspectWrapper: AspectWrapper<ED, Cxt, AD>,
-        basicFeatures: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>,
+        basicFeatures: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>,
     ) => FD,
-    frontendContextBuilder: (features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>) => (store: RowStore<ED, Cxt>) => Cxt,
-    backendContextBuilder: (contextStr?: string) => (store: RowStore<ED, Cxt>) =>  Promise<Cxt>,
+    frontendContextBuilder: (features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>) => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
+    backendContextBuilder: (contextStr?: string) => (store: DebugStore<ED, Cxt>) =>  Promise<Cxt>,
     aspectDict: AD,
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
-    checkers?: Array<Checker<ED, keyof ED, Cxt>>,
+    checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     watchers?: Array<Watcher<ED, keyof ED, Cxt>>,
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
@@ -67,7 +70,7 @@ export function initialize<
         );
     }
     const aspectDict2 = Object.assign({}, aspectDict, commonAspectDict);
-    const checkers2 = createDynamicCheckers<ED, Cxt>(storageSchema).concat(checkers || []);
+    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED>(storageSchema));
     const triggers2 = createDynamicTriggers<ED, Cxt>(storageSchema).concat(triggers || []);
     const debugStore = createDebugStore(
         storageSchema,
@@ -79,11 +82,10 @@ export function initialize<
         actionDict
     );
 
-    const features = {} as FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
+    const features = {} as FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
 
     const cacheStore = new CacheStore(
         storageSchema,
-        () => frontendContextBuilder(features),
         () => debugStore.getCurrentData(),
         () => clearMaterializedData(),
     );
@@ -110,7 +112,7 @@ export function initialize<
     };
 
     const basicFeatures = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder(features)(cacheStore), cacheStore);
-    const userDefinedfeatures = createFeatures(wrapper, basicFeatures);
+    const userDefinedfeatures = createFeatures(basicFeatures);
 
     intersected = intersection(Object.keys(basicFeatures), Object.keys(userDefinedfeatures));
     if (intersected.length > 0) {

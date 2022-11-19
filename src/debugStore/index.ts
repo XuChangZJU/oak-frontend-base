@@ -1,15 +1,14 @@
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 import { DebugStore } from './DebugStore';
 import {
-    Checker, Trigger, StorageSchema, FormCreateData, Context, EntityDict, RowStore,
-    ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, OperationResult
-} from "oak-domain/lib/types";
+    Checker, Trigger, StorageSchema, EntityDict, ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher} from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
-import { makeIntrinsicWatchers } from 'oak-domain/lib/store/watchers';
 import { assert } from 'oak-domain/lib/utils/assert';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+import { generateNewId } from 'oak-domain/lib/utils/uuid';
 
-async function initDataInStore<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>>(
+async function initDataInStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
     store: DebugStore<ED, Cxt>,
     initialData: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
@@ -19,9 +18,7 @@ async function initDataInStore<ED extends EntityDict & BaseEntityDict, Cxt exten
         remove: number;
         commit: number;
     }) {
-    store.startInitializing();
     store.resetInitialData(initialData, stat);
-    store.endInitializing();
 }
 
 function getMaterializedData() {
@@ -136,8 +133,8 @@ export function clearMaterializedData() {
  * @param store 
  * @param watchers 
  */
-function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>>(
-    store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) =>  Promise<Cxt>, watchers: Array<Watcher<ED, keyof ED, Cxt>>) {
+function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
+    store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) =>  Promise<Cxt>, watchers: Array<Watcher<ED, keyof ED, Cxt>>) {
     
     let count = 0;
     async function doWatchers() {
@@ -152,7 +149,7 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
                     const filter2 = typeof filter === 'function' ? await filter() : filter;
                     const data = typeof actionData === 'function' ? await (actionData as any)() : actionData;        // 这里有个奇怪的编译错误，不理解 by Xc
                     const result = await store.operate(entity, {
-                        id: await generateNewId(),
+                        id: generateNewId(),
                         action,
                         data,
                         filter: filter2
@@ -166,14 +163,14 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
                     const { entity, projection, fn, filter } = <WBWatcher<ED, keyof ED, Cxt>>w;
                     const filter2 = typeof filter === 'function' ? await filter() : filter;
                     const projection2 = typeof projection === 'function' ? await projection() : projection;
-                    const { result: rows } = await store.select(entity, {
+                    const rows = await store.select(entity, {
                         data: projection2 as any,
                         filter: filter2,
                     }, context, {
                         dontCollect: true,
                     });
 
-                    const result = fn(context, rows);
+                    const result = await fn(context, rows);
                     console.log(`执行了watcher【${w.name}】，结果是：`, result);
                 }
                 await context.commit();
@@ -207,9 +204,9 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
     materializeData(data, store.getStat());
 } */
 
-export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>>(
+export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
     storageSchema: StorageSchema<ED>,
-    contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Promise<Cxt>,
+    contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>,
     triggers: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers: Array<Checker<ED, keyof ED, Cxt>>,
     watchers: Array<Watcher<ED, keyof ED, Cxt>>,
