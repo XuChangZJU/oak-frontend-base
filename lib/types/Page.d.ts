@@ -118,6 +118,7 @@ export declare type OakNavigateToParameters<ED extends EntityDict & BaseEntityDi
     [k: string]: any;
 };
 export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
+    setDisablePulldownRefresh: (able: boolean) => void;
     sub: (type: string, callback: Function) => void;
     unsub: (type: string, callback: Function) => void;
     pub: (type: string, options?: any) => void;
@@ -182,6 +183,7 @@ export declare type OakListComponentMethods<ED extends EntityDict & BaseEntityDi
     addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
     removeItem: (id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
     updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
+    recoverItem: (id: string) => void;
 };
 declare type ComponentOnPropsChangeOption = {
     path?: string;
@@ -206,9 +208,10 @@ export declare type OakComponentData<ED extends EntityDict & BaseEntityDict, T e
     oakEntity: T;
     oakFullpath: string;
     oakLegalActions?: ED[T]['Action'][];
+    oakDisablePulldownRefresh: boolean;
 };
 export declare type MakeOakComponent<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>> = <T extends keyof ED, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption>(options: OakComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => React.ComponentType<any>;
-export declare type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh';
+export declare type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh';
 export declare type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedFilter' | 'removeNamedFilter' | 'removeNamedFilterByName' | 'setNamedSorters' | 'addNamedSorter' | 'removeNamedSorter' | 'removeNamedSorterByName' | 'setPageSize' | 'setCurrentPage' | 'addItem' | 'removeItem' | 'updateItem';
 export declare type WebComponentSingleMethodNames = 'update' | 'remove';
 export declare type WebComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption = {}, TMethod extends WechatMiniprogram.Component.MethodOption = {}> = {

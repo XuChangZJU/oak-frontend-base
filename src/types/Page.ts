@@ -292,6 +292,7 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
     removeItem: (id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
     updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
+    recoverItem: (id: string) => void;
 };
 
 type ComponentOnPropsChangeOption = {

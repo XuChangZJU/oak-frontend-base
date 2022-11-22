@@ -70,7 +70,7 @@ export function initialize<
         );
     }
     const aspectDict2 = Object.assign({}, aspectDict, commonAspectDict);
-    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED>(storageSchema));
+    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt>(storageSchema));
     const triggers2 = createDynamicTriggers<ED, Cxt>(storageSchema).concat(triggers || []);
     const debugStore = createDebugStore(
         storageSchema,
@@ -124,7 +124,7 @@ export function initialize<
     }
     Object.assign(features, basicFeatures, userDefinedfeatures);
 
-    checkers2.forEach((checker) => cacheStore.registerChecker(checker));
+    checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
     if (actionDict) {
         const { checkers: adCheckers } = analyzeActionDefDict(
             storageSchema,

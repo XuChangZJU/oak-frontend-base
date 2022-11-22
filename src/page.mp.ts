@@ -47,7 +47,7 @@ const oakBehavior = Behavior<
     WechatMiniprogram.Component.PropertyOption,
     OakCommonComponentMethods<EDD, keyof EDD> & OakListComponentMethods<EDD, keyof EDD> & OakSingleComponentMethods<EDD, keyof EDD> & {
         iAmThePage: () => boolean;
-        setState: (data: Record<string, any>, callback: () => void) => void;
+        setState: (data: Record<string, any>, callback?: () => void) => void;
         onLoad: (query: Record<string, any>) => Promise<void>;
         onPullDownRefresh: () => Promise<void>;
         onReachBottom: () => Promise<void>;
@@ -83,6 +83,11 @@ const oakBehavior = Behavior<
         >
     }>({
         methods: {
+            setDisablePulldownRefresh(able) {
+                this.setState({
+                    oakDisablePulldownRefresh: able,
+                });
+            },
             t(key: string, params?: object) {
                 //  common: {
                 //        GREETING: 'Hello {{name}}, nice to see you.',
@@ -123,7 +128,7 @@ const oakBehavior = Behavior<
                 return false;
             },
 
-            setState(data: Record<string, any>, callback: () => void) {
+            setState(data: Record<string, any>, callback?: () => void) {
                 this.setData(data, () => {
                     this.state = this.data;
                     callback && callback.call(this);
@@ -194,7 +199,7 @@ const oakBehavior = Behavior<
             },
 
             async onPullDownRefresh() {
-                if (!this.state.oakLoading && this.iAmThePage()) {
+                if (!this.state.oakLoading && this.iAmThePage() && !this.state.oakDisablePulldownRefresh && !this.props.oakDisablePulldownRefresh) {
                     await this.refresh();
                 }
                 await wx.stopPullDownRefresh();

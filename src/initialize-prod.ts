@@ -51,7 +51,7 @@ export function initialize<
     checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
-    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED>(storageSchema));
+    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt>(storageSchema));
 
     const features = {} as FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
 
@@ -83,7 +83,7 @@ export function initialize<
     }
     Object.assign(features, basicFeatures, userDefinedfeatures);
 
-    checkers2.forEach((checker) => cacheStore.registerChecker(checker));
+    checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
     if (actionDict) {
         const { checkers: adCheckers } = analyzeActionDefDict(
             storageSchema,
