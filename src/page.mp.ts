@@ -471,6 +471,9 @@ const oakBehavior = Behavior<
             removeItem(id, beforeExecute, afterExecute) {
                 return this.features.runningTree.removeItem(this.state.oakFullpath, id, beforeExecute, afterExecute);
             },
+            recoverItem(id) {
+                return this.features.runningTree.recoverItem(this.state.oakFullpath, id);
+            },
             setId(id) {
                 return this.features.runningTree.setId(this.state.oakFullpath, id);
             },
