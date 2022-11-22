@@ -1,0 +1,20 @@
+import React from 'react';
+import { Aspect, EntityDict } from 'oak-domain/lib/types';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+import { CommonAspectDict } from 'oak-common-aspect';
+import { BasicFeatures } from './../../../features';
+import { Feature } from './../../../types/Feature';
+declare type ED = EntityDict & BaseEntityDict;
+declare type Cxt = AsyncContext<ED>;
+declare type FrontCxt = SyncContext<ED>;
+declare type AD = Record<string, Aspect<ED, Cxt>>;
+declare type FD = Record<string, Feature>;
+declare type features = FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
+declare const FeaturesProvider: React.FC<{
+    features: features;
+    children: React.ReactNode;
+}>;
+declare const useFeatures: () => features;
+export { FeaturesProvider, useFeatures };
