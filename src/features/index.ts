@@ -1,4 +1,4 @@
-import { AspectWrapper, Checker, Context, EntityDict, Aspect } from 'oak-domain/lib/types';
+import { AspectWrapper, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -13,15 +13,17 @@ import { Notification } from './notification';
 import { Message } from './message';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { Navigator } from './navigator';
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 
-export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>, AD extends CommonAspectDict<ED, Cxt>> (
+export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> (
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         storageSchema: StorageSchema<ED>,
-        contextBuilder: () => Cxt,
-        store: CacheStore<ED, Cxt>) {
-    const cache = new Cache<ED, Cxt, AD>(aspectWrapper, contextBuilder, store);
+        contextBuilder: () => FrontCxt,
+        store: CacheStore<ED, FrontCxt>) {
+    const cache = new Cache<ED, Cxt, FrontCxt, AD>(aspectWrapper, contextBuilder, store);
     const location = new Location();
-    const runningTree = new RunningTree<ED, Cxt, AD>(aspectWrapper, cache, storageSchema);
+    const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD>(aspectWrapper, cache, storageSchema);
     const locales = new Locales(aspectWrapper);
     const eventBus = new EventBus();
     const localStorage = new LocalStorage();
@@ -43,12 +45,13 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends C
 
 export type BasicFeatures<
     ED extends EntityDict & BaseEntityDict,
-    Cxt extends Context<ED>,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
 > = {
-    cache: Cache<ED, Cxt, AD>;
+    cache: Cache<ED, Cxt, FrontCxt, AD>;
     location: Location;
-    runningTree: RunningTree<ED, Cxt, AD>;
+    runningTree: RunningTree<ED, Cxt, FrontCxt, AD>;
     locales: Locales<ED, Cxt, AD>;
     eventBus: EventBus;
     localStorage: LocalStorage;

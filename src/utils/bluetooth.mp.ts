@@ -1,4 +1,5 @@
 import { unset } from 'oak-domain/lib/utils/lodash';
+import { generateNewId } from 'oak-domain/lib/utils/uuid';
 import { PromisefyOption } from '../types/Wx';
 
 export class Bluetooth {
@@ -119,7 +120,7 @@ export class Bluetooth {
 
     async createPeripheralServer() {
         const server = await wx.createBLEPeripheralServer({});
-        const id = await generateNewId();
+        const id = generateNewId();
         Object.assign(this.serverDict, {
             [id]: server,
         });

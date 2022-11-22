@@ -1,9 +1,10 @@
-import { EntityDict, SelectOption, Context, RowStore, DeduceCreateOperation, DeduceRemoveOperation, DeduceUpdateOperation, OperateOption, SelectionResult, SelectRowShape } from "oak-domain/lib/types";
+import { EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
 import { TreeStore, TreeStoreOperateOption, TreeStoreSelectOption } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { RWLock } from 'oak-domain/lib/utils/concurrent';
+import { AsyncContext, AsyncRowStore } from "oak-domain/lib/store/AsyncRowStore";
+import assert from 'assert';
 
 interface DebugStoreOperateOption extends TreeStoreOperateOption {
     noLock?: true;
@@ -13,57 +14,44 @@ interface DebugStoreSelectOption extends TreeStoreSelectOption {
     noLock?: true;
 };
 
-export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>> extends TreeStore<ED, Cxt> {
+export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>> extends TreeStore<ED> implements AsyncRowStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;
-    private rwLock: RWLock;
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: RowStore<ED, Cxt>) => Promise<Cxt>) {
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>) {
         super(storageSchema);
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
-        this.rwLock = new RWLock();
+    }
+    begin(option?: TxnOption): Promise<string> {
+        return super.beginAsync();
+    }
+    commit(txnId: string): Promise<void> {
+        return super.commitAsync(txnId);
+    }
+    rollback(txnId: string): Promise<void> {
+        return super.rollbackAsync(txnId);
     }
 
-    protected async updateAbjointRow<T extends keyof ED, OP extends DebugStoreOperateOption>(
-        entity: T,
-        operation: ED[T]['CreateSingle'] | ED[T]['Update'] | ED[T]['Remove'],
-        context: Cxt,
-        option?: OP) {
-            // 对于create动作，没有值的属性要置NULL
-            const { action, data } = operation;
-            if (action === 'create') {
-                const { attributes } = this.getSchema()[entity];
-                for (const key in attributes) {
-                    if (data[key] === undefined) {
-                        Object.assign(data, {
-                            [key]: null,
-                        });
-                    }
-                }
-            }
-            return super.updateAbjointRow(entity, operation, context, option);
-        }
-
-    protected async cascadeUpdate<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: DeduceCreateOperation<ED[T]["Schema"]> | DeduceUpdateOperation<ED[T]["Schema"]> | DeduceRemoveOperation<ED[T]["Schema"]>, context: Cxt, option: OP) {        
+    protected async cascadeUpdateAsync<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: AsyncContext<ED>, option: OP) {        
         if (!option.blockTrigger) {
-            await this.executor.preOperation(entity, operation, context, option);
+            await this.executor.preOperation(entity, operation, context as any, option);
         }
-        const result = super.cascadeUpdate(entity, operation, context, option);
+        const result = await super.cascadeUpdateAsync(entity, operation, context, option);
         if (!option.blockTrigger) {
-            await this.executor.postOperation(entity, operation, context, option);
+            await this.executor.postOperation(entity, operation, context as any, option);
         }
         return result;
     }
 
-    protected async cascadeSelect<T extends keyof ED, S extends ED[T]["Selection"], OP extends DebugStoreSelectOption>(entity: T, selection: S, context: Cxt, option: OP): Promise<SelectRowShape<ED[T]['Schema'], S['data']>[]> {
+    protected async cascadeSelectAsync<T extends keyof ED, OP extends DebugStoreSelectOption>(entity: T, selection: ED[T]["Selection"], context: AsyncContext<ED>, option: OP) {
         const selection2 = Object.assign({
             action: 'select',
         }, selection) as ED[T]['Operation'];
 
         if (!option.blockTrigger) {
-            await this.executor.preOperation(entity, selection2, context, option);
+            await this.executor.preOperation(entity, selection2, context as any, option);
         }
-        const result = await super.cascadeSelect(entity, selection2 as any, context, option);
+        const result = await super.cascadeSelectAsync(entity, selection2 as any, context, option);
         if (!option.blockTrigger) {
-            await this.executor.postOperation(entity, selection2, context, option, result);
+            await this.executor.postOperation(entity, selection2, context as any, option, result);
         }
         return result;
     }
@@ -74,70 +62,22 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Cont
         context: Cxt,
         option: OP
     ) {
-        if (!option.noLock) {
-            await this.rwLock.acquire('S');
-        }
-
-        const autoCommit = !context.getCurrentTxnId();
-        let result;
-        if (autoCommit) {
-            await context.begin();
-        }
-        try {
-            result = await super.operate(entity, operation, context, option);
-        }
-        catch (err) {
-            if (autoCommit) {
-                await context.rollback();
-            }
-            if (!option || !option.noLock) {
-                this.rwLock.release();
-            }
-            throw err;
-        }
-        if (autoCommit) {
-            await context.commit();
-        }
-        if (!option || !option.noLock) {
-            this.rwLock.release();
-        }
-        return result;
+        assert(context.getCurrentTxnId());
+        return super.operateAsync(entity, operation, context, option);
     }
 
-    async select<T extends keyof ED, S extends ED[T]['Selection'], OP extends DebugStoreSelectOption>(
+    async select<T extends keyof ED, OP extends DebugStoreSelectOption>(
         entity: T,
-        selection: S,
+        selection: ED[T]['Selection'],
         context: Cxt,
         option: OP
     ) {
-        if (!option || !option.noLock) {
-            await this.rwLock.acquire('S');
-        }
-        const autoCommit = !context.getCurrentTxnId();
-        if (autoCommit) {
-            await context.begin();
-        }
-        let result: SelectionResult<ED[T]['Schema'], S['data']>;
+        assert(context.getCurrentTxnId());
+        return super.selectAsync(entity, selection, context, option);
+    }
 
-        try {
-            result = await super.select(entity, selection, context, option);
-        }
-        catch (err) {
-            if (autoCommit) {
-                await context.rollback();
-            }
-            if (!option || !option.noLock) {
-                this.rwLock.release();
-            }
-            throw err;
-        }
-        if (autoCommit) {
-            await context.commit();
-        }
-        if (!option || !option.noLock) {
-            this.rwLock.release();
-        }
-        return result;
+    async count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]["Selection"], "filter" | "count">, context: Cxt, option: OP): Promise<number> {
+        return super.countAsync(entity, selection, context, option);
     }
 
     registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>) {
@@ -146,14 +86,6 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Cont
 
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
         this.executor.registerChecker(checker);
-    }
-
-    startInitializing() {
-        this.rwLock.acquire('X');
-    }
-
-    endInitializing() {
-        this.rwLock.release();
     }
 }
 

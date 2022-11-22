@@ -8,14 +8,14 @@ import URL from 'url';
 
 type Location = { state: Record<string, any>; search: string };
 
-function getParams(location: Location, properties?: WechatMiniprogram.Component.PropertyOption) {
+function getParams(location: Location, properties?: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty>) {
     const { search, state } = location;
     const query = getQuery(search, properties);
 
     return Object.assign({}, query, state);
 }
 
-function getQuery(url: string, properties?: WechatMiniprogram.Component.PropertyOption) {
+function getQuery(url: string, properties?: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty>) {
     let query: Record<string, any> = {};
     if (!url) {
         return query;
@@ -84,7 +84,7 @@ function getQuery(url: string, properties?: WechatMiniprogram.Component.Property
     return query2;
 }
 
-const withRouter = (Component: React.ComponentType<any>, { path, properties }: {path?: string, properties?: WechatMiniprogram.Component.PropertyOption }) => {
+const withRouter = (Component: React.ComponentType<any>, { path, properties }: {path?: string, properties?: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty> }) => {
     const ComponentWithRouterProp = (props: any) => {
         const navigate = useNavigate();
         const location = useLocation();

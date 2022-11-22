@@ -3,14 +3,37 @@ import { pull } from 'oak-domain/lib/utils/lodash';
 const mCallbacks: Array<() => any> = [];
 let mActionStackDepth = 0;
 
-export abstract class Feature {};
+export abstract class Feature {
+    callbacks: Array<() => any>;
+    
+    constructor() {
+        this.callbacks = [];
+    }
 
-export function subscribe(callback: () => any) {
+    subscribe(callback: () => any) {
+        this.callbacks.push(callback);
+        return () => {
+            pull(this.callbacks, callback);
+        }; 
+    }
+
+    protected publish() {
+        this.callbacks.forEach(
+            ele => ele()
+        );
+    }
+
+    clearSubscribes() {
+        this.callbacks = [];
+    }
+};
+
+/* export function subscribe(callback: () => any) {
     mCallbacks.push(callback);
     return () => {
         pull(mCallbacks, callback);
     }; 
-}
+}*/
 
 /**
  * 方法注解，使函数调用最后一层堆栈时唤起所有登记的回调
@@ -18,7 +41,7 @@ export function subscribe(callback: () => any) {
  * @param propertyName 
  * @param descriptor 
  */
- export function Action(target: any, propertyName: string, descriptor: TypedPropertyDescriptor<any>) {
+ /* export function Action(target: any, propertyName: string, descriptor: TypedPropertyDescriptor<any>) {
     const method = descriptor.value!;
     descriptor.value = async function (...params: any[]) {
         mActionStackDepth++;
@@ -53,4 +76,4 @@ export function subscribe(callback: () => any) {
         }
         return result;
     }
-}
+} */

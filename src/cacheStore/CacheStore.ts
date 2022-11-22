@@ -1,148 +1,99 @@
-import { DeduceCreateSingleOperation, DeduceRemoveOperation, DeduceUpdateOperation, EntityDict, OperateOption, OperationResult, OpRecord, SelectOption } from 'oak-domain/lib/types/Entity';
+import { EntityDict, OperationResult, OpRecord, SelectOption } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from "oak-domain/lib/types/Storage";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { Checker, CheckerType, Context, Trigger } from 'oak-domain/lib/types';
+import { Checker, CheckerType, TxnOption } from 'oak-domain/lib/types';
 import { TreeStore, TreeStoreOperateOption } from 'oak-memory-tree-store';
 import assert from 'assert';
+import { SyncContext, SyncRowStore } from 'oak-domain/lib/store/SyncRowStore';
+import CheckerExecutor from './CheckerExecutor';
 
-interface CachStoreOperation extends TreeStoreOperateOption {
-    inSync?: boolean;
-};
+interface CachStoreOperation extends TreeStoreOperateOption {};
 
 export class CacheStore<
     ED extends EntityDict & BaseEntityDict,
-    Cxt extends Context<ED>
-    > extends TreeStore<ED, Cxt> {
-    private executor: TriggerExecutor<ED, Cxt>;
+    Cxt extends SyncContext<ED>
+    > extends TreeStore<ED> implements SyncRowStore<ED, SyncContext<ED>>{
+    private checkerExecutor: CheckerExecutor<ED, Cxt>;
     private getFullDataFn?: () => any;
     private resetInitialDataFn?: () => void;
 
     constructor(
         storageSchema: StorageSchema<ED>,
-        contextBuilder: () => (store: CacheStore<ED, Cxt>) => Cxt,
         getFullDataFn?: () => any,
         resetInitialDataFn?: () => void
     ) {
         super(storageSchema);
-        this.executor = new TriggerExecutor(async () =>
-            contextBuilder()(this)
-        );
+        this.checkerExecutor = new CheckerExecutor();
         this.getFullDataFn = getFullDataFn;
         this.resetInitialDataFn = resetInitialDataFn;
     }
-
-    protected async updateAbjointRow<T extends keyof ED>(entity: T, operation: DeduceCreateSingleOperation<ED[T]['Schema']> | DeduceUpdateOperation<ED[T]['Schema']> | DeduceRemoveOperation<ED[T]['Schema']>, context: Cxt, option?: CachStoreOperation): Promise<number> {
-        if (!option?.inSync) {
-            // 如果不是同步，需要补齐所有的null属性
-            const { action, data } = operation;
-            if (action === 'create') {
-                const { attributes } = this.getSchema()[entity];
-                for (const key in attributes) {
-                    if (data[key] === undefined) {
-                        Object.assign(data, {
-                            [key]: null,
-                        });
-                    }
-                }
-            }
-        }
-        return super.updateAbjointRow(entity, operation, context, option);
-    }
-
-    async operate<T extends keyof ED, OP extends TreeStoreOperateOption>(
+    operate<T extends keyof ED, OP extends TreeStoreOperateOption>(
         entity: T,
         operation: ED[T]['Operation'],
         context: Cxt,
         option: OP
-    ): Promise<OperationResult<ED>> {
-        const autoCommit = !context.getCurrentTxnId();
-        let result;
-        if (autoCommit) {
-            await context.begin();
-        }
-        try {
-            if (!option.blockTrigger) {
-                await this.executor.preOperation(entity, operation, context, option);
-            }
-            result = await super.operate(entity, operation, context, option);
-            if (!option.blockTrigger) {
-                await this.executor.postOperation(entity, operation, context, option);
-            }
-        } catch (err) {
-            if (autoCommit) {
-                await context.rollback();
-            }
-            throw err;
-        }
-        if (autoCommit) {
-            await context.commit();
-        }
-        return result;
-    }
-
-    async sync(opRecords: Array<OpRecord<ED>>, context: Cxt) {
-        const autoCommit = !context.getCurrentTxnId();
-        if (autoCommit) {
-            await context.begin();
-        }
-        let result;
-
-        try {
-            result = await super.sync<CachStoreOperation>(opRecords, context, {
-                inSync: true,
-            });
-        } catch (err) {
-            if (autoCommit) {
-                await context.rollback();
-            }
-            throw err;
-        }
-        if (autoCommit) {
-            await context.commit();
-        }
-        return result;
-    }
-
-    async check<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, checkerTypes?: CheckerType[]) {
-        const { action } = operation;
-        const checkers = this.executor.getCheckers(entity, action, checkerTypes);
-
+    ): OperationResult<ED> {
         assert(context.getCurrentTxnId());
-        if (checkers) {
-            for (const checker of checkers) {
-                await checker.fn({ operation } as any, context, {});
-            }
+        if (!option.blockTrigger) {
+            this.checkerExecutor.check(entity, operation, context);
         }
+        return super.operateSync(entity, operation, context, option);
     }
 
-    async select<
-        T extends keyof ED,
-        S extends ED[T]['Selection'],
-        OP extends SelectOption
-    >(entity: T, selection: S, context: Cxt, option: OP) {
+    sync<Cxt extends SyncContext<ED>>(opRecords: Array<OpRecord<ED>>, context: Cxt) {
         const autoCommit = !context.getCurrentTxnId();
         if (autoCommit) {
-            await context.begin();
+            context.begin();
         }
         let result;
 
         try {
-            result = await super.select(entity, selection, context, option);
+            result = super.sync<CachStoreOperation, Cxt>(opRecords, context, {});
         } catch (err) {
             if (autoCommit) {
-                await context.rollback();
+                context.rollback();
             }
             throw err;
         }
         if (autoCommit) {
-            await context.commit();
+            context.commit();
+        }
+        return result;
+    }
+
+    check<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, checkerTypes?: CheckerType[]) {
+        assert(context.getCurrentTxnId());
+        this.checkerExecutor.check(entity, operation, context, checkerTypes);
+    }
+
+    select<
+        T extends keyof ED,
+        OP extends SelectOption,
+        Cxt extends SyncContext<ED>
+    >(entity: T, selection: ED[T]['Selection'], context: Cxt, option: OP) {
+        const autoCommit = !context.getCurrentTxnId();
+        if (autoCommit) {
+            context.begin();
+        }
+        let result;
+
+        try {
+            result = super.selectSync(entity, selection, context, option);
+        } catch (err) {
+            if (autoCommit) {
+                context.rollback();
+            }
+            throw err;
+        }
+        if (autoCommit) {
+            context.commit();
         }
         return result;
     }
 
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
-        this.executor.registerChecker(checker);
+        this.checkerExecutor.registerChecker(checker);
     }
 
     /**
@@ -159,5 +110,35 @@ export class CacheStore<
      */
     resetInitialData() {
         return this.resetInitialDataFn!();
+    }
+
+    count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]['Selection'], 'filter' | 'count'>, context: SyncContext<ED>, option: OP): number {
+        const autoCommit = !context.getCurrentTxnId();
+        if (autoCommit) {
+            context.begin();
+        }
+        let result;
+
+        try {
+            result = super.countSync(entity, selection, context, option);
+        } catch (err) {
+            if (autoCommit) {
+                context.rollback();
+            }
+            throw err;
+        }
+        if (autoCommit) {
+            context.commit();
+        }
+        return result;
+    }
+    begin(option?: TxnOption): string {
+        return super.beginSync();
+    }
+    commit(txnId: string): void {
+        return super.commitSync(txnId);
+    }
+    rollback(txnId: string): void {
+        return super.rollbackSync(txnId);
     }
 }

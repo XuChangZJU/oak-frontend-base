@@ -1,7 +1,4 @@
-import { EntityDict, Context } from 'oak-domain/lib/types';
-import { CommonAspectDict } from 'oak-common-aspect';
 import { pull, unset } from 'oak-domain/lib/utils/lodash';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Feature } from '../types/Feature';
 
 export class EventBus extends Feature {

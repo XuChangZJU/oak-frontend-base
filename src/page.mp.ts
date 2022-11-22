@@ -4,22 +4,24 @@ import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, Context, DeduceSorterItem, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
-import { Feature, subscribe as FeactureSubscribe } from './types/Feature';
+import { Feature } from './types/Feature';
 import {
     OakCommonComponentMethods,
     OakComponentOption,
     OakListComponentMethods,
-    OakHiddenComponentMethods,
+    OakSingleComponentMethods,
 } from './types/Page';
 
 import {
     onPathSet, reRender, refresh,
-    loadMore, execute, callPicker, setUpdateData, setMultiAttrUpdateData,
+    loadMore, execute, 
     destroyNode,
 } from './page.common';
 import { MessageProps } from './types/Message';
 import { NotificationProps } from './types/Notification';
 import { CURRENT_LOCALE_DATA, CURRENT_LOCALE_KEY, getI18nInstanceWechatMp } from './platforms/wechatMp/i18n';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 
 
 const OakProperties = {
@@ -36,15 +38,16 @@ const OakProperties = {
 };
 
 type EDD = EntityDict & BaseEntityDict;
-type Cxt = Context<EntityDict & BaseEntityDict>;
+type Cxt = AsyncContext<EntityDict & BaseEntityDict>;
 type ADD = Record<string, Aspect<EDD, Cxt>>;
 type FDD = Record<string, Feature>;
+type FrontCxt = SyncContext<EntityDict & BaseEntityDict>;
 const oakBehavior = Behavior<
     WechatMiniprogram.Component.DataOption,
     WechatMiniprogram.Component.PropertyOption,
-    OakCommonComponentMethods<EDD, keyof EDD> & OakListComponentMethods<EDD, keyof EDD> & OakHiddenComponentMethods &{
+    OakCommonComponentMethods<EDD, keyof EDD> & OakListComponentMethods<EDD, keyof EDD> & OakSingleComponentMethods<EDD, keyof EDD> & {
         iAmThePage: () => boolean;
-        setState: (data: Record<string, any>, callback: () => void) => void;
+        setState: (data: Record<string, any>, callback?: () => void) => void;
         onLoad: (query: Record<string, any>) => Promise<void>;
         onPullDownRefresh: () => Promise<void>;
         onReachBottom: () => Promise<void>;
@@ -63,15 +66,15 @@ const oakBehavior = Behavior<
             oakAutoUnmount?: boolean;
             oakDisablePulldownRefresh?: boolean;
         } & Record<string, any>;
-        features: BasicFeatures<EDD, Cxt, ADD & CommonAspectDict<EDD, Cxt>> & FDD;
-        subscribed: (() => void) | undefined;
+        features: BasicFeatures<EDD, Cxt, FrontCxt, ADD & CommonAspectDict<EDD, Cxt>> & FDD;
+        subscribed: Array<() => void>;
         option: OakComponentOption<
             EDD,
             keyof EDD,
             Cxt,
+            FrontCxt,
             ADD,
             FDD,
-            EDD[keyof EDD]['Selection']['data'],
             Record<string, any>,
             boolean,
             Record<string, any>,
@@ -80,6 +83,11 @@ const oakBehavior = Behavior<
         >
     }>({
         methods: {
+            setDisablePulldownRefresh(able) {
+                this.setState({
+                    oakDisablePulldownRefresh: able,
+                });
+            },
             t(key: string, params?: object) {
                 //  common: {
                 //        GREETING: 'Hello {{name}}, nice to see you.',
@@ -120,20 +128,7 @@ const oakBehavior = Behavior<
                 return false;
             },
 
-            subscribe() {
-                if (!this.subscribed) {
-                    this.subscribed = FeactureSubscribe(() => this.reRender());
-                }
-            },
-
-            unsubscribe() {
-                if (this.subscribed) {
-                    this.subscribed();
-                    this.subscribed = undefined;
-                }
-            },
-
-            setState(data: Record<string, any>, callback: () => void) {
+            setState(data: Record<string, any>, callback?: () => void) {
                 this.setData(data, () => {
                     this.state = this.data;
                     callback && callback.call(this);
@@ -204,7 +199,7 @@ const oakBehavior = Behavior<
             },
 
             async onPullDownRefresh() {
-                if (!this.state.oakLoading && this.iAmThePage()) {
+                if (!this.state.oakLoading && this.iAmThePage() && !this.state.oakDisablePulldownRefresh && !this.props.oakDisablePulldownRefresh) {
                     await this.refresh();
                 }
                 await wx.stopPullDownRefresh();
@@ -282,27 +277,19 @@ const oakBehavior = Behavior<
                 });
             },
 
-            addOperation(operation, beforeExecute, afterExecute, path) {
-                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-                return this.features.runningTree.addOperation(path2, operation, beforeExecute, afterExecute);
-            },
         
-            cleanOperation(path) {
+            clean(path) {
                 const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 return this.features.runningTree.clean(path2);
             },
-
-            callPicker(attr: string, params: Record<string, any> = {}) {
-                return callPicker.call(this as any, attr, params);
-            },
         
-            execute(operation) {
-                return execute.call(this as any, operation);
+            execute(action, path) {
+                return execute.call(this as any, action, path);
             },
         
             getFreshValue(path?: string) {
                 const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-                return this.features.runningTree.getFreshValue(path2) as Promise<EDD[keyof EDD]['Schema'][] | EDD[keyof EDD]['Schema'] | undefined>;
+                return this.features.runningTree.getFreshValue(path2);
             },
         
             checkOperation(entity, action, filter, checkerTypes) {
@@ -314,7 +301,7 @@ const oakBehavior = Behavior<
                 return this.features.runningTree.tryExecute(path2);
             },
         
-            getOperations<T extends keyof EDD>(path?: string): Promise<EDD[T]['Operation'][] | undefined> {
+            getOperations<T extends keyof EDD>(path?: string) {
                 const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 return this.features.runningTree.getOperations(path2);
             },
@@ -323,55 +310,36 @@ const oakBehavior = Behavior<
                 return refresh.call(this as any);
             },
         
-            setUpdateData(attr: string, data: any) {
-                return setUpdateData.call(this as any, attr, data);
-            },
-        
-            setMultiAttrUpdateData(data: Record<string, any>) {
-                return setMultiAttrUpdateData.call(this as any, data);
-            },
-        
             loadMore() {
                 return loadMore.call(this as any);
             },
-        
-            setId(id: string) {
-                return this.features.runningTree.setId(this.state.oakFullpath, id);
-            },
-        
-            unsetId() {
-                return this.features.runningTree.unsetId(this.state.oakFullpath);
-            },
-        
+                      
             getId() {
                 return this.features.runningTree.getId(this.state.oakFullpath);
             },
         
-            async setFilters(filters) {
-                await this.features.runningTree.setNamedFilters(
+            setFilters(filters) {
+                this.features.runningTree.setNamedFilters(
                     this.state.oakFullpath,
                     filters
                 );
             },
         
-            async getFilters() {
+            getFilters() {
                 if (this.state.oakFullpath) {
                     const namedFilters = this.features.runningTree.getNamedFilters(
                         this.state.oakFullpath
                     );
-                    const filters = await Promise.all(
-                        namedFilters.map(({ filter }) => {
-                            if (typeof filter === 'function') {
-                                return filter();
-                            }
-                            return filter;
-                        })
-                    );
-                    return filters;
+                    return namedFilters.map(({ filter }) => {
+                        if (typeof filter === 'function') {
+                            return filter();
+                        }
+                        return filter;
+                    });
                 }
             },
         
-            async getFilterByName(name: string) {
+            getFilterByName(name: string) {
                 if (this.state.oakFullpath) {
                     const filter = this.features.runningTree.getNamedFilterByName(
                         this.state.oakFullpath,
@@ -386,57 +354,53 @@ const oakBehavior = Behavior<
                 }
             },
         
-            async addNamedFilter(namedFilter, refresh) {
-                await this.features.runningTree.addNamedFilter(
+            addNamedFilter(namedFilter, refresh) {
+                this.features.runningTree.addNamedFilter(
                     this.state.oakFullpath,
                     namedFilter,
                     refresh
                 );
             },
         
-            async removeNamedFilter(namedFilter, refresh) {
-                await this.features.runningTree.removeNamedFilter(
+            removeNamedFilter(namedFilter, refresh) {
+                this.features.runningTree.removeNamedFilter(
                     this.state.oakFullpath,
                     namedFilter,
                     refresh
                 );
             },
         
-            async removeNamedFilterByName(name, refresh) {
-                await this.features.runningTree.removeNamedFilterByName(
+            removeNamedFilterByName(name, refresh) {
+                this.features.runningTree.removeNamedFilterByName(
                     this.state.oakFullpath,
                     name,
                     refresh
                 );
             },
         
-            async setNamedSorters(namedSorters) {
-                await this.features.runningTree.setNamedSorters(
+            setNamedSorters(namedSorters) {
+                this.features.runningTree.setNamedSorters(
                     this.state.oakFullpath,
                     namedSorters
                 );
             },
         
-            async getSorters() {
+            getSorters() {
                 if (this.state.oakFullpath) {
                     const namedSorters = this.features.runningTree.getNamedSorters(
                         this.state.oakFullpath
                     );
-                    const sorters = (
-                        await Promise.all(
-                            namedSorters.map(({ sorter }) => {
-                                if (typeof sorter === 'function') {
-                                    return sorter();
-                                }
-                                return sorter;
-                            })
-                        )
-                    ).filter((ele) => !!ele) as DeduceSorterItem<EDD[keyof EDD]['Schema']>[];
+                    const sorters = namedSorters.map(({ sorter }) => {
+                        if (typeof sorter === 'function') {
+                            return sorter();
+                        }
+                        return sorter;
+                    }).filter((ele) => !!ele) as DeduceSorterItem<EDD[keyof EDD]['Schema']>[];
                     return sorters;
                 }
             },
         
-            async getSorterByName(name) {
+            getSorterByName(name) {
                 if (this.state.oakFullpath) {
                     const sorter = this.features.runningTree.getNamedSorterByName(
                         this.state.oakFullpath,
@@ -451,24 +415,24 @@ const oakBehavior = Behavior<
                 }
             },
         
-            async addNamedSorter(namedSorter, refresh) {
-                await this.features.runningTree.addNamedSorter(
+            addNamedSorter(namedSorter, refresh) {
+                this.features.runningTree.addNamedSorter(
                     this.state.oakFullpath,
                     namedSorter,
                     refresh
                 );
             },
         
-            async removeNamedSorter(namedSorter, refresh) {
-                await this.features.runningTree.removeNamedSorter(
+            removeNamedSorter(namedSorter, refresh) {
+                this.features.runningTree.removeNamedSorter(
                     this.state.oakFullpath,
                     namedSorter,
                     refresh
                 );
             },
         
-            async removeNamedSorterByName(name, refresh) {
-                await this.features.runningTree.removeNamedSorterByName(
+            removeNamedSorterByName(name, refresh) {
+                this.features.runningTree.removeNamedSorterByName(
                     this.state.oakFullpath,
                     name,
                     refresh
@@ -498,27 +462,46 @@ const oakBehavior = Behavior<
                     );
                 }
             },
+            addItem(data, beforeExecute, afterExecute) {
+                return this.features.runningTree.addItem(this.state.oakFullpath, data, beforeExecute, afterExecute);
+            },
+            updateItem(data, id, action, beforeExecute, afterExecute) {
+                return this.features.runningTree.updateItem(this.state.oakFullpath, data, id, action, beforeExecute, afterExecute);
+            },
+            removeItem(id, beforeExecute, afterExecute) {
+                return this.features.runningTree.removeItem(this.state.oakFullpath, id, beforeExecute, afterExecute);
+            },
+            setId(id) {
+                return this.features.runningTree.setId(this.state.oakFullpath, id);
+            },
+            unsetId() {
+                return this.features.runningTree.unsetId(this.state.oakFullpath);
+            },
+            update(data, action, beforeExecute, afterExecute) {
+                return this.features.runningTree.update(this.state.oakFullpath, data, action , beforeExecute, afterExecute);
+            },
+            remove(beforeExecute, afterExecute) {
+                return this.features.runningTree.remove(this.state.oakFullpath, beforeExecute, afterExecute);
+            }
         },
         observers: {
-            async oakPath(data) {
+            oakPath(data) {
                 if (data) {
-                    await onPathSet.call(this as any, this.option as any);
+                    onPathSet.call(this as any, this.option as any);
                 }
             },
-            async oakId(data) {
-                await this.setId(data);
+            oakId(data) {
+                this.features.runningTree.setId(this.state.oakFullpath, data);
             }
         },
         pageLifetimes: {
             show() {
-                const { show } = this.option.lifetimes || {};
-                this.subscribe();
+                const { show } = this.option.lifetimes || {};                
                 this.reRender();
                 show && show.call(this);
             },
             hide() {
                 const { hide } = this.option.lifetimes || {};
-                this.unsubscribe();
                 hide && hide.call(this);
             }
         },
@@ -547,7 +530,6 @@ const oakBehavior = Behavior<
                 attached && attached.call(this);
             },
             detached() {
-                this.unsubscribe();
                 this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && destroyNode.call(this as any);
                 const { detached } = this.option.lifetimes || {};
                 detached && detached.call(this);
@@ -570,10 +552,10 @@ const oakBehavior = Behavior<
 export function createComponent<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    Cxt extends Context<ED>,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>,
-    Proj extends ED[T]['Selection']['data'],
     FormedData extends Record<string, any>,
     IsList extends boolean,
     TData extends Record<string, any> = {},
@@ -584,16 +566,16 @@ export function createComponent<
         ED,
         T,
         Cxt,
+        FrontCxt,
         AD,
         FD,
-        Proj,
         FormedData,
         IsList,
         TData,
         TProperty,
         TMethod
     >,
-    features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD,
+    features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD,
 ) {
     const {
         data,
@@ -624,15 +606,15 @@ export function createComponent<
                 oakAutoUnmount: boolean;
                 oakDisablePulldownRefresh: boolean;
             } & Record<string, any>;
-            features: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> & FD;
+            features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
             subscribed: (() => void) | undefined;
-            option: OakComponentOption<
+            oakOption: OakComponentOption<
                 ED,
                 T,
                 Cxt,
+                FrontCxt,
                 AD,
                 FD,
-                Proj,
                 FormedData,
                 IsList,
                 TData,
@@ -655,18 +637,16 @@ export function createComponent<
             },
             pageLifetimes: {
                 show() {
-                    this.subscribe();
                     this.reRender();
                     show && show.call(this);
                 },
                 hide() {
-                    this.unsubscribe();
                     hide && hide.call(this);
                 }
             },
             lifetimes: {
                 created() {
-                    this.option = option;
+                    this.oakOption = option;
                     this.features = features;
                     created && created.call(this);
                 },

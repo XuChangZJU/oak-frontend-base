@@ -8,6 +8,6 @@
 import React from 'react';
 declare const withRouter: (Component: React.ComponentType<any>, { path, properties }: {
     path?: string | undefined;
-    properties?: WechatMiniprogram.Component.PropertyOption | undefined;
+    properties?: Record<string, WechatMiniprogram.Component.AllProperty | FunctionConstructor> | undefined;
 }) => React.ForwardRefExoticComponent<React.RefAttributes<unknown>>;
 export default withRouter;

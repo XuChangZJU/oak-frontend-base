@@ -1,111 +1,116 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, Context, AspectWrapper, SelectionResult, CheckerType } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { reinforceSelection } from 'oak-domain/lib/store/selection';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { Action, Feature } from '../types/Feature';
+import { Feature } from '../types/Feature';
 import { cloneDeep, pull } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
-import { RWLock } from 'oak-domain/lib/utils/concurrent';
 import { OakRowUnexistedException } from 'oak-domain/lib/types/Exception';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 
 export class Cache<
     ED extends EntityDict & BaseEntityDict,
-    Cxt extends Context<ED>,
-    AD extends CommonAspectDict<ED, Cxt>
-> extends Feature {
-    cacheStore?: CacheStore<ED, Cxt>;
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>,
+    AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>
+    > extends Feature {
+    cacheStore?: CacheStore<ED, FrontCxt>;
     private aspectWrapper: AspectWrapper<ED, Cxt, AD>;
     private syncEventsCallbacks: Array<
-        (opRecords: OpRecord<ED>[]) => Promise<void>
+        (opRecords: OpRecord<ED>[]) => void
     >;
-    private contextBuilder?: () => Cxt;
-    private syncLock: RWLock;
+    private contextBuilder?: () => FrontCxt;
 
     constructor(
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
-        contextBuilder: () => Cxt,
-        store: CacheStore<ED, Cxt>
+        contextBuilder: () => FrontCxt,
+        store: CacheStore<ED, FrontCxt>
     ) {
         super();
         this.aspectWrapper = aspectWrapper;
         this.syncEventsCallbacks = [];
-        this.syncLock = new RWLock();
 
         this.contextBuilder = contextBuilder;
         this.cacheStore = store;
 
         // 在这里把wrapper的返回opRecords截取到并同步到cache中
-        const { exec } = aspectWrapper;
+        /* const { exec } = aspectWrapper;
         aspectWrapper.exec = async <T extends keyof AD>(
             name: T,
             params: any
         ) => {
             const { result, opRecords } = await exec(name, params);
-            await this.sync(opRecords);
+            this.sync(opRecords);
             return {
                 result,
                 opRecords,
             };
-        };
+        }; */
     }
 
-    @Action
+    async exec<K extends keyof AD>(
+        name: K,
+        params: Parameters<AD[K]>[0],
+        callback?: (result: Awaited<ReturnType<AD[K]>>) => void
+    ) {
+        const { result, opRecords } = await this.aspectWrapper.exec(name, params);
+        callback && callback(result);
+        this.sync(opRecords);
+        return result;
+    }
+
     async refresh<T extends keyof ED, OP extends SelectOption>(
         entity: T,
         selection: ED[T]['Selection'],
         option?: OP,
-        getCount?: true
+        getCount?: true,
+        callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
     ) {
         reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
-        const { result } = await this.aspectWrapper.exec('select', {
+        return await this.exec('select', {
             entity,
             selection,
             option,
             getCount,
-        });
-        return result;
+        }, callback);
     }
 
-    @Action
     async operate<T extends keyof ED, OP extends OperateOption>(
         entity: T,
         operation: ED[T]['Operation'],
-        option?: OP
+        option?: OP,
+        callback?: (result: Awaited<ReturnType<AD['operate']>>) => void,
     ) {
-        const { result } = await this.aspectWrapper.exec('operate', {
+        return await this.exec('operate', {
             entity,
             operation,
             option,
-        });
-
-        return result;
+        }, callback);
     }
 
-    @Action
     async count<T extends keyof ED, OP extends SelectOption>(
         entity: T,
         selection: ED[T]['Selection'],
-        option?: OP
+        option?: OP,
+        callback?: (result: Awaited<ReturnType<AD['count']>>) => void,
     ) {
         // reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
-        const { result } = await this.aspectWrapper.exec('count', {
+        return await this.exec('count', {
             entity,
             selection,
             option,
-        });
-        return result;
+        }, callback);
     }
 
-    private async sync(records: OpRecord<ED>[]) {
+    private sync(records: OpRecord<ED>[]) {
         // sync会异步并发的调用，不能用this.context;
         const context = this.contextBuilder!();
-        await this.syncLock.acquire('X');
-        await this.cacheStore!.sync(records, context);
-        this.syncLock.release();
+        this.cacheStore!.sync(records, context);
 
         // 唤起同步注册的回调
-        const result = this.syncEventsCallbacks.map((ele) => ele(records));
-        await Promise.all(result);
+        this.syncEventsCallbacks.map((ele) => ele(records));
+        this.publish();
     }
 
     /**
@@ -114,44 +119,41 @@ export class Cache<
      * @param operation
      * @returns
      */
-    async tryRedoOperations<T extends keyof ED>(
-        operations: (ED[T]['Operation'] & { entity: T })[]
-    ) {
+    tryRedoOperations<T extends keyof ED>(operations: ({ operation: ED[T]['Operation']; entity: T })[]) {
         const context = this.contextBuilder!();
-        await context.begin();
+        context.begin();
         try {
-            for (const operation of operations) {
-                const { entity } = operation;
-                await this.cacheStore!.operate(entity, cloneDeep(operation), context, {
+            for (const oper of operations) {
+                const { entity, operation } = oper;
+                this.cacheStore!.operate(entity, operation, context, {
                     dontCollect: true,
                     dontCreateOper: true,
-                    blockTrigger: true,
                     dontCreateModi: true,
                 });
             }
-            await context.rollback();
+            context.rollback();
+            return true;
         } catch (err) {
-            await context.rollback();
-            throw err;
+            context.rollback();
+            return err as Error;
         }
-        return true;
     }
 
-    async checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) {
+    checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) {
         const context = this.contextBuilder!();
-        await context.begin();
+        context.begin();
         const operation = {
             action,
             filter,
             data: {},
         } as ED[T]['Update'];
         try {
-            await this.cacheStore!.check(entity, operation, context, checkerTypes);
-            await context.rollback();
+            this.cacheStore!.check(entity, operation, context, checkerTypes);
+            context.rollback();
             return true;
         }
-        catch(err) {
-            await context.rollback();
+        catch (err) {
+            context.rollback();
             return false;
         }
 
@@ -163,7 +165,7 @@ export class Cache<
      * @param selection
      * @param opers
      */
-    async tryRedoOperationsThenSelect<T extends keyof ED, S extends ED[T]['Selection']>(
+    tryRedoOperationsThenSelect<T extends keyof ED, S extends ED[T]['Selection']>(
         entity: T,
         selection: S,
         opers: Array<{
@@ -172,62 +174,61 @@ export class Cache<
         }>
     ) {
         const context = this.contextBuilder!();
-        await context.begin();
-        for (const oper of opers) {
-            await this.cacheStore!.operate(
-                oper.entity,
-                cloneDeep(oper.operation),
-                context,
-                {
-                    dontCollect: true,
-                    dontCreateOper: true,
-                    blockTrigger: true,
-                    dontCreateModi: true,
-                }
-            );
-        }
-        reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
+        context.begin();
         try {
-            const result = await this.getInner(entity, selection, context);
-            await context.rollback();
+            for (const oper of opers) {
+                this.cacheStore!.operate(
+                    oper.entity,
+                    cloneDeep(oper.operation),
+                    context,
+                    {
+                        dontCollect: true,
+                        dontCreateOper: true,
+                        blockTrigger: true,
+                        dontCreateModi: true,
+                    }
+                );
+            }
+            reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
+            const result = this.getInner(entity, selection, context);
+            context.rollback();
             return result;
         }
         catch (err) {
-            await context.rollback();
+            context.rollback();
             throw err;
         }
     }
 
-    private async getInner<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, context: Cxt) {        
-        while (true) {
-            try {
-                const { result } = await this.cacheStore!.select(
-                    entity,
-                    selection,
-                    context,
-                    {
-                        dontCollect: true,
-                    }
-                );
-                return result;
-            } catch (err) {
-                if (err instanceof OakRowUnexistedException) {
-                    const missedRows = err.getRows();
-                    await this.aspectWrapper.exec('fetchRows', missedRows);
-                } else {
-                    throw err;
+    private getInner<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, context: SyncContext<ED>): Partial<ED[T]['Schema']>[] {
+        try {
+            const result = this.cacheStore!.select(
+                entity,
+                selection,
+                context,
+                {
+                    dontCollect: true,
                 }
+            );
+            return result;
+        } catch (err) {
+            if (err instanceof OakRowUnexistedException) {
+                const missedRows = err.getRows();
+                this.exec('fetchRows', missedRows);
+                return [];
+            } else {
+                throw err;
             }
         }
     }
 
-    async get<T extends keyof ED, S extends ED[T]['Selection']>(
+    get<T extends keyof ED, S extends ED[T]['Selection']>(
         entity: T,
         selection: S,
         params?: SelectOption
     ) {
         const context = this.contextBuilder!();
-        
+
         return this.getInner(entity, selection, context);
     }
 
@@ -235,11 +236,11 @@ export class Cache<
         return this.cacheStore!.judgeRelation(entity, attr);
     }
 
-    bindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>) {
+    bindOnSync(callback: (opRecords: OpRecord<ED>[]) => void) {
         this.syncEventsCallbacks.push(callback);
     }
 
-    unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => Promise<void>) {
+    unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => void) {
         pull(this.syncEventsCallbacks, callback);
     }
 

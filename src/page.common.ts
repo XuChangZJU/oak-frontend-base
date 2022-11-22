@@ -1,45 +1,27 @@
 import { assert } from 'oak-domain/lib/utils/assert';
 import {
-    Context,
     EntityDict,
     OakException,
     OakInputIllegalException,
     OakUserException,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { subscribe as FeactureSubscribe } from './types/Feature';
 import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
 import {
     OakComponentOption,
     ComponentFullThisType,
 } from './types/Page';
 import { unset } from 'oak-domain/lib/utils/lodash';
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 
-export function subscribe<
+export function onPathSet<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>): void {
-    if (!this.subscribed) {
-        this.subscribed = FeactureSubscribe(() => this.reRender());
-    }
-}
-
-export function unsubscribe<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED,
-    Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>): void {
-    if (this.subscribed) {
-        this.subscribed();
-        this.subscribed = undefined;
-    }
-}
-
-export async function onPathSet<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED,
-    Cxt extends Context<ED>>(
-        this: ComponentFullThisType<ED, T, Cxt>,
-        option: OakComponentOption<ED, T, Cxt, any, any, any, any, any, {}, {}, {}>) {
+    Cxt extends AsyncContext<ED>,    
+    FrontCxt extends SyncContext<ED>>(
+        this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
+        option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>) {
     const { props, state } = this;
     const { oakPath, oakProjection, oakIsPicker, oakFilters, oakSorters, oakId } = props;
     const { entity, path, projection, isList, filters, sorters, pagination } = option;
@@ -108,7 +90,7 @@ export async function onPathSet<
             '没有正确的path信息，请检查是否配置正确'
         );
 
-        await features.runningTree.createNode({
+        features.runningTree.createNode({
             path: oakPath2,
             entity: entity2,
             isList,
@@ -123,34 +105,39 @@ export async function onPathSet<
         Object.assign(this.state, {
             oakEntity: entity2,
             oakFullpath: oakPath2,
-            oakIsReady: true,
         });
 
     }
     else {
         Object.assign(this.state, {
             oakFullpath: oakPath2,
-            oakIsReady: true,
         });
         // 创建virtualNode
-        await features.runningTree.createNode({
+        features.runningTree.createNode({
             path: oakPath2 as string,
         });
     }
-    await this.refresh();
+    this.subscribed.push(
+        features.runningTree.subscribeNode(
+            () => this.reRender(),
+            oakPath2!
+        )
+    );
+    this.refresh();
 }
 
-export async function reRender<
+export function reRender<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    Cxt extends Context<ED>>(
-        this: ComponentFullThisType<ED, T, Cxt>,
-        option: OakComponentOption<ED, T, Cxt, any, any, any, any, any, {}, {}, {}>,
+    Cxt extends AsyncContext<ED>,    
+    FrontCxt extends SyncContext<ED>>(
+        this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
+        option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>,
         extra?: Record<string, any>) {
     const { features } = this;
     const { formData } = option;
     if (this.state.oakEntity && this.state.oakFullpath) {
-        const rows = await this.features.runningTree.getFreshValue(
+        const rows = this.features.runningTree.getFreshValue(
             this.state.oakFullpath
         );
 
@@ -159,18 +146,17 @@ export async function reRender<
         const oakPullDownRefreshLoading = (this as any).pullDownRefresh && this.features.runningTree.isLoading(this.state.oakFullpath);
         const oakLoadingMore = this.features.runningTree.isLoadingMore(this.state.oakFullpath);
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
+        const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
 
         let oakLegalActions: ED[T]['Action'][] = [];
         const actions: ED[T]['Action'][] = this.props.oakActions || option.actions;
         if (actions && actions.length > 0) {
             assert(this.props.oakId);       // actions必须配合id来使用
-            const testResult = await Promise.all(
-                actions.map(
-                    async ele => ({
-                        action: ele,
-                        result: await this.checkOperation(this.state.oakEntity, ele, { id: this.props.oakId }, ['user', 'row']),
-                    })
-                )
+            const testResult = actions.map(
+                ele => ({
+                    action: ele,
+                    result: this.checkOperation(this.state.oakEntity, ele, { id: this.props.oakId }, ['relation', 'row']),
+                })
             );
             oakLegalActions = testResult.filter(
                 ele => ele.result
@@ -179,7 +165,7 @@ export async function reRender<
             );
         }
         const data: Record<string, any> = formData
-            ? await formData.call(this, {
+            ? formData.call(this, {
                 data: rows as any,
                 features,
                 props: this.props,
@@ -198,6 +184,7 @@ export async function reRender<
             }
         }
         Object.assign(data, {
+            oakExecutable,
             oakDirty,
             oakLoading,
             oakLoadingMore,
@@ -208,27 +195,11 @@ export async function reRender<
         if (extra) {
             Object.assign(data, extra);
         }
-        let oakAllowExecuting: boolean | OakUserException = false;
-        try {
-            oakAllowExecuting = await this.features.runningTree.tryExecute(this.state.oakFullpath);
-        }
-        catch (err) {
-            if (err instanceof OakUserException) {
-                oakAllowExecuting = err;
-            }
-            else {
-                oakAllowExecuting = false;
-                throw err;
-            }
-        }
-        Object.assign(data, {
-            oakAllowExecuting,
-        });
 
         this.setState(data);
     } else {
         const data: Record<string, any> = formData
-            ? await formData.call(this, {
+            ? formData.call(this, {
                 features,
                 props: this.props,
             } as any)
@@ -245,8 +216,9 @@ export async function reRender<
 export async function refresh<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    Cxt extends Context<ED>>(
-        this: ComponentFullThisType<ED, T, Cxt>
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>>(
+        this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>
     ) {
     if (this.state.oakFullpath) {
         try {
@@ -263,7 +235,8 @@ export async function refresh<
 export async function loadMore<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>) {
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>>(this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>) {
     if (this.state.oakEntity && this.state.oakFullpath) {
         try {
             await this.features.runningTree.loadMore(this.state.oakFullpath);
@@ -279,9 +252,10 @@ export async function loadMore<
 export async function execute<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    Cxt extends Context<ED>>(
-        this: ComponentFullThisType<ED, T, Cxt>,
-        operation?: Omit<ED[T]['Operation'], 'id'>,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>>(
+        this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
+        action?: ED[T]['Action'],
         path?: string) {
     if (this.state.oakExecuting) {
         throw new Error('请仔细设计按钮状态，不要允许重复点击！');
@@ -289,122 +263,21 @@ export async function execute<
     /* this.setState({
         oakFocused: undefined,
     }); */
-    try {
-        const fullpath = path
-            ? `${this.state.oakFullpath}.${path}`
-            : this.state.oakFullpath;
-        const result = await this.features.runningTree.execute(fullpath, operation);
-        await this.setMessage({
-            type: 'success',
-            content: '操作成功',
-        });
-        return result;
-    } catch (err) {
-        if (err instanceof OakUserException) {
-            if (err instanceof OakInputIllegalException) {
-                const attrs = err.getAttributes();
-                const entity = err.getEntity();
-                const message = err.message;
-                /* this.setState({
-                    oakFocused: {
-                        attr: attrs[0],
-                        message,
-                    },
-                    oakExecuting: false,
-                }); */
-                const attrNames = attrs.map(attr => this.t(`${entity}:attr.${attr}`)).filter(ele => !!ele);
-                this.setMessage({
-                    type: 'error',
-                    content: attrNames.length > 0 ? `「${attrNames.join(',')}」${message}` : message,
-                });
-                throw err;
-            }
-        }
-        this.setMessage({
-            type: 'error',
-            content: (err as Error).message,
-        });
-        throw err;
-    }
-}
 
-export function callPicker<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED,
-    Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>, attr: string, params: Record<string, any> = {}) {
-    if (this.state.oakExecuting) {
-        return;
-    }
-
-    const relation = this.features.cache.judgeRelation(
-        this.state.oakEntity,
-        attr
-    );
-    let subEntity: string;
-    if (relation === 2) {
-        subEntity = attr;
-    } else {
-        assert(typeof relation === 'string');
-        subEntity = relation;
-    }
-    let url = `/pickers/${subEntity}?oakIsPicker=true&oakParentEntity=${this.state.oakEntity as string}&oakParent=${this.state.oakFullpath}&oakPath=${attr}`;
-    for (const k in params) {
-        url += `&${k}=${JSON.stringify(params[k])}`;
-    }
-    this.navigateTo({
-        url,
+    const fullpath = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+    await this.features.runningTree.execute(fullpath, action);
+    this.setMessage({
+        type: 'success',
+        content: '操作成功',
     });
 }
 
-export async function setUpdateData<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED,
-    Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>, attr: string, data: any) {
-    assert(attr.indexOf('.') === -1, 'setUpdateData只能设置当前对象属性，子层对象请写完整的addOperation')
-    if (this.props.oakId) {
-        return this.addOperation({
-            action: 'update',
-            data: {
-                [attr]: data,
-            }
-        } as ED[T]['Update']);
-    }
-    else {
-        await this.addOperation({
-            action: 'create',
-            data: {
-                [attr]: data,
-            }
-        } as ED[T]['CreateSingle']);
-    }
-}
-
-export async function setMultiAttrUpdateData<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED,
-    Cxt extends Context<ED>>(this: ComponentFullThisType<ED, T, Cxt>, data: Record<string, any>) {
-    for (const key in data) {
-        assert(key.indexOf('.') === -1, 'setMultiAttrUpdateData只能设置当前对象属性，子层对象请写完整的addOperation');
-    }
-    if (this.props.oakId) {
-        return this.addOperation({
-            action: 'update',
-            data,
-        } as ED[T]['Update']);
-    }
-    else {
-        await this.addOperation({
-            action: 'create',
-            data,
-        } as ED[T]['CreateSingle']);
-    }
-}
-
 export function destroyNode<
-ED extends EntityDict & BaseEntityDict,
-T extends keyof ED,
-Cxt extends Context<ED>>(
-    this: ComponentFullThisType<ED, T, Cxt>) {
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>>(
+        this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>) {
     assert(this.state.oakFullpath);
     this.features.runningTree.destroyNode(this.state.oakFullpath);
     unset(this.state, ['oakFullpath', 'oakEntity']);

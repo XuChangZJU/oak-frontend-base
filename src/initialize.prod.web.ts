@@ -21,25 +21,28 @@ import { OakComponentOption } from './types/Page';
 import { createComponent } from './page.web';
 import { initialize as initProd } from './initialize-prod';
 import { getI18next, I18nOptions } from './platforms/web/i18n';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { CacheStore } from './cacheStore/CacheStore';
 
 export function initialize<
     ED extends EntityDict & BaseEntityDict,
-    Cxt extends Context<ED>,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>
 >(
     storageSchema: StorageSchema<ED>,
     createFeatures: (
-        aspectWrapper: AspectWrapper<ED, Cxt, AD>,
-        basicFeatures: BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>,
+        basicFeatures: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>,
     ) => FD,
-    frontendContextBuilder: (features: FD & BasicFeatures<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>) => (store: RowStore<ED, Cxt>) => Cxt,
-    connector: Connector<ED, Cxt>,
-    checkers?: Array<Checker<ED, keyof ED, Cxt>>,
+    frontendContextBuilder: (features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>) => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
+    connector: Connector<ED, Cxt, FrontCxt>,
+    checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>,
     i18nOptions?: I18nOptions
 ) {
-    const { features } = initProd<ED, Cxt, AD, FD>(
+    const { features } = initProd<ED, Cxt, FrontCxt, AD, FD>(
         storageSchema,
         createFeatures,
         frontendContextBuilder,
@@ -56,7 +59,6 @@ export function initialize<
             T extends keyof ED,
             FormedData extends WechatMiniprogram.Component.DataOption,
             IsList extends boolean,
-            Proj extends ED[T]['Selection']['data'],
             TData extends WechatMiniprogram.Component.DataOption = {},
             TProperty extends WechatMiniprogram.Component.PropertyOption = {},
             TMethod extends WechatMiniprogram.Component.MethodOption = {}
@@ -65,9 +67,9 @@ export function initialize<
                 ED,
                 T,
                 Cxt,
+                FrontCxt,
                 AD,
                 FD,
-                Proj,
                 FormedData,
                 IsList,
                 TData,
@@ -79,9 +81,9 @@ export function initialize<
                 ED,
                 T,
                 Cxt,
+                FrontCxt,
                 AD,
                 FD,
-                Proj,
                 FormedData,
                 IsList,
                 TData,
