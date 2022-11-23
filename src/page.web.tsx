@@ -41,9 +41,25 @@ abstract class OakComponentBase<
     TData extends WechatMiniprogram.Component.DataOption,
     TProperty extends WechatMiniprogram.Component.PropertyOption,
     TMethod extends WechatMiniprogram.Component.MethodOption
-    > extends React.PureComponent<ComponentProps<IsList, TProperty>, ComponentData<ED, T, FormedData, TData>> {
-    abstract features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
-    abstract oakOption: OakComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>;
+> extends React.PureComponent<
+    ComponentProps<IsList, TProperty>,
+    ComponentData<ED, T, FormedData, TData>
+> {
+    abstract features: FD &
+        BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
+    abstract oakOption: OakComponentOption<
+        ED,
+        T,
+        Cxt,
+        FrontCxt,
+        AD,
+        FD,
+        FormedData,
+        IsList,
+        TData,
+        TProperty,
+        TMethod
+    >;
 
     setDisablePulldownRefresh(able: boolean) {
         this.setState({
@@ -59,9 +75,7 @@ abstract class OakComponentBase<
         name: string,
         detail?: DetailType,
         options?: WechatMiniprogram.Component.TriggerEventOption
-    ) {
-
-    }
+    ) {}
 
     sub(type: string, callback: Function) {
         this.features.eventBus.sub(type, callback);
@@ -129,49 +143,33 @@ abstract class OakComponentBase<
         return reRender.call(this as any, this.oakOption as any, extra);
     }
 
-    navigateTo<T2 extends keyof ED>(options: { url: string } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) {
-        const { url, ...rest } = options;
-        let url2 = url;
-
-        for (const param in rest) {
-            const param2 = param as unknown as keyof typeof rest;
-            if (rest[param2] !== undefined) {
-                url2 += `${url2.includes('?') ? '&' : '?'}${param}=${typeof rest[param2] === 'string'
-                    ? rest[param2]
-                    : JSON.stringify(rest[param2])
-                    }`;
-            }
-        }
+    navigateTo<T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>,
+        disableNamespace?: boolean
+    ) {
         // 路由传入namespace
-        return this.features.navigator.navigateTo(url2, state, disableNamespace);
+        return this.features.navigator.navigateTo(
+            options,
+            state,
+            disableNamespace
+        );
     }
 
-    navigateBack(option?: { delta?: number }) {
-        const { delta } = option || {};
-        return new Promise((resolve, reject) => {
-            try {
-                this.props.navigate(delta || -1);
-                resolve(undefined);
-            } catch (err) {
-                reject(err);
-            }
-        });
+    navigateBack(delta?: number) {
+        return this.features.navigator.navigateBack(delta);
     }
 
-    redirectTo<T2 extends keyof ED>(options: { url: string } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) {
-        const { url, ...rest } = options;
-        let url2 = url;
-
-        for (const param in rest) {
-            const param2 = param as unknown as keyof typeof rest;
-            if (rest[param2] !== undefined) {
-                url2 += `${url2.includes('?') ? '&' : '?'}${param}=${typeof rest[param2] === 'string'
-                    ? rest[param2]
-                    : JSON.stringify(rest[param2])
-                    }`;
-            }
-        }
-        return this.features.navigator.redirectTo(url2, state, disableNamespace);
+    redirectTo<T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>,
+        disableNamespace?: boolean
+    ) {
+        return this.features.navigator.redirectTo(
+            options,
+            state,
+            disableNamespace
+        );
     }
 
     /* setProps(props: Record<string, any>, usingState?: true) {
@@ -215,16 +213,47 @@ abstract class OakComponentBase<
         }
     } */
 
-    addItem<T extends keyof ED>(data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        this.features.runningTree.addItem(this.state.oakFullpath, data, beforeExecute, afterExecute);
+    addItem<T extends keyof ED>(
+        data: Omit<ED[T]['CreateSingle']['data'], 'id'>,
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
+        this.features.runningTree.addItem(
+            this.state.oakFullpath,
+            data,
+            beforeExecute,
+            afterExecute
+        );
     }
 
-    removeItem(id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        this.features.runningTree.removeItem(this.state.oakFullpath, id, beforeExecute, afterExecute);
+    removeItem(
+        id: string,
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
+        this.features.runningTree.removeItem(
+            this.state.oakFullpath,
+            id,
+            beforeExecute,
+            afterExecute
+        );
     }
 
-    updateItem<T extends keyof ED>(data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        this.features.runningTree.updateItem(this.state.oakFullpath, data, id, action, beforeExecute, afterExecute);
+    updateItem<T extends keyof ED>(
+        data: ED[T]['Update']['data'],
+        id: string,
+        action?: ED[T]['Action'],
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
+        this.features.runningTree.updateItem(
+            this.state.oakFullpath,
+            data,
+            id,
+            action,
+            beforeExecute,
+            afterExecute
+        );
     }
 
     recoverItem(id: string) {
@@ -235,16 +264,36 @@ abstract class OakComponentBase<
         this.features.runningTree.create(this.state.oakFullpath, data, beforeExecute, afterExecute);
     } */
 
-    update<T extends keyof ED>(data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        this.features.runningTree.update(this.state.oakFullpath, data, action, beforeExecute, afterExecute);
+    update<T extends keyof ED>(
+        data: ED[T]['Update']['data'],
+        action?: ED[T]['Action'],
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
+        this.features.runningTree.update(
+            this.state.oakFullpath,
+            data,
+            action,
+            beforeExecute,
+            afterExecute
+        );
     }
 
-    remove(beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        this.features.runningTree.remove(this.state.oakFullpath, beforeExecute, afterExecute);
+    remove(
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
+        this.features.runningTree.remove(
+            this.state.oakFullpath,
+            beforeExecute,
+            afterExecute
+        );
     }
 
     clean(path?: string) {
-        const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.clean(path2);
     }
 
@@ -257,21 +306,37 @@ abstract class OakComponentBase<
     }
 
     getFreshValue(path?: string) {
-        const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         return this.features.runningTree.getFreshValue(path2);
     }
 
-    checkOperation(entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) {
-        return this.features.cache.checkOperation(entity, action, filter, checkerTypes);
+    checkOperation(
+        entity: T,
+        action: ED[T]['Action'],
+        filter?: ED[T]['Update']['filter'],
+        checkerTypes?: CheckerType[]
+    ) {
+        return this.features.cache.checkOperation(
+            entity,
+            action,
+            filter,
+            checkerTypes
+        );
     }
 
     tryExecute(path?: string) {
-        const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         return this.features.runningTree.tryExecute(path2);
     }
 
     getOperations<T extends keyof ED>(path?: string) {
-        const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         return this.features.runningTree.getOperations(path2);
     }
 
@@ -368,12 +433,14 @@ abstract class OakComponentBase<
             const namedSorters = this.features.runningTree.getNamedSorters(
                 this.state.oakFullpath
             );
-            const sorters = namedSorters.map(({ sorter }) => {
-                if (typeof sorter === 'function') {
-                    return sorter();
-                }
-                return sorter;
-            }).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
+            const sorters = namedSorters
+                .map(({ sorter }) => {
+                    if (typeof sorter === 'function') {
+                        return sorter();
+                    }
+                    return sorter;
+                })
+                .filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
             return sorters;
         }
     }
@@ -419,15 +486,14 @@ abstract class OakComponentBase<
 
     getPagination() {
         if (this.state.oakFullpath) {
-            return this.features.runningTree.getPagination(this.state.oakFullpath);
+            return this.features.runningTree.getPagination(
+                this.state.oakFullpath
+            );
         }
     }
 
     setPageSize(pageSize: number) {
-        this.features.runningTree.setPageSize(
-            this.state.oakFullpath,
-            pageSize
-        );
+        this.features.runningTree.setPageSize(this.state.oakFullpath, pageSize);
     }
 
     setCurrentPage(currentPage: number) {
@@ -559,8 +625,8 @@ export function createComponent<
                 ) => {
                     return this.navigateTo(options, state, disableNamespace);
                 },
-                navigateBack: (options?: { delta: number }) => {
-                    return this.navigateBack(options);
+                navigateBack: (delta?: number) => {
+                    return this.navigateBack(delta);
                 },
                 redirectTo: <T2 extends keyof ED>(
                     options: Parameters<typeof wx.redirectTo>[0] &

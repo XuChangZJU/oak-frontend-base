@@ -3,7 +3,7 @@ import { Feature } from './../../../types/Feature';
 
 type FD = Record<string, Feature>;
 
-const FeatureContext = React.createContext<{ features: any }>({
+const FeaturesContext = React.createContext<{ features: any }>({
     features: {},
 });
 
@@ -12,7 +12,7 @@ const FeaturesProvider: React.FC<{
     children: React.ReactNode;
 }> = ({ features, children }) => {
     return createElement(
-        FeatureContext.Provider,
+        FeaturesContext.Provider,
         {
             value: { features },
         },
@@ -23,14 +23,14 @@ const FeaturesProvider: React.FC<{
 const useFeatures = <FD extends Record<string, Feature>>() => {
     const { features } = useContext<{
         features: FD;
-    }>(FeatureContext);
+    }>(FeaturesContext);
     return features;
 };
 
 // function useFormData<Value>(
 //     useHook: (options: Record<string, any>) => Promise<Value>
 // ) {
-//     const features = useContext(FeatureContext);
+//     const features = useContext(FeaturesContext);
 
 //     const [state, setState] = useState<Value>({} as Value);
 

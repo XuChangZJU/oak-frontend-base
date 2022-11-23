@@ -208,49 +208,61 @@ export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T ex
 export type OakCommonComponentMethods<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED
-    > = {
-        setDisablePulldownRefresh: (able: boolean) => void;
-        sub: (type: string, callback: Function) => void;
-        unsub: (type: string, callback: Function) => void;
-        pub: (type: string, options?: any) => void;
-        unsubAll: (type: string) => void;
-        save: (key: string, item: any) => void;
-        load: (key: string) => any;
-        clear: () => void;
-        resolveInput: <K extends string>(
-            input: any,
-            keys?: K[]
-        ) => { dataset?: Record<string, any>; value?: string } & {
-            [k in K]?: any;
-        };
-        setNotification: (data: NotificationProps) => void;
-        consumeNotification: () => NotificationProps | undefined;
-        setMessage: (data: MessageProps) => void;
-        consumeMessage: () => MessageProps | undefined;
-        reRender: (extra?: Record<string, any>) => void;
-        getFreshValue: (path?: string) => Partial<ED[keyof ED]['Schema']>[] | Partial<ED[keyof ED]['Schema']> | undefined;
-        navigateTo: <T2 extends keyof ED>(
-            options: { url: string } & OakNavigateToParameters<ED, T2>,
-            state?: Record<string, any>,
-            disableNamespace?: boolean
-        ) => Promise<void>;
-        navigateBack: (option?: { delta: number }) => Promise<void>;
-        redirectTo: <T2 extends keyof ED>(
-            options: Parameters<typeof wx.redirectTo>[0] &
-                OakNavigateToParameters<ED, T2>,
-            state?: Record<string, any>,
-            disableNamespace?: boolean
-        ) => Promise<void>;
-        // setProps: (props: Record<string, any>, usingState?: true) => void;
-        clean: (path?: string) => void;
-
-        t(key: string, params?: object): string;
-        execute: (action?: ED[T]['Action'], path?: string) => Promise<void>;
-        checkOperation: (ntity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => boolean;
-        tryExecute: (path?: string) => boolean | Error;
-        getOperations: (path?: string) => {operation: ED[T]['Operation'], entity: T }[] | undefined;
-        refresh: () => Promise<void>;
+> = {
+    setDisablePulldownRefresh: (able: boolean) => void;
+    sub: (type: string, callback: Function) => void;
+    unsub: (type: string, callback: Function) => void;
+    pub: (type: string, options?: any) => void;
+    unsubAll: (type: string) => void;
+    save: (key: string, item: any) => void;
+    load: (key: string) => any;
+    clear: () => void;
+    resolveInput: <K extends string>(
+        input: any,
+        keys?: K[]
+    ) => { dataset?: Record<string, any>; value?: string } & {
+        [k in K]?: any;
     };
+    setNotification: (data: NotificationProps) => void;
+    consumeNotification: () => NotificationProps | undefined;
+    setMessage: (data: MessageProps) => void;
+    consumeMessage: () => MessageProps | undefined;
+    reRender: (extra?: Record<string, any>) => void;
+    getFreshValue: (
+        path?: string
+    ) =>
+        | Partial<ED[keyof ED]['Schema']>[]
+        | Partial<ED[keyof ED]['Schema']>
+        | undefined;
+    navigateTo: <T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>,
+        disableNamespace?: boolean
+    ) => Promise<void>;
+    navigateBack: (delta?: number) => Promise<void>;
+    redirectTo: <T2 extends keyof ED>(
+        options: Parameters<typeof wx.redirectTo>[0] &
+            OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>,
+        disableNamespace?: boolean
+    ) => Promise<void>;
+    // setProps: (props: Record<string, any>, usingState?: true) => void;
+    clean: (path?: string) => void;
+
+    t(key: string, params?: object): string;
+    execute: (action?: ED[T]['Action'], path?: string) => Promise<void>;
+    checkOperation: (
+        ntity: T,
+        action: ED[T]['Action'],
+        filter?: ED[T]['Update']['filter'],
+        checkerTypes?: CheckerType[]
+    ) => boolean;
+    tryExecute: (path?: string) => boolean | Error;
+    getOperations: (
+        path?: string
+    ) => { operation: ED[T]['Operation']; entity: T }[] | undefined;
+    refresh: () => Promise<void>;
+};
 
 export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     setId: (id: string) => void;

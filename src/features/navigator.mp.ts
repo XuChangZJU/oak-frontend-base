@@ -1,7 +1,9 @@
 import assert from 'assert';
-import { Feature } from '../types/Feature';
 import URL from 'url';
-
+import { Feature } from '../types/Feature';
+import { OakNavigateToParameters } from '../types/Page';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { EntityDict } from 'oak-domain/lib/types';
 
 export class Navigator extends Feature {
     private constructUrl(url: string, state?: Record<string, any>) {
@@ -28,10 +30,11 @@ export class Navigator extends Feature {
                     search2 = '?';
                 }
                 if (state[param] !== undefined) {
-                    search2 += `&${param}=${typeof state[param] === 'string'
-                        ? state[param]
-                        : JSON.stringify(state[param])
-                        }`;
+                    search2 += `&${param}=${
+                        typeof state[param] === 'string'
+                            ? state[param]
+                            : JSON.stringify(state[param])
+                    }`;
                 }
             }
         }
@@ -43,41 +46,44 @@ export class Navigator extends Feature {
         return url2;
     }
 
-    navigateTo(url: string, state?: Record<string, any>) {
-        const url2 = this.constructUrl(url, state);
-        return new Promise(
-            (resolve, reject) => {
-                wx.navigateTo({
-                    url: url2,
-                    success: () => resolve(undefined),
-                    fail: (err) => reject(err)
-                })
-            }
-        );
+    navigateTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>
+    ) {
+        const { url, ...rest } = options;
+
+        const url2 = this.constructUrl(url, Object.assign({}, rest, state));
+        return new Promise((resolve, reject) => {
+            wx.navigateTo({
+                url: url2,
+                success: () => resolve(undefined),
+                fail: (err) => reject(err),
+            });
+        });
     }
 
-    redirectTo(url: string, state?: Record<string, any>) {
-        const url2 = this.constructUrl(url, state);
-        return new Promise(
-            (resolve, reject) => {
-                wx.redirectTo({
-                    url: url2,
-                    success: () => resolve(undefined),
-                    fail: (err) => reject(err)
-                })
-            }
-        );
+    redirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>
+    ) {
+        const { url, ...rest } = options;
+        const url2 = this.constructUrl(url, Object.assign({}, rest, state));
+        return new Promise((resolve, reject) => {
+            wx.redirectTo({
+                url: url2,
+                success: () => resolve(undefined),
+                fail: (err) => reject(err),
+            });
+        });
     }
 
-    navigateBack(delta: number = 1) {
-        return new Promise(
-            (resolve, reject) => {
-                wx.navigateBack({
-                    delta,
-                    success: () => resolve(undefined),
-                    fail: (err) => reject(err)
-                })
-            }
-        );
+    navigateBack(delta?: number) {
+        return new Promise((resolve, reject) => {
+            wx.navigateBack({
+                delta: delta || 1,
+                success: () => resolve(undefined),
+                fail: (err) => reject(err),
+            });
+        });
     }
 }

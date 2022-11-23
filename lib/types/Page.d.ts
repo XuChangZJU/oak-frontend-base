@@ -141,9 +141,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     navigateTo: <T2 extends keyof ED>(options: {
         url: string;
     } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) => Promise<void>;
-    navigateBack: (option?: {
-        delta: number;
-    }) => Promise<void>;
+    navigateBack: (delta?: number) => Promise<void>;
     redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) => Promise<void>;
     clean: (path?: string) => void;
     t(key: string, params?: object): string;

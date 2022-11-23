@@ -1,8 +1,14 @@
 import { createBrowserHistory, BrowserHistory } from 'history';
 import { Feature } from '../types/Feature';
+import {
+    OakNavigateToParameters,
+} from '../types/Page';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import {
+    EntityDict,
+} from 'oak-domain/lib/types';
 
-
-export class Navigator extends Feature{
+export class Navigator extends Feature {
     history: BrowserHistory;
     namespace: string;
 
@@ -14,7 +20,7 @@ export class Navigator extends Feature{
 
     /**
      * 必须使用这个方法注入history才能和react-router兼容
-     * @param history 
+     * @param history
      */
     setHistory(history: BrowserHistory) {
         this.history = history;
@@ -28,29 +34,57 @@ export class Navigator extends Feature{
         return this.history.location;
     }
 
-    async navigateTo(url: string, state?: Record<string, any>, disableNamespace?: boolean) {
+    getNamespace() {
+        return this.namespace;
+    }
+
+    async navigateTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>,
+        disableNamespace?: boolean
+    ) {
+        const url = this.getUrl(options, disableNamespace);
+        this.history.push(url, state);
+    }
+
+    async redirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>,
+        disableNamespace?: boolean
+    ) {
+        const url = this.getUrl(options, disableNamespace);
+        this.history.replace(url, state);
+    }
+
+    async navigateBack(delta?: number) {
+        this.history.go(delta ? 0 - delta : -1);
+    }
+
+    private getUrl<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        disableNamespace?: boolean
+    ) {
+        const { url, ...rest } = options;
         let url2 = url;
+
+        for (const param in rest) {
+            const param2 = param as unknown as keyof typeof rest;
+            if (rest[param2] !== undefined) {
+                url2 += `${url2.includes('?') ? '&' : '?'}${param}=${
+                    typeof rest[param2] === 'string'
+                        ? rest[param2]
+                        : JSON.stringify(rest[param2])
+                }`;
+            }
+        }
         if (!disableNamespace && this.namespace) {
-            url2 = (this.namespace.startsWith('/') ? '' : '/') +
+            url2 =
+                (this.namespace.startsWith('/') ? '' : '/') +
                 (this.namespace === '/' ? '' : this.namespace) +
                 (url2.startsWith('/') ? '' : '/') +
                 url2;
         }
-        this.history.push(url2, state);
-    }
 
-    async redirectTo(url: string, state?: Record<string, any>, disableNamespace?: boolean) {
-        let url2 = url;
-        if (!disableNamespace && this.namespace) {
-            url2 = (this.namespace.startsWith('/') ? '' : '/') +
-                (this.namespace === '/' ? '' : this.namespace) +
-                (url2.startsWith('/') ? '' : '/') +
-                url2;
-        }
-        this.history.replace(url2, state);
-    }
-
-    async navigateBack(delta: number = 1) {
-        this.history.go(0 - delta);
+        return url2;
     }
 }
