@@ -4,10 +4,12 @@ import { Feature } from '../types/Feature';
 
 export class Navigator extends Feature{
     history: BrowserHistory;
+    namespace: string;
 
     constructor() {
         super();
         this.history = createBrowserHistory();
+        this.namespace = '';
     }
 
     /**
@@ -18,16 +20,34 @@ export class Navigator extends Feature{
         this.history = history;
     }
 
+    setNamespace(namespace: string) {
+        this.namespace = namespace;
+    }
+
     getLocation() {
         return this.history.location;
     }
 
-    async navigateTo(url: string, state?: Record<string, any>) {
-        this.history.push(url, state);
+    async navigateTo(url: string, state?: Record<string, any>, disableNamespace?: boolean) {
+        let url2 = url;
+        if (!disableNamespace && this.namespace) {
+            url2 = (this.namespace.startsWith('/') ? '' : '/') +
+                (this.namespace === '/' ? '' : this.namespace) +
+                (url2.startsWith('/') ? '' : '/') +
+                url2;
+        }
+        this.history.push(url2, state);
     }
 
-    async redirectTo(url: string, state?: Record<string, any>) {
-        this.history.replace(url, state);
+    async redirectTo(url: string, state?: Record<string, any>, disableNamespace?: boolean) {
+        let url2 = url;
+        if (!disableNamespace && this.namespace) {
+            url2 = (this.namespace.startsWith('/') ? '' : '/') +
+                (this.namespace === '/' ? '' : this.namespace) +
+                (url2.startsWith('/') ? '' : '/') +
+                url2;
+        }
+        this.history.replace(url2, state);
     }
 
     async navigateBack(delta: number = 1) {

@@ -131,15 +131,7 @@ abstract class OakComponentBase<
 
     navigateTo<T2 extends keyof ED>(options: { url: string } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) {
         const { url, ...rest } = options;
-        let url2 = url.includes('?')
-            ? url.concat(
-                this.state.oakFullpath
-                    ? `&oakFrom=${this.state.oakFullpath}`
-                    : ''
-            )
-            : url.concat(
-                this.state.oakFullpath ? `?oakFrom=${this.state.oakFullpath}` : ''
-            );
+        let url2 = url;
 
         for (const param in rest) {
             const param2 = param as unknown as keyof typeof rest;
@@ -151,14 +143,7 @@ abstract class OakComponentBase<
             }
         }
         // 路由传入namespace
-        if (!disableNamespace && this.props.namespace) {
-            url2 =
-                (this.props.namespace.startsWith('/') ? '' : '/') +
-                (this.props.namespace === '/' ? '' : this.props.namespace) +
-                (url2.startsWith('/') ? '' : '/') +
-                url2;
-        }
-        return this.props.navigate(url2, { replace: false, state });
+        return this.features.navigator.navigateTo(url2, state, disableNamespace);
     }
 
     navigateBack(option?: { delta?: number }) {
@@ -175,17 +160,7 @@ abstract class OakComponentBase<
 
     redirectTo<T2 extends keyof ED>(options: { url: string } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) {
         const { url, ...rest } = options;
-        let url2 = url.includes('?')
-            ? url.concat(
-                this.state.oakFullpath
-                    ? `&oakFrom=${this.state.oakFullpath}`
-                    : ''
-            )
-            : url.concat(
-                this.state.oakFullpath
-                    ? `?oakFrom=${this.state.oakFullpath}`
-                    : ''
-            );
+        let url2 = url;
 
         for (const param in rest) {
             const param2 = param as unknown as keyof typeof rest;
@@ -196,15 +171,7 @@ abstract class OakComponentBase<
                     }`;
             }
         }
-        // 路由传入namespace
-        if (!disableNamespace && this.props.namespace) {
-            url2 =
-                (this.props.namespace.startsWith('/') ? '' : '/') +
-                (this.props.namespace === '/' ? '' : this.props.namespace) +
-                (url2.startsWith('/') ? '' : '/') +
-                url2;
-        }
-        return this.props.navigate(url2, { replace: true, state });
+        return this.features.navigator.redirectTo(url2, state, disableNamespace);
     }
 
     /* setProps(props: Record<string, any>, usingState?: true) {

@@ -86,7 +86,6 @@ function getQuery(url: string, properties?: Record<string, FunctionConstructor |
 
 const withRouter = (Component: React.ComponentType<any>, { path, properties }: {path?: string, properties?: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty> }) => {
     const ComponentWithRouterProp = (props: any) => {
-        const navigate = useNavigate();
         const location = useLocation();
         const width = useWidth();
         const { t, i18n } = useTranslation();
@@ -106,7 +105,6 @@ const withRouter = (Component: React.ComponentType<any>, { path, properties }: {
                 t={t}
                 i18n={i18n}
                 width={width}
-                navigate={navigate}
                 location={location}
                 ref={forwardedRef}
                 routeMatch={routeMatch}
