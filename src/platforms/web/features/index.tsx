@@ -1,25 +1,14 @@
-import React, { useContext, useEffect, useState, createElement } from 'react';
-import { Aspect, Context, EntityDict } from 'oak-domain/lib/types';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
-import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
-import { CommonAspectDict } from 'oak-common-aspect';
-import { BasicFeatures } from './../../../features';
+import React, { useContext, createElement } from 'react';
 import { Feature } from './../../../types/Feature';
 
-type ED = EntityDict & BaseEntityDict;
-type Cxt = AsyncContext<ED>;
-type FrontCxt = SyncContext<ED>;
-type AD = Record<string, Aspect<ED, Cxt>>;
 type FD = Record<string, Feature>;
-type features = FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
 
-const FeatureContext = React.createContext<{ features: features }>({
-    features: {} as features,
+const FeatureContext = React.createContext<{ features: any }>({
+    features: {},
 });
 
 const FeaturesProvider: React.FC<{
-    features: features;
+    features: FD;
     children: React.ReactNode;
 }> = ({ features, children }) => {
     return createElement(
@@ -31,8 +20,10 @@ const FeaturesProvider: React.FC<{
     );
 };
 
-const useFeatures = () => {
-    const { features } = useContext(FeatureContext);
+const useFeatures = <FD extends Record<string, Feature>>() => {
+    const { features } = useContext<{
+        features: FD;
+    }>(FeatureContext);
     return features;
 };
 
