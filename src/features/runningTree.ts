@@ -42,7 +42,8 @@ abstract class Node<
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>,
         projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
-        parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>) {
+        parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
+        path?: string) {
         super();
         this.entity = entity;
         this.schema = schema;
@@ -54,6 +55,10 @@ abstract class Node<
         this.loadingMore = false;
         this.executing = false;
         this.modiIds = undefined;
+        if (parent) {
+            assert(path);
+            parent.addChild(path, this as any);
+        }
     }
 
     getEntity() {
@@ -630,11 +635,12 @@ class ListNode<
             | ED[T]['Selection']['data']
             | (() => Promise<ED[T]['Selection']['data']>),
         parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
+        path?: string,
         filters?: NamedFilterItem<ED, T>[],
         sorters?: NamedSorterItem<ED, T>[],
         pagination?: Pagination
     ) {
-        super(entity, schema, cache, projection, parent);
+        super(entity, schema, cache, projection, parent, path);
         this.children = {};
         this.filters = filters || [];
         this.sorters = sorters || [];
@@ -1166,8 +1172,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>,
         projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
-        parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, id?: string) {
-        super(entity, schema, cache, projection, parent);
+        parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
+        path?: string,
+        id?: string) {
+        super(entity, schema, cache, projection, parent, path);
         this.children = {};
         if (id) {
             this.id = id;
@@ -1821,6 +1829,7 @@ export class RunningTree<
                     this.cache,
                     projection!,
                     parentNode,
+                    path,
                     filters,
                     sorters,
                     pagination
@@ -1832,6 +1841,7 @@ export class RunningTree<
                     this.cache,
                     projection!,
                     parentNode as VirtualNode<ED, Cxt, FrontCxt, AD>,      // 过编译
+                    path,
                     id
                 );
             }
@@ -1840,9 +1850,7 @@ export class RunningTree<
             node = new VirtualNode();
             assert(!parentNode);
         }
-        if (parentNode) {
-            parentNode.addChild(path, node as any);
-        } else {
+        if (!parentNode) {
             assert(!parent && !this.root[path]);
             this.root[path] = node;
         }
