@@ -136,6 +136,13 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     getProjection(withDecendants?: boolean): ED[T]["Selection"]["data"];
     refresh(): Promise<void>;
     clean(): void;
+    getFilter(disableOperation?: boolean): ED[T]['Selection']['filter'] | undefined;
+    /**
+     * getParentFilter不能假设一定已经有数据，只能根据当前filter的条件去构造
+     * @param childNode
+     * @param disableOperation
+     * @returns
+     */
     getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, disableOperation?: boolean): ED[T2]['Selection']['filter'] | undefined;
 }
 declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
@@ -150,7 +157,7 @@ declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends As
     destroy(): void;
     getFreshValue(): undefined;
     isDirty(): boolean;
-    refresh(): Promise<void[]>;
+    refresh(): Promise<void>;
     composeOperations(): Array<{
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];

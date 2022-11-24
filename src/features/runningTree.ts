@@ -1,6 +1,6 @@
 import { assert } from 'oak-domain/lib/utils/assert';
 import { cloneDeep, pull, unset, merge, uniq } from "oak-domain/lib/utils/lodash";
-import { combineFilters, contains, repel, same } from "oak-domain/lib/store/filter";
+import { addFilterSegment, combineFilters, contains, repel, same } from "oak-domain/lib/store/filter";
 import { createOperationsFromModies } from 'oak-domain/lib/store/modi';
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, DeduceSorterItem, AspectWrapper } from "oak-domain/lib/types";
@@ -1097,7 +1097,7 @@ class ListNode<
                     },
                     undefined,
                     getCount,
-                    ({ data, count}) => {
+                    ({ data, count }) => {
                         this.pagination.currentPage = currentPage3 + 1;
                         this.pagination.more = data.length === pageSize;
                         this.setLoading(false);
@@ -1107,7 +1107,7 @@ class ListNode<
                         if (getCount) {
                             this.pagination.total = count;
                         }
-        
+
                         const ids = data.map(
                             ele => ele.id!
                         ) as string[];
@@ -1209,12 +1209,12 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         assert(false);
     }
 
-   /*  setLoading(loading: boolean) {
-        super.setLoading(loading);
-        for (const k in this.children) {
-            this.children[k].setLoading(loading);
-        }
-    } */
+    /*  setLoading(loading: boolean) {
+         super.setLoading(loading);
+         for (const k in this.children) {
+             this.children[k].setLoading(loading);
+         }
+     } */
 
     checkIfClean(): void {
         if (this.operation) {
@@ -1282,20 +1282,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
         }> : [];
-        let filter = this.id && { id: this.id } as ED[T]['Selection']['filter'];
-
-        if (!filter) {
-            // 还可能是来自父级的外键
-            filter = this.tryGetParentFilter(disableOperation);
-        }
-        if (!filter) {
-            // 还要考虑create
-            if (this.operation && this.operation.operation.action === 'create') {
-                filter = {
-                    id: this.operation.operation.data.id!,
-                };
-            }
-        }
+        const filter = this.getFilter();
         if (filter) {
             if (!disableOperation && this.operation) {
                 operations.push({
@@ -1517,36 +1504,16 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     async refresh() {
-        // SingleNode如果是非根结点，其id应该在第一次refresh的时候来确定
-        let id = this.id;
-        if (!id) {
-            if (this.parent instanceof ListNode) {
-                // list的子项不需要refresh，由list负责刷新数据
-                assert(this.parent.getEntity() === this.entity);
-                // id = this.parent.getChildPath(this);
-                // this.id = id;
-                return;
-            }
-            else if (this.parent instanceof SingleNode) {
-                const parentFilter = this.parent.getParentFilter(this);
-                if (parentFilter) {
-                    const { id: id2 } = parentFilter!;
-                    id = id2;
-                }
-            }
-        }
-        if (!id) {
-            return;
-        }
+        // SingleNode如果是非根结点，其id应该在第一次refresh的时候来确定        
         const projection = this.getProjection();
-        const filter = { id } as ED[T]['Selection']['filter'];
+        const filter = this.getFilter(true);
         this.setLoading(true);
         this.publish();
         try {
             await this.cache.refresh(this.entity, {
                 data: projection,
                 filter,
-            },undefined, undefined, ({ data: [value] }) => {
+            }, undefined, undefined, ({ data: [value] }) => {
                 // 对于modi对象，在此缓存
                 if (this.schema[this.entity].toModi && value) {
                     const { modi$entity } = value;
@@ -1571,9 +1538,33 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         this.publish();
     }
 
+    getFilter(disableOperation?: boolean): ED[T]['Selection']['filter'] | undefined {
+        if (this.id) {
+            return {
+                id: this.id,
+            };
+        }
+        const parentFilter = this.tryGetParentFilter();
+        if (parentFilter) {
+            return parentFilter;
+        }
+
+        if (!disableOperation && this.operation && this.operation.operation.action === 'create') {
+            return {
+                id: this.operation.operation.data.id!,
+            };
+        }
+    }
+
+    /**
+     * getParentFilter不能假设一定已经有数据，只能根据当前filter的条件去构造
+     * @param childNode 
+     * @param disableOperation 
+     * @returns 
+     */
     getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, disableOperation?: boolean): ED[T2]['Selection']['filter'] | undefined {
-        const value = this.getFreshValue(disableOperation)!;
-        if (!value) {
+        const filter = this.getFilter();
+        if (!filter) {
             return;
         }
 
@@ -1584,34 +1575,45 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 const rel = this.judgeRelation(key2);
                 if (rel === 2) {
                     // 基于entity/entityId的多对一
-                    if (value.entityId && value.entity === childNode.getEntity()) {
-                        return {
-                            id: value.entityId,
-                        };
-                    }
-                    return undefined;
+                    return {
+                        id: {
+                            $in: {
+                                entity: this.entity,
+                                data: {
+                                    entityId: 1,
+                                },
+                                filter: addFilterSegment(filter, {
+                                    entity: childNode.getEntity(),
+                                }),
+                            }
+                        },
+                    };
                 }
                 else if (typeof rel === 'string') {
-                    if (value[`${rel}Id`]) {
-                        return {
-                            id: value[`${rel}Id`],
-                        };
-                    }
-                    return undefined;
+                    return {
+                        id: {
+                            $in: {
+                                entity: this.entity,
+                                data: {
+                                    [`${rel}Id`]: 1,
+                                },
+                                filter,
+                            },
+                        },
+                    };
                 }
                 else {
                     assert(rel instanceof Array);
                     if (rel[1]) {
                         // 基于普通外键的一对多
                         return {
-                            [rel[1]]: value.id,
+                            [rel[1].slice(0, rel[1].length - 2)]: filter,
                         };
                     }
                     else {
                         // 基于entity/entityId的一对多
                         return {
-                            entity: this.entity,
-                            entityId: value.id,
+                            [this.entity]: filter,
                         };
                     }
                 }
@@ -1672,11 +1674,12 @@ class VirtualNode<
         return this.dirty;
     }
     async refresh() {
-        return Promise.all(
+        await Promise.all(
             Object.keys(this.children).map(
                 ele => this.children[ele].refresh()
             )
         );
+        this.publish();
     }
     composeOperations(): Array<{ entity: keyof ED, operation: ED[keyof ED]['Operation'] }> | undefined {
         /**
@@ -1821,13 +1824,14 @@ export class RunningTree<
         }
 
         if (entity) {
+            assert(projection, `页面没有定义投影「${path}」`);
             if (isList) {
                 assert(!(parentNode instanceof ListNode));
                 node = new ListNode<ED, T, Cxt, FrontCxt, AD>(
                     entity,
                     this.schema!,
                     this.cache,
-                    projection!,
+                    projection,
                     parentNode,
                     path,
                     filters,
@@ -1839,7 +1843,7 @@ export class RunningTree<
                     entity,
                     this.schema!,
                     this.cache,
-                    projection!,
+                    projection,
                     parentNode as VirtualNode<ED, Cxt, FrontCxt, AD>,      // 过编译
                     path,
                     id
