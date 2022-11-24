@@ -1078,6 +1078,7 @@ class ListNode<
         const { currentPage, pageSize } = pagination;
         const currentPage3 = typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
         const { data: projection, filter, sorter, validParentFilter } = this.constructSelection(true);
+        assert(projection, `页面没有定义投影「ListNode, ${this.entity as string}」`);
         // 若不存在有效的父过滤条件（父有值或本结点就是顶层结点），则不能刷新
         if (validParentFilter) {
             try {
@@ -1182,7 +1183,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         else {
             // 若没有父结点上的filter，则一定是create动作
-            const filter = this.tryGetParentFilter();
+            const filter = this.tryGetParentFilter(true);
             if (!filter) {
                 this.create({});
             }
@@ -1506,6 +1507,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     async refresh() {
         // SingleNode如果是非根结点，其id应该在第一次refresh的时候来确定        
         const projection = this.getProjection();
+        assert(projection, `页面没有定义投影「SingleNode, ${this.entity as string}」`);
         const filter = this.getFilter(true);
         this.setLoading(true);
         this.publish();
@@ -1544,16 +1546,13 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 id: this.id,
             };
         }
-        const parentFilter = this.tryGetParentFilter();
-        if (parentFilter) {
-            return parentFilter;
-        }
-
         if (!disableOperation && this.operation && this.operation.operation.action === 'create') {
             return {
                 id: this.operation.operation.data.id!,
             };
         }
+        const parentFilter = this.tryGetParentFilter(disableOperation);
+        return parentFilter;
     }
 
     /**
@@ -1563,7 +1562,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
      * @returns 
      */
     getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, disableOperation?: boolean): ED[T2]['Selection']['filter'] | undefined {
-        const filter = this.getFilter();
+        const filter = this.getFilter(disableOperation);
         if (!filter) {
             return;
         }
@@ -1824,9 +1823,9 @@ export class RunningTree<
         }
 
         if (entity) {
-            assert(projection, `页面没有定义投影「${path}」`);
             if (isList) {
                 assert(!(parentNode instanceof ListNode));
+                assert(projection, `页面没有定义投影「${path}」`);
                 node = new ListNode<ED, T, Cxt, FrontCxt, AD>(
                     entity,
                     this.schema!,
@@ -1843,7 +1842,7 @@ export class RunningTree<
                     entity,
                     this.schema!,
                     this.cache,
-                    projection,
+                    projection!,
                     parentNode as VirtualNode<ED, Cxt, FrontCxt, AD>,      // 过编译
                     path,
                     id
