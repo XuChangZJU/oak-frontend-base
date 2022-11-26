@@ -1,6 +1,5 @@
 import { EntityDict, OperationResult, OpRecord, SelectOption } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from "oak-domain/lib/types/Storage";
-import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Checker, CheckerType, TxnOption } from 'oak-domain/lib/types';
 import { TreeStore, TreeStoreOperateOption } from 'oak-memory-tree-store';

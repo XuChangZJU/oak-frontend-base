@@ -606,8 +606,7 @@ class ListNode<
             此时对userRelation的删除动作就会导致user不会被移出list
          */
         if (needRefresh) {
-            // 这里因为operation还没被移除掉(execute还没有结束)，所以同步的时候不能计算动态的operation产生的id
-            const { filter, sorter } = this.constructSelection(true, true);
+            const { filter, sorter } = this.constructSelection(true);
             const result = this.cache.get(this.getEntity(), {
                 data: {
                     id: 1,

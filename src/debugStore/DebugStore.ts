@@ -15,7 +15,7 @@ interface DebugStoreSelectOption extends TreeStoreSelectOption {
 };
 
 export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>> extends TreeStore<ED> implements AsyncRowStore<ED, Cxt> {
-    private executor: TriggerExecutor<ED, Cxt>;
+    private executor: TriggerExecutor<ED>;
     constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>) {
         super(storageSchema);
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
@@ -32,11 +32,11 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
 
     protected async cascadeUpdateAsync<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: AsyncContext<ED>, option: OP) {        
         if (!option.blockTrigger) {
-            await this.executor.preOperation(entity, operation, context as any, option);
+            await this.executor.preOperation(entity, operation, context, option);
         }
         const result = await super.cascadeUpdateAsync(entity, operation, context, option);
         if (!option.blockTrigger) {
-            await this.executor.postOperation(entity, operation, context as any, option);
+            await this.executor.postOperation(entity, operation, context, option);
         }
         return result;
     }
@@ -47,11 +47,11 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         }, selection) as ED[T]['Operation'];
 
         if (!option.blockTrigger) {
-            await this.executor.preOperation(entity, selection2, context as any, option);
+            await this.executor.preOperation(entity, selection2, context, option);
         }
-        const result = await super.cascadeSelectAsync(entity, selection2 as any, context, option);
+        const result = await super.cascadeSelectAsync(entity, selection2, context, option);
         if (!option.blockTrigger) {
-            await this.executor.postOperation(entity, selection2, context as any, option, result);
+            await this.executor.postOperation(entity, selection2, context, option, result);
         }
         return result;
     }
