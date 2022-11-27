@@ -1029,7 +1029,7 @@ class ListNode<
         return projection;
     }
 
-    constructSelection(withParent?: true, disableOperation?: boolean) {
+    constructSelection(withParent?: true) {
         const { filters, sorters } = this;
         const data = this.getProjection();
         let validParentFilter = true;
@@ -1051,7 +1051,7 @@ class ListNode<
 
         if (withParent && this.parent) {
             if (this.parent instanceof SingleNode) {
-                const filterOfParent = this.parent.getParentFilter<T>(this, disableOperation);
+                const filterOfParent = this.parent.getParentFilter<T>(this);
                 if (filterOfParent) {
                     filterArr.push(filterOfParent as any);
                 }
@@ -1182,17 +1182,17 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         else {
             // 若没有父结点上的filter，则一定是create动作
-            const filter = this.tryGetParentFilter(true);
+            const filter = this.tryGetParentFilter();
             if (!filter) {
                 this.create({});
             }
         }
     }
 
-    private tryGetParentFilter(disableOperation?: boolean) {
+    private tryGetParentFilter() {
         const parent = this.getParent();
         if (parent instanceof SingleNode) {
-            const filter = parent.getParentFilter<T>(this, disableOperation);
+            const filter = parent.getParentFilter<T>(this);
             return filter;
         }
         else if (parent instanceof ListNode) {
@@ -1550,7 +1550,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 id: this.operation.operation.data.id!,
             };
         }
-        const parentFilter = this.tryGetParentFilter(disableOperation);
+        const parentFilter = this.tryGetParentFilter();
         return parentFilter;
     }
 
@@ -1560,59 +1560,90 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
      * @param disableOperation 
      * @returns 
      */
-    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, disableOperation?: boolean): ED[T2]['Selection']['filter'] | undefined {
-        const filter = this.getFilter(disableOperation);
-        if (!filter) {
-            return;
-        }
+    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>): ED[T2]['Selection']['filter'] | undefined {
+        const filter = this.getFilter(true);
 
         for (const key in this.children) {
             if (childNode === this.children[key]) {
                 const sliceIdx = key.indexOf(':');
                 const key2 = sliceIdx > 0 ? key.slice(0, sliceIdx) : key;
+
+                // 此时如果operation中有相关的外键被设置则直接返回
+                let operationData: ED[T]['Update']['data'] | undefined = undefined;
+                if (this.operation) {
+                    const { operation: { action, data } } = this.operation;
+                    if (action !== 'remove') {
+                        operationData = data;
+                    }
+                }
                 const rel = this.judgeRelation(key2);
                 if (rel === 2) {
                     // 基于entity/entityId的多对一
-                    return {
-                        id: {
-                            $in: {
-                                entity: this.entity,
-                                data: {
-                                    entityId: 1,
-                                },
-                                filter: addFilterSegment(filter, {
-                                    entity: childNode.getEntity(),
-                                }),
-                            }
-                        },
-                    };
-                }
-                else if (typeof rel === 'string') {
-                    return {
-                        id: {
-                            $in: {
-                                entity: this.entity,
-                                data: {
-                                    [`${rel}Id`]: 1,
-                                },
-                                filter,
-                            },
-                        },
-                    };
-                }
-                else {
-                    assert(rel instanceof Array);
-                    if (rel[1]) {
-                        // 基于普通外键的一对多
+                    if (operationData?.entityId) {
                         return {
-                            [rel[1].slice(0, rel[1].length - 2)]: filter,
+                            id: operationData!.entityId!,
+                        };
+                    }
+                    else if (filter) {
+                        return {
+                            id: {
+                                $in: {
+                                    entity: this.entity,
+                                    data: {
+                                        entityId: 1,
+                                    },
+                                    filter: addFilterSegment(filter, {
+                                        entity: childNode.getEntity(),
+                                    }),
+                                }
+                            },
                         };
                     }
                     else {
-                        // 基于entity/entityId的一对多
+                        return;
+                    }
+                }
+                else if (typeof rel === 'string') {
+                    if (operationData && operationData[`${rel}Id`]) {
                         return {
-                            [this.entity]: filter,
+                            id: operationData[`${rel}Id`],
                         };
+                    }
+                    else if (filter) {
+                        return {
+                            id: {
+                                $in: {
+                                    entity: this.entity,
+                                    data: {
+                                        [`${rel}Id`]: 1,
+                                    },
+                                    filter,
+                                },
+                            },
+                        };
+                    }
+                    else {
+                        return;
+                    }
+                }
+                else {
+                    assert(rel instanceof Array);
+                    if (filter) {
+                        if (rel[1]) {
+                            // 基于普通外键的一对多
+                            return {
+                                [rel[1].slice(0, rel[1].length - 2)]: filter,
+                            };
+                        }
+                        else {
+                            // 基于entity/entityId的一对多
+                            return {
+                                [this.entity]: filter,
+                            };
+                        }
+                    }
+                    else {
+                        return;
                     }
                 }
             }
