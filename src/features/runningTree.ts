@@ -858,7 +858,7 @@ class ListNode<
                 });
             }
 
-            const result = this.cache.tryRedoOperationsThenSelect(this.entity, selection, operations);
+            const result = this.cache.tryRedoOperationsThenSelect(this.entity, selection, operations, this.isLoading() || this.isLoadingMore());
             return result;
         }
         return [];
@@ -1293,7 +1293,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             const result = this.cache.tryRedoOperationsThenSelect(this.entity, {
                 data: projection,
                 filter,
-            }, operations);
+            }, operations, this.isLoading());
             return result[0];
         }
     }

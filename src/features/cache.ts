@@ -165,13 +165,14 @@ export class Cache<
      * @param selection
      * @param opers
      */
-    tryRedoOperationsThenSelect<T extends keyof ED, S extends ED[T]['Selection']>(
+    tryRedoOperationsThenSelect<T extends keyof ED>(
         entity: T,
-        selection: S,
+        selection: ED[T]['Selection'],
         opers: Array<{
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
-        }>
+        }>,
+        allowMiss?: boolean
     ) {
         const context = this.contextBuilder!();
         context.begin();
@@ -190,7 +191,7 @@ export class Cache<
                 );
             }
             reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
-            const result = this.getInner(entity, selection, context);
+            const result = this.getInner(entity, selection, context, allowMiss);
             context.rollback();
             return result;
         }
@@ -200,7 +201,7 @@ export class Cache<
         }
     }
 
-    private getInner<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, context: SyncContext<ED>): Partial<ED[T]['Schema']>[] {
+    private getInner<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], context: SyncContext<ED>, allowMiss?: boolean): Partial<ED[T]['Schema']>[] {
         try {
             const result = this.cacheStore!.select(
                 entity,
@@ -213,8 +214,10 @@ export class Cache<
             return result;
         } catch (err) {
             if (err instanceof OakRowUnexistedException) {
-                const missedRows = err.getRows();
-                this.exec('fetchRows', missedRows);
+                if (!allowMiss) {
+                    const missedRows = err.getRows();
+                    this.exec('fetchRows', missedRows);
+                }
                 return [];
             } else {
                 throw err;
@@ -222,9 +225,9 @@ export class Cache<
         }
     }
 
-    get<T extends keyof ED, S extends ED[T]['Selection']>(
+    get<T extends keyof ED>(
         entity: T,
-        selection: S,
+        selection: ED[T]['Selection'],
         params?: SelectOption
     ) {
         const context = this.contextBuilder!();

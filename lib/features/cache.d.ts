@@ -33,13 +33,13 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
      * @param selection
      * @param opers
      */
-    tryRedoOperationsThenSelect<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, opers: Array<{
+    tryRedoOperationsThenSelect<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], opers: Array<{
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
-    }>): Partial<ED[T]["Schema"]>[];
+    }>, allowMiss?: boolean): Partial<ED[T]["Schema"]>[];
     private getInner;
-    get<T extends keyof ED, S extends ED[T]['Selection']>(entity: T, selection: S, params?: SelectOption): Partial<ED[T]["Schema"]>[];
-    judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | 2 | string[];
+    get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: SelectOption): Partial<ED[T]["Schema"]>[];
+    judgeRelation(entity: keyof ED, attr: string): string | 0 | 2 | 1 | string[];
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;
     getCachedData(): { [T in keyof ED]?: ED[T]["OpSchema"][] | undefined; };
