@@ -1,7 +1,7 @@
 // 简化版的对checker的同步检查
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { Checker, CheckerType } from 'oak-domain/lib/types';
+import { Checker, CheckerType, SelectOption, OperateOption } from 'oak-domain/lib/types';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { translateCheckerInSyncContext } from 'oak-domain/lib/store/checker';
 
@@ -10,7 +10,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
         [K in keyof ED]?: {
             [A: string]: Array<{
                 priority: number;
-                fn: (operation: ED[K]['Operation'], context: Cxt) => void;
+                fn: (operation: ED[K]['Operation'], context: Cxt, option: SelectOption | OperateOption) => void;
                 type: CheckerType;
             }>;
         };
@@ -70,7 +70,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
         if (checkers) {
             const checkers2 = checkerTypes ? checkers.filter(ele => checkerTypes.includes(ele.type)) : checkers;
             for (const checker of checkers2) {
-                checker.fn(operation, context);
+                checker.fn(operation, context, {} as any);
             }
         }
     }
