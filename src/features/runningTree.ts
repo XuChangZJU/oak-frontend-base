@@ -1508,24 +1508,26 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         const projection = this.getProjection();
         assert(projection, `页面没有定义投影「SingleNode, ${this.entity as string}」`);
         const filter = this.getFilter(true);
-        this.setLoading(true);
-        this.publish();
-        try {
-            await this.cache.refresh(this.entity, {
-                data: projection,
-                filter,
-            }, undefined, undefined, ({ data: [value] }) => {
-                // 对于modi对象，在此缓存
-                if (this.schema[this.entity].toModi && value) {
-                    const { modi$entity } = value;
-                    this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id)
-                }
+        if (filter) {
+            this.setLoading(true);
+            this.publish();
+            try {
+                await this.cache.refresh(this.entity, {
+                    data: projection,
+                    filter,
+                }, undefined, undefined, ({ data: [value] }) => {
+                    // 对于modi对象，在此缓存
+                    if (this.schema[this.entity].toModi && value) {
+                        const { modi$entity } = value;
+                        this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id)
+                    }
+                    this.setLoading(false);
+                });
+            }
+            catch (err) {
                 this.setLoading(false);
-            });
-        }
-        catch (err) {
-            this.setLoading(false);
-            throw err;
+                throw err;
+            }
         }
     }
 
