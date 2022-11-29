@@ -93,7 +93,7 @@ export function initialize<
     const wrapper: AspectWrapper<ED, Cxt, CommonAspectDict<ED, Cxt> & AD> = {
         exec: async (name, params) => {
             const context = frontendContextBuilder(features)(cacheStore);
-            const str = await context.toString();
+            const str = context.toString();
             const contextBackend = await backendContextBuilder(str)(debugStore);
             await contextBackend.begin();
             let result;

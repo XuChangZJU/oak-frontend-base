@@ -96,7 +96,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     getProjection(): ED[T]['Selection']['data'];
     constructSelection(withParent?: true): {
         data: ED[T]["Selection"]["data"];
-        filter: ED[T]["Selection"]["filter"] | undefined;
+        filter: ED[T]["Selection"]["filter"] | {};
         sorter: DeduceSorterItem<ED[T]["Schema"]>[];
         validParentFilter: boolean;
     };

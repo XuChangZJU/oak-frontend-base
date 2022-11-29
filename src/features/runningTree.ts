@@ -1063,7 +1063,7 @@ class ListNode<
         }
 
         const filters2 = filterArr.filter(ele => !!ele);
-        const filter = filters2.length > 0 ? combineFilters<ED, T>(filters2) : undefined;
+        const filter = filters2.length > 0 ? combineFilters<ED, T>(filters2) : {};
         return {
             data,
             filter,
