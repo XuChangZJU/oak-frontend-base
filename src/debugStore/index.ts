@@ -168,6 +168,7 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
                         filter: filter2,
                     }, context, {
                         dontCollect: true,
+                        blockTrigger: true,
                     });
 
                     const result = await fn(context, rows);
