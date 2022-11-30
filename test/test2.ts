@@ -1,7 +1,10 @@
-function setState<T extends Record<string, any>>(data: Partial<{ name: string, age: number } & T>) {
-    console.log(data);
+import { generateNewIdAsync } from 'oak-domain/src/utils/uuid';
+
+async function main() {
+    let iter = 0; 
+    while (iter ++ < 10) {
+        console.log(await generateNewIdAsync());
+    }
 }
 
-setState({
-    name: 'xc',
-})
+main();

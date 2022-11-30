@@ -12,10 +12,10 @@
         "debounce": "^1.2.1",
         "format-message-parse": "^6.2.4",
         "history": "^5.3.0",
-        "oak-common-aspect": "file:../oak-common-aspect",
-        "oak-domain": "file:../oak-domain",
-        "oak-external-sdk": "file:../oak-external-sdk",
-        "oak-memory-tree-store": "file:../oak-memory-tree-store",
+        "oak-common-aspect": "^2.0.1",
+        "oak-domain": "^2.0.1",
+        "oak-external-sdk": "^1.0.4",
+        "oak-memory-tree-store": "^2.0.1",
         "rmc-pull-to-refresh": "^1.0.13",
         "url": "^0.11.0",
         "uuid": "^8.3.2"
@@ -64,7 +64,7 @@
         "clean": "rimraf lib/*",
         "copy-files": "copyfiles -u 1 src/**/*.css src/**/wxs.js lib/",
         "build": "tsc && npm run copy-files",
-        "test": "ts-node ./test/test.ts",
+        "test": "ts-node ./test/test2.ts",
         "prepare": "rimraf node_modules/react & rimraf node_modules/react-dom & rimraf node_modules/react-router"
     },
     "main": "lib/index"

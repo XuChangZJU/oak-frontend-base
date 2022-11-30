@@ -1,4 +1,4 @@
-import { EntityDict, Context, OakException, Aspect } from 'oak-domain/lib/types';
+import { EntityDict, Aspect } from 'oak-domain/lib/types';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from '../features/index';
