@@ -6,7 +6,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
-import { generateNewId } from 'oak-domain/lib/utils/uuid';
+import { generateNewIdAsync } from 'oak-domain/lib/utils/uuid';
 
 async function initDataInStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
     store: DebugStore<ED, Cxt>,
@@ -149,7 +149,7 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
                     const filter2 = typeof filter === 'function' ? await filter() : filter;
                     const data = typeof actionData === 'function' ? await (actionData as any)() : actionData;        // 这里有个奇怪的编译错误，不理解 by Xc
                     const result = await store.operate(entity, {
-                        id: generateNewId(),
+                        id: await generateNewIdAsync(),
                         action,
                         data,
                         filter: filter2

@@ -79,7 +79,7 @@ const oakBehavior = Behavior<
         > &
             FDD;
         subscribed: Array<() => void>;
-        option: OakComponentOption<
+        oakOption: OakComponentOption<
             EDD,
             keyof EDD,
             Cxt,
@@ -148,7 +148,7 @@ const oakBehavior = Behavior<
         },
 
         reRender() {
-            return reRender.call(this as any, this.option as any);
+            return reRender.call(this as any, this.oakOption as any);
         },
 
         async onLoad(query: Record<string, any>) {
@@ -156,7 +156,7 @@ const oakBehavior = Behavior<
              * 小程序以props传递数据，和以页面间参数传递数据的处理不一样，都在这里处理
              * 目前处理的还不是很完善，在实际处理中再做
              */
-            const { properties, path } = this.option;
+            const { properties, path } = this.oakOption;
             const assignProps = (
                 data: Record<string, any>,
                 property: string,
@@ -213,7 +213,7 @@ const oakBehavior = Behavior<
                 }
             }
             if (this.props.oakPath || (this.iAmThePage() && path)) {
-                await onPathSet.call(this as any, this.option as any);
+                await onPathSet.call(this as any, this.oakOption as any);
             } else {
                 this.reRender();
             }
@@ -235,7 +235,7 @@ const oakBehavior = Behavior<
             if (
                 !this.state.oakLoadingMore &&
                 this.iAmThePage() &&
-                this.option.isList
+                this.oakOption.isList
             ) {
                 await this.loadMore();
             }
@@ -558,7 +558,7 @@ const oakBehavior = Behavior<
     observers: {
         oakPath(data) {
             if (data) {
-                onPathSet.call(this as any, this.option as any);
+                onPathSet.call(this as any, this.oakOption as any);
             }
         },
         oakId(data) {
@@ -567,12 +567,12 @@ const oakBehavior = Behavior<
     },
     pageLifetimes: {
         show() {
-            const { show } = this.option.lifetimes || {};
+            const { show } = this.oakOption.lifetimes || {};
             this.reRender();
             show && show.call(this);
         },
         hide() {
-            const { hide } = this.option.lifetimes || {};
+            const { hide } = this.oakOption.lifetimes || {};
             hide && hide.call(this);
         },
     },
@@ -588,36 +588,6 @@ const oakBehavior = Behavior<
                     callback && callback.call(this);
                 });
             };
-        },
-        attached() {
-            const { attached } = this.option.lifetimes || {};
-            const i18nInstance = getI18nInstanceWechatMp();
-            if (i18nInstance) {
-                (this as any).setState({
-                    [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
-                    [CURRENT_LOCALE_DATA]: i18nInstance.translations,
-                });
-            }
-            attached && attached.call(this);
-        },
-        detached() {
-            this.state.oakFullpath &&
-                (this.iAmThePage() || this.props.oakAutoUnmount) &&
-                destroyNode.call(this as any);
-            const { detached } = this.option.lifetimes || {};
-            detached && detached.call(this);
-        },
-        ready() {
-            const { ready } = this.option.lifetimes || {};
-            ready && ready.call(this);
-        },
-        moved() {
-            const { moved } = this.option.lifetimes || {};
-            moved && moved.call(this);
-        },
-        error(err: Error) {
-            const { error } = this.option.lifetimes || {};
-            error && error.call(this, err);
         },
     },
 });
@@ -658,7 +628,7 @@ export function createComponent<
         lifetimes,
         observers,
     } = option;
-    const { attached, show, hide, created, detached, ...restLifetimes } = lifetimes || {};
+    const { attached, show, hide, created, detached, ready,  moved, error } = lifetimes || {};
     const { options, externalClasses } = wechatMp || {};
 
     return Component<
@@ -686,7 +656,7 @@ export function createComponent<
                 AD & CommonAspectDict<ED, Cxt>
             > &
                 FD;
-            subscribed: (() => void) | undefined;
+            subscribed: Array<() => void>;
             oakOption: OakComponentOption<
                 ED,
                 T,
@@ -703,7 +673,7 @@ export function createComponent<
         }
     >({
         externalClasses,
-        options,
+        // options,
         behaviors: [oakBehavior],
         data: Object.assign({}, data, {
             oakFullpath: '',
@@ -721,7 +691,7 @@ export function createComponent<
         },
         pageLifetimes: {
             show() {
-                this.reRender();
+                // this.reRender();
                 show && show.call(this);
             },
             hide() {
@@ -732,7 +702,42 @@ export function createComponent<
             created() {
                 this.oakOption = option;
                 this.features = features;
+                this.subscribed = [];
                 created && created.call(this);
+            },
+            attached() {
+                const i18nInstance = getI18nInstanceWechatMp();
+                if (i18nInstance) {
+                    (this as any).setState({
+                        [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
+                        [CURRENT_LOCALE_DATA]: i18nInstance.translations,
+                    });
+                }
+                if (option.entity) {
+                    this.subscribed.push(
+                        features.cache.subscribe(() => this.reRender())
+                    );                    
+                }
+                attached && attached.call(this);
+            },
+            detached() {
+                this.subscribed.forEach(
+                    ele => ele()
+                );
+                this.state.oakFullpath &&
+                    (this.iAmThePage() || this.props.oakAutoUnmount) &&
+                    destroyNode.call(this as any);
+                
+                detached && detached.call(this);
+            },
+            ready() {
+                ready && ready.call(this);
+            },
+            moved() {
+                moved && moved.call(this);
+            },
+            error(err: Error) {
+                error && error.call(this, err);
             },
         },
     });
