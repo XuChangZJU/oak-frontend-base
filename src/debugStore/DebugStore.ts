@@ -41,21 +41,6 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         return result;
     }
 
-    protected async cascadeSelectAsync<T extends keyof ED, OP extends DebugStoreSelectOption>(entity: T, selection: ED[T]["Selection"], context: AsyncContext<ED>, option: OP) {
-        const selection2 = Object.assign({
-            action: 'select',
-        }, selection) as ED[T]['Operation'];
-
-        if (!option.blockTrigger) {
-            await this.executor.preOperation(entity, selection2, context, option);
-        }
-        const result = await super.cascadeSelectAsync(entity, selection2, context, option);
-        if (!option.blockTrigger) {
-            await this.executor.postOperation(entity, selection2, context, option, result);
-        }
-        return result;
-    }
-
     async operate<T extends keyof ED, OP extends DebugStoreOperateOption>(
         entity: T,
         operation: ED[T]['Operation'],
@@ -73,7 +58,20 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         option: OP
     ) {
         assert(context.getCurrentTxnId());
-        return super.selectAsync(entity, selection, context, option);
+        const selection2 = Object.assign({
+            action: 'select',
+        }, selection) as ED[T]['Operation'];
+
+        // select的trigger应加在根结点的动作之前
+        if (!option.blockTrigger) {
+            await this.executor.preOperation(entity, selection2, context, option);
+        }
+        const result = await super.selectAsync(entity, selection, context, option);
+
+        if (!option.blockTrigger) {
+            await this.executor.postOperation(entity, selection2, context, option, result);
+        }
+        return result;
     }
 
     async count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]["Selection"], "filter" | "count">, context: Cxt, option: OP): Promise<number> {

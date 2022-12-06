@@ -16,7 +16,6 @@ export declare class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt exte
     commit(txnId: string): Promise<void>;
     rollback(txnId: string): Promise<void>;
     protected cascadeUpdateAsync<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: AsyncContext<ED>, option: OP): Promise<import("oak-domain/lib/types").OperationResult<ED>>;
-    protected cascadeSelectAsync<T extends keyof ED, OP extends DebugStoreSelectOption>(entity: T, selection: ED[T]["Selection"], context: AsyncContext<ED>, option: OP): Promise<Partial<ED[T]["Schema"]>[]>;
     operate<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: Cxt, option: OP): Promise<import("oak-domain/lib/types").OperationResult<ED>>;
     select<T extends keyof ED, OP extends DebugStoreSelectOption>(entity: T, selection: ED[T]['Selection'], context: Cxt, option: OP): Promise<Partial<ED[T]["Schema"]>[]>;
     count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]["Selection"], "filter" | "count">, context: Cxt, option: OP): Promise<number>;

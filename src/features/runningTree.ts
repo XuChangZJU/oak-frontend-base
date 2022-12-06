@@ -1402,29 +1402,15 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (!this.dirty) {
             return;
         }
-        if (!this.operation) {
-            const operation: ED[T]['Update'] = {
-                id: generateNewId(),
-                action: 'update',
-                data: {},
-            };
-            if (this.id) {
-                Object.assign(operation, {
-                    filter: {
-                        id: this.id!,
-                    }
-                });
-            }
-            this.operation = {
-                operation,
-            };
-        }
-        let operation: ED[T]['Update'] = cloneDeep(this.operation.operation);
-        if (this.id && !operation.filter) {
+        const filter = this.getFilter();
+        const operation: ED[T]['Update'] = this.operation ? cloneDeep(this.operation.operation) : {
+            id: generateNewId(),
+            action: 'update',
+            data: {},
+        };
+        if (filter) {
             Object.assign(operation, {
-                filter: {
-                    id: this.id,
-                }
+                filter,
             });
         }
 
@@ -1458,7 +1444,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
         return [{
             entity: this.entity,
-            operation,
+            operation: operation!,
         }];
     }
 
@@ -1564,26 +1550,19 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
      */
     getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>): ED[T2]['Selection']['filter'] | undefined {
         const filter = this.getFilter(true);
+        const value = this.getFreshValue();
+        const id = this.id;
 
         for (const key in this.children) {
             if (childNode === this.children[key]) {
                 const sliceIdx = key.indexOf(':');
                 const key2 = sliceIdx > 0 ? key.slice(0, sliceIdx) : key;
-
-                // 此时如果operation中有相关的外键被设置则直接返回
-                let operationData: ED[T]['Update']['data'] | undefined = undefined;
-                if (this.operation) {
-                    const { operation: { action, data } } = this.operation;
-                    if (action !== 'remove') {
-                        operationData = data;
-                    }
-                }
                 const rel = this.judgeRelation(key2);
                 if (rel === 2) {
                     // 基于entity/entityId的多对一
-                    if (operationData?.entityId) {
+                    if (value?.entityId) {
                         return {
-                            id: operationData!.entityId!,
+                            id: value!.entityId!,
                         };
                     }
                     else if (filter) {
@@ -1606,9 +1585,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     }
                 }
                 else if (typeof rel === 'string') {
-                    if (operationData && operationData[`${rel}Id`]) {
+                    if (value && value[`${rel}Id`]) {
                         return {
-                            id: operationData[`${rel}Id`],
+                            id: value[`${rel}Id`],
                         };
                     }
                     else if (filter) {
@@ -1630,22 +1609,38 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 }
                 else {
                     assert(rel instanceof Array);
-                    if (filter) {
-                        if (rel[1]) {
-                            // 基于普通外键的一对多
+                    if (rel[1]) {
+                        // 基于普通外键的一对多
+                        if (id || value) {
+                            return {
+                                [rel[1]]: id || value!.id,
+                            };
+                        }
+                        else if (filter) {
                             return {
                                 [rel[1].slice(0, rel[1].length - 2)]: filter,
                             };
                         }
                         else {
-                            // 基于entity/entityId的一对多
+                            return;
+                        }
+                    }
+                    else {
+                        // 基于entity/entityId的一对多
+                        if (id || value) {
+                            return {
+                                entity: this.entity,
+                                entityId: id || value!.id,
+                            };
+                        }
+                        else if (filter) {
                             return {
                                 [this.entity]: filter,
                             };
                         }
-                    }
-                    else {
-                        return;
+                        else {
+                            return;
+                        }
                     }
                 }
             }
