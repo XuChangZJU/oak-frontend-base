@@ -562,7 +562,12 @@ const oakBehavior = Behavior<
             }
         },
         oakId(data) {
-            this.features.runningTree.setId(this.state.oakFullpath, data);
+            if (this.state.oakFullpath) {
+                this.features.runningTree.setId(this.state.oakFullpath, data);
+            }
+            else {
+                this.props.oakId = data;
+            }
         },
     },
     pageLifetimes: {
