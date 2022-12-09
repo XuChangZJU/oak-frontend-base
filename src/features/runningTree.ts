@@ -119,11 +119,11 @@ abstract class Node<
     setDirty() {
         if (!this.dirty) {
             this.dirty = true;
-            if (this.parent) {
-                this.parent.setDirty();
-            }
         }
         this.publish();
+        if (this.parent) {
+            this.parent.setDirty();
+        }
     }
 
     isDirty() {
