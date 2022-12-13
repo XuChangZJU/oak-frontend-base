@@ -59,10 +59,15 @@ async function translationService(
     return result;
 }
 
-function getI18nextInitOptions(options?: Record<string, any>) {
-    const { version = '1.0.0' } = options || {};
+export type I18nOptions = {
+    version?: string;
+    debug?: boolean; //默认 process.env.NODE_ENV !== 'production'
+};
+
+function getI18nextInitOptions(options?: I18nOptions) {
+    const { version = '1.0.0', debug = false } = options || {};
     return {
-        debug: process.env.NODE_ENV !== 'production',
+        debug: debug,
         fallbackLng: 'zh_CN',
         ns: ['common', 'error'],
         lng: 'zh_CN',
@@ -106,12 +111,18 @@ function getI18nextInitOptions(options?: Record<string, any>) {
         returnObjects: true,
         joinArrays: true,
         saveMissing: true,
+        // missingKeyHandler: (
+        //     lngs: readonly string[],
+        //     ns: string,
+        //     key: string,
+        //     fallbackValue: string,
+        //     updateMissing: boolean,
+        //     options: any
+        // ) => {
+        //     console.warn(lngs, ns, key, fallbackValue);
+        // },
     };
 }
-
-export type I18nOptions = {
-    version?: string;
-};
 
 export function getI18next(options?: I18nOptions) {
     const i18nextInitOptions = getI18nextInitOptions(options) as InitOptions;
