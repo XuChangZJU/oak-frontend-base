@@ -58,18 +58,18 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         option: OP
     ) {
         assert(context.getCurrentTxnId());
-        const selection2 = Object.assign({
+        Object.assign(selection, {
             action: 'select',
-        }, selection) as ED[T]['Operation'];
+        });
 
         // select的trigger应加在根结点的动作之前
         if (!option.blockTrigger) {
-            await this.executor.preOperation(entity, selection2, context, option);
+            await this.executor.preOperation(entity, selection as ED[T]['Operation'], context, option);
         }
         const result = await super.selectAsync(entity, selection, context, option);
 
         if (!option.blockTrigger) {
-            await this.executor.postOperation(entity, selection2, context, option, result);
+            await this.executor.postOperation(entity, selection as ED[T]['Operation'], context, option, result);
         }
         return result;
     }
