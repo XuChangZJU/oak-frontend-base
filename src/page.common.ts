@@ -14,6 +14,7 @@ import {
 import { unset } from 'oak-domain/lib/utils/lodash';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+import { MessageProps } from './types/Message';
 
 export function onPathSet<
     ED extends EntityDict & BaseEntityDict,
@@ -256,10 +257,13 @@ export async function execute<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends AsyncContext<ED>,
-    FrontCxt extends SyncContext<ED>>(
-        this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
-        action?: ED[T]['Action'],
-        path?: string) {
+    FrontCxt extends SyncContext<ED>
+>(
+    this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
+    action?: ED[T]['Action'],
+    path?: string,
+    messageProps?: boolean | MessageProps, //默认true
+) {
     if (this.state.oakExecuting) {
         throw new Error('请仔细设计按钮状态，不要允许重复点击！');
     }
@@ -267,12 +271,20 @@ export async function execute<
         oakFocused: undefined,
     }); */
 
-    const fullpath = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+    const fullpath = path
+        ? `${this.state.oakFullpath}.${path}`
+        : this.state.oakFullpath;
     await this.features.runningTree.execute(fullpath, action);
-    this.setMessage({
-        type: 'success',
-        content: '操作成功',
-    });
+    if (messageProps !== false) {
+        const messageData: MessageProps = {
+            type: 'success',
+            content: '操作成功',
+        };
+        if (typeof messageProps === 'object') {
+            Object.assign(messageData, messageProps);
+        }
+        this.setMessage(messageData);
+    }
 }
 
 export function destroyNode<

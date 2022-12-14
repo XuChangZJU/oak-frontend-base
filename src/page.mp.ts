@@ -304,8 +304,8 @@ const oakBehavior = Behavior<
             return this.features.runningTree.clean(path2);
         },
 
-        execute(action, path) {
-            return execute.call(this as any, action, path);
+        execute(action, messageProps?: boolean | MessageProps) {
+            return execute.call(this as any, action, undefined, messageProps);
         },
 
         getFreshValue(path?: string) {
@@ -564,8 +564,7 @@ const oakBehavior = Behavior<
         oakId(data) {
             if (this.state.oakFullpath) {
                 this.features.runningTree.setId(this.state.oakFullpath, data);
-            }
-            else {
+            } else {
                 this.props.oakId = data;
             }
         },

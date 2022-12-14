@@ -145,7 +145,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) => Promise<void>;
     clean: (path?: string) => void;
     t(key: string, params?: object): string;
-    execute: (action?: ED[T]['Action'], path?: string) => Promise<void>;
+    execute: (action?: ED[T]['Action'], messageProps?: boolean | MessageProps) => Promise<void>;
     checkOperation: (ntity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => boolean;
     tryExecute: (path?: string) => boolean | Error;
     getOperations: (path?: string) => {

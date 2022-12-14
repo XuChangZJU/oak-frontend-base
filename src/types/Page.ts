@@ -250,7 +250,7 @@ export type OakCommonComponentMethods<
     clean: (path?: string) => void;
 
     t(key: string, params?: object): string;
-    execute: (action?: ED[T]['Action'], path?: string) => Promise<void>;
+    execute: (action?: ED[T]['Action'], messageProps?: boolean | MessageProps) => Promise<void>;
     checkOperation: (
         ntity: T,
         action: ED[T]['Action'],

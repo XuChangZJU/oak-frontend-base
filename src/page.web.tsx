@@ -301,8 +301,8 @@ abstract class OakComponentBase<
         return this.props.t(key, params);
     }
 
-    execute(action?: ED[T]['Action']) {
-        return execute.call(this as any, action);
+    execute(action?: ED[T]['Action'], messageProps?: boolean | MessageProps) {
+        return execute.call(this as any, action, undefined, messageProps);
     }
 
     getFreshValue(path?: string) {
@@ -603,43 +603,59 @@ export function createComponent<
 
         constructor(props: ComponentProps<IsList, TProperty>) {
             super(props);
-            const methodProps: Record<WebComponentCommonMethodNames, Function> = {
-                setDisablePulldownRefresh: (able: boolean) => this.setDisablePulldownRefresh(able),
-                t: (key: string, params?: object) => this.t(key, params),
-                execute: (action?: ED[T]['Action']) => {
-                    return this.execute(action);
-                },
-                refresh: () => {
-                    return this.refresh();
-                },
-                setNotification: (data: NotificationProps) => {
-                    return this.setNotification(data);
-                },
-                setMessage: (data: MessageProps) => {
-                    return this.setMessage(data);
-                },
-                navigateTo: <T2 extends keyof ED>(
-                    options: { url: string } & OakNavigateToParameters<ED, T2>,
-                    state?: Record<string, any>,
-                    disableNamespace?: boolean
-                ) => {
-                    return this.navigateTo(options, state, disableNamespace);
-                },
-                navigateBack: (delta?: number) => {
-                    return this.navigateBack(delta);
-                },
-                redirectTo: <T2 extends keyof ED>(
-                    options: Parameters<typeof wx.redirectTo>[0] &
-                        OakNavigateToParameters<ED, T2>,
-                    state?: Record<string, any>,
-                    disableNamespace?: boolean
-                ) => {
-                    return this.redirectTo(options, state, disableNamespace);
-                },
-                clean: (path?: string) => {
-                    return this.clean(path);
-                }
-            };
+            const methodProps: Record<WebComponentCommonMethodNames, Function> =
+                {
+                    setDisablePulldownRefresh: (able: boolean) =>
+                        this.setDisablePulldownRefresh(able),
+                    t: (key: string, params?: object) => this.t(key, params),
+                    execute: (
+                        action?: ED[T]['Action'],
+                        messageProps?: boolean | MessageProps
+                    ) => {
+                        return this.execute(action, messageProps);
+                    },
+                    refresh: () => {
+                        return this.refresh();
+                    },
+                    setNotification: (data: NotificationProps) => {
+                        return this.setNotification(data);
+                    },
+                    setMessage: (data: MessageProps) => {
+                        return this.setMessage(data);
+                    },
+                    navigateTo: <T2 extends keyof ED>(
+                        options: { url: string } & OakNavigateToParameters<
+                            ED,
+                            T2
+                        >,
+                        state?: Record<string, any>,
+                        disableNamespace?: boolean
+                    ) => {
+                        return this.navigateTo(
+                            options,
+                            state,
+                            disableNamespace
+                        );
+                    },
+                    navigateBack: (delta?: number) => {
+                        return this.navigateBack(delta);
+                    },
+                    redirectTo: <T2 extends keyof ED>(
+                        options: Parameters<typeof wx.redirectTo>[0] &
+                            OakNavigateToParameters<ED, T2>,
+                        state?: Record<string, any>,
+                        disableNamespace?: boolean
+                    ) => {
+                        return this.redirectTo(
+                            options,
+                            state,
+                            disableNamespace
+                        );
+                    },
+                    clean: (path?: string) => {
+                        return this.clean(path);
+                    },
+                };
             if (option.isList) {
                 Object.assign(methodProps, {
                     addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
