@@ -4,10 +4,9 @@ import {
     Checker,
     Trigger,
     StorageSchema,
-    Context,
-    RowStore,
-    OakRowInconsistencyException,
     Watcher,
+    Routine,
+    Timer,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
@@ -58,6 +57,8 @@ export function initialize<
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     watchers?: Array<Watcher<ED, keyof ED, Cxt>>,
+    timers?: Array<Timer<ED, Cxt>>,
+    startRoutines?: Array<Routine<ED, Cxt>>,
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
@@ -78,6 +79,8 @@ export function initialize<
         triggers2,
         checkers2,
         watchers || [],
+        timers,
+        startRoutines,
         initialData,
         actionDict
     );

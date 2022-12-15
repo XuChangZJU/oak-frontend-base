@@ -1,7 +1,8 @@
+import { scheduleJob } from 'node-schedule';
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 import { DebugStore } from './DebugStore';
 import {
-    Checker, Trigger, StorageSchema, EntityDict, ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher} from "oak-domain/lib/types";
+    Checker, Trigger, StorageSchema, EntityDict, ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, Routine, Timer} from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { assert } from 'oak-domain/lib/utils/assert';
@@ -190,20 +191,48 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
     doWatchers();
 }
 
-/* export function resetDebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Context<ED>>(
-    store: DebugStore<ED, Cxt>,
-    data: {
-        [T in keyof ED]?: Array<ED[T]['OpSchema']>;
-    }
+function initializeTimers<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
+    store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) =>  Promise<Cxt>, timers: Array<Timer<ED, Cxt>>
 ) {
-    initDataInStore(store, data, {
-        create: 0,
-        update: 0,
-        remove: 0,
-        commit: 0
-    });
-    materializeData(data, store.getStat());
-} */
+    for (const timer of timers) {
+        const { cron, fn, name } = timer;
+        scheduleJob(name, cron, async (date) => {
+            const start = Date.now();
+            const context = await contextBuilder()(store);
+            await context.begin();
+            console.log(`定时器【${name}】开始执行，时间是【${date.toLocaleTimeString()}】`);
+            try {
+                const result = await fn(context);
+                console.log(`定时器【${name}】执行完成，耗时${Date.now() - start}毫秒，结果是【${result}】`);
+                await context.commit();
+            }
+            catch(err) {
+                console.warn(`定时器【${name}】执行失败，耗时${Date.now() - start}毫秒，错误是`, err);
+                await context.rollback();
+            }
+        })
+    }
+}
+
+async function doRoutines<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
+    store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) =>  Promise<Cxt>, routines: Array<Routine<ED, Cxt>>
+) {
+    for (const routine of routines) {
+        const { name, fn } = routine;
+        const context = await contextBuilder()(store);        
+        const start = Date.now();
+        await context.begin();
+        try {
+            const result = await fn(context);
+            console.log(`例程【${name}】执行完成，耗时${Date.now() - start}毫秒，结果是【${result}】`);
+            await context.commit();
+        }
+        catch (err) {
+            console.warn(`例程【${name}】执行失败，耗时${Date.now() - start}毫秒，错误是`, err);
+            await context.rollback();
+        }
+    }
+}
 
 export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
     storageSchema: StorageSchema<ED>,
@@ -211,6 +240,8 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
     triggers: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers: Array<Checker<ED, keyof ED, Cxt>>,
     watchers: Array<Watcher<ED, keyof ED, Cxt>>,
+    timers?: Array<Timer<ED, Cxt>>,
+    startRoutines?: Array<Routine<ED, Cxt>>,
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
@@ -258,6 +289,14 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
 
     // 启动watcher
     initializeWatchers(store, contextBuilder, watchers.concat(adWatchers));
+    // 启动timer
+    if (timers) {
+        initializeTimers(store, contextBuilder, timers);
+    }
+    // 启动startRoutine
+    if (startRoutines) {
+        doRoutines(store, contextBuilder, startRoutines);
+    }
     return store;
 }
 
