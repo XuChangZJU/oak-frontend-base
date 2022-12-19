@@ -154,7 +154,9 @@ export function reRender<
         if (actions && actions.length > 0) {
             assert(!option.isList, 'actions只能作用于单个对象页面上');
             const id = this.features.runningTree.getId(this.state.oakFullpath);
-            if (id) {
+            const value = this.features.runningTree.getFreshValue(this.state.oakFullpath);
+            if (id && value) {
+                // 必须有值才判断action
                 const testResult = actions.map(
                     ele => ({
                         action: ele,
