@@ -152,18 +152,21 @@ export function reRender<
         let oakLegalActions: ED[T]['Action'][] = [];
         const actions: ED[T]['Action'][] = this.props.oakActions || option.actions;
         if (actions && actions.length > 0) {
-            assert(this.props.oakId);       // actions必须配合id来使用
-            const testResult = actions.map(
-                ele => ({
-                    action: ele,
-                    result: this.checkOperation(this.state.oakEntity, ele, { id: this.props.oakId }, ['relation', 'row']),
-                })
-            );
-            oakLegalActions = testResult.filter(
-                ele => ele.result
-            ).map(
-                ele => ele.action
-            );
+            assert(!option.isList, 'actions只能作用于单个对象页面上');
+            const id = this.features.runningTree.getId(this.state.oakFullpath);
+            if (id) {
+                const testResult = actions.map(
+                    ele => ({
+                        action: ele,
+                        result: this.checkOperation(this.state.oakEntity, ele, { id: this.props.oakId }, ['relation', 'row']),
+                    })
+                );
+                oakLegalActions = testResult.filter(
+                    ele => ele.result
+                ).map(
+                    ele => ele.action
+                );
+            }
         }
         const data: Record<string, any> = formData
             ? formData.call(this, {

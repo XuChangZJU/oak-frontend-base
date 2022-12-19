@@ -600,6 +600,7 @@ export function createComponent<
         isReachBottom = false;
         subscribed: Array<() => void> = [];
         methodProps: Record<string, Function>;
+        defaultProperties: Record<string, any>;
 
         constructor(props: ComponentProps<IsList, TProperty>) {
             super(props);
@@ -740,6 +741,18 @@ export function createComponent<
                 oakDirty: false,
             }) as any;
             this.methodProps = methodProps;
+           
+            // 处理默认的properties
+            this.defaultProperties = {};
+            const { properties } = option;
+            if (properties) {
+                for (const property in properties) {
+                    if (typeof properties[property] === 'object') {
+                        const { value } = properties[property] as WechatMiniprogram.Component.FullProperty<any>;
+                        this.defaultProperties[property] = value;
+                    }
+                }
+            }
 
             lifetimes?.created && lifetimes.created.call(this);
         }
@@ -807,7 +820,6 @@ export function createComponent<
                 }
                 this.reRender();
             }
-
         }
 
         componentWillUnmount() {
@@ -859,6 +871,7 @@ export function createComponent<
                         getScrollContainer: () => document.body,
                     },
                     <Render methods={this.methodProps} data={{
+                        ...this.defaultProperties,
                         ...this.state,
                         ...this.props,
                     }} />
@@ -866,6 +879,7 @@ export function createComponent<
                 return Child;
             }
             return <Render methods={this.methodProps} data={{
+                ...this.defaultProperties,
                 ...this.state,
                 ...this.props,
             }} />;
