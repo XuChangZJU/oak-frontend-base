@@ -5,7 +5,42 @@ import { OakNavigateToParameters } from '../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types';
 
+type Location = {
+    pathname: string;
+    state: unknown;
+    key: string
+};
+
 export class Navigator extends Feature {
+    namespace: string;
+    history: WechatMiniprogram.Wx;
+
+    constructor() {
+        super();
+        this.history = wx;
+        this.namespace = '';
+    }
+
+    setNamespace(namespace: string) {
+        this.namespace = namespace;
+    }
+
+    getLocation(): Location {
+        const pages = getCurrentPages(); //获取加载的页面
+        const currentPage = pages[pages.length - 1]; //获取当前页面的对象
+        const url = currentPage.route; //当前页面url
+        const options = currentPage.options; //如果要获取url中所带的参数可以查看options
+        return {
+            pathname: url,
+            state: options,
+            key: `${pages.length - 1}`,
+        };
+    }
+
+    getNamespace() {
+        return this.namespace;
+    }
+
     private constructUrl(url: string, state?: Record<string, any>) {
         const urlParse = URL.parse(url, true);
         const { pathname, search } = urlParse as {

@@ -144,7 +144,7 @@ export function reRender<
 
         const oakDirty = this.features.runningTree.isDirty(this.state.oakFullpath);
         const oakLoading = !(this as any).pullDownRefresh && this.features.runningTree.isLoading(this.state.oakFullpath);
-        const oakPullDownRefreshLoading = (this as any).pullDownRefresh && this.features.runningTree.isLoading(this.state.oakFullpath);
+        const oakPullDownRefreshLoading = !!(this as any).pullDownRefresh && this.features.runningTree.isLoading(this.state.oakFullpath);
         const oakLoadingMore = this.features.runningTree.isLoadingMore(this.state.oakFullpath);
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
         const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
