@@ -1153,6 +1153,20 @@ class ListNode<
         }
         this.publish();
     }
+
+    getChildOperation(child: SingleNode<ED, T, Cxt, FrontCxt, AD>) {
+        let childId: string = '';
+        for (const k in this.children) {
+            if (this.children[k] === child)             {
+                childId = k;
+                break;
+            }
+        }
+        assert(childId);
+        if (this.updates && this.updates[childId]) {
+            return this.updates[childId].operation;
+        }
+    }
 }
 
 class SingleNode<ED extends EntityDict & BaseEntityDict,
@@ -1284,11 +1298,23 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }> : [];
         const filter = this.getFilter();
         if (filter) {
-            if (!disableOperation && this.operation) {
+            assert(!disableOperation);
+            if (this.operation) {
                 operations.push({
                     entity: this.entity,
                     operation: this.operation.operation,
                 });
+            }
+            // 如果是listNode下的一个子结点，则父结点上对应的operation也需要被redo
+            const parent = this.getParent();
+            if (parent instanceof ListNode) {
+                const parentOperation = parent.getChildOperation(this);
+                if (parentOperation) {
+                    operations.push({
+                        entity: this.entity,
+                        operation: parentOperation,
+                    });
+                }
             }
             const result = this.cache.tryRedoOperationsThenSelect(this.entity, {
                 data: projection,

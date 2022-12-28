@@ -104,6 +104,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     loadMore(): Promise<void>;
     setCurrentPage(currentPage: number, append?: boolean): void;
     clean(): void;
+    getChildOperation(child: SingleNode<ED, T, Cxt, FrontCxt, AD>): ED[T]["CreateSingle"] | ED[T]["Update"] | ED[T]["Remove"] | undefined;
 }
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?;
