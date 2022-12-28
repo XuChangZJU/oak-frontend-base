@@ -103,14 +103,14 @@ export function onPathSet<
             id: oakId,
         });
 
-        Object.assign(this.state, {
+        this.setState({
             oakEntity: entity2,
             oakFullpath: oakPath2,
         });
 
     }
     else {
-        Object.assign(this.state, {
+        this.setState({
             oakFullpath: oakPath2,
         });
         // 创建virtualNode

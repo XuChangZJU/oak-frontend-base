@@ -557,7 +557,7 @@ const oakBehavior = Behavior<
     },
     observers: {
         oakPath(data) {
-            if (data) {
+            if (data && data !== this.state.oakFullpath) {
                 onPathSet.call(this as any, this.oakOption as any);
             }
         },
