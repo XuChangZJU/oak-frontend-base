@@ -160,7 +160,7 @@ export function reRender<
                 const testResult = actions.map(
                     ele => ({
                         action: ele,
-                        result: this.checkOperation(this.state.oakEntity, ele, { id: this.props.oakId }, ['relation', 'row']),
+                        result: this.checkOperation(this.state.oakEntity, ele, { id }, ['relation', 'row']),
                     })
                 );
                 oakLegalActions = testResult.filter(
