@@ -91,7 +91,7 @@ export class Cache<
 
     async count<T extends keyof ED, OP extends SelectOption>(
         entity: T,
-        selection: ED[T]['Selection'],
+        selection: Pick<ED[T]['Selection'], 'filter'>,
         option?: OP,
         callback?: (result: Awaited<ReturnType<AD['count']>>) => void,
     ) {

@@ -14,7 +14,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>) => void): Promise<any>;
     refresh<T extends keyof ED, OP extends SelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true, callback?: (result: Awaited<ReturnType<AD['select']>>) => void): Promise<any>;
     operate<T extends keyof ED, OP extends OperateOption>(entity: T, operation: ED[T]['Operation'], option?: OP, callback?: (result: Awaited<ReturnType<AD['operate']>>) => void): Promise<any>;
-    count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, callback?: (result: Awaited<ReturnType<AD['count']>>) => void): Promise<any>;
+    count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]['Selection'], 'filter'>, option?: OP, callback?: (result: Awaited<ReturnType<AD['count']>>) => void): Promise<any>;
     private sync;
     /**
      * 前端缓存做operation只可能是测试权限，必然回滚

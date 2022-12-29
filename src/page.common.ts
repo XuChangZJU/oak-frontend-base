@@ -16,7 +16,7 @@ import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { MessageProps } from './types/Message';
 
-export function onPathSet<
+export async function onPathSet<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends AsyncContext<ED>,    
@@ -103,16 +103,25 @@ export function onPathSet<
             id: oakId,
         });
 
-        this.setState({
-            oakEntity: entity2,
-            oakFullpath: oakPath2,
-        });
+        // 确保SetState生效，这里改成异步
+        await new Promise(
+            (resolve) => {
+                this.setState({
+                    oakEntity: entity2,
+                    oakFullpath: oakPath2,
+                }, () => resolve(0));
+            }
+        );
 
     }
     else {
-        this.setState({
-            oakFullpath: oakPath2,
-        });
+        await new Promise(
+            (resolve) => {
+                this.setState({
+                    oakFullpath: oakPath2,
+                }, () => resolve(0));
+            }
+        );
         // 创建virtualNode
         features.runningTree.createNode({
             path: oakPath2 as string,

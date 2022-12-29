@@ -799,7 +799,7 @@ export function createComponent<
             this.isReachBottom = isCurrentReachBottom;
         }
 
-        componentDidMount() {
+        async componentDidMount() {
             this.registerPageScroll();
             if (option.entity) {
                 this.subscribed.push(
@@ -809,7 +809,7 @@ export function createComponent<
             lifetimes?.attached && lifetimes.attached.call(this);
             const { oakPath } = this.props;
             if (oakPath || this.iAmThePage() && path) {
-                this.onPathSet();
+                await this.onPathSet();
                 lifetimes?.ready && lifetimes.ready.call(this);
                 lifetimes?.show && lifetimes.show.call(this);
             }
@@ -831,10 +831,10 @@ export function createComponent<
             lifetimes?.detached && lifetimes.detached.call(this);
         }
 
-        componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
+        async componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
             if (prevProps.oakPath !== this.props.oakPath) {
                 assert(this.props.oakPath);
-                this.onPathSet();
+                await this.onPathSet();
                 lifetimes?.ready && lifetimes.ready.call(this);
                 // lifetimes?.show && lifetimes.show.call(this);
             }
