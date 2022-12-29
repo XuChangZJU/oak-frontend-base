@@ -174,7 +174,8 @@ const oakBehavior = Behavior<
                                 value = new Number(data[property]);
                                 break;
                             }
-                            case Object: {
+                            case Object:
+                            case Array: {
                                 value = JSON.parse(data[property]);
                                 break;
                             }

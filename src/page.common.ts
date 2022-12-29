@@ -115,6 +115,10 @@ export async function onPathSet<
 
     }
     else {
+        // 创建virtualNode
+        features.runningTree.createNode({
+            path: oakPath2 as string,
+        });
         await new Promise(
             (resolve) => {
                 this.setState({
@@ -122,10 +126,6 @@ export async function onPathSet<
                 }, () => resolve(0));
             }
         );
-        // 创建virtualNode
-        features.runningTree.createNode({
-            path: oakPath2 as string,
-        });
     }
     this.subscribed.push(
         features.runningTree.subscribeNode(
