@@ -1,4 +1,4 @@
-import { EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
+import { AggregationResult, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
 import { TreeStore, TreeStoreOperateOption, TreeStoreSelectOption } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
@@ -19,6 +19,9 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
     constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>) {
         super(storageSchema);
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
+    }
+    aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]["Aggregation"], context: Cxt, option: OP): Promise<AggregationResult<ED[T]["Schema"]>> {
+        return this.aggregateAsync(entity, aggregation, context, option);
     }
     begin(option?: TxnOption): Promise<string> {
         return super.beginAsync();

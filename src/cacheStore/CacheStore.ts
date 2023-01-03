@@ -1,4 +1,4 @@
-import { EntityDict, OperationResult, OpRecord, SelectOption } from 'oak-domain/lib/types/Entity';
+import { AggregationResult, EntityDict, OperationResult, OpRecord, SelectOption } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from "oak-domain/lib/types/Storage";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Checker, CheckerType, TxnOption } from 'oak-domain/lib/types';
@@ -27,6 +27,11 @@ export class CacheStore<
         this.getFullDataFn = getFullDataFn;
         this.resetInitialDataFn = resetInitialDataFn;
     }
+    
+    aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]['Aggregation'], context: SyncContext<ED>, option: OP): AggregationResult<ED[T]['Schema']> {
+        return this.aggregateSync(entity, aggregation, context, option);
+    }
+
     operate<T extends keyof ED, OP extends TreeStoreOperateOption>(
         entity: T,
         operation: ED[T]['Operation'],

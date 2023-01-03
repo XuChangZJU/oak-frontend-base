@@ -157,6 +157,7 @@ const oakBehavior = Behavior<
              * 目前处理的还不是很完善，在实际处理中再做
              */
             const { properties, path } = this.oakOption;
+            const dataResolved: Record<string, any> = {};
             const assignProps = (
                 data: Record<string, any>,
                 property: string,
@@ -184,7 +185,7 @@ const oakBehavior = Behavior<
                             }
                         }
                     }
-                    Object.assign(this.props, {
+                    Object.assign(dataResolved, {
                         [property]: value,
                     });
                 }
@@ -212,6 +213,10 @@ const oakBehavior = Behavior<
                         OakProperties[key as keyof typeof OakProperties]!
                     );
                 }
+            }
+            
+            if (Object.keys(dataResolved).length > 0) {
+                this.setState(dataResolved);
             }
             if (this.props.oakPath || (this.iAmThePage() && path)) {
                 await onPathSet.call(this as any, this.oakOption as any);
