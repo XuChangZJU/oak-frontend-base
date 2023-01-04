@@ -68,12 +68,16 @@ export class Cache<
         callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
     ) {
         reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
-        return await this.exec('select', {
+        const result = await this.exec('select', {
             entity,
             selection,
             option,
             getCount,
         }, callback);
+        return result as {
+            data: Partial<ED[T]['Schema']>[];
+            count?: number;
+        };
     }
 
     async operate<T extends keyof ED, OP extends OperateOption>(
@@ -191,7 +195,9 @@ export class Cache<
                 );
             }
             reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
-            const result = this.getInner(entity, selection, context, allowMiss);
+
+            // 这个场景下要把可能刚刚delete的行返回
+            const result = this.getInner(entity, selection, context, allowMiss, true);
             context.rollback();
             return result;
         }
@@ -201,7 +207,7 @@ export class Cache<
         }
     }
 
-    private getInner<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], context: SyncContext<ED>, allowMiss?: boolean): Partial<ED[T]['Schema']>[] {
+    private getInner<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], context: SyncContext<ED>, allowMiss?: boolean, includedDeleted?: boolean): Partial<ED[T]['Schema']>[] {
         try {
             const result = this.cacheStore!.select(
                 entity,
@@ -209,6 +215,7 @@ export class Cache<
                 context,
                 {
                     dontCollect: true,
+                    includedDeleted: includedDeleted || undefined,
                 }
             );
             return result;
