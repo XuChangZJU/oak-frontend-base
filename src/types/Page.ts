@@ -151,7 +151,7 @@ export type OakComponentOption<
     TMethod extends Record<string, Function>,
     > = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TProperty> &
     Partial<{
-        data?: TData;
+        data?: ((option: { features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD, props: ComponentProps<IsList, TProperty>}) => TData) | TData;
         properties: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty>;
         methods: TMethod;
         lifetimes: {
@@ -164,7 +164,9 @@ export type OakComponentOption<
             show?(): void;
             hide?(): void;
         };
-        actions?: ED[T]['Action'][];
+        actions?: ED[T]['Action'][] | ((this: ComponentPublicThisType<
+            ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod
+            >) => ED[T]['Action'][]);
         observers: Record<string, (...args: any[]) => any>;
     }> &
     Partial<{

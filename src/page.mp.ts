@@ -6,6 +6,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { Feature } from './types/Feature';
 import {
+    ComponentProps,
     OakCommonComponentMethods,
     OakComponentOption,
     OakListComponentMethods,
@@ -685,10 +686,12 @@ export function createComponent<
         externalClasses,
         // options,
         behaviors: [oakBehavior],
-        data: Object.assign({}, data, {
+        data: typeof data !== 'function' ? Object.assign({}, data, {
             oakFullpath: '',
-        }),
-        properties: Object.assign(
+        }) : {
+            oakFullpath: '',
+        },
+        properties:  Object.assign(
             {},
             properties,
             OakProperties
@@ -741,6 +744,11 @@ export function createComponent<
                 detached && detached.call(this);
             },
             ready() {
+                if (typeof data === 'function') {
+                    // ts的编译好像有问题，这里不硬写as过不去 
+                    const data2 = (data as ((option: { features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD, props: ComponentProps<IsList, TProperty>}) => TData))({ features, props: this.data as any });
+                    this.setData(data2);
+                }
                 ready && ready.call(this);
             },
             moved() {

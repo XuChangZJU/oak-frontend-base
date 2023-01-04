@@ -70,7 +70,10 @@ export declare type ComponentFullThisType<ED extends EntityDict & BaseEntityDict
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 } & OakCommonComponentMethods<ED, T> & (IsList extends true ? OakListComponentMethods<ED, T> : OakSingleComponentMethods<ED, T>);
 export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any>, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends Record<string, Function>> = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TProperty> & Partial<{
-    data?: TData;
+    data?: ((option: {
+        features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
+        props: ComponentProps<IsList, TProperty>;
+    }) => TData) | TData;
     properties: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty>;
     methods: TMethod;
     lifetimes: {
@@ -83,7 +86,7 @@ export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T
         show?(): void;
         hide?(): void;
     };
-    actions?: ED[T]['Action'][];
+    actions?: ED[T]['Action'][] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => ED[T]['Action'][]);
     observers: Record<string, (...args: any[]) => any>;
 }> & Partial<{
     wechatMp: {

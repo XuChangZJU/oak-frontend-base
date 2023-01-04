@@ -159,7 +159,7 @@ export function reRender<
         const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
 
         let oakLegalActions: ED[T]['Action'][] = [];
-        const actions: ED[T]['Action'][] = this.props.oakActions || option.actions;
+        const actions: ED[T]['Action'][] = this.props.oakActions || (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
         if (actions && actions.length > 0) {
             assert(!option.isList, 'actions只能作用于单个对象页面上');
             const id = this.features.runningTree.getId(this.state.oakFullpath);
