@@ -193,10 +193,13 @@ const oakBehavior = Behavior<
             };
             if (properties) {
                 for (const key in properties) {
+                    const type2 = typeof properties[key] === 'object' ?
+                        (properties[key]! as WechatMiniprogram.Component.FullProperty<WechatMiniprogram.Component.ShortProperty>).type :
+                        (properties[key] as WechatMiniprogram.Component.ShortProperty);
                     if (query[key]) {
-                        assignProps(query, key, properties[key]!);
+                        assignProps(query, key, type2!);
                     } else if (this.data) {
-                        assignProps(this.data, key, properties[key]!);
+                        assignProps(this.data, key, type2!);
                     }
                 }
             }
