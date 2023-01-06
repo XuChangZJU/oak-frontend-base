@@ -102,6 +102,12 @@ export async function onPathSet<
             sorters: sorters2,
             id: oakId,
         });
+        this.subscribed.push(
+            features.runningTree.subscribeNode(
+                () => this.reRender(),
+                oakPath2!
+            )
+        );
 
         // 确保SetState生效，这里改成异步
         await new Promise(
@@ -119,6 +125,12 @@ export async function onPathSet<
         features.runningTree.createNode({
             path: oakPath2 as string,
         });
+        this.subscribed.push(
+            features.runningTree.subscribeNode(
+                () => this.reRender(),
+                oakPath2!
+            )
+        );
         await new Promise(
             (resolve) => {
                 this.setState({
@@ -127,12 +139,6 @@ export async function onPathSet<
             }
         );
     }
-    this.subscribed.push(
-        features.runningTree.subscribeNode(
-            () => this.reRender(),
-            oakPath2!
-        )
-    );
     this.refresh();
 }
 

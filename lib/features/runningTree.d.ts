@@ -149,11 +149,11 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
 declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private dirty;
     private children;
-    constructor();
+    constructor(path?: string, parent?: VirtualNode<ED, Cxt, FrontCxt, AD>);
     getActiveModies(child: any): undefined;
     setDirty(): void;
-    addChild(path: string, child: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>): void;
-    getChild(path: string): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
+    addChild(path: string, child: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>): void;
+    getChild(path: string): VirtualNode<ED, Cxt, FrontCxt, AD> | SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     getParent(): undefined;
     destroy(): void;
     getFreshValue(): undefined;

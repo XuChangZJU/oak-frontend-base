@@ -1,6 +1,5 @@
 import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { reinforceSelection } from 'oak-domain/lib/store/selection';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
 import { cloneDeep, pull } from 'oak-domain/lib/utils/lodash';
@@ -67,7 +66,6 @@ export class Cache<
         getCount?: true,
         callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
     ) {
-        reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
         const result = await this.exec('select', {
             entity,
             selection,
@@ -99,7 +97,6 @@ export class Cache<
         option?: OP,
         callback?: (result: Awaited<ReturnType<AD['count']>>) => void,
     ) {
-        // reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
         return await this.exec('count', {
             entity,
             selection,
@@ -194,7 +191,6 @@ export class Cache<
                     }
                 );
             }
-            reinforceSelection(this.cacheStore!.getSchema(), entity, selection);
 
             // 这个场景下要把可能刚刚delete的行返回
             const result = this.getInner(entity, selection, context, allowMiss, true);

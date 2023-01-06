@@ -504,7 +504,7 @@ class ListNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Node<ED, T, Cxt, FrontCxt, AD> {
+> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     private updates: Record<string, {
         operation: ED[T]['CreateSingle'] | ED[T]['Update'] | ED[T]['Remove'],
@@ -1157,7 +1157,7 @@ class ListNode<
     getChildOperation(child: SingleNode<ED, T, Cxt, FrontCxt, AD>) {
         let childId: string = '';
         for (const k in this.children) {
-            if (this.children[k] === child)             {
+            if (this.children[k] === child) {
                 childId = k;
                 break;
             }
@@ -1680,13 +1680,16 @@ class VirtualNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private dirty: boolean;
-    private children: Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>>;
-    constructor() {
+    private children: Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
+    constructor(path?: string, parent?: VirtualNode<ED, Cxt, FrontCxt, AD>) {
         super();
         this.dirty = false;
         this.children = {};
+        if (parent) {
+            parent.addChild(path!, this);
+        }
     }
     getActiveModies(child: any): undefined {
         return;
@@ -1696,17 +1699,19 @@ class VirtualNode<
         this.publish();
     }
     addChild(
-        path: string, child: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>) {
+        path: string, child: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>) {
         // 规范virtualNode子结点的命名路径和类型，entity的singleNode必须被命名为entity或entity:number，ListNode必须被命名为entitys或entitys:number
         assert(!this.children[path]);
-        const entity = child.getEntity() as string;
-        if (child instanceof SingleNode) {
-            assert(path === entity || path.startsWith(`${entity}:`), `oakPath「${path}」不符合命名规范，请以「${entity}」为命名起始标识`);
-        }
-        else {
-            assert(path === `${entity}s` || path.startsWith(`${entity}s:`), `oakPath「${path}」不符合命名规范，请以「${entity}s」为命名起始标识`);
-        }
         this.children[path] = child;
+        if (child instanceof SingleNode || child instanceof ListNode) {
+            const entity = child.getEntity() as string;
+            if (child instanceof SingleNode) {
+                assert(path === entity || path.startsWith(`${entity}:`), `oakPath「${path}」不符合命名规范，请以「${entity}」为命名起始标识`);
+            }
+            else {
+                assert(path === `${entity}s` || path.startsWith(`${entity}s:`), `oakPath「${path}」不符合命名规范，请以「${entity}s」为命名起始标识`);
+            }
+        }
     }
     getChild(path: string) {
         return this.children[path];
@@ -1744,14 +1749,15 @@ class VirtualNode<
             if (operation) {
                 const idx = ele.indexOf(':') !== -1 ? ele.slice(0, ele.indexOf(':')) : ele;
                 if (operationDict[idx]) {
+                    assert(false, '这种情况不应当再出现');
                     // 需要合并这两个子结点的动作       todo 两个子结点指向同一个对象，这种情况应当要消除
-                    if (this.children[ele] instanceof SingleNode) {
+                    /* if (this.children[ele] instanceof SingleNode) {
                         // mergeOperationOper(this.children[ele].getEntity(), this.children[ele].getSchema(), operation[0], operationDict[idx][0]);
                     }
                     else {
                         console.warn('发生virtualNode上的list页面的动作merge，请查看');
                         operationDict[idx].push(...operation);
-                    }
+                    } */
                 }
                 else {
                     operationDict[idx] = operation;
@@ -1830,7 +1836,7 @@ export class RunningTree<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
     private root: Record<
@@ -1903,8 +1909,8 @@ export class RunningTree<
             }
         }
         else {
-            node = new VirtualNode();
-            assert(!parentNode);
+            assert(!parentNode || parentNode instanceof VirtualNode);
+            node = new VirtualNode(path, parentNode);
         }
         if (!parentNode) {
             assert(!parent && !this.root[path]);
