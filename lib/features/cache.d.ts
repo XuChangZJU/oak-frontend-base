@@ -16,6 +16,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         data: Partial<ED[T]['Schema']>[];
         count?: number | undefined;
     }>;
+    aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]['Aggregation'], option?: OP): Promise<any>;
     operate<T extends keyof ED, OP extends OperateOption>(entity: T, operation: ED[T]['Operation'], option?: OP, callback?: (result: Awaited<ReturnType<AD['operate']>>) => void): Promise<any>;
     count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]['Selection'], 'filter'>, option?: OP, callback?: (result: Awaited<ReturnType<AD['count']>>) => void): Promise<any>;
     private sync;

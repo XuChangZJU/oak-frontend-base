@@ -615,6 +615,9 @@ export function createComponent<
                     ) => {
                         return this.execute(action, messageProps);
                     },
+                    aggregate: (aggregation: ED[T]['Aggregation']) => {
+                        return this.features.cache.aggregate(this.state.oakEntity, aggregation);
+                    },
                     refresh: () => {
                         return this.refresh();
                     },

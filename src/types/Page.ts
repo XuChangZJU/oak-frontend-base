@@ -1,4 +1,4 @@
-import { Aspect, EntityDict, DeduceSorterItem, CheckerType } from "oak-domain/lib/types";
+import { Aspect, EntityDict, DeduceSorterItem, CheckerType, AggregationResult } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
@@ -264,6 +264,7 @@ export type OakCommonComponentMethods<
         path?: string
     ) => { operation: ED[T]['Operation']; entity: T }[] | undefined;
     refresh: () => Promise<void>;
+    aggregate: (aggregation: ED[T]['Aggregation']) => Promise<AggregationResult<ED[T]['Schema']>>;
 };
 
 export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
@@ -370,7 +371,7 @@ export type MakeOakComponent<
     ) => React.ComponentType<any>;
 
 // 暴露给组件的方法
-export type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh';
+export type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh' | 'aggregate';
 
 // 暴露给list组件的方法
 export type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedFilter' | 'removeNamedFilter' | 'removeNamedFilterByName' | 'setNamedSorters'

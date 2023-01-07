@@ -564,6 +564,9 @@ const oakBehavior = Behavior<
                 afterExecute
             );
         },
+        async aggregate(aggregation) {
+            return await this.features.cache.aggregate(this.state.oakEntity, aggregation);
+        },
     },
     observers: {
         oakPath(data) {

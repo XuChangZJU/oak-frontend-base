@@ -78,6 +78,20 @@ export class Cache<
         };
     }
 
+    
+    async aggregate<T extends keyof ED, OP extends SelectOption>(
+        entity: T,
+        aggregation: ED[T]['Aggregation'],
+        option?: OP,
+    ) {
+        const result = await this.exec('aggregate', {
+            entity,
+            aggregation,
+            option,
+        });
+        return result;
+    }
+
     async operate<T extends keyof ED, OP extends OperateOption>(
         entity: T,
         operation: ED[T]['Operation'],
