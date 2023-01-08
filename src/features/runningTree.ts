@@ -203,7 +203,7 @@ function mergeOperationData<ED extends EntityDict & BaseEntityDict, T extends ke
                 const result = mergeOperationOper(rel, schema, (from[attr] as any), (into[attr] as any));
                 assert(!result);
             }
-            else if (rel instanceof Array) {
+            else if (rel instanceof Array && !attr.endsWith('$$aggr')) {
                 /**
                  * 两个一对多的list要合并，直接合并list就可以了，前端设计上应该不可能出现两个一对多的list相交的case
                  * $extraFile$XXX:1     $extraFile$XXX:2
@@ -1498,7 +1498,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                             [k]: subProjection,
                         });
                     }
-                    else {
+                    else if (!k.endsWith('$$aggr')) {
                         const child = this.children[k];
                         assert(rel instanceof Array && child instanceof ListNode);
                         const subSelection = child.constructSelection();
@@ -1634,7 +1634,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     }
                 }
                 else {
-                    assert(rel instanceof Array);
+                    assert(rel instanceof Array && !key2.endsWith('$$aggr'));
                     if (rel[1]) {
                         // 基于普通外键的一对多
                         if (id || value) {
