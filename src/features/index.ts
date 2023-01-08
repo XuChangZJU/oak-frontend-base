@@ -13,6 +13,7 @@ import { Notification } from './notification';
 import { Message } from './message';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { Navigator } from './navigator';
+import { Port } from './port';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 
@@ -30,6 +31,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
     const notification = new Notification();
     const message = new Message();
     const navigator = new Navigator();
+    const port = new Port<ED, Cxt, AD>(aspectWrapper);
     return {
         cache,
         location,
@@ -40,6 +42,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         notification,
         message,
         navigator,
+        port,
     };
 }
 
@@ -58,4 +61,5 @@ export type BasicFeatures<
     notification: Notification;
     message: Message;
     navigator: Navigator;
+    port: Port<ED, Cxt, AD>;
 };

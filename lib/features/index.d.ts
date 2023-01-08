@@ -12,6 +12,7 @@ import { Notification } from './notification';
 import { Message } from './message';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { Navigator } from './navigator';
+import { Port } from './port';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>>(aspectWrapper: AspectWrapper<ED, Cxt, AD>, storageSchema: StorageSchema<ED>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>): {
@@ -24,6 +25,7 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
     notification: Notification;
     message: Message;
     navigator: Navigator;
+    port: Port<ED, Cxt, AD>;
 };
 export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> = {
     cache: Cache<ED, Cxt, FrontCxt, AD>;
@@ -35,4 +37,5 @@ export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt ex
     notification: Notification;
     message: Message;
     navigator: Navigator;
+    port: Port<ED, Cxt, AD>;
 };

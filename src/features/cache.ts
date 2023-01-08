@@ -84,7 +84,7 @@ export class Cache<
         aggregation: ED[T]['Aggregation'],
         option?: OP,
     ) {
-        const result = await this.exec('aggregate', {
+        const { result } = await this.aspectWrapper.exec('aggregate', {
             entity,
             aggregation,
             option,
