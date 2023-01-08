@@ -13,7 +13,7 @@ import {
     Timer,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict, Exportation, Importation } from 'oak-domain/lib/types/Entity';
 
 import { Feature } from './types/Feature';
 
@@ -51,7 +51,10 @@ export function initialize<
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
     actionDict?: ActionDictOfEntityDict<ED>,
-    i18nOptions?: I18nOptions
+    i18nOptions?: I18nOptions,
+    importations?: Importation<ED, keyof ED, any>[],
+    exportations?: Exportation<ED, keyof ED, any>[]
+
 ) {
     const { features } = initDev<ED, Cxt, FrontCxt, AD, FD>(
         storageSchema,
