@@ -9,7 +9,7 @@ import {
     Timer,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict, Exportation, Importation } from 'oak-domain/lib/types/Entity';
 import { createDynamicCheckers } from 'oak-domain/lib/checkers/index';
 import { createDynamicTriggers } from 'oak-domain/lib/triggers/index';
 
@@ -21,7 +21,7 @@ import { intersection } from 'oak-domain/lib/utils/lodash';
 import commonAspectDict from 'oak-common-aspect';
 import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
-import { CommonAspectDict } from 'oak-common-aspect';
+import { CommonAspectDict, registerPorts } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { DebugStore } from './debugStore/DebugStore';
@@ -62,7 +62,9 @@ export function initialize<
     initialData?: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
-    actionDict?: ActionDictOfEntityDict<ED>
+    actionDict?: ActionDictOfEntityDict<ED>,
+    importations?: Importation<ED, keyof ED, any>[],
+    exportations?: Exportation<ED, keyof ED, any>[]
 ) {
     let intersected = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
     if (intersected.length > 0) {
@@ -135,6 +137,8 @@ export function initialize<
         );
         adCheckers.forEach((checker) => cacheStore.registerChecker(checker));
     }
+
+    registerPorts(importations || [], exportations || []);
 
     return {
         features,
