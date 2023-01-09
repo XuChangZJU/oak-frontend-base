@@ -197,6 +197,7 @@ function initializeTimers<ED extends EntityDict & BaseEntityDict, Cxt extends As
     if (process.env.OAK_PLATFORM === 'wechatMp') {
         const { platform } = wx.getSystemInfoSync();
         if (platform !== 'devtools') {
+            // 在真机调试环境下，timer中调用Intl会挂
             return;
         }
     }
