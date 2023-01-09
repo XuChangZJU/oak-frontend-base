@@ -194,6 +194,12 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
 function initializeTimers<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
     store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) =>  Promise<Cxt>, timers: Array<Timer<ED, Cxt>>
 ) {
+    if (process.env.OAK_PLATFORM === 'wechatMp') {
+        const { platform } = wx.getSystemInfoSync();
+        if (platform !== 'devtools') {
+            return;
+        }
+    }
     for (const timer of timers) {
         const { cron, fn, name } = timer;
         schedule(cron, async (date) => {
