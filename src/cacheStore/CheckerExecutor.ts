@@ -4,6 +4,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Checker, CheckerType, SelectOption, OperateOption } from 'oak-domain/lib/types';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { translateCheckerInSyncContext } from 'oak-domain/lib/store/checker';
+import { checkFilterRepel } from 'oak-domain/lib/store/filter';
 
 export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt extends SyncContext<ED>> {
     private checkerMap: {
@@ -12,11 +13,12 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                 priority: number;
                 fn: (operation: ED[K]['Operation'], context: Cxt, option: SelectOption | OperateOption) => void;
                 type: CheckerType;
+                filter?: ED[K]['Update']['filter'] | ((operation: ED[K]['Operation'], context: Cxt, option: SelectOption | OperateOption) => ED[K]['Update']['filter']);
             }>;
         };
     } = {};
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
-        const { entity, action, priority = 1, type } = checker;
+        const { entity, action, priority = 1, type, conditionalFilter } = checker;
         const fn = translateCheckerInSyncContext(checker);
         const addCheckerMap = (action2: string) => {
             if (this.checkerMap[entity] && this.checkerMap[entity]![action2]) {
@@ -31,6 +33,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                     type,
                     priority,
                     fn,
+                    filter: conditionalFilter,
                 });
             }
             else if (this.checkerMap[entity]) {
@@ -39,6 +42,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                         type,
                         priority,
                         fn,
+                        filter: conditionalFilter,
                     }],
                 });
             }
@@ -49,6 +53,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                             type,
                             priority,
                             fn,
+                            filter: conditionalFilter,
                         }],
                     },
                 });
@@ -70,6 +75,13 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
         if (checkers) {
             const checkers2 = checkerTypes ? checkers.filter(ele => checkerTypes.includes(ele.type)) : checkers;
             for (const checker of checkers2) {
+                const { filter } = checker;
+                if (filter) {
+                    const filterr = typeof filter === 'function' ? filter(operation, context, {}) : filter;
+                    if (checkFilterRepel(entity, context, filterr, operation.filter)) {
+                        continue;
+                    }
+                }
                 checker.fn(operation, context, {} as any);
             }
         }

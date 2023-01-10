@@ -51,7 +51,7 @@ export function initialize<
     checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>
 ) {
-    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt>(storageSchema));
+    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema));
 
     const features = {} as FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
 

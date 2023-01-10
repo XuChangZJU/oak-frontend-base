@@ -43,7 +43,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     }>, allowMiss?: boolean): Partial<ED[T]["Schema"]>[];
     private getInner;
     get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], params?: SelectOption): Partial<ED[T]["Schema"]>[];
-    judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | 2 | string[];
+    judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | string[] | 2;
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;
     getCachedData(): { [T in keyof ED]?: ED[T]["OpSchema"][] | undefined; };
