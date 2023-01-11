@@ -1257,6 +1257,11 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     setId(id: string) {
         this.id = id;
+        if (this.operation) {
+            // 如果是先建结点，再setId，这时候原先创建的create动作应当被清空
+            // 有没有setId保留operation的需求？目前认为没有。 by Xc 2022.1.11
+            this.operation = undefined;
+        }
         this.refresh();
     }
 
