@@ -11,7 +11,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     private syncEventsCallbacks;
     private contextBuilder?;
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>);
-    exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>) => void): Promise<any>;
+    exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords: OpRecord<ED>[]) => void): Promise<any>;
     refresh<T extends keyof ED, OP extends SelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true, callback?: (result: Awaited<ReturnType<AD['select']>>) => void): Promise<{
         data: Partial<ED[T]['Schema']>[];
         count?: number | undefined;
