@@ -86,9 +86,9 @@ export class Navigator extends Feature {
             const urls_0 = urls[0] || '';
             if (namespace === '/') {
                 url2 = url2;
-                if (urls_0 === '/') {
-                    url2 = url2.substring(1, url2.length);
-                }
+                // if (urls_0 === '/') {
+                //     url2 = url2.substring(1, url2.length);
+                // }
             } else if (namespace !== '/' && urls_0 === '') {
                 url2 = namespace + url2;
             } else if (namespace !== '/' && urls_0 === '/') {
