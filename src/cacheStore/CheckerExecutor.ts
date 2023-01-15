@@ -1,4 +1,5 @@
 // 简化版的对checker的同步检查
+import assert from 'assert';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Checker, CheckerType, SelectOption, OperateOption } from 'oak-domain/lib/types';
@@ -78,7 +79,10 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                 const { filter } = checker;
                 if (filter) {
                     const filterr = typeof filter === 'function' ? filter(operation, context, {}) : filter;
-                    if (checkFilterRepel(entity, context, filterr, operation.filter)) {
+                    assert(!(filter instanceof Promise), `对${entity as string}的动作${action}上定义的checker，其filter返回了Promise，请注意将同步和异步的返回区分对待`);
+                    const isRepel = checkFilterRepel(entity, context, filterr, operation.filter, true);
+                    assert(typeof isRepel === 'boolean');
+                    if (isRepel) {
                         continue;
                     }
                 }
