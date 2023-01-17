@@ -18,11 +18,12 @@ export class Port<
         this.aspectWrapper = aspectWrapper;
     }
 
-    importEntity<T extends keyof ED>(entity: T, id: string, file: File) {
+    importEntity<T extends keyof ED>(entity: T, id: string, file: File, option: Object) {
         const formData = new FormData();
         formData.set('entity', entity as string);
         formData.set('id', id);
         formData.set('file', file);
+        formData.set('option', JSON.stringify(option));
 
         return this.aspectWrapper.exec('importEntity', formData);
     }

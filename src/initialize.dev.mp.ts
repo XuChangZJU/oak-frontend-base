@@ -7,8 +7,10 @@ import {
     StorageSchema,
     Watcher,
     Timer,
+    AuthDefDict,
 } from 'oak-domain/lib/types';
-import { EntityDict, Exportation, Importation } from 'oak-domain/lib/types/Entity';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { Exportation, Importation } from 'oak-domain/lib/types/Port';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
 import { Feature } from './types/Feature';
@@ -47,6 +49,7 @@ export function initialize<
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
     actionDict?: ActionDictOfEntityDict<ED>,
+    authDict?: AuthDefDict<ED>,
     i18nOptions?: I18nOptions,
     importations?: Importation<ED, keyof ED, any>[],
     exportations?: Exportation<ED, keyof ED, any>[]
@@ -63,7 +66,10 @@ export function initialize<
         timers,
         startRoutines,
         initialData,
-        actionDict
+        actionDict,
+        authDict,
+        importations,
+        exportations
     );
 
     // 初始化i8n配置

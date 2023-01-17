@@ -7,9 +7,11 @@ import {
     Watcher,
     Routine,
     Timer,
+    AuthDefDict,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict, Exportation, Importation } from 'oak-domain/lib/types/Entity';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { Exportation, Importation  } from 'oak-domain/lib/types/Port';
 import { createDynamicCheckers } from 'oak-domain/lib/checkers/index';
 import { createDynamicTriggers } from 'oak-domain/lib/triggers/index';
 
@@ -63,6 +65,7 @@ export function initialize<
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
     actionDict?: ActionDictOfEntityDict<ED>,
+    authDict?: AuthDefDict<ED>,
     importations?: Importation<ED, keyof ED, any>[],
     exportations?: Exportation<ED, keyof ED, any>[]
 ) {
@@ -73,7 +76,7 @@ export function initialize<
         );
     }
     const aspectDict2 = Object.assign({}, aspectDict, commonAspectDict);
-    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema));
+    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema, authDict));
     const triggers2 = createDynamicTriggers<ED, Cxt>(storageSchema).concat(triggers || []);
     const debugStore = createDebugStore(
         storageSchema,
