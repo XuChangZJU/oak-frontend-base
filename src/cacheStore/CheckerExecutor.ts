@@ -14,13 +14,14 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                 priority: number;
                 fn: (operation: ED[K]['Operation'], context: Cxt, option: SelectOption | OperateOption) => void;
                 type: CheckerType;
+                when: 'before' | 'after';
                 filter?: ED[K]['Update']['filter'] | ((operation: ED[K]['Operation'], context: Cxt, option: SelectOption | OperateOption) => ED[K]['Update']['filter']);
             }>;
         };
     } = {};
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
         const { entity, action, priority = 1, type, conditionalFilter } = checker;
-        const fn = translateCheckerInSyncContext(checker);
+        const { fn, when } = translateCheckerInSyncContext(checker);
         const addCheckerMap = (action2: string) => {
             if (this.checkerMap[entity] && this.checkerMap[entity]![action2]) {
                 let iter = 0;
@@ -34,6 +35,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                     type,
                     priority,
                     fn,
+                    when,
                     filter: conditionalFilter,
                 });
             }
@@ -70,11 +72,11 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
         }
     }
 
-    check<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, checkerTypes?: CheckerType[]) {
+    check<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, when?: 'before' | 'after', checkerTypes?: CheckerType[]) {
         const { action } = operation;
         const checkers = this.checkerMap[entity] && this.checkerMap[entity]![action];
         if (checkers) {
-            const checkers2 = checkerTypes ? checkers.filter(ele => checkerTypes.includes(ele.type)) : checkers;
+            const checkers2 = checkerTypes ? checkers.filter(ele => checkerTypes.includes(ele.type) && (!when || ele.when === when)) : checkers;
             for (const checker of checkers2) {
                 const { filter } = checker;
                 if (filter) {

@@ -40,9 +40,14 @@ export class CacheStore<
     ): OperationResult<ED> {
         assert(context.getCurrentTxnId());
         if (!option.blockTrigger) {
-            this.checkerExecutor.check(entity, operation, context);
+            this.checkerExecutor.check(entity, operation, context, 'before');
         }
-        return super.operateSync(entity, operation, context, option);
+        const result = super.operateSync(entity, operation, context, option);
+        if (!option.blockTrigger) {
+            this.checkerExecutor.check(entity, operation, context, 'after');
+        }
+
+        return result;
     }
 
     sync<Cxt extends SyncContext<ED>>(opRecords: Array<OpRecord<ED>>, context: Cxt) {
@@ -68,7 +73,7 @@ export class CacheStore<
 
     check<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, checkerTypes?: CheckerType[]) {
         assert(context.getCurrentTxnId());
-        this.checkerExecutor.check(entity, operation, context, checkerTypes);
+        this.checkerExecutor.check(entity, operation, context, undefined, checkerTypes);
     }
 
     select<
