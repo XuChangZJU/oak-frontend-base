@@ -147,8 +147,8 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
             try {
                 if (w.hasOwnProperty('actionData')) {
                     const { entity, action, filter, actionData } = <BBWatcher<ED, keyof ED>>w;
-                    const filter2 = typeof filter === 'function' ? await filter() : filter;
-                    const data = typeof actionData === 'function' ? await (actionData as any)() : actionData;        // 这里有个奇怪的编译错误，不理解 by Xc
+                    const filter2 = typeof filter === 'function' ? await (filter as Function)() : filter;
+                    const data = typeof actionData === 'function' ? await (actionData as Function)() : actionData;        // 这里有个奇怪的编译错误，不理解 by Xc
                     const result = await store.operate(entity, {
                         id: await generateNewIdAsync(),
                         action,
@@ -162,8 +162,8 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
                 }
                 else {
                     const { entity, projection, fn, filter } = <WBWatcher<ED, keyof ED, Cxt>>w;
-                    const filter2 = typeof filter === 'function' ? await filter() : filter;
-                    const projection2 = typeof projection === 'function' ? await projection() : projection;
+                    const filter2 = typeof filter === 'function' ? await (filter as Function)() : filter;
+                    const projection2 = typeof projection === 'function' ? await (projection as Function)() : projection;
                     const rows = await store.select(entity, {
                         data: projection2 as any,
                         filter: filter2,

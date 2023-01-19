@@ -43,7 +43,7 @@ export async function onPathSet<
                     filter:
                         typeof filter === 'function'
                             ? () =>
-                                filter.call(this, {
+                                (filter as Function).call(this, {
                                     features,
                                     props: this.props,
                                     state: this.state,
@@ -57,7 +57,7 @@ export async function onPathSet<
         if (!proj && projection) {
             proj = typeof projection === 'function'
                 ? () =>
-                    projection.call(this, {
+                    (projection as Function).call(this, {
                         features,
                         props: this.props,
                         state: this.state,
@@ -76,7 +76,7 @@ export async function onPathSet<
                     sorter:
                         typeof sorter === 'function'
                             ? () =>
-                                sorter.call(this, {
+                                (sorter as Function).call(this, {
                                     features,
                                     props: this.props,
                                     state: this.state,

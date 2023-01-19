@@ -1,4 +1,4 @@
-import { EntityDict, StorageSchema, OpRecord, DeduceSorterItem, AspectWrapper } from "oak-domain/lib/types";
+import { EntityDict, StorageSchema, OpRecord, AspectWrapper } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
@@ -37,7 +37,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     isExecuting(): boolean;
     setExecuting(executing: boolean): void;
     getParent(): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD> | undefined;
-    protected getProjection(): ED[T]["Selection"]["data"];
+    protected getProjection(): any;
     protected judgeRelation(attr: string): string | 0 | 1 | 2 | string[];
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
@@ -97,7 +97,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     constructSelection(withParent?: true): {
         data: ED[T]["Selection"]["data"];
         filter: ED[T]["Selection"]["filter"] | {};
-        sorter: DeduceSorterItem<ED[T]["Schema"]>[];
+        sorter: ED[T]["Selection"]["sorter"];
         validParentFilter: boolean;
     };
     refresh(pageNumber?: number, getCount?: true, append?: boolean): Promise<void>;
@@ -134,7 +134,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
         entity: T;
         operation: ED[T]['Operation'];
     }> | undefined;
-    getProjection(withDecendants?: boolean): ED[T]["Selection"]["data"];
+    getProjection(withDecendants?: boolean): any;
     refresh(): Promise<void>;
     clean(): void;
     getFilter(disableOperation?: boolean): ED[T]['Selection']['filter'] | undefined;

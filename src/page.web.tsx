@@ -4,7 +4,7 @@ import React from 'react';
 import { withRouter, PullToRefresh } from './platforms/web';
 import { get } from 'oak-domain/lib/utils/lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { Action, Aspect, CheckerType, DeduceSorterItem, EntityDict } from 'oak-domain/lib/types';
+import { Action, Aspect, CheckerType, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
@@ -374,7 +374,7 @@ abstract class OakComponentBase<
             );
             const filters = namedFilters.map(({ filter }) => {
                 if (typeof filter === 'function') {
-                    return filter();
+                    return (filter as Function)();
                 }
                 return filter;
             });
@@ -390,7 +390,7 @@ abstract class OakComponentBase<
             );
             if (filter?.filter) {
                 if (typeof filter.filter === 'function') {
-                    return filter.filter();
+                    return (filter.filter as Function)();
                 }
                 return filter.filter;
             }
@@ -436,11 +436,11 @@ abstract class OakComponentBase<
             const sorters = namedSorters
                 .map(({ sorter }) => {
                     if (typeof sorter === 'function') {
-                        return sorter();
+                        return (sorter as Function)();
                     }
                     return sorter;
                 })
-                .filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
+                .filter((ele) => !!ele) as ED[T]['Selection']['sorter'][];
             return sorters;
         }
     }
@@ -453,7 +453,7 @@ abstract class OakComponentBase<
             );
             if (sorter?.sorter) {
                 if (typeof sorter.sorter === 'function') {
-                    return sorter.sorter();
+                    return (sorter.sorter as Function)();
                 }
                 return sorter.sorter;
             }

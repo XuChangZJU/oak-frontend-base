@@ -1,7 +1,7 @@
 /// <reference path="../node_modules/@types/wechat-miniprogram/index.d.ts" />
 import assert from 'assert';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { Aspect, Context, DeduceSorterItem, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { Feature } from './types/Feature';
@@ -439,10 +439,8 @@ const oakBehavior = Behavior<
                         }
                         return sorter;
                     })
-                    .filter((ele) => !!ele) as DeduceSorterItem<
-                    EDD[keyof EDD]['Schema']
-                >[];
-                return sorters;
+                    .filter((ele) => !!ele);
+                return sorters as EDD[keyof EDD]['Selection']['sorter'];
             }
         },
 

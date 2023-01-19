@@ -3,7 +3,7 @@ import { cloneDeep, pull, unset, merge, uniq } from "oak-domain/lib/utils/lodash
 import { addFilterSegment, combineFilters, contains, repel, same } from "oak-domain/lib/store/filter";
 import { createOperationsFromModies } from 'oak-domain/lib/store/modi';
 import { judgeRelation } from "oak-domain/lib/store/relation";
-import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, DeduceSorterItem, AspectWrapper } from "oak-domain/lib/types";
+import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, AspectWrapper } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 
@@ -156,7 +156,7 @@ abstract class Node<
     }
 
     protected getProjection() {
-        return typeof this.projection === 'function' ? this.projection() : cloneDeep(this.projection);
+        return typeof this.projection === 'function' ? (this.projection as Function)() : cloneDeep(this.projection);
     }
 
     protected judgeRelation(attr: string) {
@@ -822,7 +822,7 @@ class ListNode<
             if (operation.action === 'create') {
                 const { data } = operation;
                 assert(!(data instanceof Array));
-                createdIds.push(data.id);
+                createdIds.push(data.id!);
             }
         }
 
@@ -989,7 +989,7 @@ class ListNode<
         if (!this.dirty) {
             return;
         }
-        const childOperations: Record<string, ED[T]['Update']> = {};
+        const childOperations: Record<string, ED[T]['Operation']> = {};
         for (const id in this.children) {
             const childOperation = this.children[id].composeOperations();
             if (childOperation) {
@@ -1037,14 +1037,14 @@ class ListNode<
         const sorterArr = sorters.map((ele) => {
             const { sorter } = ele;
             if (typeof sorter === 'function') {
-                return sorter();
+                return (sorter as Function)();
             }
             return sorter;
-        }).filter((ele) => !!ele) as DeduceSorterItem<ED[T]['Schema']>[];
+        }).filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
         const filterArr = filters.map((ele) => {
             const { filter } = ele;
             if (typeof filter === 'function') {
-                return filter();
+                return (filter as Function)();
             }
             return filter;
         });
@@ -1434,7 +1434,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             return;
         }
         const filter = this.getFilter();
-        const operation: ED[T]['Update'] = this.operation ? cloneDeep(this.operation.operation) : {
+        const operation: ED[T]['Operation'] = this.operation ? cloneDeep(this.operation.operation) : {
             id: generateNewId(),
             action: 'update',
             data: {},

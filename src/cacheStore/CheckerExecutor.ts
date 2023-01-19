@@ -82,7 +82,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                 if (filter) {
                     const filterr = typeof filter === 'function' ? filter(operation, context, {}) : filter;
                     assert(!(filter instanceof Promise), `对${entity as string}的动作${action}上定义的checker，其filter返回了Promise，请注意将同步和异步的返回区分对待`);
-                    const isRepel = checkFilterRepel(entity, context, filterr, operation.filter, true);
+                    const isRepel = checkFilterRepel<ED, T, Cxt>(entity, context, filterr, operation.filter, true);
                     assert(typeof isRepel === 'boolean');
                     if (isRepel) {
                         continue;

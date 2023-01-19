@@ -1,4 +1,4 @@
-import { Aspect, EntityDict, DeduceSorterItem, CheckerType, AggregationResult } from "oak-domain/lib/types";
+import { Aspect, EntityDict, CheckerType, AggregationResult } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
@@ -41,11 +41,11 @@ interface ComponentOption<
         '#name'?: string;
     }>;
     sorters?: Array<{
-        sorter: DeduceSorterItem<ED[T]['Schema']> | ((options: {
+        sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | ((options: {
             features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
             props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
             state: Record<string, any>;
-        }) => DeduceSorterItem<ED[T]['Schema']>)
+        }) => NonNullable<ED[T]['Selection']['sorter']>[number])
         '#name'?: string;
     }>;
     formData?: (options: {
@@ -293,7 +293,7 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     getSorters: () => ED[T]['Selection']['sorter'] | undefined;
     getSorterByName: (
         name: string
-    ) => DeduceSorterItem<ED[T]['Schema']> | undefined;
+    ) => NonNullable<ED[T]['Selection']['sorter']>[number] | undefined;
     addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
     removeNamedSorter: (
         filter: NamedSorterItem<ED, T>,
