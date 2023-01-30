@@ -31,4 +31,8 @@ export class Port<
     exportEntity<T extends keyof ED>(entity: T, id: string, filter?: ED[T]['Selection']['filter']) {
         return this.aspectWrapper.exec('exportEntity', { entity, id, filter });
     }
+
+    getImportationTemplate<T extends keyof ED>(id: string) {
+        return this.aspectWrapper.exec('getImportationTemplate', { id });
+    }
 }

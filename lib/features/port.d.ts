@@ -14,4 +14,8 @@ export declare class Port<ED extends EntityDict & BaseEntityDict, Cxt extends As
         result: Awaited<ReturnType<AD["exportEntity"]>>;
         opRecords: import("oak-domain/lib/types").OpRecord<ED>[];
     }>;
+    getImportationTemplate<T extends keyof ED>(id: string): Promise<{
+        result: Awaited<ReturnType<AD["getImportationTemplate"]>>;
+        opRecords: import("oak-domain/lib/types").OpRecord<ED>[];
+    }>;
 }
