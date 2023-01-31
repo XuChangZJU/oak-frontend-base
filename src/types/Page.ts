@@ -113,7 +113,7 @@ export type ComponentPublicThisType<
             detail?: DetailType,
             options?: WechatMiniprogram.Component.TriggerEventOption
         ) => void;
-    } & TMethod & OakCommonComponentMethods<ED, T> & (IsList extends true ? OakListComponentMethods<ED, T> : OakSingleComponentMethods<ED, T>);
+    } & TMethod & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
 
 export type ComponentFullThisType<
     ED extends EntityDict & BaseEntityDict,
@@ -135,7 +135,7 @@ export type ComponentFullThisType<
             detail?: DetailType,
             options?: WechatMiniprogram.Component.TriggerEventOption
         ) => void;
-    } & OakCommonComponentMethods<ED, T> & (IsList extends true ? OakListComponentMethods<ED, T> : OakSingleComponentMethods<ED, T>);
+    } & OakCommonComponentMethods<ED, T> &  OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
 
 export type OakComponentOption<
     ED extends EntityDict & BaseEntityDict,
@@ -151,7 +151,7 @@ export type OakComponentOption<
     TMethod extends Record<string, Function>,
     > = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TProperty> &
     Partial<{
-        data?: ((option: { features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD, props: ComponentProps<IsList, TProperty>}) => TData) | TData;
+        data?: ((option: { features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD, props: ComponentProps<IsList, TProperty> }) => TData) | TData;
         properties: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty>;
         methods: TMethod;
         lifetimes: {
@@ -166,7 +166,7 @@ export type OakComponentOption<
         };
         actions?: ED[T]['Action'][] | ((this: ComponentPublicThisType<
             ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod
-            >) => ED[T]['Action'][]);
+        >) => ED[T]['Action'][]);
         observers: Record<string, (...args: any[]) => any>;
     }> &
     Partial<{
@@ -193,6 +193,7 @@ export type OakListComponentProperties = {
     oakFilters: ObjectConstructor;
     oakSorters: ObjectConstructor;
     oakIsPicker: BooleanConstructor;
+    oakPagination: ObjectConstructor;
 }
 
 export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
@@ -210,104 +211,92 @@ export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T ex
 export type OakCommonComponentMethods<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED
-> = {
-    setDisablePulldownRefresh: (able: boolean) => void;
-    sub: (type: string, callback: Function) => void;
-    unsub: (type: string, callback: Function) => void;
-    pub: (type: string, options?: any) => void;
-    unsubAll: (type: string) => void;
-    save: (key: string, item: any) => void;
-    load: (key: string) => any;
-    clear: () => void;
-    resolveInput: <K extends string>(
-        input: any,
-        keys?: K[]
-    ) => { dataset?: Record<string, any>; value?: string } & {
-        [k in K]?: any;
-    };
-    setNotification: (data: NotificationProps) => void;
-    consumeNotification: () => NotificationProps | undefined;
-    setMessage: (data: MessageProps) => void;
-    consumeMessage: () => MessageProps | undefined;
-    reRender: (extra?: Record<string, any>) => void;
-    getFreshValue: (
-        path?: string
-    ) =>
-        | Partial<ED[keyof ED]['Schema']>[]
-        | Partial<ED[keyof ED]['Schema']>
-        | undefined;
-    navigateTo: <T2 extends keyof ED>(
-        options: { url: string } & OakNavigateToParameters<ED, T2>,
-        state?: Record<string, any>,
-        disableNamespace?: boolean
-    ) => Promise<void>;
-    navigateBack: (delta?: number) => Promise<void>;
-    redirectTo: <T2 extends keyof ED>(
-        options: Parameters<typeof wx.redirectTo>[0] &
-            OakNavigateToParameters<ED, T2>,
-        state?: Record<string, any>,
-        disableNamespace?: boolean
-    ) => Promise<void>;
-    // setProps: (props: Record<string, any>, usingState?: true) => void;
-    clean: (path?: string) => void;
+    > = {
+        setDisablePulldownRefresh: (able: boolean) => void;
+        sub: (type: string, callback: Function) => void;
+        unsub: (type: string, callback: Function) => void;
+        pub: (type: string, options?: any) => void;
+        unsubAll: (type: string) => void;
+        save: (key: string, item: any) => void;
+        load: (key: string) => any;
+        clear: () => void;
+        resolveInput: <K extends string>(
+            input: any,
+            keys?: K[]
+        ) => { dataset?: Record<string, any>; value?: string } & {
+            [k in K]?: any;
+        };
+        setNotification: (data: NotificationProps) => void;
+        consumeNotification: () => NotificationProps | undefined;
+        setMessage: (data: MessageProps) => void;
+        consumeMessage: () => MessageProps | undefined;
+        reRender: (extra?: Record<string, any>) => void;
+        getFreshValue: (path?: string) =>
+            | Partial<ED[keyof ED]['Schema']>[]
+            | Partial<ED[keyof ED]['Schema']>
+            | undefined;
+        navigateTo: <T2 extends keyof ED>(
+            options: { url: string } & OakNavigateToParameters<ED, T2>,
+            state?: Record<string, any>,
+            disableNamespace?: boolean
+        ) => Promise<void>;
+        navigateBack: (delta?: number) => Promise<void>;
+        redirectTo: <T2 extends keyof ED>(
+            options: Parameters<typeof wx.redirectTo>[0] &
+                OakNavigateToParameters<ED, T2>,
+            state?: Record<string, any>,
+            disableNamespace?: boolean
+        ) => Promise<void>;
+        // setProps: (props: Record<string, any>, usingState?: true) => void;
+        clean: (path?: string) => void;
 
-    t(key: string, params?: object): string;
-    execute: (action?: ED[T]['Action'], messageProps?: boolean | MessageProps) => Promise<void>;
-    checkOperation: (
-        ntity: T,
-        action: ED[T]['Action'],
-        filter?: ED[T]['Update']['filter'],
-        checkerTypes?: CheckerType[]
-    ) => boolean;
-    tryExecute: (path?: string) => boolean | Error;
-    getOperations: (
-        path?: string
-    ) => { operation: ED[T]['Operation']; entity: T }[] | undefined;
-    refresh: () => Promise<void>;
-    aggregate: (aggregation: ED[T]['Aggregation']) => Promise<AggregationResult<ED[T]['Schema']>>;
-};
+        t(key: string, params?: object): string;
+        execute: (action?: ED[T]['Action'], messageProps?: boolean | MessageProps) => Promise<void>;
+        checkOperation: (
+            ntity: T,
+            action: ED[T]['Action'],
+            filter?: ED[T]['Update']['filter'],
+            checkerTypes?: CheckerType[]
+        ) => boolean;
+        tryExecute: (path?: string) => boolean | Error;
+        getOperations: (
+            path?: string
+        ) => { operation: ED[T]['Operation']; entity: T }[] | undefined;
+        refresh: () => Promise<void>;
+        aggregate: (aggregation: ED[T]['Aggregation']) => Promise<AggregationResult<ED[T]['Schema']>>;
+    };
 
 export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     setId: (id: string) => void;
     unsetId: () => void;
     getId: () => string | undefined;
     // create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
-    update: (data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
-    remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
+    update: (data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
+    remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
 }
 
 export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     loadMore: () => Promise<void>;
-    setFilters: (filters: NamedFilterItem<ED, T>[]) => void;
-    getFilters: () => ED[T]['Selection']['filter'][] | undefined;
-    getFilterByName: (
-        name: string
-    ) => ED[T]['Selection']['filter'] | undefined;
-    addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => void;
-    removeNamedFilter: (
-        filter: NamedFilterItem<ED, T>,
-        refresh?: boolean
-    ) => void;
-    removeNamedFilterByName: (name: string, refresh?: boolean) => void;
-    setNamedSorters: (sorters: NamedSorterItem<ED, T>[]) => void;
-    getSorters: () => ED[T]['Selection']['sorter'] | undefined;
-    getSorterByName: (
-        name: string
-    ) => NonNullable<ED[T]['Selection']['sorter']>[number] | undefined;
-    addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean) => void;
-    removeNamedSorter: (
-        filter: NamedSorterItem<ED, T>,
-        refresh?: boolean
-    ) => void;
-    removeNamedSorterByName: (name: string, refresh?: boolean) => void;
-    getPagination: () => Pagination | undefined;
-    setPageSize: (pageSize: number) => void;
-    setCurrentPage: (current: number) => void;
+    setFilters: (filters: NamedFilterItem<ED, T>[], path?: string) => void;
+    getFilters: (path?: string) => ED[T]['Selection']['filter'][] | undefined;
+    getFilterByName: (name: string, path?: string) => ED[T]['Selection']['filter'] | undefined;
+    addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) => void;
+    removeNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) => void;
+    removeNamedFilterByName: (name: string, refresh?: boolean, path?: string) => void;
+    setNamedSorters: (sorters: NamedSorterItem<ED, T>[], path?: string) => void;
+    getSorters: (path?: string) => ED[T]['Selection']['sorter'] | undefined;
+    getSorterByName: (name: string, path?: string) => NonNullable<ED[T]['Selection']['sorter']>[number] | undefined;
+    addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
+    removeNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
+    removeNamedSorterByName: (name: string, refresh?: boolean, path?: string) => void;
+    getPagination: (path?: string) => Pagination | undefined;
+    setPageSize: (pageSize: number, path?: string) => void;
+    setCurrentPage: (current: number, path?: string) => void;
 
-    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
-    removeItem: (id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
-    updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => void;
-    recoverItem: (id: string) => void;
+    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
+    removeItem: (id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
+    updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
+    recoverItem: (id: string, path?: string) => void;
 };
 
 type ComponentOnPropsChangeOption = {
@@ -340,6 +329,15 @@ export type OakComponentData<
         oakLegalActions?: ED[T]['Action'][];
         oakDisablePulldownRefresh: boolean;
     };
+
+export type OakListComoponetData<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED
+    > = {
+        oakFilters?: NonNullable<ED[T]['Selection']['filter']>[];
+        oakSorters?: NonNullable<ED[T]['Selection']['sorter']>[];
+        oakPagination?: Pagination;
+    }
 
 export type MakeOakComponent<
     ED extends EntityDict & BaseEntityDict,
@@ -386,7 +384,7 @@ export type WebComponentProps<
     IsList extends boolean,
     TData extends WechatMiniprogram.Component.DataOption = {},
     TMethod extends WechatMiniprogram.Component.MethodOption = {}> = {
-        methods: TMethod & Pick<OakCommonComponentMethods<ED, T>, WebComponentCommonMethodNames>
-            & (IsList extends true ? Pick<OakListComponentMethods<ED, T>, WebComponentListMethodNames> : Pick<OakSingleComponentMethods<ED, T>, WebComponentSingleMethodNames>);
-        data: TData & OakComponentData<ED, T> & (IsList extends true ? OakListComponentProperties : {});
+        methods: TMethod & OakCommonComponentMethods<ED, T>
+        & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
+        data: TData & OakComponentData<ED, T> & (IsList extends true ? OakListComoponetData<ED, T> : {});
     }

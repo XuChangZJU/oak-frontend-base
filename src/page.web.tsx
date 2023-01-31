@@ -41,10 +41,10 @@ abstract class OakComponentBase<
     TData extends WechatMiniprogram.Component.DataOption,
     TProperty extends WechatMiniprogram.Component.PropertyOption,
     TMethod extends WechatMiniprogram.Component.MethodOption
-> extends React.PureComponent<
+    > extends React.PureComponent<
     ComponentProps<IsList, TProperty>,
     ComponentData<ED, T, FormedData, TData>
-> {
+    > {
     abstract features: FD &
         BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     abstract oakOption: OakComponentOption<
@@ -75,7 +75,7 @@ abstract class OakComponentBase<
         name: string,
         detail?: DetailType,
         options?: WechatMiniprogram.Component.TriggerEventOption
-    ) {}
+    ) { }
 
     sub(type: string, callback: Function) {
         this.features.eventBus.sub(type, callback);
@@ -216,8 +216,12 @@ abstract class OakComponentBase<
     addItem<T extends keyof ED>(
         data: Omit<ED[T]['CreateSingle']['data'], 'id'>,
         beforeExecute?: () => Promise<void>,
-        afterExecute?: () => Promise<void>
+        afterExecute?: () => Promise<void>,
+        path?: string
     ) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.addItem(
             this.state.oakFullpath,
             data,
@@ -229,10 +233,14 @@ abstract class OakComponentBase<
     removeItem(
         id: string,
         beforeExecute?: () => Promise<void>,
-        afterExecute?: () => Promise<void>
+        afterExecute?: () => Promise<void>,
+        path?: string
     ) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.removeItem(
-            this.state.oakFullpath,
+            path2,
             id,
             beforeExecute,
             afterExecute
@@ -244,10 +252,14 @@ abstract class OakComponentBase<
         id: string,
         action?: ED[T]['Action'],
         beforeExecute?: () => Promise<void>,
-        afterExecute?: () => Promise<void>
+        afterExecute?: () => Promise<void>,
+        path?: string
     ) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.updateItem(
-            this.state.oakFullpath,
+            path2,
             data,
             id,
             action,
@@ -256,8 +268,11 @@ abstract class OakComponentBase<
         );
     }
 
-    recoverItem(id: string) {
-        this.features.runningTree.recoverItem(this.state.oakFullpath, id);
+    recoverItem(id: string, path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        this.features.runningTree.recoverItem(path2, id);
     }
 
     /* create<T extends keyof ED>(data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
@@ -268,10 +283,14 @@ abstract class OakComponentBase<
         data: ED[T]['Update']['data'],
         action?: ED[T]['Action'],
         beforeExecute?: () => Promise<void>,
-        afterExecute?: () => Promise<void>
+        afterExecute?: () => Promise<void>,
+        path?: string
     ) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.update(
-            this.state.oakFullpath,
+            path2,
             data,
             action,
             beforeExecute,
@@ -281,10 +300,14 @@ abstract class OakComponentBase<
 
     remove(
         beforeExecute?: () => Promise<void>,
-        afterExecute?: () => Promise<void>
+        afterExecute?: () => Promise<void>,
+        path?: string
     ) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.remove(
-            this.state.oakFullpath,
+            path2,
             beforeExecute,
             afterExecute
         );
@@ -356,22 +379,29 @@ abstract class OakComponentBase<
         return this.features.runningTree.unsetId(this.state.oakFullpath);
     }
 
-    getId() {
-        return this.features.runningTree.getId(this.state.oakFullpath);
+    getId(path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        return this.features.runningTree.getId(path2);
     }
 
-    setFilters(filters: NamedFilterItem<ED, T>[]) {
+    setFilters(filters: NamedFilterItem<ED, T>[], path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.setNamedFilters(
-            this.state.oakFullpath,
+            path2,
             filters
         );
     }
 
-    getFilters() {
+    getFilters(path?: string) {
         if (this.state.oakFullpath) {
-            const namedFilters = this.features.runningTree.getNamedFilters(
-                this.state.oakFullpath
-            );
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            const namedFilters = this.features.runningTree.getNamedFilters(path2);
             const filters = namedFilters.map(({ filter }) => {
                 if (typeof filter === 'function') {
                     return (filter as Function)();
@@ -382,12 +412,12 @@ abstract class OakComponentBase<
         }
     }
 
-    getFilterByName(name: string) {
+    getFilterByName(name: string, path?: string) {
         if (this.state.oakFullpath) {
-            const filter = this.features.runningTree.getNamedFilterByName(
-                this.state.oakFullpath,
-                name
-            );
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            const filter = this.features.runningTree.getNamedFilterByName(path2, name);
             if (filter?.filter) {
                 if (typeof filter.filter === 'function') {
                     return (filter.filter as Function)();
@@ -397,42 +427,55 @@ abstract class OakComponentBase<
         }
     }
 
-    addNamedFilter(namedFilter: NamedFilterItem<ED, T>, refresh?: boolean) {
+    addNamedFilter(namedFilter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.addNamedFilter(
-            this.state.oakFullpath,
+            path2,
             namedFilter,
             refresh
         );
     }
 
-    removeNamedFilter(namedFilter: NamedFilterItem<ED, T>, refresh?: boolean) {
+    removeNamedFilter(namedFilter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.removeNamedFilter(
-            this.state.oakFullpath,
+            path2,
             namedFilter,
             refresh
         );
     }
 
-    removeNamedFilterByName(name: string, refresh?: boolean) {
+    removeNamedFilterByName(name: string, refresh?: boolean, path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.removeNamedFilterByName(
-            this.state.oakFullpath,
+            path2,
             name,
             refresh
         );
     }
 
-    setNamedSorters(namedSorters: NamedSorterItem<ED, T>[]) {
+    setNamedSorters(namedSorters: NamedSorterItem<ED, T>[], path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.setNamedSorters(
-            this.state.oakFullpath,
+            path2,
             namedSorters
         );
     }
 
-    getSorters() {
+    getSorters(path?: string) {
         if (this.state.oakFullpath) {
-            const namedSorters = this.features.runningTree.getNamedSorters(
-                this.state.oakFullpath
-            );
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            const namedSorters = this.features.runningTree.getNamedSorters(path2);
             const sorters = namedSorters
                 .map(({ sorter }) => {
                     if (typeof sorter === 'function') {
@@ -445,12 +488,12 @@ abstract class OakComponentBase<
         }
     }
 
-    getSorterByName(name: string) {
+    getSorterByName(name: string, path?: string) {
         if (this.state.oakFullpath) {
-            const sorter = this.features.runningTree.getNamedSorterByName(
-                this.state.oakFullpath,
-                name
-            );
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            const sorter = this.features.runningTree.getNamedSorterByName(path2, name);
             if (sorter?.sorter) {
                 if (typeof sorter.sorter === 'function') {
                     return (sorter.sorter as Function)();
@@ -460,48 +503,66 @@ abstract class OakComponentBase<
         }
     }
 
-    addNamedSorter(namedSorter: NamedSorterItem<ED, T>, refresh?: boolean) {
+    addNamedSorter(namedSorter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.addNamedSorter(
-            this.state.oakFullpath,
+            path2,
             namedSorter,
             refresh
         );
     }
 
-    removeNamedSorter(namedSorter: NamedSorterItem<ED, T>, refresh?: boolean) {
+    removeNamedSorter(namedSorter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.removeNamedSorter(
-            this.state.oakFullpath,
+            path2,
             namedSorter,
             refresh
         );
     }
 
-    removeNamedSorterByName(name: string, refresh?: boolean) {
+    removeNamedSorterByName(name: string, refresh?: boolean, path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
         this.features.runningTree.removeNamedSorterByName(
-            this.state.oakFullpath,
+            path2,
             name,
             refresh
         );
     }
 
-    getPagination() {
+    getPagination(path?: string) {
         if (this.state.oakFullpath) {
-            return this.features.runningTree.getPagination(
-                this.state.oakFullpath
-            );
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            return this.features.runningTree.getPagination(path2);
         }
     }
 
-    setPageSize(pageSize: number) {
-        this.features.runningTree.setPageSize(this.state.oakFullpath, pageSize);
+    setPageSize(pageSize: number, path?: string) {
+        if (this.state.oakFullpath) {
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            this.features.runningTree.setPageSize(path2, pageSize);
+        }
     }
 
-    setCurrentPage(currentPage: number) {
+    setCurrentPage(currentPage: number, path?: string) {
         assert(currentPage !== 0);
 
         if (this.state.oakEntity && this.state.oakFullpath) {
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             this.features.runningTree.setCurrentPage(
-                this.state.oakFullpath,
+                path2,
                 currentPage
             );
         }
@@ -605,126 +666,117 @@ export function createComponent<
         constructor(props: ComponentProps<IsList, TProperty>) {
             super(props);
             const methodProps: Record<WebComponentCommonMethodNames, Function> =
-                {
-                    setDisablePulldownRefresh: (able: boolean) =>
-                        this.setDisablePulldownRefresh(able),
-                    t: (key: string, params?: object) => this.t(key, params),
-                    execute: (
-                        action?: ED[T]['Action'],
-                        messageProps?: boolean | MessageProps
-                    ) => {
-                        return this.execute(action, messageProps);
-                    },
-                    aggregate: (aggregation: ED[T]['Aggregation']) => {
-                        return this.features.cache.aggregate(this.state.oakEntity, aggregation);
-                    },
-                    refresh: () => {
-                        return this.refresh();
-                    },
-                    setNotification: (data: NotificationProps) => {
-                        return this.setNotification(data);
-                    },
-                    setMessage: (data: MessageProps) => {
-                        return this.setMessage(data);
-                    },
-                    navigateTo: <T2 extends keyof ED>(
-                        options: { url: string } & OakNavigateToParameters<
-                            ED,
-                            T2
-                        >,
-                        state?: Record<string, any>,
-                        disableNamespace?: boolean
-                    ) => {
-                        return this.navigateTo(
-                            options,
-                            state,
-                            disableNamespace
-                        );
-                    },
-                    navigateBack: (delta?: number) => {
-                        return this.navigateBack(delta);
-                    },
-                    redirectTo: <T2 extends keyof ED>(
-                        options: Parameters<typeof wx.redirectTo>[0] &
-                            OakNavigateToParameters<ED, T2>,
-                        state?: Record<string, any>,
-                        disableNamespace?: boolean
-                    ) => {
-                        return this.redirectTo(
-                            options,
-                            state,
-                            disableNamespace
-                        );
-                    },
-                    clean: (path?: string) => {
-                        return this.clean(path);
-                    },
-                };
-            if (option.isList) {
-                Object.assign(methodProps, {
-                    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
-                        return this.addItem(data, beforeExecute, afterExecute);
-                    },
-                    removeItem: (id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
-                        return this.removeItem(id, beforeExecute, afterExecute);
-                    },
-                    updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
-                        return this.updateItem(data, id, action, beforeExecute, afterExecute);
-                    },
-                    setFilters: (filters: NamedFilterItem<ED, T>[]) => {
-                        return this.setFilters(filters);
-                    },
-                    addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean) => {
-                        return this.addNamedFilter(filter, refresh);
-                    },
-                    removeNamedFilter: (
-                        filter: NamedFilterItem<ED, T>,
-                        refresh?: boolean
-                    ) => {
-                        return this.removeNamedFilter(filter, refresh);
-                    },
-                    removeNamedFilterByName: (name: string, refresh?: boolean) => {
-                        return this.removeNamedFilterByName(name, refresh);
-                    },
-                    setNamedSorters: (sorters: NamedSorterItem<ED, T>[]) => {
-                        return this.setNamedSorters(sorters);
-                    },
-                    addNamedSorter: (sorter: NamedSorterItem<ED, T>, refresh?: boolean) => {
-                        return this.addNamedSorter(sorter, refresh);
-                    },
-                    removeNamedSorter: (
-                        sorter: NamedSorterItem<ED, T>,
-                        refresh?: boolean
-                    ) => {
-                        return this.removeNamedSorter(sorter, refresh);
-                    },
-                    removeNamedSorterByName: (name: string, refresh?: boolean) => {
-                        return this.removeNamedSorterByName(name, refresh);
-                    },
-                    setPageSize: (pageSize: number) => {
-                        return this.setPageSize(pageSize);
-                    },
-                    setCurrentPage: (current: number) => {
-                        return this.setCurrentPage(current);
-                    },
-                    loadMore: () => {
-                        return this.loadMore();
-                    }
-                } as Record<WebComponentListMethodNames, Function>);
-            }
-            else {
-                Object.assign(methodProps, {
-                    /* create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
-                        return this.create(data, beforeExecute, afterExecute);
-                    }, */
-                    update: (data: ED[T]['Update']['data'], action: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
-                        return this.update(data, action, beforeExecute, afterExecute);
-                    },
-                    remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
-                        return this.remove(beforeExecute, afterExecute);
-                    },
-                } as Record<WebComponentSingleMethodNames, Function>);
-            }
+            {
+                setDisablePulldownRefresh: (able: boolean) =>
+                    this.setDisablePulldownRefresh(able),
+                t: (key: string, params?: object) => this.t(key, params),
+                execute: (
+                    action?: ED[T]['Action'],
+                    messageProps?: boolean | MessageProps
+                ) => {
+                    return this.execute(action, messageProps);
+                },
+                aggregate: (aggregation: ED[T]['Aggregation']) => {
+                    return this.features.cache.aggregate(this.state.oakEntity, aggregation);
+                },
+                refresh: () => {
+                    return this.refresh();
+                },
+                setNotification: (data: NotificationProps) => {
+                    return this.setNotification(data);
+                },
+                setMessage: (data: MessageProps) => {
+                    return this.setMessage(data);
+                },
+                navigateTo: <T2 extends keyof ED>(
+                    options: { url: string } & OakNavigateToParameters<
+                        ED,
+                        T2
+                    >,
+                    state?: Record<string, any>,
+                    disableNamespace?: boolean
+                ) => {
+                    return this.navigateTo(
+                        options,
+                        state,
+                        disableNamespace
+                    );
+                },
+                navigateBack: (delta?: number) => {
+                    return this.navigateBack(delta);
+                },
+                redirectTo: <T2 extends keyof ED>(
+                    options: Parameters<typeof wx.redirectTo>[0] &
+                        OakNavigateToParameters<ED, T2>,
+                    state?: Record<string, any>,
+                    disableNamespace?: boolean
+                ) => {
+                    return this.redirectTo(
+                        options,
+                        state,
+                        disableNamespace
+                    );
+                },
+                clean: (path?: string) => {
+                    return this.clean(path);
+                },
+            };
+            Object.assign(methodProps, {
+                addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
+                    return this.addItem(data, beforeExecute, afterExecute, path);
+                },
+                removeItem: (id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
+                    return this.removeItem(id, beforeExecute, afterExecute, path);
+                },
+                updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
+                    return this.updateItem(data, id, action, beforeExecute, afterExecute, path);
+                },
+                setFilters: (filters: NamedFilterItem<ED, T>[], path?: string) => {
+                    return this.setFilters(filters, path);
+                },
+                addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) => {
+                    return this.addNamedFilter(filter, refresh, path);
+                },
+                removeNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) => {
+                    return this.removeNamedFilter(filter, refresh, path);
+                },
+                removeNamedFilterByName: (name: string, refresh?: boolean, path?: string) => {
+                    return this.removeNamedFilterByName(name, refresh, path);
+                },
+                setNamedSorters: (sorters: NamedSorterItem<ED, T>[], path?: string) => {
+                    return this.setNamedSorters(sorters, path);
+                },
+                addNamedSorter: (sorter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => {
+                    return this.addNamedSorter(sorter, refresh, path);
+                },
+                removeNamedSorter: (sorter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => {
+                    return this.removeNamedSorter(sorter, refresh, path);
+                },
+                removeNamedSorterByName: (name: string, refresh?: boolean, path?: string) => {
+                    return this.removeNamedSorterByName(name, refresh, path);
+                },
+                setPageSize: (pageSize: number, path?: string) => {
+                    return this.setPageSize(pageSize, path);
+                },
+                setCurrentPage: (current: number, path?: string) => {
+                    return this.setCurrentPage(current, path);
+                },
+                loadMore: () => {
+                    return this.loadMore();
+                }
+            } as Record<WebComponentListMethodNames, Function>);
+
+            Object.assign(methodProps, {
+                /* create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
+                    return this.create(data, beforeExecute, afterExecute);
+                }, */
+                update: (data: ED[T]['Update']['data'], action: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
+                    return this.update(data, action, beforeExecute, afterExecute, path);
+                },
+                remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
+                    return this.remove(beforeExecute, afterExecute, path);
+                },
+            } as Record<WebComponentSingleMethodNames, Function>);
 
             if (methods) {
                 for (const m in methods) {
@@ -738,7 +790,7 @@ export function createComponent<
             }
 
             // ts似乎有个BUG，这里不硬写as会有编译错误
-            const data2 = typeof data === 'function' ? (data as ((option: { features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD, props: ComponentProps<IsList, TProperty>}) => TData))({ features, props }) : data;
+            const data2 = typeof data === 'function' ? (data as ((option: { features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD, props: ComponentProps<IsList, TProperty> }) => TData))({ features, props }) : data;
             this.state = Object.assign({}, data2, {
                 oakLoading: false,
                 oakLoadingMore: false,
@@ -747,7 +799,7 @@ export function createComponent<
                 oakDirty: false,
             }) as any;
             this.methodProps = methodProps;
-           
+
             // 处理默认的properties
             this.defaultProperties = {};
             const { properties } = option;

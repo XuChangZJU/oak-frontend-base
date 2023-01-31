@@ -360,15 +360,17 @@ const oakBehavior = Behavior<
             return this.features.runningTree.getId(this.state.oakFullpath);
         },
 
-        setFilters(filters) {
+        setFilters(filters, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.setNamedFilters(
-                this.state.oakFullpath,
+                path2,
                 filters
             );
         },
 
-        getFilters() {
+        getFilters(path) {
             if (this.state.oakFullpath) {
+                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 const namedFilters = this.features.runningTree.getNamedFilters(
                     this.state.oakFullpath
                 );
@@ -381,10 +383,11 @@ const oakBehavior = Behavior<
             }
         },
 
-        getFilterByName(name: string) {
+        getFilterByName(name, path) {
             if (this.state.oakFullpath) {
+                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 const filter = this.features.runningTree.getNamedFilterByName(
-                    this.state.oakFullpath,
+                    path2,
                     name
                 );
                 if (filter?.filter) {
@@ -396,42 +399,45 @@ const oakBehavior = Behavior<
             }
         },
 
-        addNamedFilter(namedFilter, refresh) {
+        addNamedFilter(namedFilter, refresh, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.addNamedFilter(
-                this.state.oakFullpath,
+                path2,
                 namedFilter,
                 refresh
             );
         },
 
-        removeNamedFilter(namedFilter, refresh) {
+        removeNamedFilter(namedFilter, refresh, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.removeNamedFilter(
-                this.state.oakFullpath,
+                path2,
                 namedFilter,
                 refresh
             );
         },
 
-        removeNamedFilterByName(name, refresh) {
+        removeNamedFilterByName(name, refresh, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.removeNamedFilterByName(
-                this.state.oakFullpath,
+                path2,
                 name,
                 refresh
             );
         },
 
-        setNamedSorters(namedSorters) {
+        setNamedSorters(namedSorters, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.setNamedSorters(
-                this.state.oakFullpath,
+                path2,
                 namedSorters
             );
         },
 
-        getSorters() {
+        getSorters(path) {
             if (this.state.oakFullpath) {
-                const namedSorters = this.features.runningTree.getNamedSorters(
-                    this.state.oakFullpath
-                );
+                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const namedSorters = this.features.runningTree.getNamedSorters(path2);
                 const sorters = namedSorters
                     .map(({ sorter }) => {
                         if (typeof sorter === 'function') {
@@ -444,10 +450,11 @@ const oakBehavior = Behavior<
             }
         },
 
-        getSorterByName(name) {
+        getSorterByName(name, path) {
             if (this.state.oakFullpath) {
+                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 const sorter = this.features.runningTree.getNamedSorterByName(
-                    this.state.oakFullpath,
+                    path2,
                     name
                 );
                 if (sorter?.sorter) {
@@ -459,66 +466,64 @@ const oakBehavior = Behavior<
             }
         },
 
-        addNamedSorter(namedSorter, refresh) {
-            this.features.runningTree.addNamedSorter(
-                this.state.oakFullpath,
-                namedSorter,
-                refresh
-            );
+        addNamedSorter(namedSorter, refresh, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            this.features.runningTree.addNamedSorter(path2, namedSorter, refresh);
         },
 
-        removeNamedSorter(namedSorter, refresh) {
+        removeNamedSorter(namedSorter, refresh, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.removeNamedSorter(
-                this.state.oakFullpath,
+                path2,
                 namedSorter,
                 refresh
             );
         },
 
-        removeNamedSorterByName(name, refresh) {
-            this.features.runningTree.removeNamedSorterByName(
-                this.state.oakFullpath,
-                name,
-                refresh
-            );
+        removeNamedSorterByName(name, refresh, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            this.features.runningTree.removeNamedSorterByName(path2, name, refresh);
         },
 
-        getPagination() {
+        getPagination(path) {
             if (this.state.oakFullpath) {
-                return this.features.runningTree.getPagination(
-                    this.state.oakFullpath
-                );
+                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                return this.features.runningTree.getPagination(path2);
             }
         },
 
-        setPageSize(pageSize) {
+        setPageSize(pageSize, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.setPageSize(
-                this.state.oakFullpath,
+                path2,
                 pageSize
             );
         },
 
-        setCurrentPage(currentPage) {
+        setCurrentPage(currentPage, path) {
             assert(currentPage !== 0);
 
             if (this.state.oakEntity && this.state.oakFullpath) {
+                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 this.features.runningTree.setCurrentPage(
-                    this.state.oakFullpath,
+                    path2,
                     currentPage
                 );
             }
         },
-        addItem(data, beforeExecute, afterExecute) {
+        addItem(data, beforeExecute, afterExecute, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.addItem(
-                this.state.oakFullpath,
+                path2,
                 data,
                 beforeExecute,
                 afterExecute
             );
         },
-        updateItem(data, id, action, beforeExecute, afterExecute) {
+        updateItem(data, id, action, beforeExecute, afterExecute, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.updateItem(
-                this.state.oakFullpath,
+                path2,
                 data,
                 id,
                 action,
@@ -526,17 +531,19 @@ const oakBehavior = Behavior<
                 afterExecute
             );
         },
-        removeItem(id, beforeExecute, afterExecute) {
+        removeItem(id, beforeExecute, afterExecute, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.removeItem(
-                this.state.oakFullpath,
+                path2,
                 id,
                 beforeExecute,
                 afterExecute
             );
         },
-        recoverItem(id) {
+        recoverItem(id, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.recoverItem(
-                this.state.oakFullpath,
+                path2,
                 id
             );
         },
@@ -546,18 +553,20 @@ const oakBehavior = Behavior<
         unsetId() {
             return this.features.runningTree.unsetId(this.state.oakFullpath);
         },
-        update(data, action, beforeExecute, afterExecute) {
+        update(data, action, beforeExecute, afterExecute, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.update(
-                this.state.oakFullpath,
+                path2,
                 data,
                 action,
                 beforeExecute,
                 afterExecute
             );
         },
-        remove(beforeExecute, afterExecute) {
+        remove(beforeExecute, afterExecute, path) {
+            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.remove(
-                this.state.oakFullpath,
+                path2,
                 beforeExecute,
                 afterExecute
             );

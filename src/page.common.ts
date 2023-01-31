@@ -197,6 +197,18 @@ export function reRender<
         Object.assign(data, {
             oakLegalActions,
         });
+
+        if (option.isList) {
+            const oakFilters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getFilters();
+            const oakSorters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getSorters();
+            const oakPagination = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getPagination();
+            Object.assign(data, {
+                oakFilters,
+                oakSorters,
+                oakPagination,
+            });
+        }
+
         for (const k in data) {
             if (data[k] === undefined) {
                 Object.assign(data, {
