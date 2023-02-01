@@ -1521,8 +1521,14 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     async refresh() {
+        // SingleNode如果是ListNode的子结点，则不必refresh（优化，ListNode有义务负责子层对象的数据）
+        if (this.parent && this.parent instanceof ListNode && this.parent.getEntity() === this.getEntity()) {
+            this.publish();
+            return;
+        }
+
         // SingleNode如果是非根结点，其id应该在第一次refresh的时候来确定        
-        const projection = this.getProjection();
+        const projection = this.getProjection(true);
         assert(projection, `页面没有定义投影「SingleNode, ${this.entity as string}」`);
         const filter = this.getFilter(true);
         if (filter) {
