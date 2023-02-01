@@ -19,7 +19,7 @@ import { MessageProps } from './types/Message';
 export async function onPathSet<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    Cxt extends AsyncContext<ED>,    
+    Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>>(
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
         option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>) {
@@ -145,7 +145,7 @@ export async function onPathSet<
 export function reRender<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    Cxt extends AsyncContext<ED>,    
+    Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>>(
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
         option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>,
@@ -158,6 +158,9 @@ export function reRender<
         );
 
         const oakDirty = this.features.runningTree.isDirty(this.state.oakFullpath);
+        /**
+         * 这里的pullDownRefresh处理的应该有问题，先不动。to wangkejun.  By Xc 20230201
+         */
         const oakLoading = !(this as any).pullDownRefresh && this.features.runningTree.isLoading(this.state.oakFullpath);
         const oakPullDownRefreshLoading = !!(this as any).pullDownRefresh && this.features.runningTree.isLoading(this.state.oakFullpath);
         const oakLoadingMore = this.features.runningTree.isLoadingMore(this.state.oakFullpath);
@@ -240,11 +243,26 @@ export function reRender<
         if (extra) {
             Object.assign(data, extra);
         }
-        if (Object.keys(data).length === 0) {
+
+        if (this.state.oakFullpath) {
+            /**
+             * loadingMore和pullLoading设计上有问题，暂不处理
+             */
+            const oakDirty = this.features.runningTree.isDirty(this.state.oakFullpath);
+            const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
+            const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
+            const oakLoading = this.features.runningTree.isLoading(this.state.oakFullpath);
             Object.assign(data, {
-                __now: Date.now(),          // 如果没有任何state被set，可能会不触发重渲染
+                oakDirty,
+                oakExecutable,
+                oakExecuting,
+                oakLoading,
             });
         }
+
+        Object.assign({
+            __time: Date.now(),
+        });         // 有些环境下如果传空值不触发判断
         this.setState(data);
     }
 }

@@ -148,6 +148,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
 }
 declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private dirty;
+    private executing;
     private children;
     constructor(path?: string, parent?: VirtualNode<ED, Cxt, FrontCxt, AD>);
     getActiveModies(child: any): undefined;
@@ -164,6 +165,8 @@ declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends As
         operation: ED[keyof ED]['Operation'];
     }> | undefined;
     setExecuting(executing: boolean): void;
+    isExecuting(): boolean;
+    isLoading(): boolean;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
     clean(): void;
@@ -186,7 +189,6 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     private cache;
     private schema;
     private root;
-    private aspectWrapper;
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, FrontCxt, AD>, schema: StorageSchema<ED>);
     createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     private findNode;
@@ -200,7 +202,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     create<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): Promise<void>;
     update<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     remove(path: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
-    isLoading(path: string): boolean;
+    isLoading(path: string): boolean | undefined;
     isLoadingMore(path: string): boolean;
     isExecuting(path: string): boolean;
     refresh(path: string): Promise<void>;

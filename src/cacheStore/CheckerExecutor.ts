@@ -45,6 +45,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                         type,
                         priority,
                         fn,
+                        when,
                         filter: conditionalFilter,
                     }],
                 });
@@ -56,6 +57,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                             type,
                             priority,
                             fn,
+                            when,
                             filter: conditionalFilter,
                         }],
                     },
@@ -76,7 +78,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
         const { action } = operation;
         const checkers = this.checkerMap[entity] && this.checkerMap[entity]![action];
         if (checkers) {
-            const checkers2 = checkerTypes ? checkers.filter(ele => checkerTypes.includes(ele.type) && (!when || ele.when === when)) : checkers;
+            const checkers2 = checkers.filter(ele => (!checkerTypes || checkerTypes.includes(ele.type)) && (!when || ele.when === when));
             for (const checker of checkers2) {
                 const { filter } = checker;
                 if (filter) {

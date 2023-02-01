@@ -1693,10 +1693,12 @@ class VirtualNode<
     AD extends CommonAspectDict<ED, Cxt>
 > extends Feature {
     private dirty: boolean;
+    private executing: boolean;
     private children: Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
     constructor(path?: string, parent?: VirtualNode<ED, Cxt, FrontCxt, AD>) {
         super();
         this.dirty = false;
+        this.executing = false;
         this.children = {};
         if (parent) {
             parent.addChild(path!, this);
@@ -1781,12 +1783,25 @@ class VirtualNode<
 
         return operationss;
     }
+
     setExecuting(executing: boolean) {
-        for (const ele in this.children) {
-            this.children[ele].setExecuting(executing);
-        }
+        this.executing = executing;
         this.publish();
     }
+
+    isExecuting() {
+        return this.executing;
+    }
+
+    isLoading() {
+        for (const ele in this.children) {
+            if (this.children[ele].isLoading()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     async doBeforeTrigger() {
         for (const ele in this.children) {
             await this.children[ele].doBeforeTrigger();
@@ -1854,7 +1869,6 @@ export class RunningTree<
         string,
         SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>
     >;
-    private aspectWrapper: AspectWrapper<ED, Cxt, AD>;
 
     constructor(
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
@@ -1862,7 +1876,7 @@ export class RunningTree<
         schema: StorageSchema<ED>
     ) {
         super();
-        this.aspectWrapper = aspectWrapper;
+        // this.aspectWrapper = aspectWrapper;
         this.cache = cache;
         this.schema = schema;
         this.root = {};
@@ -2023,8 +2037,7 @@ export class RunningTree<
 
     isLoading(path: string) {
         const node = this.findNode(path);
-        assert(node && (node instanceof SingleNode || node instanceof ListNode));
-        return node.isLoading();
+        return node?.isLoading();
     }
 
     isLoadingMore(path: string) {
@@ -2035,8 +2048,7 @@ export class RunningTree<
 
     isExecuting(path: string) {
         const node = this.findNode(path);
-        assert(node && (node instanceof SingleNode || node instanceof ListNode));
-        return node.isExecuting();
+        return node ? node.isExecuting() : false;
     }
 
     async refresh(path: string) {
