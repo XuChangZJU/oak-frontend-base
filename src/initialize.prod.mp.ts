@@ -8,6 +8,7 @@ import {
     RowStore,
     OakException,
     Connector,
+    AuthDefDict,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
@@ -40,6 +41,7 @@ export function initialize<
     connector: Connector<ED, Cxt, FrontCxt>,
     checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>,
+    authDict?: AuthDefDict<ED>,
     i18nOptions?: I18nOptions
 ) {
     const { features } = initProd<ED, Cxt, FrontCxt, AD, FD>(
@@ -48,7 +50,8 @@ export function initialize<
         frontendContextBuilder,
         connector,
         checkers,
-        actionDict
+        actionDict,
+        authDict
     );
 
     // 初始化locales

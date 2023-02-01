@@ -6,6 +6,7 @@ import {
     Context,
     RowStore,
     Connector,
+    AuthDefDict,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
@@ -49,9 +50,10 @@ export function initialize<
     frontendContextBuilder: (features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>) => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
     connector: Connector<ED, Cxt, FrontCxt>,
     checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
-    actionDict?: ActionDictOfEntityDict<ED>
+    actionDict?: ActionDictOfEntityDict<ED>,
+    authDict?: AuthDefDict<ED>,
 ) {
-    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema));
+    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema, authDict));
 
     const features = {} as FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
 
