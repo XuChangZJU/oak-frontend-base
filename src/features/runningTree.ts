@@ -2218,8 +2218,8 @@ export class RunningTree<
     }
 
     tryExecute(path: string) {
-        const node = this.findNode(path)!;
-        const operations = node.composeOperations();
+        const node = this.findNode(path);
+        const operations = node?.composeOperations();
         if (operations && operations.length > 0) {
             return this.cache.tryRedoOperations(operations);
         }
