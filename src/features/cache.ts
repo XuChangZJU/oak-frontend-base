@@ -239,8 +239,8 @@ export class Cache<
                         for (const record of opRecords) {
                             const { d } = record as SelectOpResult<ED>;
                             assert(Object.keys(d).length > 0, '在通过fetchRow取不一致数据时返回了空数据，请拿该程序员祭天。');
-                            for (const e in d) {
-                                assert(Object.keys(d![e]!).length > 0, `在通过fetchRow取不一致数据时返回了空数据，请拿该程序员祭天。entity是${e}`);
+                            for (const mr of missedRows) {
+                                assert(Object.keys(d![mr.entity]!).length > 0, `在通过fetchRow取不一致数据时返回了空数据，请拿该程序员祭天。entity是${mr.entity}`);
                             }
                         }
                     })
@@ -255,11 +255,11 @@ export class Cache<
     get<T extends keyof ED>(
         entity: T,
         selection: ED[T]['Selection'],
-        params?: SelectOption
+        allowMiss?: boolean,
     ) {
         const context = this.contextBuilder!();
 
-        return this.getInner(entity, selection, context);
+        return this.getInner(entity, selection, context, allowMiss);
     }
 
     judgeRelation(entity: keyof ED, attr: string) {
