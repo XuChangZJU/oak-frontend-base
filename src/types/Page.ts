@@ -165,7 +165,7 @@ export type ComponentPublicThisType<
         subscribed: Array<() => void>;
         features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
         state: ComponentData<ED, T, FormedData, TData>;
-        props: ComponentProps<IsList, TProperty>;
+        props: Readonly<ComponentProps<IsList, TProperty>>;
         setState: (
             data: Partial<ComponentData<ED, T, FormedData, TData>>,
             callback?: () => void,

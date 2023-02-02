@@ -762,7 +762,7 @@ export function createComponent<
             ready() {
                 if (typeof data === 'function') {
                     // ts的编译好像有问题，这里不硬写as过不去 
-                    const data2 = (data as ((option: { features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD, props: ComponentProps<IsList, TProperty>}) => TData))({ features, props: this.data as any });
+                    const data2 = (data as Function).call(this as any);
                     this.setData(data2);
                 }
                 ready && ready.call(this);

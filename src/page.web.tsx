@@ -792,8 +792,7 @@ export function createComponent<
                 }
             }
 
-            // ts似乎有个BUG，这里不硬写as会有编译错误
-            const data2 = typeof data === 'function' ? (data as ((option: { features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD, props: ComponentProps<IsList, TProperty> }) => TData))({ features, props }) : data;
+            const data2 = typeof data === 'function' ? (data as Function).call(this as any) : data;
             this.state = Object.assign({}, data2, {
                 oakLoading: false,
                 oakLoadingMore: false,

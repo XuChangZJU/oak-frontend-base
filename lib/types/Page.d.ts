@@ -74,7 +74,7 @@ export declare type ComponentPublicThisType<ED extends EntityDict & BaseEntityDi
     subscribed: Array<() => void>;
     features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     state: ComponentData<ED, T, FormedData, TData>;
-    props: ComponentProps<IsList, TProperty>;
+    props: Readonly<ComponentProps<IsList, TProperty>>;
     setState: (data: Partial<ComponentData<ED, T, FormedData, TData>>, callback?: () => void) => void;
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 } & TMethod & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
