@@ -723,6 +723,9 @@ export function createComponent<
                 clean: (path?: string) => {
                     return this.clean(path);
                 },
+                checkOperation: (entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => {
+                    return this.checkOperation(entity, action, filter, checkerTypes);
+                }
             };
             Object.assign(methodProps, {
                 addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {

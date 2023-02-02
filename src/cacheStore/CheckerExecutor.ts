@@ -2,7 +2,7 @@
 import assert from 'assert';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { Checker, CheckerType, SelectOption, OperateOption } from 'oak-domain/lib/types';
+import { Checker, CheckerType, SelectOption, OperateOption, DATA_CHECKER_DEFAULT_PRIORITY, CHECKER_DEFAULT_PRIORITY } from 'oak-domain/lib/types';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { translateCheckerInSyncContext } from 'oak-domain/lib/store/checker';
 import { checkFilterRepel } from 'oak-domain/lib/store/filter';
@@ -20,20 +20,23 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
         };
     } = {};
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
-        const { entity, action, priority = 1, type, conditionalFilter } = checker;
+        let { entity, action, priority, type, conditionalFilter } = checker;
         const { fn, when } = translateCheckerInSyncContext(checker);
+        if (priority === undefined) {
+            priority = type === 'data' ? DATA_CHECKER_DEFAULT_PRIORITY : CHECKER_DEFAULT_PRIORITY;
+        }
         const addCheckerMap = (action2: string) => {
             if (this.checkerMap[entity] && this.checkerMap[entity]![action2]) {
                 let iter = 0;
                 const checkers = this.checkerMap[entity]![action2]!;
                 for (; iter < checkers.length; iter ++) {
-                    if (priority >= checkers[iter].priority) {
+                    if (priority! <= checkers[iter].priority!) {
                         break;
                     }
                 }
                 checkers.splice(iter, 0, {
                     type,
-                    priority,
+                    priority: priority!,
                     fn,
                     when,
                     filter: conditionalFilter,

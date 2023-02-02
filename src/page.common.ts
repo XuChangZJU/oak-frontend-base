@@ -166,7 +166,7 @@ export function reRender<
                 const testResult = actions.map(
                     ele => ({
                         action: ele,
-                        result: this.checkOperation(this.state.oakEntity, ele, { id }, ['relation', 'row']),
+                        result: this.checkOperation(this.state.oakEntity, ele, { id }, ['relation', 'row', 'logical', 'logicalRelation']),
                     })
                 );
                 oakLegalActions = testResult.filter(
