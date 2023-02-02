@@ -1,5 +1,6 @@
 /// <reference types="wechat-miniprogram" />
 /// <reference types="react" />
+/// <reference types="wechat-miniprogram" />
 import { Aspect, EntityDict, CheckerType, AggregationResult } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -11,49 +12,65 @@ import { NotificationProps } from './Notification';
 import { MessageProps } from './Message';
 import { AsyncContext } from "oak-domain/lib/store/AsyncRowStore";
 import { SyncContext } from "oak-domain/lib/store/SyncRowStore";
-interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption = {}> {
-    entity?: T | (() => T);
+export declare type PropertyOption = Record<string, WechatMiniprogram.Component.AllProperty | FunctionConstructor>;
+export declare type DataOption = WechatMiniprogram.Component.DataOption;
+export declare type MethodOption = WechatMiniprogram.Component.MethodOption;
+/**
+ * 微信的原声明中少写了FunctionConstructor，只能抄一遍
+ */
+declare type PropertyType = FunctionConstructor | StringConstructor | NumberConstructor | BooleanConstructor | ArrayConstructor | ObjectConstructor | null;
+declare type ValueType<T extends PropertyType> = T extends null ? any : T extends StringConstructor ? string : T extends NumberConstructor ? number : T extends BooleanConstructor ? boolean : T extends ArrayConstructor ? any[] : T extends ObjectConstructor ? AnyObject : T extends FunctionConstructor ? Function : never;
+declare type FullProperty<T extends PropertyType> = {
+    /** 属性类型 */
+    type: T;
+    /** 属性初始值 */
+    value?: ValueType<T> | undefined;
+    /** 属性值被更改时的响应函数 */
+    observer?: string | ((newVal: ValueType<T>, oldVal: ValueType<T>, changedPath: Array<string | number>) => void) | undefined;
+    /** 属性的类型（可以指定多个） */
+    optionalTypes?: ShortProperty[] | undefined;
+};
+declare type AllFullProperty = FullProperty<StringConstructor> | FullProperty<NumberConstructor> | FullProperty<BooleanConstructor> | FullProperty<ArrayConstructor> | FullProperty<ObjectConstructor> | FullProperty<null>;
+declare type ShortProperty = FunctionConstructor | StringConstructor | NumberConstructor | BooleanConstructor | ArrayConstructor | ObjectConstructor | null;
+declare type AllProperty = AllFullProperty | ShortProperty;
+declare type PropertyToData<T extends AllProperty> = T extends ShortProperty ? ValueType<T> : FullPropertyToData<Exclude<T, ShortProperty>>;
+declare type FullPropertyToData<T extends AllFullProperty> = ValueType<T['type']>;
+declare type PropertyOptionToData<P extends PropertyOption> = {
+    [name in keyof P]: PropertyToData<P[name]>;
+};
+interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends DataOption, TProperty extends PropertyOption> {
+    entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => T);
     path?: string;
     isList: IsList;
-    projection?: ED[T]['Selection']['data'] | ((options: {
-        features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-        props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
-        state: Record<string, any>;
-    }) => ED[T]['Selection']['data']);
+    projection?: ED[T]['Selection']['data'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ED[T]['Selection']['data']);
     append?: boolean;
     pagination?: Pagination;
     filters?: Array<{
-        filter: ED[T]['Selection']['filter'] | ((options: {
-            features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-            props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
-            state: Record<string, any>;
-        }) => ED[T]['Selection']['filter'] | undefined);
+        filter: ED[T]['Selection']['filter'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ED[T]['Selection']['filter'] | undefined);
         '#name'?: string;
     }>;
     sorters?: Array<{
-        sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | ((options: {
-            features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-            props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
-            state: Record<string, any>;
-        }) => NonNullable<ED[T]['Selection']['sorter']>[number]);
+        sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => NonNullable<ED[T]['Selection']['sorter']>[number]);
         '#name'?: string;
     }>;
     formData?: (options: {
         data: IsList extends true ? Partial<ED[T]['Schema']>[] : Partial<ED[T]['Schema']> | undefined;
         features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-        props: Partial<WechatMiniprogram.Component.PropertyOptionToData<TProperty>>;
+        props: Partial<PropertyOptionToData<TProperty>>;
         legalActions: ED[T]['Action'][];
-    }) => FormedData;
+    }) => FormedData & ThisType<ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList>>;
     ns?: T | T[];
+    data?: ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => TData) | TData;
+    properties?: TProperty;
 }
 export declare type MiniprogramStyleMethods = {
     animate(selector: string, keyFrames: WechatMiniprogram.Component.KeyFrame[], duration: number, callback?: () => void): void;
     clearAnimation(selector: string, options?: WechatMiniprogram.Component.ClearAnimationOptions, callback?: () => void): void;
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 };
-export declare type ComponentProps<IsList extends boolean, TProperty extends WechatMiniprogram.Component.PropertyOption> = IsList extends true ? WechatMiniprogram.Component.PropertyOptionToData<OakListComponentProperties & OakComponentProperties & TProperty> : WechatMiniprogram.Component.PropertyOptionToData<OakComponentProperties & TProperty>;
-export declare type ComponentData<ED extends EntityDict & BaseEntityDict, T extends keyof ED, FormedData extends WechatMiniprogram.Component.DataOption, TData extends WechatMiniprogram.Component.DataOption> = TData & FormedData & OakComponentData<ED, T>;
-export declare type ComponentPublicThisType<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any> = {}, TProperty extends WechatMiniprogram.Component.PropertyOption = {}, TMethod extends WechatMiniprogram.Component.MethodOption = {}> = {
+export declare type ComponentProps<IsList extends boolean, TProperty extends PropertyOption> = IsList extends true ? PropertyOptionToData<OakListComponentProperties & OakComponentProperties & TProperty> : PropertyOptionToData<OakComponentProperties & TProperty>;
+export declare type ComponentData<ED extends EntityDict & BaseEntityDict, T extends keyof ED, FormedData extends DataOption, TData extends DataOption> = TData & FormedData & OakComponentData<ED, T>;
+export declare type ComponentPublicThisType<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any> = {}, TProperty extends PropertyOption = {}, TMethod extends MethodOption = {}> = {
     subscribed: Array<() => void>;
     features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     state: ComponentData<ED, T, FormedData, TData>;
@@ -69,12 +86,7 @@ export declare type ComponentFullThisType<ED extends EntityDict & BaseEntityDict
     setState: (data: Partial<OakComponentData<ED, T>>, callback?: () => void) => void;
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 } & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
-export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any>, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends Record<string, Function>> = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TProperty> & Partial<{
-    data?: ((option: {
-        features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-        props: ComponentProps<IsList, TProperty>;
-    }) => TData) | TData;
-    properties: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty>;
+export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any>, TProperty extends PropertyOption, TMethod extends Record<string, Function>> = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty> & Partial<{
     methods: TMethod;
     lifetimes: {
         created?(): void;
@@ -86,7 +98,7 @@ export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T
         show?(): void;
         hide?(): void;
     };
-    actions?: ED[T]['Action'][] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => ED[T]['Action'][]);
+    actions: ED[T]['Action'][] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => ED[T]['Action'][]);
     observers: Record<string, (...args: any[]) => any>;
 }> & Partial<{
     wechatMp: {
@@ -218,11 +230,11 @@ export declare type OakListComoponetData<ED extends EntityDict & BaseEntityDict,
     oakSorters?: NonNullable<ED[T]['Selection']['sorter']>[];
     oakPagination?: Pagination;
 };
-export declare type MakeOakComponent<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>> = <T extends keyof ED, FormedData extends WechatMiniprogram.Component.DataOption, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption, TProperty extends WechatMiniprogram.Component.PropertyOption, TMethod extends WechatMiniprogram.Component.MethodOption>(options: OakComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => React.ComponentType<any>;
+export declare type MakeOakComponent<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>> = <T extends keyof ED, FormedData extends DataOption, IsList extends boolean, TData extends DataOption, TProperty extends PropertyOption, TMethod extends MethodOption>(options: OakComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => React.ComponentType<any>;
 export declare type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh' | 'aggregate';
 export declare type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedFilter' | 'removeNamedFilter' | 'removeNamedFilterByName' | 'setNamedSorters' | 'addNamedSorter' | 'removeNamedSorter' | 'removeNamedSorterByName' | 'setPageSize' | 'setCurrentPage' | 'addItem' | 'removeItem' | 'updateItem';
 export declare type WebComponentSingleMethodNames = 'update' | 'remove';
-export declare type WebComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, TData extends WechatMiniprogram.Component.DataOption = {}, TMethod extends WechatMiniprogram.Component.MethodOption = {}> = {
+export declare type WebComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, TData extends DataOption = {}, TMethod extends MethodOption = {}> = {
     methods: TMethod & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
     data: TData & OakComponentData<ED, T> & (IsList extends true ? OakListComoponetData<ED, T> : {});
 };

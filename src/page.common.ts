@@ -43,11 +43,7 @@ export async function onPathSet<
                     filter:
                         typeof filter === 'function'
                             ? () =>
-                                (filter as Function).call(this, {
-                                    features,
-                                    props: this.props,
-                                    state: this.state,
-                                })
+                                (filter as Function).call(this)
                             : filter,
                     ['#name']: name,
                 });
@@ -57,11 +53,7 @@ export async function onPathSet<
         if (!proj && projection) {
             proj = typeof projection === 'function'
                 ? () =>
-                    (projection as Function).call(this, {
-                        features,
-                        props: this.props,
-                        state: this.state,
-                    })
+                    (projection as Function).call(this)
                 : projection;
         }
         let sorters2: NamedSorterItem<ED, T>[] = [];
@@ -76,11 +68,7 @@ export async function onPathSet<
                     sorter:
                         typeof sorter === 'function'
                             ? () =>
-                                (sorter as Function).call(this, {
-                                    features,
-                                    props: this.props,
-                                    state: this.state,
-                                })
+                                (sorter as Function).call(this)
                             : sorter,
                     ['#name']: name,
                 });

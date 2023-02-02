@@ -22,13 +22,17 @@ import { Feature } from './types/Feature';
 import { BasicFeatures } from './features';
 import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { OakComponentOption } from './types/Page';
 import { createComponent } from './page.web';
 import { initialize as initDev } from './initialize-dev';
 import { getI18next, I18nOptions } from './platforms/web/i18n';
 import { AsyncContext, AsyncRowStore } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { CacheStore } from './cacheStore/CacheStore';
+import { 
+    DataOption,
+    PropertyOption,
+    MethodOption,
+    OakComponentOption } from './types/Page';
 
 export function initialize<
     ED extends EntityDict & BaseEntityDict,
@@ -83,11 +87,11 @@ export function initialize<
     Object.assign(global, {
         OakComponent: <
             T extends keyof ED,
-            FormedData extends WechatMiniprogram.Component.DataOption,
+            FormedData extends DataOption,
             IsList extends boolean,
-            TData extends WechatMiniprogram.Component.DataOption = {},
-            TProperty extends WechatMiniprogram.Component.PropertyOption = {},
-            TMethod extends WechatMiniprogram.Component.MethodOption = {}
+            TData extends DataOption = {},
+            TProperty extends PropertyOption = {},
+            TMethod extends MethodOption = {}
         >(
             options: OakComponentOption<
                 ED,

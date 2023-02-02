@@ -6,6 +6,9 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { Feature } from './types/Feature';
 import {
+    DataOption,
+    PropertyOption,
+    MethodOption,
     ComponentProps,
     OakCommonComponentMethods,
     OakComponentOption,
@@ -44,7 +47,7 @@ type ADD = Record<string, Aspect<EDD, Cxt>>;
 type FDD = Record<string, Feature>;
 type FrontCxt = SyncContext<EntityDict & BaseEntityDict>;
 const oakBehavior = Behavior<
-    WechatMiniprogram.Component.DataOption,
+    DataOption,
     WechatMiniprogram.Component.PropertyOption,
     OakCommonComponentMethods<EDD, keyof EDD> &
         OakListComponentMethods<EDD, keyof EDD> &
@@ -626,7 +629,7 @@ export function createComponent<
     FormedData extends Record<string, any>,
     IsList extends boolean,
     TData extends Record<string, any> = {},
-    TProperty extends WechatMiniprogram.Component.PropertyOption = {},
+    TProperty extends PropertyOption = {},
     TMethod extends Record<string, Function> = {}
 >(
     option: OakComponentOption<
@@ -656,9 +659,9 @@ export function createComponent<
     const { options, externalClasses } = wechatMp || {};
 
     return Component<
-        WechatMiniprogram.Component.DataOption,
+        DataOption,
         WechatMiniprogram.Component.PropertyOption,
-        WechatMiniprogram.Component.MethodOption,
+        MethodOption,
         {
             state: Record<string, any>;
             props: {
@@ -704,7 +707,7 @@ export function createComponent<
         }) : {
             oakFullpath: '',
         },
-        properties:  Object.assign(
+        properties: Object.assign(
             {},
             properties,
             OakProperties

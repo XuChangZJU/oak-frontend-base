@@ -10,6 +10,9 @@ import { BasicFeatures } from './features';
 import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
 import { Feature } from './types/Feature';
 import {
+    DataOption,
+    PropertyOption,
+    MethodOption,
     ComponentData,
     ComponentProps,
     OakComponentOption,
@@ -38,9 +41,9 @@ abstract class OakComponentBase<
     FD extends Record<string, Feature>,
     FormedData extends Record<string, any>,
     IsList extends boolean,
-    TData extends WechatMiniprogram.Component.DataOption,
-    TProperty extends WechatMiniprogram.Component.PropertyOption,
-    TMethod extends WechatMiniprogram.Component.MethodOption
+    TData extends DataOption,
+    TProperty extends PropertyOption,
+    TMethod extends MethodOption
     > extends React.PureComponent<
     ComponentProps<IsList, TProperty>,
     ComponentData<ED, T, FormedData, TData>
@@ -617,7 +620,7 @@ export function createComponent<
     FormedData extends Record<string, any>,
     IsList extends boolean,
     TData extends Record<string, any> = {},
-    TProperty extends WechatMiniprogram.Component.PropertyOption = {},
+    TProperty extends PropertyOption = {},
     TMethod extends Record<string, Function> = {}
 >(
     option: OakComponentOption<
