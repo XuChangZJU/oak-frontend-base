@@ -1304,23 +1304,26 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         const filter = this.getFilter();
         if (filter) {
             assert(!disableOperation);
-            if (this.operation) {
-                operations.push({
-                    entity: this.entity,
-                    operation: this.operation.operation,
-                });
-            }
-            // 如果是listNode下的一个子结点，则父结点上对应的operation也需要被redo
             const parent = this.getParent();
             if (parent instanceof ListNode) {
                 const parentOperation = parent.getChildOperation(this);
                 if (parentOperation) {
+                    // 现在只需要处理一种情况，就是在list上create，在这里update
+                    assert(parentOperation.action === 'create');
                     operations.push({
                         entity: this.entity,
                         operation: parentOperation,
                     });
                 }
             }
+            
+            if (this.operation) {
+                operations.push({
+                    entity: this.entity,
+                    operation: this.operation.operation,
+                });
+            }
+            
             const result = this.cache.tryRedoOperationsThenSelect(this.entity, {
                 data: projection,
                 filter,
