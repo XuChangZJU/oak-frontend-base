@@ -1013,6 +1013,16 @@ class ListNode<
             }
         }
 
+        // 如果没有创建相应的子结点，updates的更新也应该处理
+        for (const id in this.updates) {
+            if (!this.children[id]) {
+                operations.push({
+                    entity: this.entity,
+                    operation: this.updates[id].operation,
+                });
+            }
+        }
+
         return operations;
     }
 
