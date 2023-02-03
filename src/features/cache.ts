@@ -4,7 +4,7 @@ import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
 import { cloneDeep, pull } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
-import { OakRowUnexistedException } from 'oak-domain/lib/types/Exception';
+import { OakRowUnexistedException, OakRowInconsistencyException } from 'oak-domain/lib/types/Exception';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import assert from 'assert';
@@ -54,10 +54,22 @@ export class Cache<
         params: Parameters<AD[K]>[0],
         callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords: OpRecord<ED>[]) => void
     ) {
-        const { result, opRecords } = await this.aspectWrapper.exec(name, params);
-        callback && callback(result, opRecords);
-        this.sync(opRecords);
-        return result;
+        try {
+            const { result, opRecords } = await this.aspectWrapper.exec(name, params);
+            callback && callback(result, opRecords);
+            this.sync(opRecords);
+            return result;
+        }
+        catch(e) {
+            // 如果是数据不一致错误，这里可以让用户知道
+            if (e instanceof OakRowInconsistencyException) {
+                const opRecord = (e as OakRowInconsistencyException<ED>).getData();
+                if (opRecord) {
+                    this.sync([opRecord]);
+                }
+            }
+            throw e;
+        }
     }
 
     async refresh<T extends keyof ED, OP extends SelectOption>(
