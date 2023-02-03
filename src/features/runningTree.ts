@@ -504,7 +504,7 @@ class ListNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Node<ED, T, Cxt, FrontCxt, AD> {
+    > extends Node<ED, T, Cxt, FrontCxt, AD> {
     private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     private updates: Record<string, {
         operation: ED[T]['CreateSingle'] | ED[T]['Update'] | ED[T]['Remove'],
@@ -832,12 +832,26 @@ class ListNode<
             entity: keyof ED;
             operation: ED[keyof ED]['Operation'];
         }> : [];
-        operations.push(...Object.keys(this.updates).map(
-            ele => ({
-                entity: this.entity,
-                operation: this.updates[ele].operation,
-            })
-        ));
+
+        // 所有的子结点将数据应用到最新
+        for (const id in this.children) {
+            const childOperation = this.children[id].composeOperations();
+            if (childOperation) {
+                operations.push(...childOperation);
+            }
+        }
+
+        // 如果没有子结点但是有相关更新，这里也要应用上
+        Object.keys(this.updates).forEach(
+            (id) => {
+                if (!this.children[id]) {
+                    operations.push({
+                        entity: this.entity,
+                        operation: this.updates[id].operation
+                    });
+                }
+            }
+        );
 
         // 如果有modi，则不能以ids作为当前对象，需要向上层获得filter应用了modi之后再找过
         const selection = this.constructSelection(true);
@@ -989,34 +1003,17 @@ class ListNode<
         if (!this.dirty) {
             return;
         }
-        const childOperations: Record<string, ED[T]['Operation']> = {};
+
+        // 目前只支持updateItem，还不支持在list上更新
+        const operations: Array<{ entity: T, operation: ED[T]['Operation'] }> = [];
         for (const id in this.children) {
             const childOperation = this.children[id].composeOperations();
             if (childOperation) {
-                assert(childOperation.length === 1);
-                childOperations[id] = childOperation[0].operation;
+                operations.push(...childOperation);
             }
         }
 
-        const operations: ED[T]['Operation'][] = [];
-        for (const id in this.updates) {
-            const operation = cloneDeep(this.updates[id].operation);
-            if (childOperations[id]) {
-                const childOperation = childOperations[id];
-                // 在list有operation在singleNode上也有目前只允许一种情况，即list上create，在single上update
-                assert(operation.action === 'create' && childOperation.action === 'update');
-                Object.assign(operation.data, childOperation.data);
-                unset(childOperations, id);
-            }
-            operations.push(operation);
-        }
-        operations.push(...Object.values(childOperations));
-        return operations.map(
-            ele => Object.assign({
-                operation: ele,
-                entity: this.entity,
-            })
-        );
+        return operations;
     }
 
     getProjection(): ED[T]['Selection']['data'] {
@@ -1304,26 +1301,12 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         const filter = this.getFilter();
         if (filter) {
             assert(!disableOperation);
-            const parent = this.getParent();
-            if (parent instanceof ListNode) {
-                const parentOperation = parent.getChildOperation(this);
-                if (parentOperation) {
-                    // 现在只需要处理一种情况，就是在list上create，在这里update
-                    assert(parentOperation.action === 'create');
-                    operations.push({
-                        entity: this.entity,
-                        operation: parentOperation,
-                    });
-                }
+            const operations2 = this.composeOperations();
+
+            if (operations2) {
+                operations.push(...operations2);
             }
-            
-            if (this.operation) {
-                operations.push({
-                    entity: this.entity,
-                    operation: this.operation.operation,
-                });
-            }
-            
+
             const result = this.cache.tryRedoOperationsThenSelect(this.entity, {
                 data: projection,
                 filter,
@@ -1475,11 +1458,28 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 }
             }
         }
-
-        return [{
+        const operations = [] as Array<{
+            entity: T;
+            operation: ED[T]['Operation'];
+        }>;
+        const parent = this.getParent();
+        if (parent instanceof ListNode) {
+            const parentOperation = parent.getChildOperation(this);
+            if (parentOperation) {
+                // 现在只需要处理一种情况，就是在list上create，在这里update
+                assert(parentOperation.action === 'create');
+                operations.push({
+                    entity: this.entity,
+                    operation: parentOperation,
+                });
+            }
+        }
+        operations.push({
             entity: this.entity,
             operation: operation!,
-        }];
+        });
+
+        return operations;
     }
 
     getProjection(withDecendants?: boolean) {
@@ -1694,7 +1694,7 @@ class VirtualNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Feature {
+    > extends Feature {
     private dirty: boolean;
     private executing: boolean;
     private children: Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
@@ -1865,7 +1865,7 @@ export class RunningTree<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Feature {
+    > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
     private root: Record<
