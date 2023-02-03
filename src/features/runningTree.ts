@@ -1282,7 +1282,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (this.id) {
             return this.id;
         }
-        const value = this.getFreshValue();
+        const value = this.getFreshValue(true);
         return value?.id;
     }
 
@@ -1299,7 +1299,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         unset(this.children, path);
     }
 
-    getFreshValue(disableOperation?: boolean): Partial<ED[T]['Schema']> | undefined {
+    getFreshValue(noCascade?: boolean): Partial<ED[T]['Schema']> | undefined {
         const projection = this.getProjection(false);
 
         // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
@@ -1310,8 +1310,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }> : [];
         const filter = this.getFilter();
         if (filter) {
-            assert(!disableOperation);
-            const operations2 = this.composeOperations();
+            const operations2 = this.composeOperations(noCascade);
 
             if (operations2) {
                 operations.push(...operations2);
@@ -1422,7 +1421,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         this.setDirty();
     }
 
-    composeOperations(): Array<{
+    composeOperations(noCascade?: boolean): Array<{
         entity: T;
         operation: ED[T]['Operation'];
     }> | undefined {
@@ -1441,29 +1440,31 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             });
         }
 
-        for (const ele in this.children) {
-            const child = this.children[ele];
-            const childOperations = child!.composeOperations();
-            const sliceIdx = ele.indexOf(':');
-            const ele2 = sliceIdx > 0 ? ele.slice(0, sliceIdx) : ele;
-            if (childOperations) {
-                if (child instanceof SingleNode) {
-                    assert(childOperations.length === 1);
-                    assert(!operation.data[ele2]);      // 多对一的子结点不应该有多项
-                    Object.assign(operation.data, {
-                        [ele2]: childOperations[0].operation,
-                    });
-                }
-                else {
-                    assert(child instanceof ListNode);
-                    const childOpers = childOperations.map(
-                        ele => ele.operation
-                    );
-                    if (operation.data[ele2]) {
-                        operation.data[ele2].push(...childOpers);
+        if (!noCascade) {
+            for (const ele in this.children) {
+                const child = this.children[ele];
+                const childOperations = child!.composeOperations();
+                const sliceIdx = ele.indexOf(':');
+                const ele2 = sliceIdx > 0 ? ele.slice(0, sliceIdx) : ele;
+                if (childOperations) {
+                    if (child instanceof SingleNode) {
+                        assert(childOperations.length === 1);
+                        assert(!operation.data[ele2]);      // 多对一的子结点不应该有多项
+                        Object.assign(operation.data, {
+                            [ele2]: childOperations[0].operation,
+                        });
                     }
                     else {
-                        operation.data[ele2] = childOpers;
+                        assert(child instanceof ListNode);
+                        const childOpers = childOperations.map(
+                            ele => ele.operation
+                        );
+                        if (operation.data[ele2]) {
+                            operation.data[ele2].push(...childOpers);
+                        }
+                        else {
+                            operation.data[ele2] = childOpers;
+                        }
                     }
                 }
             }
@@ -1600,7 +1601,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
      */
     getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>): ED[T2]['Selection']['filter'] | undefined {
         const filter = this.getFilter(true);
-        const value = this.getFreshValue();
+        const value = this.getFreshValue(true);
         const id = this.id;
 
         for (const key in this.children) {

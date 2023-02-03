@@ -124,13 +124,13 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     };
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
-    getFreshValue(disableOperation?: boolean): Partial<ED[T]['Schema']> | undefined;
+    getFreshValue(noCascade?: boolean): Partial<ED[T]['Schema']> | undefined;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     update(data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     remove(beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
-    composeOperations(): Array<{
+    composeOperations(noCascade?: boolean): Array<{
         entity: T;
         operation: ED[T]['Operation'];
     }> | undefined;
