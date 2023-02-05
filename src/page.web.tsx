@@ -282,6 +282,13 @@ abstract class OakComponentBase<
         this.features.runningTree.create(this.state.oakFullpath, data, beforeExecute, afterExecute);
     } */
 
+    isCreation(path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        return this.features.runningTree.isCreation(path2);
+    }
+
     update<T extends keyof ED>(
         data: ED[T]['Update']['data'],
         action?: ED[T]['Action'],
@@ -782,6 +789,9 @@ export function createComponent<
                 remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
                     return this.remove(beforeExecute, afterExecute, path);
                 },
+                isCreation: (path?: string)=> {
+                    return this.isCreation(path);
+                }
             } as Record<WebComponentSingleMethodNames, Function>);
 
             if (methods) {

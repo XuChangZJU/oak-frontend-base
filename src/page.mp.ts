@@ -18,7 +18,7 @@ import {
 
 import {
     onPathSet, reRender, refresh,
-    loadMore, execute, 
+    loadMore, execute,
     destroyNode,
 } from './page.common';
 import { MessageProps } from './types/Message';
@@ -50,17 +50,17 @@ const oakBehavior = Behavior<
     DataOption,
     WechatMiniprogram.Component.PropertyOption,
     OakCommonComponentMethods<EDD, keyof EDD> &
-        OakListComponentMethods<EDD, keyof EDD> &
-        OakSingleComponentMethods<EDD, keyof EDD> & {
-            iAmThePage: () => boolean;
-            setState: (
-                data: Record<string, any>,
-                callback?: () => void
-            ) => void;
-            onLoad: (query: Record<string, any>) => Promise<void>;
-            onPullDownRefresh: () => Promise<void>;
-            onReachBottom: () => Promise<void>;
-        },
+    OakListComponentMethods<EDD, keyof EDD> &
+    OakSingleComponentMethods<EDD, keyof EDD> & {
+        iAmThePage: () => boolean;
+        setState: (
+            data: Record<string, any>,
+            callback?: () => void
+        ) => void;
+        onLoad: (query: Record<string, any>) => Promise<void>;
+        onPullDownRefresh: () => Promise<void>;
+        onReachBottom: () => Promise<void>;
+    },
     {
         state: Record<string, any>;
         props: {
@@ -81,7 +81,7 @@ const oakBehavior = Behavior<
             FrontCxt,
             ADD & CommonAspectDict<EDD, Cxt>
         > &
-            FDD;
+        FDD;
         subscribed: Array<() => void>;
         oakOption: OakComponentOption<
             EDD,
@@ -221,7 +221,7 @@ const oakBehavior = Behavior<
                     );
                 }
             }
-            
+
             if (Object.keys(dataResolved).length > 0) {
                 this.setState(dataResolved);
             }
@@ -364,7 +364,7 @@ const oakBehavior = Behavior<
         },
 
         setFilters(filters, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.setNamedFilters(
                 path2,
                 filters
@@ -373,7 +373,7 @@ const oakBehavior = Behavior<
 
         getFilters(path) {
             if (this.state.oakFullpath) {
-                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 const namedFilters = this.features.runningTree.getNamedFilters(
                     this.state.oakFullpath
                 );
@@ -388,7 +388,7 @@ const oakBehavior = Behavior<
 
         getFilterByName(name, path) {
             if (this.state.oakFullpath) {
-                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 const filter = this.features.runningTree.getNamedFilterByName(
                     path2,
                     name
@@ -403,7 +403,7 @@ const oakBehavior = Behavior<
         },
 
         addNamedFilter(namedFilter, refresh, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.addNamedFilter(
                 path2,
                 namedFilter,
@@ -412,7 +412,7 @@ const oakBehavior = Behavior<
         },
 
         removeNamedFilter(namedFilter, refresh, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.removeNamedFilter(
                 path2,
                 namedFilter,
@@ -421,7 +421,7 @@ const oakBehavior = Behavior<
         },
 
         removeNamedFilterByName(name, refresh, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.removeNamedFilterByName(
                 path2,
                 name,
@@ -430,7 +430,7 @@ const oakBehavior = Behavior<
         },
 
         setNamedSorters(namedSorters, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.setNamedSorters(
                 path2,
                 namedSorters
@@ -439,7 +439,7 @@ const oakBehavior = Behavior<
 
         getSorters(path) {
             if (this.state.oakFullpath) {
-                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 const namedSorters = this.features.runningTree.getNamedSorters(path2);
                 const sorters = namedSorters
                     .map(({ sorter }) => {
@@ -455,7 +455,7 @@ const oakBehavior = Behavior<
 
         getSorterByName(name, path) {
             if (this.state.oakFullpath) {
-                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 const sorter = this.features.runningTree.getNamedSorterByName(
                     path2,
                     name
@@ -470,12 +470,12 @@ const oakBehavior = Behavior<
         },
 
         addNamedSorter(namedSorter, refresh, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.addNamedSorter(path2, namedSorter, refresh);
         },
 
         removeNamedSorter(namedSorter, refresh, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.removeNamedSorter(
                 path2,
                 namedSorter,
@@ -484,19 +484,19 @@ const oakBehavior = Behavior<
         },
 
         removeNamedSorterByName(name, refresh, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.removeNamedSorterByName(path2, name, refresh);
         },
 
         getPagination(path) {
             if (this.state.oakFullpath) {
-                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 return this.features.runningTree.getPagination(path2);
             }
         },
 
         setPageSize(pageSize, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             this.features.runningTree.setPageSize(
                 path2,
                 pageSize
@@ -507,7 +507,7 @@ const oakBehavior = Behavior<
             assert(currentPage !== 0);
 
             if (this.state.oakEntity && this.state.oakFullpath) {
-                const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
                 this.features.runningTree.setCurrentPage(
                     path2,
                     currentPage
@@ -515,7 +515,7 @@ const oakBehavior = Behavior<
             }
         },
         addItem(data, beforeExecute, afterExecute, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.addItem(
                 path2,
                 data,
@@ -524,7 +524,7 @@ const oakBehavior = Behavior<
             );
         },
         updateItem(data, id, action, beforeExecute, afterExecute, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.updateItem(
                 path2,
                 data,
@@ -535,7 +535,7 @@ const oakBehavior = Behavior<
             );
         },
         removeItem(id, beforeExecute, afterExecute, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.removeItem(
                 path2,
                 id,
@@ -544,7 +544,7 @@ const oakBehavior = Behavior<
             );
         },
         recoverItem(id, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.recoverItem(
                 path2,
                 id
@@ -556,8 +556,16 @@ const oakBehavior = Behavior<
         unsetId() {
             return this.features.runningTree.unsetId(this.state.oakFullpath);
         },
+
+        isCreation(path?: string) {
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            return this.features.runningTree.isCreation(path2);
+        },
+        
         update(data, action, beforeExecute, afterExecute, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.update(
                 path2,
                 data,
@@ -567,7 +575,7 @@ const oakBehavior = Behavior<
             );
         },
         remove(beforeExecute, afterExecute, path) {
-            const path2 = path? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.remove(
                 path2,
                 beforeExecute,
@@ -655,7 +663,7 @@ export function createComponent<
         lifetimes,
         observers,
     } = option;
-    const { attached, show, hide, created, detached, ready,  moved, error } = lifetimes || {};
+    const { attached, show, hide, created, detached, ready, moved, error } = lifetimes || {};
     const { options, externalClasses } = wechatMp || {};
 
     return Component<
@@ -682,7 +690,7 @@ export function createComponent<
                 FrontCxt,
                 AD & CommonAspectDict<ED, Cxt>
             > &
-                FD;
+            FD;
             subscribed: Array<() => void>;
             oakOption: OakComponentOption<
                 ED,
@@ -745,7 +753,7 @@ export function createComponent<
                 if (option.entity) {
                     this.subscribed.push(
                         features.cache.subscribe(() => this.reRender())
-                    );                    
+                    );
                 }
                 attached && attached.call(this);
             },
@@ -756,7 +764,7 @@ export function createComponent<
                 this.state.oakFullpath &&
                     (this.iAmThePage() || this.props.oakAutoUnmount) &&
                     destroyNode.call(this as any);
-                
+
                 detached && detached.call(this);
             },
             ready() {

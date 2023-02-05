@@ -125,6 +125,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
     getFreshValue(noCascade?: boolean): Partial<ED[T]['Schema']> | undefined;
+    isCreation(): boolean;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
@@ -230,6 +231,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
         entity: keyof ED;
         operation: ED[keyof ED]["Operation"];
     }[] | undefined;
+    isCreation(path: string): boolean;
     execute<T extends keyof ED>(path: string, action?: ED[T]['Action']): Promise<{
         entity: keyof ED;
         operation: ED[keyof ED]["Operation"];

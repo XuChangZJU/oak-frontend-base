@@ -1267,13 +1267,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
          * 似乎只有最顶层设置了id的结点的这种情况才需要刷新，
          * 如果是子结点，这里的id可以从父结点获得，这个操作是因为create action所引起，可以无视（userRelation/byMobile会跑出来）
          */
-        if (this.id && this.id !== id) {
-            this.id = id;
-            if (this.operation) {
-                throw new Error('结点上的operation没有clean之前是不能setId的');
-            }
-            this.refresh();
+        if (this.dirty) {
+            throw new Error('结点没有clean之前是不能setId的');
         }
+        this.id = id;
     }
 
     unsetId() {
@@ -1326,6 +1323,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             }, operations, this.isLoading());
             return result[0];
         }
+    }
+
+    isCreation() {
+        return this.operation?.operation.action === 'create';
     }
 
 
@@ -2248,6 +2249,12 @@ export class RunningTree<
         const node = this.findNode(path)!;
         const operations = node.composeOperations();
         return operations;
+    }
+
+    isCreation(path: string) {
+        const node = this.findNode(path)!;
+        assert(node instanceof SingleNode);
+        return node.isCreation();
     }
 
     async execute<T extends keyof ED>(path: string, action?: ED[T]['Action']) {
