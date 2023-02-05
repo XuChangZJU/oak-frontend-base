@@ -1321,18 +1321,20 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             operation: ED[keyof ED]['Operation'];
         }> : [];
         const filter = this.getFilter();
-        assert(filter);
-        const operations2 = this.composeOperations(noCascade);
-
-        if (operations2) {
-            operations.push(...operations2);
+        if (filter) {
+            //  这里必须用if，upsert提交后就会跑到没有filter的case
+            const operations2 = this.composeOperations(noCascade);
+    
+            if (operations2) {
+                operations.push(...operations2);
+            }
+    
+            const result = this.cache.tryRedoOperationsThenSelect(this.entity, {
+                data: projection,
+                filter,
+            }, operations, this.isLoading());
+            return result[0];
         }
-
-        const result = this.cache.tryRedoOperationsThenSelect(this.entity, {
-            data: projection,
-            filter,
-        }, operations, this.isLoading());
-        return result[0];
     }
 
     isCreation() {
