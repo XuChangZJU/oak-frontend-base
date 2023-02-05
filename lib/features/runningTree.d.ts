@@ -111,6 +111,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     private children;
     private operation?;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, id?: string);
+    private isCreatedByParent;
     private tryGetParentFilter;
     protected getChildPath(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): string;
     checkIfClean(): void;
@@ -138,7 +139,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     getProjection(withDecendants?: boolean): any;
     refresh(): Promise<void>;
     clean(): void;
-    getFilter(disableOperation?: boolean): ED[T]['Selection']['filter'] | undefined;
+    getFilter(): ED[T]['Selection']['filter'] | undefined;
     /**
      * getParentFilter不能假设一定已经有数据，只能根据当前filter的条件去构造
      * @param childNode

@@ -1018,7 +1018,7 @@ class ListNode<
             if (!this.children[id]) {
                 operations.push({
                     entity: this.entity,
-                    operation: this.updates[id].operation,
+                    operation: cloneDeep(this.updates[id].operation),
                 });
             }
         }
@@ -1198,16 +1198,27 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         id?: string) {
         super(entity, schema, cache, projection, parent, path);
         this.children = {};
-        if (id) {
-            this.id = id;
+        this.id = id;
+
+        if (this.isCreatedByParent()){
+            // 这样说明是父结点（ListNode）创建的本结点，置dirty就行了
+            this.setDirty();
+        } 
+        else if (!this.getFilter()) {
+            // 没有任何的filter，是创建动作
+            this.create({});
         }
-        else {
-            // 若没有父结点上的filter，则一定是create动作
-            const filter = this.tryGetParentFilter();
-            if (!filter) {
-                this.create({});
+    }
+
+    private isCreatedByParent() {
+        const parent = this.getParent();
+        if (parent instanceof ListNode) {
+            const operation = parent.getChildOperation(this);
+            if (operation?.action === 'create') {
+                return true;
             }
         }
+        return false;
     }
 
     private tryGetParentFilter() {
@@ -1310,23 +1321,24 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             operation: ED[keyof ED]['Operation'];
         }> : [];
         const filter = this.getFilter();
-        if (filter) {
-            const operations2 = this.composeOperations(noCascade);
+        assert(filter);
+        const operations2 = this.composeOperations(noCascade);
 
-            if (operations2) {
-                operations.push(...operations2);
-            }
-
-            const result = this.cache.tryRedoOperationsThenSelect(this.entity, {
-                data: projection,
-                filter,
-            }, operations, this.isLoading());
-            return result[0];
+        if (operations2) {
+            operations.push(...operations2);
         }
+
+        const result = this.cache.tryRedoOperationsThenSelect(this.entity, {
+            data: projection,
+            filter,
+        }, operations, this.isLoading());
+        return result[0];
     }
 
     isCreation() {
-        return this.operation?.operation.action === 'create';
+        const operations = this.composeOperations(true);
+        // 如果是create，一定在第一个
+        return !!(operations && operations[0]?.operation.action === 'create');
     }
 
 
@@ -1433,17 +1445,17 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (!this.dirty) {
             return;
         }
-        const filter = this.getFilter();
         const operation: ED[T]['Operation'] = this.operation ? cloneDeep(this.operation.operation) : {
             id: generateNewId(),
             action: 'update',
             data: {},
         };
-        if (filter) {
-            Object.assign(operation, {
-                filter,
-            });
-        }
+
+        const filter = this.getFilter();
+        assert(filter);
+        Object.assign(operation, {
+            filter,
+        });
 
         if (!noCascade) {
             for (const ele in this.children) {
@@ -1546,30 +1558,34 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             return;
         }
 
+        // 如果是新建，也不用refresh
+        if (this.isCreation()) {
+            return;
+        }
+
         // SingleNode如果是非根结点，其id应该在第一次refresh的时候来确定        
         const projection = this.getProjection(true);
         assert(projection, `页面没有定义投影「SingleNode, ${this.entity as string}」`);
-        const filter = this.getFilter(true);
-        if (filter) {
-            this.setLoading(true);
-            this.publish();
-            try {
-                await this.cache.refresh(this.entity, {
-                    data: projection,
-                    filter,
-                }, undefined, undefined, ({ data: [value] }) => {
-                    // 对于modi对象，在此缓存
-                    if (this.schema[this.entity].toModi && value) {
-                        const { modi$entity } = value;
-                        this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id)
-                    }
-                    this.setLoading(false);
-                });
-            }
-            catch (err) {
+        const filter = this.getFilter();
+        assert(filter);
+        this.setLoading(true);
+        this.publish();
+        try {
+            await this.cache.refresh(this.entity, {
+                data: projection,
+                filter,
+            }, undefined, undefined, ({ data: [value] }) => {
+                // 对于modi对象，在此缓存
+                if (this.schema[this.entity].toModi && value) {
+                    const { modi$entity } = value;
+                    this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id)
+                }
                 this.setLoading(false);
-                throw err;
-            }
+            });
+        }
+        catch (err) {
+            this.setLoading(false);
+            throw err;
         }
     }
 
@@ -1583,13 +1599,13 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         this.publish();
     }
 
-    getFilter(disableOperation?: boolean): ED[T]['Selection']['filter'] | undefined {
+    getFilter(): ED[T]['Selection']['filter'] | undefined {
         if (this.id) {
             return {
                 id: this.id,
             };
         }
-        if (!disableOperation && this.operation && this.operation.operation.action === 'create') {
+        if (this.operation && this.operation.operation.action === 'create') {
             return {
                 id: this.operation.operation.data.id!,
             };
@@ -1605,9 +1621,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
      * @returns 
      */
     getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>): ED[T2]['Selection']['filter'] | undefined {
-        const filter = this.getFilter(true);
         const value = this.getFreshValue(true);
-        const id = this.id;
 
         for (const key in this.children) {
             if (childNode === this.children[key]) {
@@ -1616,87 +1630,32 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 const rel = this.judgeRelation(key2);
                 if (rel === 2) {
                     // 基于entity/entityId的多对一
-                    if (value?.entityId) {
-                        return {
-                            id: value!.entityId!,
-                        };
-                    }
-                    else if (filter) {
-                        return {
-                            id: {
-                                $in: {
-                                    entity: this.entity,
-                                    data: {
-                                        entityId: 1,
-                                    },
-                                    filter: addFilterSegment(filter, {
-                                        entity: childNode.getEntity(),
-                                    }),
-                                }
-                            },
-                        };
-                    }
-                    else {
-                        return;
-                    }
+                    assert (value?.entityId); 
+                    assert(value?.entity === this.children[key].getEntity());
+                    return {
+                        id: value!.entityId!,
+                    };
                 }
                 else if (typeof rel === 'string') {
-                    if (value && value[`${rel}Id`]) {
-                        return {
-                            id: value[`${rel}Id`],
-                        };
-                    }
-                    else if (filter) {
-                        return {
-                            id: {
-                                $in: {
-                                    entity: this.entity,
-                                    data: {
-                                        [`${rel}Id`]: 1,
-                                    },
-                                    filter,
-                                },
-                            },
-                        };
-                    }
-                    else {
-                        return;
-                    }
+                    assert (value && value[`${rel}Id`]); 
+                    return {
+                        id: value[`${rel}Id`],
+                    };
                 }
                 else {
                     assert(rel instanceof Array && !key2.endsWith('$$aggr'));
                     if (rel[1]) {
                         // 基于普通外键的一对多
-                        if (id || value) {
                             return {
-                                [rel[1]]: id || value!.id,
+                                [rel[1]]: value!.id,
                             };
-                        }
-                        else if (filter) {
-                            return {
-                                [rel[1].slice(0, rel[1].length - 2)]: filter,
-                            };
-                        }
-                        else {
-                            return;
-                        }
                     }
                     else {
-                        // 基于entity/entityId的一对多
-                        if (id || value) {
-                            return {
-                                entity: this.entity,
-                                entityId: id || value!.id,
-                            };
-                        }
-                        else if (filter) {
-                            return {
-                                [this.entity]: filter,
-                            };
-                        }
-                        else {
-                            return;
-                        }
+                        // 基于entity/entityId的一对多                        
+                        return {
+                            entity: this.entity,
+                            entityId: value!.id,
+                        };
                     }
                 }
             }
