@@ -1263,13 +1263,17 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     setId(id: string) {
-        this.id = id;
-        if (this.operation) {
-            // 如果是先建结点，再setId，这时候原先创建的create动作应当被清空
-            // 有没有setId保留operation的需求？目前认为没有。 by Xc 2022.1.11
-            this.operation = undefined;
+        /**
+         * 似乎只有最顶层设置了id的结点的这种情况才需要刷新，
+         * 如果是子结点，这里的id可以从父结点获得，这个操作是因为create action所引起，可以无视（userRelation/byMobile会跑出来）
+         */
+        if (this.id && this.id !== id) {
+            this.id = id;
+            if (this.operation) {
+                throw new Error('结点上的operation没有clean之前是不能setId的');
+            }
+            this.refresh();
         }
-        this.refresh();
     }
 
     unsetId() {
