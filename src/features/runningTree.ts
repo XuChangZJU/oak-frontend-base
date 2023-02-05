@@ -1718,7 +1718,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 }
             }
         }
-        assert(false);
+        return;
     }
 }
 
