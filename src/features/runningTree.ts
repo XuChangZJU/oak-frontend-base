@@ -1200,10 +1200,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         this.children = {};
         this.id = id;
 
-        if (this.isCreatedByParent()){
+        if (this.isCreatedByParent()) {
             // 这样说明是父结点（ListNode）创建的本结点，置dirty就行了
             this.setDirty();
-        } 
+        }
         else if (!this.getFilter()) {
             // 没有任何的filter，是创建动作
             this.create({});
@@ -1630,32 +1630,82 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 const rel = this.judgeRelation(key2);
                 if (rel === 2) {
                     // 基于entity/entityId的多对一
-                    assert (value?.entityId); 
-                    assert(value?.entity === this.children[key].getEntity());
-                    return {
-                        id: value!.entityId!,
-                    };
+                    if (value) {
+                        assert(value?.entityId);
+                        assert(value?.entity === this.children[key].getEntity());
+                        return {
+                            id: value!.entityId!,
+                        };
+                    }
+                    const filter = this.getFilter();
+                    if (filter) {
+                        return {
+                            id: {
+                                $in: {
+                                    entity: this.entity,
+                                    data: {
+                                        entityId: 1,
+                                    },
+                                    filter: addFilterSegment(filter, {
+                                        entity: childNode.getEntity(),
+                                    }),
+                                }
+                            },
+                        };
+                    }
                 }
                 else if (typeof rel === 'string') {
-                    assert (value && value[`${rel}Id`]); 
-                    return {
-                        id: value[`${rel}Id`],
-                    };
+                    if (value) {
+                        assert(value && value[`${rel}Id`]);
+                        return {
+                            id: value[`${rel}Id`],
+                        };
+                    }
+                    const filter = this.getFilter();
+                    if (filter) {
+                        return {
+                            id: {
+                                $in: {
+                                    entity: this.entity,
+                                    data: {
+                                        [`${rel}Id`]: 1,
+                                    },
+                                    filter,
+                                },
+                            },
+                        };
+                    }
                 }
                 else {
                     assert(rel instanceof Array && !key2.endsWith('$$aggr'));
                     if (rel[1]) {
                         // 基于普通外键的一对多
+                        if (value) {
                             return {
                                 [rel[1]]: value!.id,
                             };
+                        }
+                        const filter = this.getFilter();
+                        if (filter) {
+                            return {
+                                [rel[1].slice(0, rel[1].length - 2)]: filter,
+                            };
+                        }
                     }
                     else {
-                        // 基于entity/entityId的一对多                        
-                        return {
-                            entity: this.entity,
-                            entityId: value!.id,
-                        };
+                        // 基于entity/entityId的一对多 
+                        if (value) {
+                            return {
+                                entity: this.entity,
+                                entityId: value!.id,
+                            };
+                        }
+                        const filter = this.getFilter();
+                        if (filter) {
+                            return {
+                                [this.entity]: filter,
+                            };
+                        }
                     }
                 }
             }
