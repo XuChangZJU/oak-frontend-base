@@ -1633,11 +1633,14 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 if (rel === 2) {
                     // 基于entity/entityId的多对一
                     if (value) {
-                        assert(value?.entityId);
-                        assert(value?.entity === this.children[key].getEntity());
-                        return {
-                            id: value!.entityId!,
-                        };
+                        // 要么没有行(因为属性不全所以没有返回行，比如从list -> detail)；如果取到了行但此属性为空，则说明一定是singleNode到singleNode的create
+                        if (value?.entityId) {
+                            assert(value?.entity === this.children[key].getEntity());
+                            return {
+                                id: value!.entityId!,
+                            };
+                        }
+                        return;
                     }
                     const filter = this.getFilter();
                     if (filter) {
@@ -1658,10 +1661,13 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 }
                 else if (typeof rel === 'string') {
                     if (value) {
-                        assert(value && value[`${rel}Id`]);
-                        return {
-                            id: value[`${rel}Id`],
-                        };
+                        // 要么没有行(因为属性不全所以没有返回行，比如从list -> detail)；如果取到了行但此属性为空，则说明一定是singleNode到singleNode的create
+                        if (value && value[`${rel}Id`]) {
+                            return {
+                                id: value[`${rel}Id`],
+                            };
+                        }
+                        return;
                     }
                     const filter = this.getFilter();
                     if (filter) {
