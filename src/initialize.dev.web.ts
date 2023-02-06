@@ -1,13 +1,9 @@
 import './utils/wx.polyfill';
 import {
     Aspect,
-    AspectWrapper,
     Checker,
     Trigger,
     StorageSchema,
-    Context,
-    RowStore,
-    OakRowInconsistencyException,
     Watcher,
     Routine,
     Timer,
