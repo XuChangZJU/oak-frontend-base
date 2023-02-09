@@ -2299,7 +2299,7 @@ export class RunningTree<
                 ));
             assert(entities.length === 1);
 
-            await this.cache.exec('operate', {
+            const result = await this.cache.exec('operate', {
                 entity: entities[0],
                 operation: operations.filter(ele => !!ele).map(ele => ele.operation),
             }, () => {
@@ -2310,7 +2310,7 @@ export class RunningTree<
 
             await node.doAfterTrigger();
 
-            return operations;
+            return result;
         }
         catch (err) {
             node.setExecuting(false);

@@ -312,11 +312,11 @@ export async function execute<
     const fullpath = path
         ? `${this.state.oakFullpath}.${path}`
         : this.state.oakFullpath;
-    await this.features.runningTree.execute(fullpath, action);
+    const { message } = await this.features.runningTree.execute(fullpath, action);
     if (messageProps !== false) {
         const messageData: MessageProps = {
             type: 'success',
-            content: '操作成功',
+            content: message || '操作成功',
         };
         if (typeof messageProps === 'object') {
             Object.assign(messageData, messageProps);

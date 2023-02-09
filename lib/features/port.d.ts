@@ -8,14 +8,17 @@ export declare class Port<ED extends EntityDict & BaseEntityDict, Cxt extends As
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>);
     importEntity<T extends keyof ED>(entity: T, id: string, file: File, option: Object): Promise<{
         result: Awaited<ReturnType<AD["importEntity"]>>;
-        opRecords: import("oak-domain/lib/types").OpRecord<ED>[];
+        opRecords?: import("oak-domain/lib/types").OpRecord<ED>[] | undefined;
+        message?: string | null | undefined;
     }>;
     exportEntity<T extends keyof ED>(entity: T, id: string, filter?: ED[T]['Selection']['filter']): Promise<{
         result: Awaited<ReturnType<AD["exportEntity"]>>;
-        opRecords: import("oak-domain/lib/types").OpRecord<ED>[];
+        opRecords?: import("oak-domain/lib/types").OpRecord<ED>[] | undefined;
+        message?: string | null | undefined;
     }>;
     getImportationTemplate<T extends keyof ED>(id: string): Promise<{
         result: Awaited<ReturnType<AD["getImportationTemplate"]>>;
-        opRecords: import("oak-domain/lib/types").OpRecord<ED>[];
+        opRecords?: import("oak-domain/lib/types").OpRecord<ED>[] | undefined;
+        message?: string | null | undefined;
     }>;
 }

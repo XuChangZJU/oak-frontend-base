@@ -115,6 +115,7 @@ export function initialize<
             return {
                 result,
                 opRecords: contextBackend.opRecords,
+                message: contextBackend.getMessage(),
             };
         },
     };

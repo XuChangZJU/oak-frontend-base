@@ -234,9 +234,9 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     }[] | undefined;
     isCreation(path: string): boolean;
     execute<T extends keyof ED>(path: string, action?: ED[T]['Action']): Promise<{
-        entity: keyof ED;
-        operation: ED[keyof ED]["Operation"];
-    }[]>;
+        result: Awaited<ReturnType<AD["operate"]>>;
+        message: string | null | undefined;
+    }>;
     clean(path: string): void;
     getRoot(): Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
     subscribeNode(callback: () => any, path: string): () => void;

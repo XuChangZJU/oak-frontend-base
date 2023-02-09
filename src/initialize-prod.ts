@@ -64,10 +64,11 @@ export function initialize<
     const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
         exec: async (name, params) => {
             const context = frontendContextBuilder(features)(cacheStore);
-            const { result, opRecords } = await connector.callAspect(name as string, params, context);
+            const { result, opRecords, message } = await connector.callAspect(name as string, params, context);
             return {
                 result,
                 opRecords,
+                message,
             };
         },
     };

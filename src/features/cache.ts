@@ -52,15 +52,20 @@ export class Cache<
     async exec<K extends keyof AD>(
         name: K,
         params: Parameters<AD[K]>[0],
-        callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords: OpRecord<ED>[]) => void
+        callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void
     ) {
         try {
-            const { result, opRecords } = await this.aspectWrapper.exec(name, params);
+            const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
             callback && callback(result, opRecords);
-            this.sync(opRecords);
-            return result;
+            if (opRecords) {
+                this.sync(opRecords);
+            }
+            return {
+                result,
+                message,
+            };
         }
-        catch(e) {
+        catch (e) {
             // 如果是数据不一致错误，这里可以让用户知道
             if (e instanceof OakException) {
                 const { opRecord } = e;
@@ -79,7 +84,7 @@ export class Cache<
         getCount?: true,
         callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
     ) {
-        const result = await this.exec('select', {
+        const { result } = await this.exec('select', {
             entity,
             selection,
             option,
@@ -91,7 +96,7 @@ export class Cache<
         };
     }
 
-    
+
     async aggregate<T extends keyof ED, OP extends SelectOption>(
         entity: T,
         aggregation: ED[T]['Aggregation'],
@@ -124,11 +129,13 @@ export class Cache<
         option?: OP,
         callback?: (result: Awaited<ReturnType<AD['count']>>) => void,
     ) {
-        return await this.exec('count', {
+        const { result } = await this.exec('count', {
             entity,
             selection,
             option,
         }, callback);
+
+        return result;
     }
 
     private sync(records: OpRecord<ED>[]) {
@@ -248,7 +255,7 @@ export class Cache<
                     const missedRows = err.getRows();
                     this.exec('fetchRows', missedRows, async (result, opRecords) => {
                         // missedRows理论上一定要取到，不能为空集。否则就是程序员有遗漏
-                        for (const record of opRecords) {
+                        for (const record of opRecords!) {
                             const { d } = record as SelectOpResult<ED>;
                             assert(Object.keys(d).length > 0, '在通过fetchRow取不一致数据时返回了空数据，请拿该程序员祭天。');
                             for (const mr of missedRows) {
