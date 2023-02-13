@@ -47,13 +47,9 @@ export function initialize<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature>
 >(
     storageSchema: StorageSchema<ED>,
-    createFeatures: (
-        basicFeatures: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>,
-    ) => FD,
-    frontendContextBuilder: (features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>) => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
+    frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
     backendContextBuilder: (contextStr?: string) => (store: DebugStore<ED, Cxt>) =>  Promise<Cxt>,
     aspectDict: AD,
     triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
@@ -90,8 +86,6 @@ export function initialize<
         actionDict
     );
 
-    const features = {} as FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
-
     const cacheStore = new CacheStore(
         storageSchema,
         () => debugStore.getCurrentData(),
@@ -100,7 +94,7 @@ export function initialize<
     
     const wrapper: AspectWrapper<ED, Cxt, CommonAspectDict<ED, Cxt> & AD> = {
         exec: async (name, params) => {
-            const context = frontendContextBuilder(features)(cacheStore);
+            const context = frontendContextBuilder()(cacheStore);
             const str = context.toString();
             const contextBackend = await backendContextBuilder(str)(debugStore);
             await contextBackend.begin();
@@ -120,19 +114,8 @@ export function initialize<
         },
     };
 
-    const basicFeatures = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder(features)(cacheStore), cacheStore);
-    const userDefinedfeatures = createFeatures(basicFeatures);
-
-    intersected = intersection(Object.keys(basicFeatures), Object.keys(userDefinedfeatures));
-    if (intersected.length > 0) {
-        throw new Error(
-            `用户定义的feature中不能和系统feature同名：「${intersected.join(
-                ','
-            )}」`
-        );
-    }
-    Object.assign(features, basicFeatures, userDefinedfeatures);
-
+    const features = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder()(cacheStore), cacheStore);
+    
     checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
     if (actionDict) {
         const { checkers: adCheckers } = analyzeActionDefDict(

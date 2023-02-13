@@ -1,4 +1,4 @@
-import { AspectWrapper, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, AspectWrapper, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Cache } from './cache';
@@ -15,27 +15,16 @@ import { Navigator } from './navigator';
 import { Port } from './port';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
-export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>>(aspectWrapper: AspectWrapper<ED, Cxt, AD>, storageSchema: StorageSchema<ED>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>): {
-    cache: Cache<ED, Cxt, FrontCxt, AD>;
+export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(aspectWrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>, storageSchema: StorageSchema<ED>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>): BasicFeatures<ED, Cxt, FrontCxt, AD>;
+export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>> = {
+    cache: Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     location: Location;
-    runningTree: RunningTree<ED, Cxt, FrontCxt, AD>;
-    locales: Locales<ED, Cxt, AD>;
+    runningTree: RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
+    locales: Locales<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
     eventBus: EventBus;
     localStorage: LocalStorage;
     notification: Notification;
     message: Message;
     navigator: Navigator;
-    port: Port<ED, Cxt, AD>;
-};
-export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> = {
-    cache: Cache<ED, Cxt, FrontCxt, AD>;
-    location: Location;
-    runningTree: RunningTree<ED, Cxt, FrontCxt, AD>;
-    locales: Locales<ED, Cxt, AD>;
-    eventBus: EventBus;
-    localStorage: LocalStorage;
-    notification: Notification;
-    message: Message;
-    navigator: Navigator;
-    port: Port<ED, Cxt, AD>;
+    port: Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
 };

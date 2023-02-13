@@ -1,4 +1,4 @@
-import { AspectWrapper, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, AspectWrapper, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -17,21 +17,21 @@ import { Port } from './port';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 
-export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> (
-        aspectWrapper: AspectWrapper<ED, Cxt, AD>,
+export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>> (
+        aspectWrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>,
         storageSchema: StorageSchema<ED>,
         contextBuilder: () => FrontCxt,
         store: CacheStore<ED, FrontCxt>) {
-    const cache = new Cache<ED, Cxt, FrontCxt, AD>(aspectWrapper, contextBuilder, store);
+    const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store);
     const location = new Location();
-    const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD>(aspectWrapper, cache, storageSchema);
+    const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, cache, storageSchema);
     const locales = new Locales(aspectWrapper);
     const eventBus = new EventBus();
     const localStorage = new LocalStorage();
     const notification = new Notification();
     const message = new Message();
     const navigator = new Navigator();
-    const port = new Port<ED, Cxt, AD>(aspectWrapper);
+    const port = new Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper);
     return {
         cache,
         location,
@@ -43,23 +43,23 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         message,
         navigator,
         port,
-    };
+    } as BasicFeatures<ED, Cxt, FrontCxt, AD>;
 }
 
 export type BasicFeatures<
     ED extends EntityDict & BaseEntityDict,
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
-    AD extends CommonAspectDict<ED, Cxt>
+    AD extends Record<string, Aspect<ED, Cxt>>
 > = {
-    cache: Cache<ED, Cxt, FrontCxt, AD>;
+    cache: Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     location: Location;
-    runningTree: RunningTree<ED, Cxt, FrontCxt, AD>;
-    locales: Locales<ED, Cxt, AD>;
+    runningTree: RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
+    locales: Locales<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
     eventBus: EventBus;
     localStorage: LocalStorage;
     notification: Notification;
     message: Message;
     navigator: Navigator;
-    port: Port<ED, Cxt, AD>;
+    port: Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
 };
