@@ -360,6 +360,7 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     removeItem: (id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
     updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
     recoverItem: (id: string, path?: string) => void;
+    resetItem: (id: string, path?: string) => void;
 };
 
 type ComponentOnPropsChangeOption = {
@@ -436,7 +437,7 @@ export type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | '
 
 // 暴露给list组件的方法
 export type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedFilter' | 'removeNamedFilter' | 'removeNamedFilterByName' | 'setNamedSorters'
-    | 'addNamedSorter' | 'removeNamedSorter' | 'removeNamedSorterByName' | 'setPageSize' | 'setCurrentPage' | 'addItem' | 'removeItem' | 'updateItem';
+    | 'addNamedSorter' | 'removeNamedSorter' | 'removeNamedSorterByName' | 'setPageSize' | 'setCurrentPage' | 'addItem' | 'removeItem' | 'updateItem' | 'resetItem' | 'recoverItem';
 
 // 暴露给single组件的方法
 export type WebComponentSingleMethodNames = 'update' | 'remove' | 'isCreation';

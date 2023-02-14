@@ -922,6 +922,13 @@ class ListNode<
         this.setDirty();
     }
 
+    resetItem(id: string) {
+        const { operation } = this.updates[id];
+        assert(operation.action === 'update');
+        unset(this.updates, id);
+        this.setDirty();
+    }
+
     /**
      * 目前只支持根据itemId进行更新
      * @param data 
@@ -930,7 +937,11 @@ class ListNode<
      * @param afterExecute 
      */
     updateItem(data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        assert(Object.keys(this.children).length === 0, `更新子结点应该落在相应的component上`);
+        // assert(Object.keys(this.children).length === 0, `更新子结点应该落在相应的component上`);
+        if (this.children && this.children[id]) {
+            // 实际中有这样的case出现，当使用actionButton时。先这样处理。by Xc 20230214
+            return this.children[id].update(data, action, beforeExecute, afterExecute);
+        }
         if (this.updates[id]) {
             const { operation } = this.updates[id];
             const { data: dataOrigin } = operation;
@@ -2053,10 +2064,16 @@ export class RunningTree<
         node.recoverItem(id);
     }
 
-    async create<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+    resetItem(path: string, id: string) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        node.resetItem(id);
+    }
+
+    create<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
-        await node.create(data, beforeExecute, afterExecute);
+        node.create(data, beforeExecute, afterExecute);
     }
 
     update<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {

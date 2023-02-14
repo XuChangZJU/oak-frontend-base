@@ -277,6 +277,13 @@ abstract class OakComponentBase<
             : this.state.oakFullpath;
         this.features.runningTree.recoverItem(path2, id);
     }
+    
+    resetItem(id: string, path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        this.features.runningTree.resetItem(path2, id);
+    }
 
     /* create<T extends keyof ED>(data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
         this.features.runningTree.create(this.state.oakFullpath, data, beforeExecute, afterExecute);
@@ -776,6 +783,12 @@ export function createComponent<
                 },
                 loadMore: () => {
                     return this.loadMore();
+                },
+                recoverItem: (id: string, path?: string) => {
+                    return this.recoverItem(id, path);
+                },
+                resetItem: (id: string, path?: string) => {
+                    return this.resetItem(id, path);
                 }
             } as Record<WebComponentListMethodNames, Function>);
 

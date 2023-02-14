@@ -77,6 +77,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     removeItem(id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     recoverItem(id: string): void;
+    resetItem(id: string): void;
     /**
      * 目前只支持根据itemId进行更新
      * @param data
@@ -201,7 +202,8 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     removeItem(path: string, id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     updateItem<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     recoverItem(path: string, id: string): void;
-    create<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): Promise<void>;
+    resetItem(path: string, id: string): void;
+    create<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     update<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     remove(path: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     isLoading(path: string): boolean | undefined;

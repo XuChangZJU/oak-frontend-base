@@ -550,6 +550,12 @@ const oakBehavior = Behavior<
                 id
             );
         },
+        resetItem(id: string, path?: string) {
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            this.features.runningTree.resetItem(path2, id);
+        },
         setId(id) {
             return this.features.runningTree.setId(this.state.oakFullpath, id);
         },
@@ -563,7 +569,7 @@ const oakBehavior = Behavior<
                 : this.state.oakFullpath;
             return this.features.runningTree.isCreation(path2);
         },
-        
+
         update(data, action, beforeExecute, afterExecute, path) {
             const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
             return this.features.runningTree.update(
