@@ -160,7 +160,8 @@ export type ComponentPublicThisType<
     IsList extends boolean,
     TData extends Record<string, any> = {},
     TProperty extends PropertyOption = {},
-    TMethod extends MethodOption = {}
+    TMethod extends MethodOption = {},
+    EMethod extends Record<string, Function> = {}
     > = {
         subscribed: Array<() => void>;
         features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
@@ -175,7 +176,7 @@ export type ComponentPublicThisType<
             detail?: DetailType,
             options?: WechatMiniprogram.Component.TriggerEventOption
         ) => void;
-    } & TMethod & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
+    } & TMethod & EMethod & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
 
 export type ComponentFullThisType<
     ED extends EntityDict & BaseEntityDict,
@@ -211,6 +212,7 @@ export type OakComponentOption<
     TData extends Record<string, any>,
     TProperty extends PropertyOption,
     TMethod extends Record<string, Function>,
+    EMethod extends Record<string, Function> = {}
     > = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty> &
     Partial<{
         methods: TMethod;
@@ -234,7 +236,7 @@ export type OakComponentOption<
             externalClasses?: string[];
             options?: Partial<WechatMiniprogram.Component.ComponentOptions> | undefined;
         }
-    }> & ThisType<ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>>;
+    }> & ThisType<ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>>;
 
 
 
