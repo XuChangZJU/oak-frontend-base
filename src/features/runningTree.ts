@@ -1706,6 +1706,11 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         }
                         const filter = this.getFilter();
                         if (filter) {
+                            if (filter.id && Object.keys(filter).length === 1) {
+                                return {
+                                    [rel[1]]: filter.id,
+                                };
+                            }
                             return {
                                 [rel[1].slice(0, rel[1].length - 2)]: filter,
                             };
@@ -1721,6 +1726,12 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         }
                         const filter = this.getFilter();
                         if (filter) {
+                            if (filter.id && Object.keys(filter).length === 1) {
+                                return {
+                                    entity: this.entity,
+                                    entityId: filter.id,
+                                };
+                            }
                             return {
                                 [this.entity]: filter,
                             };
