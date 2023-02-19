@@ -906,6 +906,15 @@ export function createComponent<
                 }
                 this.reRender();
             }
+            if (option.features) {
+                option.features.forEach(
+                    ele => this.subscribed.push(
+                        features[ele].subscribe(
+                            () => this.reRender()
+                        )
+                    )
+                );
+            }
         }
 
         componentWillUnmount() {

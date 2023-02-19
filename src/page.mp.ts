@@ -761,6 +761,15 @@ export function createComponent<
                         features.cache.subscribe(() => this.reRender())
                     );
                 }
+                if (option.features) {
+                    option.features.forEach(
+                        ele => this.subscribed.push(
+                            features[ele].subscribe(
+                                () => this.reRender()
+                            )
+                        )
+                    );
+                }
                 attached && attached.call(this);
             },
             detached() {

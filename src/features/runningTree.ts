@@ -1777,10 +1777,10 @@ class VirtualNode<
         if (child instanceof SingleNode || child instanceof ListNode) {
             const entity = child.getEntity() as string;
             if (child instanceof SingleNode) {
-                assert(path === entity || path.startsWith(`${entity}:`), `oakPath「${path}」不符合命名规范，请以「${entity}」为命名起始标识`);
+                assert(path === entity || path.startsWith(`${entity}:`), `oakPath「${path}」不符合命名规范，请以「${entity}:」为命名起始标识`);
             }
             else {
-                assert(path === `${entity}s` || path.startsWith(`${entity}s:`), `oakPath「${path}」不符合命名规范，请以「${entity}s」为命名起始标识`);
+                assert(path === `${entity}s` || path.startsWith(`${entity}s:`), `oakPath「${path}」不符合命名规范，请以「${entity}s:」为命名起始标识`);
             }
         }
     }
