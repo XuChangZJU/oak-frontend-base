@@ -82,20 +82,13 @@ type PropertyOptionToData<P extends PropertyOption> = {
     [name in keyof P]: PropertyToData<P[name]>
 };
 
-type CascadeEntity<
+export type CascadeEntity<
     ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED> = {
-        aggr?: ED[T]['Aggregation'],
-        selection?: ED[T]['Selection'],
-        actions?: [{
-            action: ED[T]['Action'],
-            filters?: Array<{
-                filter: ED[T]['Selection']['filter'];
-                '#name'?: string;
-            }>;
-            data?: Partial<ED[T]['CreateSingle']['data']>;
-        }];
-    };
+    T extends keyof ED> = ({
+        action: ED[T]['Action'],
+        filter?: ED[T]['Selection']['filter'];
+        data?: Partial<ED[T]['CreateSingle']['data']>;
+    } | ED[T]['Action'])[];
 
 interface ComponentOption<
     ED extends EntityDict & BaseEntityDict,
@@ -113,7 +106,9 @@ interface ComponentOption<
     path?: string;
     isList: IsList;
     features?: (keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>))[];
-    cascadeEntities?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => Record<keyof ED[T]['Schema'], CascadeEntity<ED, keyof ED>>,
+    cascadeEntities?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => {
+        [K in keyof ED[T]['Schema']]?: CascadeEntity<ED, keyof ED>;
+    },
     projection?: ED[T]['Selection']['data'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ED[T]['Selection']['data']);
     append?: boolean;
     pagination?: Pagination;
@@ -266,6 +261,7 @@ export type OakComponentProperties = {
     oakDisablePulldownRefresh: BooleanConstructor;
     oakAutoUnmount: BooleanConstructor;
     oakActions: ArrayConstructor;
+    oakCascadeEntities: ObjectConstructor;
 };
 
 export type OakListComponentProperties = {
@@ -332,9 +328,8 @@ export type OakCommonComponentMethods<
     t(key: string, params?: object): string;
     execute: (action?: ED[T]['Action'], messageProps?: boolean | MessageProps) => Promise<void>;
     checkOperation: (
-        ntity: T,
-        action: ED[T]['Action'],
-        filter?: ED[T]['Update']['filter'],
+        entity: T,
+        action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'],
         checkerTypes?: CheckerType[]
     ) => boolean;
     tryExecute: (path?: string) => boolean | Error;
@@ -409,6 +404,9 @@ export type OakComponentData<
     oakFullpath: string;
     oakLegalActions?: ED[T]['Action'][];
     oakDisablePulldownRefresh: boolean;
+    oakCascadeEntities?: {
+        [K in keyof ED[T]['Schema']]?: CascadeEntity<ED, keyof ED>;
+    };
 };
 
 export type OakListComoponetData<

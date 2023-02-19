@@ -12,10 +12,10 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
         [K in keyof ED]?: {
             [A: string]: Array<{
                 priority: number;
-                fn: (operation: ED[K]['Operation'], context: Cxt, option: SelectOption | OperateOption) => void;
+                fn: (operation: Omit<ED[K]['Operation'], 'id'>, context: Cxt, option: SelectOption | OperateOption) => void;
                 type: CheckerType;
                 when: 'before' | 'after';
-                filter?: ED[K]['Update']['filter'] | ((operation: ED[K]['Operation'], context: Cxt, option: SelectOption | OperateOption) => ED[K]['Update']['filter']);
+                filter?: ED[K]['Update']['filter'] | ((operation: Omit<ED[K]['Operation'], 'id'>, context: Cxt, option: SelectOption | OperateOption) => ED[K]['Update']['filter']);
             }>;
         };
     } = {};
@@ -37,7 +37,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                 checkers.splice(iter, 0, {
                     type,
                     priority: priority!,
-                    fn,
+                    fn: fn as (operation: Omit<ED[T]['Operation'], 'id'>, context: Cxt, option: OperateOption | SelectOption) => void,
                     when,
                     filter: conditionalFilter,
                 });
@@ -77,7 +77,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
         }
     }
 
-    check<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, when?: 'before' | 'after', checkerTypes?: CheckerType[]) {
+    check<T extends keyof ED>(entity: T, operation: Omit<ED[T]['Operation'], 'id'>, context: Cxt, when?: 'before' | 'after', checkerTypes?: CheckerType[]) {
         const { action } = operation;
         const checkers = this.checkerMap[entity] && this.checkerMap[entity]![action];
         if (checkers) {

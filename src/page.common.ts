@@ -10,11 +10,13 @@ import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
 import {
     OakComponentOption,
     ComponentFullThisType,
+    CascadeEntity,
 } from './types/Page';
 import { unset } from 'oak-domain/lib/utils/lodash';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { MessageProps } from './types/Message';
+import { judgeRelation } from 'oak-domain/lib/store/relation';
 
 export async function onPathSet<
     ED extends EntityDict & BaseEntityDict,
@@ -92,7 +94,11 @@ export async function onPathSet<
         });
         this.subscribed.push(
             features.runningTree.subscribeNode(
-                () => this.reRender(),
+                (path2) => {
+                    if (path2 === this.state.oakFullpath) {
+                        this.reRender();
+                    }
+                },
                 oakPath2!
             )
         );
@@ -115,7 +121,11 @@ export async function onPathSet<
         });
         this.subscribed.push(
             features.runningTree.subscribeNode(
-                () => this.reRender(),
+                (path2) => {
+                    if (path2 === this.state.oakFullpath) {
+                        this.reRender();
+                    }
+                },
                 oakPath2!
             )
         );
@@ -158,7 +168,7 @@ export function reRender<
         let oakLegalActions: ED[T]['Action'][] = [];
         const actions: ED[T]['Action'][] = this.props.oakActions || (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
         if (actions && actions.length > 0) {
-            assert(!option.isList, 'actions只能作用于单个对象页面上');
+            assert(!option.isList, 'actions目前只能作用于单个对象页面上');
             const id = this.features.runningTree.getId(this.state.oakFullpath);
             const value = this.features.runningTree.getFreshValue(this.state.oakFullpath);
             if (id && value) {
@@ -166,7 +176,7 @@ export function reRender<
                 const testResult = actions.map(
                     ele => ({
                         action: ele,
-                        result: this.checkOperation(this.state.oakEntity, ele, { id }, ['relation', 'row', 'logical', 'logicalRelation']),
+                        result: this.checkOperation(this.state.oakEntity, ele, undefined, { id }, ['relation', 'row', 'logical', 'logicalRelation']),
                     })
                 );
                 oakLegalActions = testResult.filter(
@@ -188,6 +198,56 @@ export function reRender<
         Object.assign(data, {
             oakLegalActions,
         });
+
+        const cascadeEntities = (option.cascadeEntities && option.cascadeEntities.call(this));
+        if (cascadeEntities) {
+            assert(!option.isList, 'actions目前只能作用于单个对象页面上');
+            const id = this.features.runningTree.getId(this.state.oakFullpath);
+            const value = this.features.runningTree.getFreshValue(this.state.oakFullpath);
+            if (id && value) {
+                // 计算所有一对多对象的权限是否存在
+                const oakCascadeEntities: {
+                    [K in keyof ED[keyof ED]]?: CascadeEntity<ED, keyof ED>;
+                } = {};
+                for (const attr in cascadeEntities) {
+                    const rel = judgeRelation(features.cache.cacheStore.getSchema()!, this.state.oakEntity, attr);
+                    assert(rel instanceof Array, `${this.state.oakFullpath}中定义的cascadeEntities的键值${attr}不是一对多的对象`);
+                    const [e2, fkey] = rel;
+                    const strictFilter = fkey ? {
+                        [fkey]: id,
+                    } : {
+                        entity: this.state.oakEntity,
+                        entityId: id,
+                    };
+                    const availableActions: CascadeEntity<ED, keyof ED> = [];
+                    cascadeEntities[attr as keyof ED[T]['Schema']]!.forEach(
+                        item => {
+                            const { action, filter, data } = typeof item === 'string' ? { action: item, filter: {}, data: {}} : item;
+                            if (action === 'create') {
+                                const data2 = Object.assign({}, data, strictFilter);
+                                if (this.checkOperation(this.state.oakEntity, 'create', data2, undefined, ['relation', 'row', 'logical', 'logicalRelation'])) {
+                                    availableActions.push({action, filter, data});
+                                }
+                            }
+                            else {
+                                const filter2 = Object.assign({}, filter, strictFilter);
+                                if (this.checkOperation(this.state.oakEntity, action, undefined, filter2, ['relation', 'row', 'logical', 'logicalRelation'])) {
+                                    availableActions.push({action, filter, data});
+                                }
+                            }
+                        }
+                    );
+                    if (availableActions.length > 0) {
+                        Object.assign(oakCascadeEntities, {
+                            [attr]: availableActions,
+                        });
+                    }
+                }
+                Object.assign(data, {
+                    oakCascadeEntities,
+                });
+            }
+        }
 
         if (option.isList) {
             const oakFilters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getFilters();

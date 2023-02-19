@@ -6,7 +6,7 @@ import { CacheStore } from '../cacheStore/CacheStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends Feature {
-    cacheStore?: CacheStore<ED, FrontCxt>;
+    cacheStore: CacheStore<ED, FrontCxt>;
     private aspectWrapper;
     private syncEventsCallbacks;
     private contextBuilder?;
@@ -36,7 +36,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         operation: ED[T]['Operation'];
         entity: T;
     })[]): true | Error;
-    checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]): boolean;
+    checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]): boolean;
     /**
      * 尝试在cache中重做一些动作，然后选择重做后的数据（为了实现modi）
      * @param entity

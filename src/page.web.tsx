@@ -354,14 +354,12 @@ abstract class OakComponentBase<
 
     checkOperation(
         entity: T,
-        action: ED[T]['Action'],
-        filter?: ED[T]['Update']['filter'],
+        action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'],
         checkerTypes?: CheckerType[]
     ) {
         return this.features.cache.checkOperation(
             entity,
-            action,
-            filter,
+            action, data, filter,
             checkerTypes
         );
     }
@@ -737,8 +735,8 @@ export function createComponent<
                 clean: (path?: string) => {
                     return this.clean(path);
                 },
-                checkOperation: (entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => {
-                    return this.checkOperation(entity, action, filter, checkerTypes);
+                checkOperation: (entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => {
+                    return this.checkOperation(entity, action, data, filter, checkerTypes);
                 }
             };
             Object.assign(methodProps, {
@@ -929,6 +927,8 @@ export function createComponent<
         async componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
             if (prevProps.oakPath !== this.props.oakPath) {
                 assert(this.props.oakPath);
+                features.runningTree.subscribeNode
+                this.subscribed
                 await this.onPathSet();
                 lifetimes?.ready && lifetimes.ready.call(this);
                 // lifetimes?.show && lifetimes.show.call(this);

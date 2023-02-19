@@ -241,6 +241,6 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     }>;
     clean(path: string): void;
     getRoot(): Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
-    subscribeNode(callback: () => any, path: string): () => void;
+    subscribeNode(callback: (path: string) => any, path: string): () => void;
 }
 export {};

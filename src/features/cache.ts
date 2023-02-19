@@ -15,7 +15,7 @@ export class Cache<
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>
     > extends Feature {
-    cacheStore?: CacheStore<ED, FrontCxt>;
+    cacheStore: CacheStore<ED, FrontCxt>;
     private aspectWrapper: AspectWrapper<ED, Cxt, AD>;
     private syncEventsCallbacks: Array<
         (opRecords: OpRecord<ED>[]) => void
@@ -174,13 +174,13 @@ export class Cache<
         }
     }
 
-    checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) {
+    checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) {
         const context = this.contextBuilder!();
         context.begin();
         const operation = {
             action,
             filter,
-            data: {},
+            data,
         } as ED[T]['Update'];
         try {
             this.cacheStore!.check(entity, operation, context, checkerTypes);

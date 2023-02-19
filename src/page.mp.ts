@@ -328,11 +328,10 @@ const oakBehavior = Behavior<
             return this.features.runningTree.getFreshValue(path2);
         },
 
-        checkOperation(entity, action, filter, checkerTypes) {
+        checkOperation(entity, action, data, filter, checkerTypes) {
             return this.features.cache.checkOperation(
                 entity,
-                action,
-                filter,
+                action, data, filter,
                 checkerTypes
             );
         },

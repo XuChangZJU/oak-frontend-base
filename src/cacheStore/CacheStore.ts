@@ -71,7 +71,7 @@ export class CacheStore<
         return result;
     }
 
-    check<T extends keyof ED>(entity: T, operation: ED[T]['Operation'], context: Cxt, checkerTypes?: CheckerType[]) {
+    check<T extends keyof ED>(entity: T, operation: Omit<ED[T]['Operation'], 'id'>, context: Cxt, checkerTypes?: CheckerType[]) {
         assert(context.getCurrentTxnId());
         this.checkerExecutor.check(entity, operation, context, undefined, checkerTypes);
     }
