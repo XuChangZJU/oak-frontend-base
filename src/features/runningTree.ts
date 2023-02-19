@@ -1959,7 +1959,7 @@ export class RunningTree<
             if (parentNode instanceof ListNode) {
             }
             else if (process.env.NODE_ENV === 'development') {
-                console.error(`创建node时发现已有结点，不能重用。「${fullPath}」`);
+                console.warn(`创建node时发现path[${fullPath}]已有结点，本特性尚未测试充分，请谨防有坑`);
             }
             return this.findNode(fullPath)!;
         }

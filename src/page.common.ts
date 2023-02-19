@@ -225,14 +225,14 @@ export function reRender<
                             const { action, filter, data } = typeof item === 'string' ? { action: item, filter: {}, data: {}} : item;
                             if (action === 'create') {
                                 const data2 = Object.assign({}, data, strictFilter);
-                                if (this.checkOperation(this.state.oakEntity, 'create', data2, undefined, ['relation', 'row', 'logical', 'logicalRelation'])) {
-                                    availableActions.push({action, filter, data});
+                                if (this.checkOperation(e2 as any, 'create', data2, undefined, ['relation', 'row', 'logical', 'logicalRelation'])) {
+                                    availableActions.push(item);
                                 }
                             }
                             else {
                                 const filter2 = Object.assign({}, filter, strictFilter);
-                                if (this.checkOperation(this.state.oakEntity, action, undefined, filter2, ['relation', 'row', 'logical', 'logicalRelation'])) {
-                                    availableActions.push({action, filter, data});
+                                if (this.checkOperation(e2 as any, action, undefined, filter2, ['relation', 'row', 'logical', 'logicalRelation'])) {
+                                    availableActions.push(item);
                                 }
                             }
                         }
