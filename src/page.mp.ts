@@ -58,8 +58,6 @@ const oakBehavior = Behavior<
             callback?: () => void
         ) => void;
         onLoad: (query: Record<string, any>) => Promise<void>;
-        onPullDownRefresh: () => Promise<void>;
-        onReachBottom: () => Promise<void>;
     },
     {
         state: Record<string, any>;
@@ -229,28 +227,6 @@ const oakBehavior = Behavior<
                 await onPathSet.call(this as any, this.oakOption as any);
             } else {
                 this.reRender();
-            }
-        },
-
-        async onPullDownRefresh() {
-            if (
-                !this.state.oakLoading &&
-                this.iAmThePage() &&
-                !this.state.oakDisablePulldownRefresh &&
-                !this.props.oakDisablePulldownRefresh
-            ) {
-                await this.refresh();
-            }
-            await wx.stopPullDownRefresh();
-        },
-
-        async onReachBottom() {
-            if (
-                !this.state.oakLoadingMore &&
-                this.iAmThePage() &&
-                this.oakOption.isList
-            ) {
-                await this.loadMore();
             }
         },
 
@@ -670,6 +646,7 @@ export function createComponent<
     } = option;
     const { attached, show, hide, created, detached, ready, moved, error } = lifetimes || {};
     const { options, externalClasses } = wechatMp || {};
+    const { onPullDownRefresh, onReachBottom, ...restMethods } = (methods || {}) as Record<string, Function>;
 
     return Component<
         DataOption,
@@ -726,7 +703,29 @@ export function createComponent<
             OakProperties
         ) as WechatMiniprogram.Component.PropertyOption,
         methods: {
-            ...methods,
+            async onPullDownRefresh() {
+                if (
+                    !this.state.oakLoading &&
+                    this.iAmThePage() &&
+                    !this.state.oakDisablePulldownRefresh &&
+                    !this.props.oakDisablePulldownRefresh
+                ) {
+                    await (onPullDownRefresh ? onPullDownRefresh.call(this) : this.refresh());
+                }
+                await wx.stopPullDownRefresh();
+            },
+    
+            async onReachBottom() {
+                if (
+                    !this.state.oakLoadingMore &&
+                    this.iAmThePage() &&
+                    this.oakOption.isList
+                ) {
+                    await (onReachBottom ? onReachBottom.call(this) : this.loadMore());
+                }
+            },
+
+            ...restMethods,
         },
         observers: {
             ...observers,
