@@ -608,6 +608,29 @@ const oakBehavior = Behavior<
     },
 });
 
+function translateListeners(listeners?: Record<string, (prev: Record<string, any>, next: Record<string, any>) => void>): undefined | Record<string, (this: { state: Record<string, any> }, ...args: any[]) => any> {
+    if (listeners) {
+        const result = {} as Record<string, (...args: any[]) => any>;
+        for (const ln in listeners) {
+            result[ln] = function (this: { state: Record<string, any> }, ...args) {
+                const propNames = ln.split(',');
+                
+                const prev: Record<string, any> = {};
+                const next: Record<string, any> = {};
+                propNames.forEach(
+                    (pn, idx) => {
+                        prev[pn] = this.state[pn];
+                        next[pn] = args[idx];
+                    }
+                );
+                listeners[ln].call(this, prev, next);
+            }
+        }
+
+        return result;
+    }
+}
+
 export function createComponent<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
@@ -636,18 +659,23 @@ export function createComponent<
     >,
     features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD,
 ) {
+    if (option.observers) {
+        console.error('observers即将废弃（已经不再使用），请使用listeners重写');
+    }
+    
     const {
         data,
         properties,
         methods,
         wechatMp,
         lifetimes,
-        observers,
+        listeners,
     } = option;
     const { attached, show, hide, created, detached, ready, moved, error } = lifetimes || {};
     const { options, externalClasses } = wechatMp || {};
     const { onPullDownRefresh, onReachBottom, ...restMethods } = (methods || {}) as Record<string, Function>;
 
+    const observers = translateListeners(listeners);
     return Component<
         DataOption,
         WechatMiniprogram.Component.PropertyOption,
@@ -727,9 +755,7 @@ export function createComponent<
 
             ...restMethods,
         },
-        observers: {
-            ...observers,
-        },
+        observers,
         pageLifetimes: {
             show() {
                 // this.reRender();

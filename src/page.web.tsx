@@ -44,10 +44,10 @@ abstract class OakComponentBase<
     TData extends DataOption,
     TProperty extends PropertyOption,
     TMethod extends MethodOption
-    > extends React.PureComponent<
+> extends React.PureComponent<
     ComponentProps<IsList, TProperty>,
     ComponentData<ED, T, FormedData, TData>
-    > {
+> {
     abstract features: FD &
         BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     abstract oakOption: OakComponentOption<
@@ -277,7 +277,7 @@ abstract class OakComponentBase<
             : this.state.oakFullpath;
         this.features.runningTree.recoverItem(path2, id);
     }
-    
+
     resetItem(id: string, path?: string) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
@@ -584,11 +584,11 @@ abstract class OakComponentBase<
     }
 }
 
-function translateObservers(observers?: Record<string, (...args: any[]) => any>): { fn: React.Component['componentDidUpdate'] } & ThisType<React.Component> {
+function translateListeners(listeners?: Record<string, (prev: Record<string, any>, next: Record<string, any>) => void>): { fn: React.Component['componentDidUpdate'] } & ThisType<React.Component> {
     return {
         fn(prevProps, prevState) {
             const { state, props } = this;
-            for (const obs in observers) {
+            for (const obs in listeners) {
                 const keys = obs.split(',').map((ele) => ele.trim());
                 let changed = false;
                 for (const k of keys) {
@@ -604,16 +604,19 @@ function translateObservers(observers?: Record<string, (...args: any[]) => any>)
                     }
                 }
 
-                const args = [] as any[];
+                const prev = {} as Record<string, any>;
+                const next = {} as Record<string, any>;
                 if (changed) {
                     for (const k of keys) {
-                        args.push(
-                            get(props, k) === undefined
-                                ? get(state, k)
-                                : get(props, k)
-                        );
+                        next[k] = get(props, k) === undefined
+                            ? get(state, k)
+                            : get(props, k)
+                        prev[k] = get(prevProps, k) === undefined
+                            ? get(prevState, k)
+                            : get(prevProps, k);
+
                     }
-                    observers[obs].apply(this, args);
+                    listeners && listeners[obs] && listeners[obs].call(this, prev, next);
                 }
             }
         },
@@ -651,7 +654,7 @@ export function createComponent<
     features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD,
 ) {
     const {
-        data, methods, lifetimes, observers, getRender, path
+        data, methods, lifetimes, getRender, path, listeners
     } = option as OakComponentOption<
         ED,
         T,
@@ -667,9 +670,12 @@ export function createComponent<
     > & {
         getRender: () => React.ComponentType<any>;
     };
+    
+    if (option.observers) {
+        console.error('observers即将废弃（已经没有效果），请使用listeners重写');
+    }
 
-
-    const { fn } = translateObservers(observers);
+    const { fn } = translateListeners(listeners);
     class OakComponentWrapper extends OakComponentBase<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod> {
         features = features;
         oakOption = option;
@@ -800,7 +806,7 @@ export function createComponent<
                 remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
                     return this.remove(beforeExecute, afterExecute, path);
                 },
-                isCreation: (path?: string)=> {
+                isCreation: (path?: string) => {
                     return this.isCreation(path);
                 }
             } as Record<WebComponentSingleMethodNames, Function>);

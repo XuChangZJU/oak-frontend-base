@@ -108,7 +108,8 @@ export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T
         hide?(): void;
     };
     actions: ED[T]['Action'][] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => ED[T]['Action'][]);
-    observers: Record<string, (...args: any[]) => any>;
+    observers: Record<string, (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>, ...args: any[]) => any>;
+    listeners: Record<string, (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>, prev: Record<string, any>, next: Record<string, any>) => void>;
 }> & Partial<{
     wechatMp: {
         externalClasses?: string[];
