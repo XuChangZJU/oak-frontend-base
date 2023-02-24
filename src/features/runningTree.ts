@@ -672,7 +672,7 @@ class ListNode<
 
     addChild(path: string, node: SingleNode<ED, T, Cxt, FrontCxt, AD>) {
         assert(!this.children[path]);
-        assert(path.length > 10, 'List的path改成了id');
+        // assert(path.length > 10, 'List的path改成了id');
         this.children[path] = node;
     }
 
