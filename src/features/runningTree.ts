@@ -504,13 +504,19 @@ class ListNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Node<ED, T, Cxt, FrontCxt, AD> {
+> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
-    private updates: Record<string, {
-        operation: ED[T]['CreateSingle'] | ED[T]['Update'] | ED[T]['Remove'],
-        beforeExecute?: () => Promise<void>;
-        afterExecute?: () => Promise<void>;
-    }>;
+    private updates: Record<
+        string,
+        {
+            operation:
+                | ED[T]['CreateSingle']
+                | ED[T]['Update']
+                | ED[T]['Remove'];
+            beforeExecute?: () => Promise<void>;
+            afterExecute?: () => Promise<void>;
+        }
+    >;
 
     private filters: NamedFilterItem<ED, T>[];
     private sorters: NamedSorterItem<ED, T>[];
@@ -612,9 +618,9 @@ class ListNode<
                     id: 1,
                 },
                 filter,
-                sorter
+                sorter,
             });
-            this.ids = result.map(ele => ele.id) as unknown as string[];
+            this.ids = result.map((ele) => ele.id) as unknown as string[];
             // 此时有可能原来的children上的id发生了变化
         }
     }
@@ -633,7 +639,9 @@ class ListNode<
         projection:
             | ED[T]['Selection']['data']
             | (() => Promise<ED[T]['Selection']['data']>),
-        parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
+        parent?:
+            | SingleNode<ED, keyof ED, Cxt, FrontCxt, AD>
+            | VirtualNode<ED, Cxt, FrontCxt, AD>,
         path?: string,
         filters?: NamedFilterItem<ED, T>[],
         sorters?: NamedSorterItem<ED, T>[],
@@ -660,9 +668,7 @@ class ListNode<
         this.refresh();
     }
 
-    getChild(
-        path: string,
-    ): SingleNode<ED, T, Cxt, FrontCxt, AD> | undefined {
+    getChild(path: string): SingleNode<ED, T, Cxt, FrontCxt, AD> | undefined {
         return this.children[path];
     }
 
@@ -693,8 +699,7 @@ class ListNode<
         this.filters = filters;
         if (refresh) {
             this.refresh(1, true);
-        }
-        else {
+        } else {
             this.publish();
         }
     }
@@ -711,8 +716,7 @@ class ListNode<
         }
         if (refresh) {
             this.refresh(1, true);
-        }
-        else {
+        } else {
             this.publish();
         }
     }
@@ -727,8 +731,7 @@ class ListNode<
         }
         if (refresh) {
             this.refresh(1, true);
-        }
-        else {
+        } else {
             this.publish();
         }
     }
@@ -741,8 +744,7 @@ class ListNode<
         }
         if (refresh) {
             this.refresh(1, true);
-        }
-        else {
+        } else {
             this.publish();
         }
     }
@@ -760,8 +762,7 @@ class ListNode<
         this.sorters = sorters;
         if (refresh) {
             this.refresh(1, true);
-        }
-        else {
+        } else {
             this.publish();
         }
     }
@@ -778,8 +779,7 @@ class ListNode<
         }
         if (refresh) {
             this.refresh(1, true);
-        }
-        else {
+        } else {
             this.publish();
         }
     }
@@ -794,8 +794,7 @@ class ListNode<
         }
         if (refresh) {
             this.refresh(1, true);
-        }
-        else {
+        } else {
             this.publish();
         }
     }
@@ -808,8 +807,7 @@ class ListNode<
         }
         if (refresh) {
             this.refresh(1, true);
-        }
-        else {
+        } else {
             this.publish();
         }
     }
@@ -828,10 +826,12 @@ class ListNode<
 
         // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
         const modies = this.parent && this.parent.getActiveModies(this);
-        const operations = modies ? createOperationsFromModies(modies) as Array<{
-            entity: keyof ED;
-            operation: ED[keyof ED]['Operation'];
-        }> : [];
+        const operations = modies
+            ? (createOperationsFromModies(modies) as Array<{
+                  entity: keyof ED;
+                  operation: ED[keyof ED]['Operation'];
+              }>)
+            : [];
 
         // 所有的子结点将数据应用到最新
         for (const id in this.children) {
@@ -842,16 +842,14 @@ class ListNode<
         }
 
         // 如果没有子结点但是有相关更新，这里也要应用上
-        Object.keys(this.updates).forEach(
-            (id) => {
-                if (!this.children[id]) {
-                    operations.push({
-                        entity: this.entity,
-                        operation: this.updates[id].operation
-                    });
-                }
+        Object.keys(this.updates).forEach((id) => {
+            if (!this.children[id]) {
+                operations.push({
+                    entity: this.entity,
+                    operation: this.updates[id].operation,
+                });
             }
-        );
+        });
 
         // 如果有modi，则不能以ids作为当前对象，需要向上层获得filter应用了modi之后再找过
         const selection = this.constructSelection(true);
@@ -861,24 +859,37 @@ class ListNode<
                     filter: {
                         id: {
                             $in: createdIds.concat(this.ids || []),
-                        }
-                    }
+                        },
+                    },
                 });
-            }
-            else if (createdIds.length > 0) {
+            } else if (createdIds.length > 0) {
                 const { filter } = selection;
                 Object.assign(selection, {
-                    filter: combineFilters([filter, { id: { $in: createdIds } }].filter(ele => !!ele), true),
+                    filter: combineFilters(
+                        [filter, { id: { $in: createdIds } }].filter(
+                            (ele) => !!ele
+                        ),
+                        true
+                    ),
                 });
             }
 
-            const result = this.cache.tryRedoOperationsThenSelect(this.entity, selection, operations, this.isLoading() || this.isLoadingMore());
+            const result = this.cache.tryRedoOperationsThenSelect(
+                this.entity,
+                selection,
+                operations,
+                this.isLoading() || this.isLoadingMore()
+            );
             return result;
         }
         return [];
     }
 
-    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+    addItem(
+        item: Omit<ED[T]['CreateSingle']['data'], 'id'>,
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
         const id = generateNewId();
         assert(!this.updates[id]);
         this.updates[id] = {
@@ -893,12 +904,18 @@ class ListNode<
         this.setDirty();
     }
 
-    removeItem(id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
-        if (this.updates[id] && this.updates[id].operation.action === 'create') {
+    removeItem(
+        id: string,
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
+        if (
+            this.updates[id] &&
+            this.updates[id].operation.action === 'create'
+        ) {
             // 如果是新增项，在这里抵消
             unset(this.updates, id);
-        }
-        else {
+        } else {
             this.updates[id] = {
                 beforeExecute,
                 afterExecute,
@@ -931,16 +948,27 @@ class ListNode<
 
     /**
      * 目前只支持根据itemId进行更新
-     * @param data 
-     * @param id 
-     * @param beforeExecute 
-     * @param afterExecute 
+     * @param data
+     * @param id
+     * @param beforeExecute
+     * @param afterExecute
      */
-    updateItem(data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+    updateItem(
+        data: ED[T]['Update']['data'],
+        id: string,
+        action?: ED[T]['Action'],
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
         // assert(Object.keys(this.children).length === 0, `更新子结点应该落在相应的component上`);
         if (this.children && this.children[id]) {
             // 实际中有这样的case出现，当使用actionButton时。先这样处理。by Xc 20230214
-            return this.children[id].update(data, action, beforeExecute, afterExecute);
+            return this.children[id].update(
+                data,
+                action,
+                beforeExecute,
+                afterExecute
+            );
         }
         if (this.updates[id]) {
             const { operation } = this.updates[id];
@@ -950,8 +978,7 @@ class ListNode<
                 assert(operation.action === 'update');
                 operation.action = action;
             }
-        }
-        else {
+        } else {
             this.updates[id] = {
                 beforeExecute,
                 afterExecute,
@@ -968,7 +995,10 @@ class ListNode<
         this.setDirty();
     }
 
-    async updateItems(data: Record<string, ED[T]['Update']['data']>, action?: ED[T]['Action']) {
+    async updateItems(
+        data: Record<string, ED[T]['Update']['data']>,
+        action?: ED[T]['Action']
+    ) {
         for (const id in data) {
             await this.updateItem(data[id], id, action);
         }
@@ -1000,7 +1030,9 @@ class ListNode<
         }
     }
 
-    getParentFilter(childNode: SingleNode<ED, T, Cxt, FrontCxt, AD>): ED[T]['Selection']['filter'] | undefined {
+    getParentFilter(
+        childNode: SingleNode<ED, T, Cxt, FrontCxt, AD>
+    ): ED[T]['Selection']['filter'] | undefined {
         for (const id in this.children) {
             if (this.children[id] === childNode) {
                 return {
@@ -1010,13 +1042,16 @@ class ListNode<
         }
     }
 
-    composeOperations(): Array<{ entity: T, operation: ED[T]['Operation'] }> | undefined {
+    composeOperations():
+        | Array<{ entity: T; operation: ED[T]['Operation'] }>
+        | undefined {
         if (!this.dirty) {
             return;
         }
 
         // 目前只支持updateItem，还不支持在list上更新
-        const operations: Array<{ entity: T, operation: ED[T]['Operation'] }> = [];
+        const operations: Array<{ entity: T; operation: ED[T]['Operation'] }> =
+            [];
         for (const id in this.children) {
             const childOperation = this.children[id].composeOperations();
             if (childOperation) {
@@ -1047,18 +1082,25 @@ class ListNode<
         return projection;
     }
 
+    getSchema(): StorageSchema<ED> {
+        const schema = super.getSchema();
+        return schema;
+    }
+
     constructSelection(withParent?: true) {
         const { filters, sorters } = this;
         const data = this.getProjection();
         let validParentFilter = true;
-        assert(data, "取数据时找不到projection信息");
-        const sorterArr = sorters.map((ele) => {
-            const { sorter } = ele;
-            if (typeof sorter === 'function') {
-                return (sorter as Function)();
-            }
-            return sorter;
-        }).filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
+        assert(data, '取数据时找不到projection信息');
+        const sorterArr = sorters
+            .map((ele) => {
+                const { sorter } = ele;
+                if (typeof sorter === 'function') {
+                    return (sorter as Function)();
+                }
+                return sorter;
+            })
+            .filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
         const filterArr = filters.map((ele) => {
             const { filter } = ele;
             if (typeof filter === 'function') {
@@ -1072,30 +1114,39 @@ class ListNode<
                 const filterOfParent = this.parent.getParentFilter<T>(this);
                 if (filterOfParent) {
                     filterArr.push(filterOfParent as any);
-                }
-                else {
+                } else {
                     // 说明有父结点但是却没有相应的约束，此时不应该去refresh(是一个insert动作)
                     validParentFilter = false;
                 }
             }
         }
 
-        const filters2 = filterArr.filter(ele => !!ele);
-        const filter = filters2.length > 0 ? combineFilters<ED, T>(filters2) : {};
+        const filters2 = filterArr.filter((ele) => !!ele);
+        const filter =
+            filters2.length > 0 ? combineFilters<ED, T>(filters2) : {};
         return {
             data,
             filter,
             sorter: sorterArr,
             validParentFilter,
-        }
+        };
     }
 
     async refresh(pageNumber?: number, getCount?: true, append?: boolean) {
         const { entity, pagination } = this;
         const { currentPage, pageSize } = pagination;
-        const currentPage3 = typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
-        const { data: projection, filter, sorter, validParentFilter } = this.constructSelection(true);
-        assert(projection, `页面没有定义投影「ListNode, ${this.entity as string}」`);
+        const currentPage3 =
+            typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
+        const {
+            data: projection,
+            filter,
+            sorter,
+            validParentFilter,
+        } = this.constructSelection(true);
+        assert(
+            projection,
+            `页面没有定义投影「ListNode, ${this.entity as string}」`
+        );
         // 若不存在有效的父过滤条件（父有值或本结点就是顶层结点），则不能刷新
         if (validParentFilter) {
             try {
@@ -1126,19 +1177,15 @@ class ListNode<
                             this.pagination.total = count;
                         }
 
-                        const ids = data.map(
-                            ele => ele.id!
-                        ) as string[];
+                        const ids = data.map((ele) => ele.id!) as string[];
                         if (append) {
-                            this.ids = (this.ids || []).concat(ids)
-                        }
-                        else {
+                            this.ids = (this.ids || []).concat(ids);
+                        } else {
                             this.ids = ids;
                         }
                     }
                 );
-            }
-            catch (err) {
+            } catch (err) {
                 this.setLoading(false);
                 if (append) {
                     this.loadingMore = false;
@@ -1920,12 +1967,14 @@ export class RunningTree<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
     private root: Record<
         string,
-        SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>
+        | SingleNode<ED, keyof ED, Cxt, FrontCxt, AD>
+        | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>
+        | VirtualNode<ED, Cxt, FrontCxt, AD>
     >;
 
     constructor(
@@ -1951,15 +2000,19 @@ export class RunningTree<
             isList,
             id,
         } = options;
-        let node: ListNode<ED, T, Cxt, FrontCxt, AD> | SingleNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
+        let node:
+            | ListNode<ED, T, Cxt, FrontCxt, AD>
+            | SingleNode<ED, T, Cxt, FrontCxt, AD>
+            | VirtualNode<ED, Cxt, FrontCxt, AD>;
         const { parent, path } = analyzePath(fullPath);
         const parentNode = parent ? this.findNode(parent) : undefined;
         if (this.findNode(fullPath)) {
             // 目前只有一种情况合法，即parentNode是list，列表中的位置移动引起的重用
             if (parentNode instanceof ListNode) {
-            }
-            else if (process.env.NODE_ENV === 'development') {
-                console.warn(`创建node时发现path[${fullPath}]已有结点，本特性尚未测试充分，请谨防有坑`);
+            } else if (process.env.NODE_ENV === 'development') {
+                console.warn(
+                    `创建node时发现path[${fullPath}]已有结点，本特性尚未测试充分，请谨防有坑`
+                );
             }
             return this.findNode(fullPath)!;
         }
@@ -1985,13 +2038,12 @@ export class RunningTree<
                     this.schema!,
                     this.cache,
                     projection!,
-                    parentNode as VirtualNode<ED, Cxt, FrontCxt, AD>,      // 过编译
+                    parentNode as VirtualNode<ED, Cxt, FrontCxt, AD>, // 过编译
                     path,
                     id
                 );
             }
-        }
-        else {
+        } else {
             assert(!parentNode || parentNode instanceof VirtualNode);
             node = new VirtualNode(path, parentNode);
         }
@@ -2038,7 +2090,6 @@ export class RunningTree<
         }
     }
 
-
     getFreshValue(path: string) {
         const node = this.findNode(path);
         let value = node && node.getFreshValue();
@@ -2051,19 +2102,36 @@ export class RunningTree<
         return node ? node.isDirty() : false;
     }
 
-    addItem<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+    addItem<T extends keyof ED>(
+        path: string,
+        data: Omit<ED[T]['CreateSingle']['data'], 'id'>,
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         return node.addItem(data, beforeExecute, afterExecute);
     }
 
-    removeItem(path: string, id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+    removeItem(
+        path: string,
+        id: string,
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.removeItem(id, beforeExecute, afterExecute);
     }
 
-    updateItem<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+    updateItem<T extends keyof ED>(
+        path: string,
+        data: ED[T]['Update']['data'],
+        id: string,
+        action?: ED[T]['Action'],
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.updateItem(data, id, action, beforeExecute, afterExecute);
@@ -2081,19 +2149,34 @@ export class RunningTree<
         node.resetItem(id);
     }
 
-    create<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+    create<T extends keyof ED>(
+        path: string,
+        data: Omit<ED[T]['CreateSingle']['data'], 'id'>,
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
         node.create(data, beforeExecute, afterExecute);
     }
 
-    update<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+    update<T extends keyof ED>(
+        path: string,
+        data: ED[T]['Update']['data'],
+        action?: ED[T]['Action'],
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
         node.update(data, action, beforeExecute, afterExecute);
     }
 
-    remove(path: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+    remove(
+        path: string,
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>
+    ) {
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
         node.remove(beforeExecute, afterExecute);
@@ -2106,7 +2189,9 @@ export class RunningTree<
 
     isLoadingMore(path: string) {
         const node = this.findNode(path);
-        assert(node && (node instanceof SingleNode || node instanceof ListNode));
+        assert(
+            node && (node instanceof SingleNode || node instanceof ListNode)
+        );
         return node.isLoadingMore();
     }
 
@@ -2119,8 +2204,7 @@ export class RunningTree<
         const node = this.findNode(path);
         if (node instanceof ListNode) {
             await node.refresh(1, true);
-        }
-        else if (node) {
+        } else if (node) {
             // 有无entity的case不创建结点
             await node.refresh();
         }
@@ -2156,10 +2240,7 @@ export class RunningTree<
         return node.getId();
     }
 
-    setPageSize<T extends keyof ED>(
-        path: string,
-        pageSize: number
-    ) {
+    setPageSize<T extends keyof ED>(path: string, pageSize: number) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         // 切换分页pageSize就重新设置
@@ -2270,7 +2351,6 @@ export class RunningTree<
         return node.removeNamedSorter(sorter, refresh);
     }
 
-
     removeNamedSorterByName(
         path: string,
         name: string,
@@ -2307,10 +2387,9 @@ export class RunningTree<
         if (action) {
             if (node instanceof SingleNode) {
                 node.update({}, action);
-            }
-            else {
+            } else {
                 assert(node instanceof ListNode);
-                assert(false);      // 对list的整体action等遇到了再实现
+                assert(false); // 对list的整体action等遇到了再实现
             }
         }
         assert(node.isDirty());
@@ -2318,29 +2397,33 @@ export class RunningTree<
         node.setExecuting(true);
         try {
             await node.doBeforeTrigger();
-            const operations = (node.composeOperations())!;
+            const operations = node.composeOperations()!;
 
             // 这里理论上virtualNode下面也可以有多个不同的entity的组件，但实际中不应当出现这样的设计
             const entities = uniq(
-                operations.filter(ele => !!ele).map(
-                    ele => ele.entity
-                ));
+                operations.filter((ele) => !!ele).map((ele) => ele.entity)
+            );
             assert(entities.length === 1);
 
-            const result = await this.cache.exec('operate', {
-                entity: entities[0],
-                operation: operations.filter(ele => !!ele).map(ele => ele.operation),
-            }, () => {
-                // 清空缓存
-                node.clean();
-                node.setExecuting(false);
-            });
+            const result = await this.cache.exec(
+                'operate',
+                {
+                    entity: entities[0],
+                    operation: operations
+                        .filter((ele) => !!ele)
+                        .map((ele) => ele.operation),
+                },
+                () => {
+                    // 清空缓存
+                    node.clean();
+                    node.setExecuting(false);
+                }
+            );
 
             await node.doAfterTrigger();
 
             return result;
-        }
-        catch (err) {
+        } catch (err) {
             node.setExecuting(false);
             throw err;
         }
@@ -2368,9 +2451,15 @@ export class RunningTree<
          * by Xc 20230219
          * 原先用的clearSubscribes，是假设没有结点共用路径，目前看来这个假设不成立
          */
-        // node.clearSubscribes(); 
+        // node.clearSubscribes();
         return node.subscribe(() => {
             callback(path);
         });
+    }
+
+    getSchema(path: string) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        return node.getSchema();
     }
 }
