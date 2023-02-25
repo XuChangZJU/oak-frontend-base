@@ -1,6 +1,6 @@
 {
     "name": "oak-frontend-base",
-    "version": "2.5.3",
+    "version": "2.5.4",
     "description": "oak框架中前端与业务逻辑无关的平台部分",
     "author": {
         "name": "XuChang"
@@ -12,9 +12,9 @@
         "debounce": "^1.2.1",
         "format-message-parse": "^6.2.4",
         "history": "^5.3.0",
-        "oak-common-aspect": "^2.1.5",
-        "oak-domain": "^2.6.3",
-        "oak-memory-tree-store": "^2.2.2",
+        "oak-common-aspect": "file:../oak-common-aspect",
+        "oak-domain": "file:../oak-domain",
+        "oak-memory-tree-store": "file:../oak-memory-tree-store",
         "rmc-pull-to-refresh": "^1.0.13",
         "url": "^0.11.0",
         "uuid": "^8.3.2"
