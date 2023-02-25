@@ -1082,11 +1082,6 @@ class ListNode<
         return projection;
     }
 
-    getSchema(): StorageSchema<ED> {
-        const schema = super.getSchema();
-        return schema;
-    }
-
     constructSelection(withParent?: true) {
         const { filters, sorters } = this;
         const data = this.getProjection();
@@ -2455,11 +2450,5 @@ export class RunningTree<
         return node.subscribe(() => {
             callback(path);
         });
-    }
-
-    getSchema(path: string) {
-        const node = this.findNode(path);
-        assert(node instanceof ListNode);
-        return node.getSchema();
     }
 }

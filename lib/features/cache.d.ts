@@ -11,6 +11,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     private syncEventsCallbacks;
     private contextBuilder?;
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>);
+    getSchema(): import("oak-domain/lib/types").StorageSchema<ED>;
     exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void): Promise<{
         result: Awaited<ReturnType<AD[K]>>;
         message: string | null | undefined;

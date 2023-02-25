@@ -49,6 +49,10 @@ export class Cache<
         }; */
     }
 
+    getSchema() {
+        return this.cacheStore.getSchema();
+    }
+
     async exec<K extends keyof AD>(
         name: K,
         params: Parameters<AD[K]>[0],
