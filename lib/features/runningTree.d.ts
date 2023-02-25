@@ -95,6 +95,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
         operation: ED[T]['Operation'];
     }> | undefined;
     getProjection(): ED[T]['Selection']['data'];
+    getSchema(): StorageSchema<ED>;
     constructSelection(withParent?: true): {
         data: ED[T]["Selection"]["data"];
         filter: ED[T]["Selection"]["filter"] | {};
@@ -242,5 +243,6 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     clean(path: string): void;
     getRoot(): Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
     subscribeNode(callback: (path: string) => any, path: string): () => void;
+    getSchema(path: string): StorageSchema<ED>;
 }
 export {};
