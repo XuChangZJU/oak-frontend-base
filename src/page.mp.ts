@@ -616,14 +616,15 @@ function translateListeners(listeners?: Record<string, (prev: Record<string, any
     if (listeners) {
         const result = {} as Record<string, (...args: any[]) => any>;
         for (const ln in listeners) {
-            result[ln] = function (this: { state: Record<string, any> }, ...args) {
+            result[ln] = function (this: { state: Record<string, any>, prevState: Record<string, any> }, ...args) {
+                // 实测中小程序也是在update之后再调用observer，此时state上的值已经变成后项，因此增加prevState来缓存之
                 const propNames = ln.split(',');
                 
                 const prev: Record<string, any> = {};
                 const next: Record<string, any> = {};
                 propNames.forEach(
                     (pn, idx) => {
-                        prev[pn] = this.state[pn];
+                        prev[pn] = this.prevState[pn];
                         next[pn] = args[idx];
                     }
                 );
