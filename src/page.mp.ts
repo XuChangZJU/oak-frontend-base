@@ -26,6 +26,7 @@ import { NotificationProps } from './types/Notification';
 import { CURRENT_LOCALE_DATA, CURRENT_LOCALE_KEY, getI18nInstanceWechatMp } from './platforms/wechatMp/i18n';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { cloneDeep } from 'oak-domain/lib/utils/lodash';
 
 
 const OakProperties = {
@@ -60,6 +61,7 @@ const oakBehavior = Behavior<
         onLoad: (query: Record<string, any>) => Promise<void>;
     },
     {
+        prevState: Record<string, any>;
         state: Record<string, any>;
         props: {
             oakId?: string;
@@ -597,7 +599,9 @@ const oakBehavior = Behavior<
             const { setData } = this;
             this.state = this.data;
             this.props = this.data;
+            this.prevState = {};
             this.setData = (data, callback) => {
+                this.prevState = cloneDeep(this.data);
                 setData.call(this, data, () => {
                     this.state = this.data;
                     this.props = this.data;
