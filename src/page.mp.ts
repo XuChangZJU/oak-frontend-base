@@ -664,6 +664,7 @@ export function createComponent<
     }
 
     const {
+        entity,
         data,
         properties,
         methods,
@@ -722,8 +723,10 @@ export function createComponent<
         behaviors: [oakBehavior],
         data: typeof data !== 'function' ? Object.assign({}, data, {
             oakFullpath: '',
+            oakLoading: !!entity,
         }) : {
             oakFullpath: '',
+            oakLoading: !!entity,
         },
         properties: Object.assign(
             {},

@@ -824,7 +824,7 @@ export function createComponent<
 
             const data2 = typeof data === 'function' ? (data as Function).call(this as any) : data;
             this.state = Object.assign({}, data2, {
-                oakLoading: false,
+                oakLoading: !!option.entity,
                 oakLoadingMore: false,
                 oakPullDownRefreshLoading: false,
                 oakExecuting: false,
