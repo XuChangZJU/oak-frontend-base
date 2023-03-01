@@ -1,4 +1,4 @@
-import { schedule } from 'oak-domain/lib/utils/cron';
+import { scheduleJob } from 'node-schedule';
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 import { DebugStore } from './DebugStore';
 import {
@@ -203,7 +203,7 @@ function initializeTimers<ED extends EntityDict & BaseEntityDict, Cxt extends As
     }
     for (const timer of timers) {
         const { cron, fn, name } = timer;
-        schedule(cron, async (date) => {
+        scheduleJob(name, cron, async (date) => {
             const start = Date.now();
             const context = await contextBuilder()(store);
             await context.begin();
