@@ -95,6 +95,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
         operation: ED[T]['Operation'];
     }> | undefined;
     getProjection(): ED[T]['Selection']['data'];
+    private constructFilters;
     constructSelection(withParent?: true): {
         data: ED[T]["Selection"]["data"];
         filter: ED[T]["Selection"]["filter"] | {};
@@ -106,6 +107,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     setCurrentPage(currentPage: number, append?: boolean): void;
     clean(): void;
     getChildOperation(child: SingleNode<ED, T, Cxt, FrontCxt, AD>): ED[T]["CreateSingle"] | ED[T]["Update"] | ED[T]["Remove"] | undefined;
+    getIntrinsticData(): ED[T]["CreateSingle"]["data"];
 }
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?;
@@ -229,6 +231,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     addNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(path: string, name: string, refresh?: boolean): void;
+    getIntrinsticData(path: string): ED[keyof ED]["CreateSingle"]["data"];
     tryExecute(path: string): boolean | Error;
     getOperations(path: string): {
         entity: keyof ED;

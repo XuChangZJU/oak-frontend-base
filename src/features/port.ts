@@ -4,7 +4,6 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
-import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 
 export class Port<
     ED extends EntityDict & BaseEntityDict,

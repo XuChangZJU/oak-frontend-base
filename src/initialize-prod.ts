@@ -44,6 +44,11 @@ export function initialize<
     checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>,
     authDict?: AuthDefDict<ED>,
+    relationDict?: {
+        [K in keyof ED]?: {
+            [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
+        }
+    },
 ) {
     const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema, authDict));
 
@@ -63,7 +68,7 @@ export function initialize<
         },
     };
 
-    const features = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder()(cacheStore), cacheStore);
+    const features = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder()(cacheStore), cacheStore, relationDict || {});
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
     if (actionDict) {

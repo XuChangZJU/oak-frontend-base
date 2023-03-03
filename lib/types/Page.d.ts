@@ -38,19 +38,26 @@ declare type FullPropertyToData<T extends AllFullProperty> = ValueType<T['type']
 declare type PropertyOptionToData<P extends PropertyOption> = {
     [name in keyof P]: PropertyToData<P[name]>;
 };
-export declare type CascadeEntity<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = ({
+export declare type ActionDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     action: ED[T]['Action'];
     filter?: ED[T]['Selection']['filter'];
     data?: Partial<ED[T]['CreateSingle']['data']>;
-} | ED[T]['Action'])[];
+} | ED[T]['Action'];
+export declare type RowWithActions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<ED[T]['Schema']> & {
+    '#oakLegalActions': ActionDef<ED, T>[];
+    '#oakLegalCascadeActions': {
+        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+    };
+};
 interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends DataOption, TProperty extends PropertyOption> {
     entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => T);
     path?: string;
     isList: IsList;
     features?: (keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>))[];
-    cascadeEntities?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => {
-        [K in keyof ED[T]['Schema']]?: CascadeEntity<ED, keyof ED>;
+    cascadeActions?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => {
+        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     };
+    actions?: ActionDef<ED, T>[] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ActionDef<ED, T>[]);
     projection?: ED[T]['Selection']['data'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ED[T]['Selection']['data']);
     append?: boolean;
     pagination?: Pagination;
@@ -63,10 +70,10 @@ interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyo
         '#name'?: string;
     }>;
     formData?: (options: {
-        data: IsList extends true ? Partial<ED[T]['Schema']>[] : Partial<ED[T]['Schema']> | undefined;
+        data: IsList extends true ? RowWithActions<ED, T>[] : RowWithActions<ED, T> | undefined;
         features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<PropertyOptionToData<TProperty>>;
-        legalActions: ED[T]['Action'][];
+        legalActions: ActionDef<ED, T>[];
     }) => FormedData & ThisType<ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList>>;
     ns?: T | T[];
     data?: ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => TData) | TData;
@@ -107,7 +114,6 @@ export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T
         show?(): void;
         hide?(): void;
     };
-    actions: ED[T]['Action'][] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => ED[T]['Action'][]);
     observers: Record<string, (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>, ...args: any[]) => any>;
     listeners: Record<string, (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>, prev: Record<string, any>, next: Record<string, any>) => void>;
 }> & Partial<{
@@ -125,7 +131,7 @@ export declare type OakComponentProperties = {
     oakDisablePulldownRefresh: BooleanConstructor;
     oakAutoUnmount: BooleanConstructor;
     oakActions: ArrayConstructor;
-    oakCascadeEntities: ObjectConstructor;
+    oakCascadeActions: ObjectConstructor;
 };
 export declare type OakListComponentProperties = {
     oakFilters: ObjectConstructor;
@@ -237,9 +243,6 @@ export declare type OakComponentData<ED extends EntityDict & BaseEntityDict, T e
     oakFullpath: string;
     oakLegalActions?: ED[T]['Action'][];
     oakDisablePulldownRefresh: boolean;
-    oakCascadeEntities?: {
-        [K in keyof ED[T]['Schema']]?: CascadeEntity<ED, keyof ED>;
-    };
 };
 export declare type OakListComoponetData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakFilters?: NonNullable<ED[T]['Selection']['filter']>[];

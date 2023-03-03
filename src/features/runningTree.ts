@@ -510,9 +510,9 @@ class ListNode<
         string,
         {
             operation:
-                | ED[T]['CreateSingle']
-                | ED[T]['Update']
-                | ED[T]['Remove'];
+            | ED[T]['CreateSingle']
+            | ED[T]['Update']
+            | ED[T]['Remove'];
             beforeExecute?: () => Promise<void>;
             afterExecute?: () => Promise<void>;
         }
@@ -828,9 +828,9 @@ class ListNode<
         const modies = this.parent && this.parent.getActiveModies(this);
         const operations = modies
             ? (createOperationsFromModies(modies) as Array<{
-                  entity: keyof ED;
-                  operation: ED[keyof ED]['Operation'];
-              }>)
+                entity: keyof ED;
+                operation: ED[keyof ED]['Operation'];
+            }>)
             : [];
 
         // 所有的子结点将数据应用到最新
@@ -1082,10 +1082,38 @@ class ListNode<
         return projection;
     }
 
-    constructSelection(withParent?: true) {
-        const { filters, sorters } = this;
-        const data = this.getProjection();
+    private constructFilters(withParent?: true) {
         let validParentFilter = true;
+        const { filters: ownFilters } = this;
+        const filters = ownFilters.map((ele) => {
+            const { filter } = ele;
+            if (typeof filter === 'function') {
+                return (filter as Function)();
+            }
+            return filter;
+        }) as ED[T]['Selection']['filter'][];
+
+        if (withParent && this.parent) {
+            if (this.parent instanceof SingleNode) {
+                const filterOfParent = this.parent.getParentFilter<T>(this);
+                if (filterOfParent) {
+                    filters.push(filterOfParent as any);
+                } else {
+                    // 说明有父结点但是却没有相应的约束，此时不应该去refresh(是一个insert动作)
+                    validParentFilter = false;
+                }
+            }
+        }
+
+        return {
+            filters,
+            validParentFilter,
+        };
+    }
+
+    constructSelection(withParent?: true) {
+        const { sorters } = this;
+        const data = this.getProjection();
         assert(data, '取数据时找不到projection信息');
         const sorterArr = sorters
             .map((ele) => {
@@ -1096,27 +1124,10 @@ class ListNode<
                 return sorter;
             })
             .filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
-        const filterArr = filters.map((ele) => {
-            const { filter } = ele;
-            if (typeof filter === 'function') {
-                return (filter as Function)();
-            }
-            return filter;
-        });
 
-        if (withParent && this.parent) {
-            if (this.parent instanceof SingleNode) {
-                const filterOfParent = this.parent.getParentFilter<T>(this);
-                if (filterOfParent) {
-                    filterArr.push(filterOfParent as any);
-                } else {
-                    // 说明有父结点但是却没有相应的约束，此时不应该去refresh(是一个insert动作)
-                    validParentFilter = false;
-                }
-            }
-        }
+        const { validParentFilter, filters } = this.constructFilters(withParent);
 
-        const filters2 = filterArr.filter((ele) => !!ele);
+        const filters2 = filters.filter((ele) => !!ele);
         const filter =
             filters2.length > 0 ? combineFilters<ED, T>(filters2) : {};
         return {
@@ -1226,6 +1237,30 @@ class ListNode<
         if (this.updates && this.updates[childId]) {
             return this.updates[childId].operation;
         }
+    }
+
+    // 查看这个list上所有数据必须遵守的等值限制
+    getIntrinsticData() {
+        const data = {} as ED[T]['CreateSingle']['data'];
+        const { filters } = this.constructFilters();
+        const checkFilter = (filter: ED[T]['Selection']['filter']) => {
+            for (const key in filter) {                
+                if (this.schema[this.entity].attributes[key as string] && typeof filter[key] !== 'object') {
+                    assert(!data[key] || data[key] === filter[key]);
+                    Object.assign(data, {
+                        [key]: filter[key],
+                    });
+                }
+            }
+        };
+        filters.forEach(
+            (ele) => {
+                if (ele) {
+                    checkFilter(ele);
+                }
+            }
+        );
+        return data;
     }
 }
 
@@ -1377,11 +1412,11 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (filter) {
             //  这里必须用if，upsert提交后就会跑到没有filter的case
             const operations2 = this.composeOperations(noCascade);
-    
+
             if (operations2) {
                 operations.push(...operations2);
             }
-    
+
             const result = this.cache.tryRedoOperationsThenSelect(this.entity, {
                 data: projection,
                 filter,
@@ -1791,7 +1826,7 @@ class VirtualNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private dirty: boolean;
     private executing: boolean;
     private children: Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
@@ -2087,7 +2122,8 @@ export class RunningTree<
 
     getFreshValue(path: string) {
         const node = this.findNode(path);
-        let value = node && node.getFreshValue();
+        assert(node instanceof ListNode || node instanceof SingleNode);
+        let value = node.getFreshValue();
 
         return value;
     }
@@ -2354,6 +2390,12 @@ export class RunningTree<
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         return node.removeNamedSorterByName(name, refresh);
+    }
+
+    getIntrinsticData(path: string) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        return node.getIntrinsticData();
     }
 
     tryExecute(path: string) {

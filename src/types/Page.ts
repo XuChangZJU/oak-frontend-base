@@ -82,13 +82,22 @@ type PropertyOptionToData<P extends PropertyOption> = {
     [name in keyof P]: PropertyToData<P[name]>
 };
 
-export type CascadeEntity<
+export type ActionDef<
     ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED> = ({
+    T extends keyof ED> = {
         action: ED[T]['Action'],
         filter?: ED[T]['Selection']['filter'];
         data?: Partial<ED[T]['CreateSingle']['data']>;
-    } | ED[T]['Action'])[];
+    } | ED[T]['Action'];
+
+export type RowWithActions<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED> = Partial<ED[T]['Schema']> & {
+        '#oakLegalActions': ActionDef<ED, T>[];
+        '#oakLegalCascadeActions': {
+            [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+        };
+    };
 
 interface ComponentOption<
     ED extends EntityDict & BaseEntityDict,
@@ -106,9 +115,10 @@ interface ComponentOption<
     path?: string;
     isList: IsList;
     features?: (keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>))[];
-    cascadeEntities?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => {
-        [K in keyof ED[T]['Schema']]?: CascadeEntity<ED, keyof ED>;
+    cascadeActions?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => {
+        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     },
+    actions?: ActionDef<ED, T>[] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ActionDef<ED, T>[]);
     projection?: ED[T]['Selection']['data'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ED[T]['Selection']['data']);
     append?: boolean;
     pagination?: Pagination;
@@ -121,10 +131,10 @@ interface ComponentOption<
         '#name'?: string;
     }>;
     formData?: (options: {
-        data: IsList extends true ? Partial<ED[T]['Schema']>[] : Partial<ED[T]['Schema']> | undefined;
+        data: IsList extends true ? RowWithActions<ED, T>[] : RowWithActions<ED, T> | undefined;
         features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<PropertyOptionToData<TProperty>>;
-        legalActions: ED[T]['Action'][];
+        legalActions: ActionDef<ED, T>[];
     }) => FormedData & ThisType<ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList>>;
     ns?: T | T[];
     data?: ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => TData) | TData;
@@ -238,15 +248,12 @@ export type OakComponentOption<
             show?(): void;
             hide?(): void;
         };
-        actions: ED[T]['Action'][] | ((this: ComponentPublicThisType<
-            ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod
-        >) => ED[T]['Action'][]);
         observers: Record<string, (this: ComponentPublicThisType<
             ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod
         >, ...args: any[]) => any>;         // 待废弃
         listeners: Record<string, (this: ComponentPublicThisType<
             ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod
-        >, prev: Record<string, any>, next: Record<string, any>) => void>; 
+        >, prev: Record<string, any>, next: Record<string, any>) => void>;
     }> &
     Partial<{
         wechatMp: {
@@ -266,7 +273,7 @@ export type OakComponentProperties = {
     oakDisablePulldownRefresh: BooleanConstructor;
     oakAutoUnmount: BooleanConstructor;
     oakActions: ArrayConstructor;
-    oakCascadeEntities: ObjectConstructor;
+    oakCascadeActions: ObjectConstructor;
 };
 
 export type OakListComponentProperties = {
@@ -409,9 +416,6 @@ export type OakComponentData<
     oakFullpath: string;
     oakLegalActions?: ED[T]['Action'][];
     oakDisablePulldownRefresh: boolean;
-    oakCascadeEntities?: {
-        [K in keyof ED[T]['Schema']]?: CascadeEntity<ED, keyof ED>;
-    };
 };
 
 export type OakListComoponetData<

@@ -1,5 +1,6 @@
 import { assert } from 'oak-domain/lib/utils/assert';
 import {
+    CheckerType,
     EntityDict,
     OakException,
     OakInputIllegalException,
@@ -10,13 +11,15 @@ import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
 import {
     OakComponentOption,
     ComponentFullThisType,
-    CascadeEntity,
+    ActionDef,
+    RowWithActions,
 } from './types/Page';
 import { unset } from 'oak-domain/lib/utils/lodash';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { MessageProps } from './types/Message';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
+import { addFilterSegment, combineFilters } from 'oak-domain/lib/store/filter';
 
 export async function onPathSet<
     ED extends EntityDict & BaseEntityDict,
@@ -140,6 +143,203 @@ export async function onPathSet<
     this.refresh();
 }
 
+function checkActionsAndCascadeEntities<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>>(
+        this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
+        rows: Partial<ED[keyof ED]['Schema']> | Partial<ED[keyof ED]['Schema']>[],
+        option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>
+    ) {
+    const checkTypes = ['relation', 'row', 'logical', 'logicalRelation'] as CheckerType[];
+    const actions: ActionDef<ED, T>[] = this.props.oakActions || (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
+    const legalActions = [] as ActionDef<ED, T>[];
+    if (actions) {
+        // todo 这里actions整体进行测试的性能应该要高于一个个去测试
+        for (const action of actions) {
+            if (rows instanceof Array) {
+                assert(option.isList);
+                const intrinsticData = this.features.runningTree.getIntrinsticData(this.state.oakFullpath!);
+                if (action === 'create' || typeof action === 'object' && action.action === 'create') {
+                    // 创建对象的判定不落在具体行上，但要考虑list上外键相关属性的限制
+                    const data = typeof action === 'object' && action.action === 'create' ? Object.assign({}, intrinsticData, action.data) : intrinsticData;
+                    if (this.checkOperation(this.state.oakEntity, 'create', data as any, undefined, checkTypes)) {
+                        legalActions.push(action);
+                    }
+                }
+                else {
+                    const a2 = typeof action === 'object' ? action.action : action;
+                    // 先尝试整体测试是否通过，再测试每一行
+                    // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
+                    if (this.checkOperation(this.state.oakEntity, a2, undefined, intrinsticData, checkTypes)) {
+                        rows.forEach(
+                            (row) => {
+                                if (row['#oakLegalActions']) {
+                                    row['#oakLegalActions'].push(action);
+                                }
+                                else {
+                                    Object.assign(row, {
+                                        '#oakLegalActions': [action],
+                                    });
+                                }
+                            }
+                        );
+                    }
+                    else {
+                        rows.forEach(
+                            (row) => {
+                                const { id } = row;
+                                if (this.checkOperation(this.state.oakEntity, a2, undefined, { id }, checkTypes)) {
+                                    if (row['#oakLegalActions']) {
+                                        row['#oakLegalActions'].push(action);
+                                    }
+                                    else {
+                                        Object.assign(row, {
+                                            '#oakLegalActions': [action],
+                                        });
+                                    }
+                                }
+                            }
+                        );
+                    }
+                }
+            }
+            else {
+                assert(!option.isList);
+                assert(!(action === 'create' || typeof action === 'object' && action.action === 'create'), 'create的action只应该定义在list页面上');
+                const { id } = rows;
+                const a2 = typeof action === 'object' ? action.action : action;
+                const data = typeof action === 'object' ? action.data : undefined;
+                if (this.checkOperation(this.state.oakEntity, a2, data as any, { id }, checkTypes)) {
+                    legalActions.push(action);
+                    if (rows['#oakLegalActions']) {
+                        rows['#oakLegalActions'].push(action);
+                    }
+                    else {
+                        Object.assign(rows, {
+                            '#oakLegalActions': [action],
+                        });
+                    }
+                }
+            }
+        }
+    }
+    const cascadeActionDict: {
+        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+    } = this.props.oakCascadeActions as any || ((option.cascadeActions && option.cascadeActions.call(this)));
+
+    if (cascadeActionDict) {
+        const addToRow = (r: Partial<ED[keyof ED]['Schema']>, e: keyof ED[T]['Schema'], a: ActionDef<ED, keyof ED>) => {
+            if (!r['#oakLegalCascadeActions']) {
+                Object.assign(r, {
+                    '#oakLegalCascadeActions': {
+                        [e]: [a],
+                    },
+                });
+            }
+            else if (!r['#oakLegalCascadeActions'][e]) {
+                Object.assign(r['#oakLegalCascadeActions'], {
+                    [e]: [a],
+                });
+            }
+            else {
+                r['#oakLegalCascadeActions'][e].push(a);
+            }
+        };
+        for (const e in cascadeActionDict) {
+            const cascadeActions = cascadeActionDict[e];
+            if (cascadeActions) {
+                const rel = judgeRelation(this.features.cache.getSchema()!, this.state.oakEntity, e);
+                assert(rel instanceof Array, `${this.state.oakFullpath}上所定义的cascadeAction中的键值${e}不是一对多映射`);
+                for (const action of cascadeActions as ActionDef<ED, T>[]) {
+                    if (rows instanceof Array) {
+                        if (action === 'create' || typeof action === 'object' && action.action === 'create') {
+                            rows.forEach(
+                                (row) => {
+                                    const intrinsticData = rel[1] ? {
+                                        [rel[1]]: row.id,
+                                    } : { entity: this.state.oakEntity, entityId: row.id };
+                                    if (typeof action === 'object') {
+                                        Object.assign(intrinsticData, action.data);
+                                    }
+                                    if (this.checkOperation(rel[0] as any, 'create', intrinsticData as any, undefined, checkTypes)) {
+                                        addToRow(row, e, action);
+                                    }
+                                }
+                            );
+                        }
+                        else {
+                            const a2 = typeof action === 'object' ? action.action : action;
+                            const filter = typeof action === 'object' ? action.filter : undefined;
+                            const intrinsticFilter = rel[1] ? {
+                                [rel[1].slice(0, rel[1].length - 2)]: this.features.runningTree.getIntrinsticData(this.state.oakFullpath!),
+                            } : {
+                                [this.state.oakEntity]: this.features.runningTree.getIntrinsticData(this.state.oakFullpath!),
+                            };
+                            const filter2 = combineFilters([filter, intrinsticFilter]);
+
+                            // 先尝试整体测试是否通过，再测试每一行
+                            // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
+                            if (this.checkOperation(rel[0] as any, a2, undefined, filter2, checkTypes)) {
+                                rows.forEach(
+                                    (row) => addToRow(row, e, action)
+                                );
+                            }
+                            else {
+                                rows.forEach(
+                                    (row) => {
+                                        const { id } = row;
+                                        const intrinsticFilter = rel[1] ? {
+                                            [rel[1]]: id,
+                                        } : { entity: this.state.oakEntity, entityId: row.id };
+                                        if (typeof action === 'object') {
+                                            Object.assign(intrinsticFilter, action.filter);
+                                        }
+                                        if (this.checkOperation(rel[0] as any, a2, undefined, intrinsticFilter as any, checkTypes)) {
+                                            addToRow(row, e, action);
+                                        }
+                                    }
+                                );
+                            }
+                        }
+                    }
+                    else {
+                        if (action === 'create' || typeof action === 'object' && action.action === 'create') {
+                            const intrinsticData = rel[1] ? {
+                                [rel[1]]: rows.id,
+                            } : { entity: this.state.oakEntity, entityId: rows.id };
+                            if (typeof action === 'object') {
+                                Object.assign(intrinsticData, action.data);
+                            }
+                            if (this.checkOperation(rel[0] as any, 'create', intrinsticData as any, undefined, checkTypes)) {
+                                addToRow(rows, e, action);
+                            }
+                        }
+                        else {
+                            const a2 = typeof action === 'object' ? action.action : action;
+                            const filter = typeof action === 'object' ? action.filter : undefined;
+                            const intrinsticFilter = rel[1] ? {
+                                [rel[1]]: rows.id,
+                            } : { entity: this.state.oakEntity, entityId: rows.id };
+                            const filter2 = combineFilters([filter, intrinsticFilter]);
+
+                            // 先尝试整体测试是否通过，再测试每一行
+                            // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
+                            if (this.checkOperation(rel[0] as any, a2, undefined, filter2, checkTypes)) {
+                                addToRow(rows, e, action);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    return legalActions;
+}
+
 export function reRender<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
@@ -165,122 +365,54 @@ export function reRender<
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
         const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
 
-        let oakLegalActions: ED[T]['Action'][] = [];
-        const actions: ED[T]['Action'][] = this.props.oakActions || (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
-        if (actions && actions.length > 0) {
-            assert(!option.isList, 'actions目前只能作用于单个对象页面上');
-            const id = this.features.runningTree.getId(this.state.oakFullpath);
-            const value = this.features.runningTree.getFreshValue(this.state.oakFullpath);
-            if (id && value) {
-                // 必须有值才判断action
-                const testResult = actions.map(
-                    ele => ({
-                        action: ele,
-                        result: this.checkOperation(this.state.oakEntity, ele, undefined, { id }, ['relation', 'row', 'logical', 'logicalRelation']),
-                    })
-                );
-                oakLegalActions = testResult.filter(
-                    ele => ele.result
-                ).map(
-                    ele => ele.action
-                );
-            }
-        }
-        const data: Record<string, any> = formData
-            ? formData.call(this, {
-                data: rows as any,
-                features,
-                props: this.props,
-                legalActions: oakLegalActions,
-            })
-            : {};
+        if (rows) {
+            const oakLegalActions = checkActionsAndCascadeEntities.call(this as any, rows, option as any);
+            const data: Record<string, any> = formData
+                ? formData.call(this, {
+                    data: rows as RowWithActions<ED, T>,
+                    features,
+                    props: this.props,
+                    legalActions: oakLegalActions,
+                })
+                : {};
 
-        Object.assign(data, {
-            oakLegalActions,
-        });
-
-        const cascadeEntities = (option.cascadeEntities && option.cascadeEntities.call(this));
-        if (cascadeEntities) {
-            assert(!option.isList, 'actions目前只能作用于单个对象页面上');
-            const id = this.features.runningTree.getId(this.state.oakFullpath);
-            const value = this.features.runningTree.getFreshValue(this.state.oakFullpath);
-            if (id && value) {
-                // 计算所有一对多对象的权限是否存在
-                const oakCascadeEntities: {
-                    [K in keyof ED[keyof ED]]?: CascadeEntity<ED, keyof ED>;
-                } = {};
-                for (const attr in cascadeEntities) {
-                    const rel = judgeRelation(features.cache.cacheStore.getSchema()!, this.state.oakEntity, attr);
-                    assert(rel instanceof Array, `${this.state.oakFullpath}中定义的cascadeEntities的键值${attr}不是一对多的对象`);
-                    const [e2, fkey] = rel;
-                    const strictFilter = fkey ? {
-                        [fkey]: id,
-                    } : {
-                        entity: this.state.oakEntity,
-                        entityId: id,
-                    };
-                    const availableActions: CascadeEntity<ED, keyof ED> = [];
-                    cascadeEntities[attr as keyof ED[T]['Schema']]!.forEach(
-                        item => {
-                            const { action, filter, data } = typeof item === 'string' ? { action: item, filter: {}, data: {}} : item;
-                            if (action === 'create') {
-                                const data2 = Object.assign({}, data, strictFilter);
-                                if (this.checkOperation(e2 as any, 'create', data2, undefined, ['relation', 'row', 'logical', 'logicalRelation'])) {
-                                    availableActions.push(item);
-                                }
-                            }
-                            else {
-                                const filter2 = Object.assign({}, filter, strictFilter);
-                                if (this.checkOperation(e2 as any, action, undefined, filter2, ['relation', 'row', 'logical', 'logicalRelation'])) {
-                                    availableActions.push(item);
-                                }
-                            }
-                        }
-                    );
-                    if (availableActions.length > 0) {
-                        Object.assign(oakCascadeEntities, {
-                            [attr]: availableActions,
-                        });
-                    }
-                }
-                Object.assign(data, {
-                    oakCascadeEntities,
-                });
-            }
-        }
-
-        if (option.isList) {
-            const oakFilters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getFilters();
-            const oakSorters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getSorters();
-            const oakPagination = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getPagination();
             Object.assign(data, {
-                oakFilters,
-                oakSorters,
-                oakPagination,
+                oakLegalActions,
             });
-        }
 
-        for (const k in data) {
-            if (data[k] === undefined) {
+            if (option.isList) {
+                const oakFilters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getFilters();
+                const oakSorters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getSorters();
+                const oakPagination = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getPagination();
                 Object.assign(data, {
-                    [k]: null,
+                    oakFilters,
+                    oakSorters,
+                    oakPagination,
                 });
             }
-        }
-        Object.assign(data, {
-            oakExecutable,
-            oakDirty,
-            oakLoading,
-            oakLoadingMore,
-            oakExecuting,
-            oakPullDownRefreshLoading,
-        });
 
-        if (extra) {
-            Object.assign(data, extra);
-        }
+            for (const k in data) {
+                if (data[k] === undefined) {
+                    Object.assign(data, {
+                        [k]: null,
+                    });
+                }
+            }
+            Object.assign(data, {
+                oakExecutable,
+                oakDirty,
+                oakLoading,
+                oakLoadingMore,
+                oakExecuting,
+                oakPullDownRefreshLoading,
+            });
 
-        this.setState(data);
+            if (extra) {
+                Object.assign(data, extra);
+            }
+
+            this.setState(data);
+        }
     } else {
         const data: Record<string, any> = formData
             ? formData.call(this, {
