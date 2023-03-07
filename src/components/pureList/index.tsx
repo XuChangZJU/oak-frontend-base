@@ -3,12 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Table, Tag, TableProps } from 'antd';
 import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
 import assert from 'assert';
-import {useFeatures} from '../../platforms/web/features/index';
+import useFeatures from '../../hooks/useFeatures';
 import { getAttributes } from '../../utils/usefulFn';
 import { get } from 'oak-domain/lib/utils/lodash';
 import dayjs from 'dayjs';
-import { ActionBtnPanelProps } from '@oak-general-business/types/actionBtnPanel';
-import ActionBtnPanel from '@oak-general-business/components/func/actionBtnPanel';
+import ActionBtnPanel from '../actionBtnPanel';
 
 type SelfColumn = {
     path?: string;
@@ -21,8 +20,9 @@ type Props = {
     entity: string;
     data: any[];
     columns: (Column | string)[];
-    actionBtnProps?: (row: any) => ActionBtnPanelProps;
+    disableOp?: boolean;
     tableProps?: TableProps<any>;
+    handleClick?: (id: string, action: string) => void;
 }
   
 type RenderCellProps = {
@@ -97,7 +97,7 @@ function RenderCell(props: RenderCellProps) {
 }
 
 function List(props: Props) {
-    const { data, columns, entity, actionBtnProps, tableProps } = props;
+    const { data, columns, entity, disableOp = false, tableProps } = props;
     const { t } = useTranslation();
     const tableColumns: ColumnsType<any> = columns.map((ele) => {
         let title: string = '';
@@ -131,16 +131,20 @@ function List(props: Props) {
             return index + 1;
         },})
     }
-    if (actionBtnProps) {
+    if (!disableOp) {
         tableColumns.push({
             fixed: 'right',
-            align: 'right',
+            align: 'center',
             title: '操作',
             key: 'operation',
-            width: 100,
-            render: (value, row) => (
-                <ActionBtnPanel {...actionBtnProps(row)} />
-            )
+            width: 300,
+            render: (value, row) => {
+                const id = row?.id;
+                const oakActions = row?.oakActions;
+                return (
+                    <ActionBtnPanel id={id} oakActions={oakActions}  />
+                )
+            }
         })
     }
     return (
