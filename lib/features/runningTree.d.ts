@@ -1,16 +1,18 @@
-import { EntityDict, StorageSchema, OpRecord, AspectWrapper } from "oak-domain/lib/types";
+import { EntityDict, StorageSchema, OpRecord, AuthDefDict } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
 import { Cache } from './cache';
 import { Pagination } from '../types/Pagination';
 import { Feature } from '../types/Feature';
+import { ActionDef } from '../types/Page';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     protected entity: T;
     protected schema: StorageSchema<ED>;
-    protected projection: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
+    private authDict;
+    protected projection?: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
     protected parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     protected dirty?: boolean;
     protected cache: Cache<ED, Cxt, FrontCxt, AD>;
@@ -18,7 +20,11 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     protected loadingMore: boolean;
     protected executing: boolean;
     protected modiIds: string[] | undefined;
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string);
+    private actions?;
+    private cascadeActions?;
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
+        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+    });
     getEntity(): T;
     getSchema(): StorageSchema<ED>;
     protected abstract getChildPath(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): string;
@@ -37,7 +43,8 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     isExecuting(): boolean;
     setExecuting(executing: boolean): void;
     getParent(): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD> | undefined;
-    protected getProjection(): any;
+    protected getProjection(): ED[T]['Selection']['data'] | undefined;
+    setProjection(projection: ED[T]['Selection']['data']): void;
     protected judgeRelation(attr: string): string | 0 | 1 | 2 | string[];
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
@@ -54,9 +61,11 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     checkIfClean(): void;
     onCacheSync(records: OpRecord<ED>[]): void;
     destroy(): void;
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], pagination?: Pagination);
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], pagination?: Pagination, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
+        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+    });
     getPagination(): Pagination;
-    setPagination(pagination: Pagination): void;
+    setPagination(pagination: Pagination, dontRefresh?: boolean): void;
     getChild(path: string): SingleNode<ED, T, Cxt, FrontCxt, AD> | undefined;
     getChildren(): Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     addChild(path: string, node: SingleNode<ED, T, Cxt, FrontCxt, AD>): void;
@@ -94,7 +103,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
         entity: T;
         operation: ED[T]['Operation'];
     }> | undefined;
-    getProjection(): ED[T]['Selection']['data'];
+    getProjection(): ED[T]["Selection"]["data"] | undefined;
     private constructFilters;
     constructSelection(withParent?: true): {
         data: ED[T]["Selection"]["data"];
@@ -107,13 +116,15 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     setCurrentPage(currentPage: number, append?: boolean): void;
     clean(): void;
     getChildOperation(child: SingleNode<ED, T, Cxt, FrontCxt, AD>): ED[T]["CreateSingle"] | ED[T]["Update"] | ED[T]["Remove"] | undefined;
-    getIntrinsticData(): ED[T]["CreateSingle"]["data"];
+    getIntrinsticFilters(): ED[T]["Selection"]["filter"];
 }
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?;
     private children;
     private operation?;
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, id?: string);
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, id?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
+        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+    });
     private isCreatedByParent;
     private tryGetParentFilter;
     protected getChildPath(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): string;
@@ -139,7 +150,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
         entity: T;
         operation: ED[T]['Operation'];
     }> | undefined;
-    getProjection(withDecendants?: boolean): any;
+    getProjection(withDecendants?: boolean): ED[T]["Selection"]["data"] | undefined;
     refresh(): Promise<void>;
     clean(): void;
     getFilter(): ED[T]['Selection']['filter'] | undefined;
@@ -189,12 +200,17 @@ export declare type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T 
     beforeExecute?: (operations: ED[T]['Operation'][]) => Promise<void>;
     afterExecute?: (operations: ED[T]['Operation'][]) => Promise<void>;
     id?: string;
+    actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]);
+    cascadeActions?: () => {
+        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+    };
 };
 export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private cache;
     private schema;
+    private authDict;
     private root;
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, FrontCxt, AD>, schema: StorageSchema<ED>);
+    constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, schema: StorageSchema<ED>, authDict: AuthDefDict<ED>);
     createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     private findNode;
     destroyNode(path: string): void;
@@ -231,7 +247,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     addNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(path: string, name: string, refresh?: boolean): void;
-    getIntrinsticData(path: string): ED[keyof ED]["CreateSingle"]["data"];
+    getIntrinsticFilters(path: string): ED[keyof ED]["Selection"]["filter"];
     tryExecute(path: string): boolean | Error;
     getOperations(path: string): {
         entity: keyof ED;

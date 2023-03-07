@@ -728,10 +728,10 @@ export function createComponent<
         behaviors: [oakBehavior],
         data: typeof data !== 'function' ? Object.assign({}, data, {
             oakFullpath: '',
-            oakLoading: !!entity,
+            oakLoading: !!option.entity && !!option.projection,
         }) : {
             oakFullpath: '',
-            oakLoading: !!entity,
+            oakLoading: !!option.entity && !!option.projection,
         },
         properties: Object.assign(
             {},

@@ -14,7 +14,7 @@ import {
     ActionDef,
     RowWithActions,
 } from './types/Page';
-import { unset } from 'oak-domain/lib/utils/lodash';
+import { cloneDeep, unset } from 'oak-domain/lib/utils/lodash';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { MessageProps } from './types/Message';
@@ -84,6 +84,7 @@ export async function onPathSet<
             '没有正确的path信息，请检查是否配置正确'
         );
 
+        const { actions, cascadeActions } = option;
         features.runningTree.createNode({
             path: oakPath2,
             entity: entity2,
@@ -94,6 +95,8 @@ export async function onPathSet<
             filters: filters2,
             sorters: sorters2,
             id: oakId,
+            actions: typeof actions === 'function' ? () => actions.call(this) : actions,
+            cascadeActions: cascadeActions && (() => cascadeActions.call(this)),
         });
         this.subscribed.push(
             features.runningTree.subscribeNode(
@@ -140,7 +143,9 @@ export async function onPathSet<
             }
         );
     }
-    this.refresh();
+    if (entity && projection || oakProjection) {
+        this.refresh();
+    }
 }
 
 function checkActionsAndCascadeEntities<
@@ -160,11 +165,11 @@ function checkActionsAndCascadeEntities<
         for (const action of actions) {
             if (rows instanceof Array) {
                 assert(option.isList);
-                const intrinsticData = this.features.runningTree.getIntrinsticData(this.state.oakFullpath!);
+                const filter = this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath!);
                 if (action === 'create' || typeof action === 'object' && action.action === 'create') {
                     // 创建对象的判定不落在具体行上，但要考虑list上外键相关属性的限制
-                    const data = typeof action === 'object' && action.action === 'create' ? Object.assign({}, intrinsticData, action.data) : intrinsticData;
-                    if (this.checkOperation(this.state.oakEntity, 'create', data as any, undefined, checkTypes)) {
+                    const data = typeof action === 'object' && cloneDeep(action.data);
+                    if (this.checkOperation(this.state.oakEntity, 'create', data as any, filter, checkTypes)) {
                         legalActions.push(action);
                     }
                 }
@@ -172,7 +177,7 @@ function checkActionsAndCascadeEntities<
                     const a2 = typeof action === 'object' ? action.action : action;
                     // 先尝试整体测试是否通过，再测试每一行
                     // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
-                    if (this.checkOperation(this.state.oakEntity, a2, undefined, intrinsticData, checkTypes)) {
+                    if (this.checkOperation(this.state.oakEntity, a2, undefined, filter, checkTypes)) {
                         rows.forEach(
                             (row) => {
                                 if (row['#oakLegalActions']) {
@@ -273,9 +278,9 @@ function checkActionsAndCascadeEntities<
                             const a2 = typeof action === 'object' ? action.action : action;
                             const filter = typeof action === 'object' ? action.filter : undefined;
                             const intrinsticFilter = rel[1] ? {
-                                [rel[1].slice(0, rel[1].length - 2)]: this.features.runningTree.getIntrinsticData(this.state.oakFullpath!),
+                                [rel[1].slice(0, rel[1].length - 2)]: this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath!),
                             } : {
-                                [this.state.oakEntity]: this.features.runningTree.getIntrinsticData(this.state.oakFullpath!),
+                                [this.state.oakEntity]: this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath!),
                             };
                             const filter2 = combineFilters([filter, intrinsticFilter]);
 

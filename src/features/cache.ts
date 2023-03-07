@@ -53,6 +53,11 @@ export class Cache<
         return this.cacheStore.getSchema();
     }
 
+    getCurrentUserId() {
+        const context = this.contextBuilder && this.contextBuilder();
+        return context?.getCurrentUserId();
+    }
+
     async exec<K extends keyof AD>(
         name: K,
         params: Parameters<AD[K]>[0],

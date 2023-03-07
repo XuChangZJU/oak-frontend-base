@@ -1,4 +1,4 @@
-import { Aspect, AspectWrapper, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, AspectWrapper, AuthDefDict, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -27,10 +27,11 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
             [K in keyof ED]?: {
                 [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
             }
-        }) {
+        },
+        authDict: AuthDefDict<ED>) {
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store);
     const location = new Location();
-    const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, cache, storageSchema);
+    const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, authDict);
     const locales = new Locales(aspectWrapper);
     const eventBus = new EventBus();
     const localStorage = new LocalStorage();

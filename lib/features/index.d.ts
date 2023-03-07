@@ -1,4 +1,4 @@
-import { Aspect, AspectWrapper, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, AspectWrapper, AuthDefDict, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Cache } from './cache';
@@ -20,7 +20,7 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
     [K in keyof ED]?: {
         [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
     };
-}): BasicFeatures<ED, Cxt, FrontCxt, AD>;
+}, authDict: AuthDefDict<ED>): BasicFeatures<ED, Cxt, FrontCxt, AD>;
 export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>> = {
     cache: Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     location: Location;

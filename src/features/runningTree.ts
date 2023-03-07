@@ -3,7 +3,7 @@ import { cloneDeep, pull, unset, merge, uniq } from "oak-domain/lib/utils/lodash
 import { addFilterSegment, combineFilters, contains, repel, same } from "oak-domain/lib/store/filter";
 import { createOperationsFromModies } from 'oak-domain/lib/store/modi';
 import { judgeRelation } from "oak-domain/lib/store/relation";
-import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, AspectWrapper } from "oak-domain/lib/types";
+import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, AspectWrapper, AuthDefDict, CascadeRelationItem, CascadeActionItem } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 
@@ -11,15 +11,145 @@ import { NamedFilterItem, NamedSorterItem } from "../types/NamedCondition";
 import { Cache } from './cache';
 import { Pagination } from '../types/Pagination';
 import { Feature } from '../types/Feature';
+import { ActionDef } from '../types/Page';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
+import { firstLetterUpperCase } from 'oak-domain/lib/utils/string';
 
 type Operation<ED extends EntityDict & BaseEntityDict, T extends keyof ED, OmitId extends boolean = false> = {
     oper: OmitId extends true ? Omit<ED[T]['Operation'], 'id'> : ED[T]['Operation'];
     beforeExecute?: () => Promise<void>;
     afterExecute?: () => Promise<void>;
 };
+
+function translateAuthItemToProjection<ED extends EntityDict & BaseEntityDict>(
+    schema: StorageSchema<ED>,
+    entity: keyof ED,
+    item: CascadeActionItem,
+    userId: string,
+    prefix?: string): Partial<ED[keyof ED]['Selection']['data']> {
+    const { cascadePath, relations } = item;
+    const paths = cascadePath.split('.');
+
+    const makeUserEntityProjection = (entity2: keyof ED) => {
+        assert(entity2 !== 'user');
+        const filter = {
+            userId,
+        };
+        // 数组目前不太好merge
+        /* if (relations) {
+            Object.assign(filter, {
+                relation: {
+                    $in: relations,
+                }
+            });
+        } */
+        const projection = {
+            id: 1,
+            [`user${firstLetterUpperCase(entity2 as string)}$${entity2 as string}`]: {
+                $entity: `user${firstLetterUpperCase(entity2 as string)}`,
+                data: {
+                    id: 1,
+                    userId: 1,
+                    [`${entity2 as string}Id`]: 1,
+                    relation: 1,
+                },
+                filter,
+            },
+        };
+        return projection as Partial<ED[keyof ED]['Selection']['data']>;
+    };
+
+    const translateIter = (entity2: keyof ED, iter: number): Partial<ED[keyof ED]['Selection']['data']> => {
+        const attr = paths[iter];
+        const rel = judgeRelation(schema, entity2, attr);
+        if (iter === paths.length - 1) {
+            if (rel === 2) {
+                if (attr === 'user') {
+                    return {
+                        id: 1,
+                        entity: 1,
+                        entityId: 1,
+                    };
+                }
+                else {
+                    return {
+                        id: 1,
+                        [attr]: makeUserEntityProjection(attr),
+                    }
+                }
+            }
+            else {
+                if (rel === 'user') {
+                    return {
+                        id: 1,
+                        [`${attr}Id`]: 1,
+                    };
+                }
+                else {
+                    return {
+                        id: 1,
+                        [attr]: makeUserEntityProjection(rel as keyof ED),
+                    };
+                }
+            }
+        }
+        else {
+            const proj2 = translateIter(rel === 2 ? attr: rel as keyof ED, iter + 1);
+            return {
+                id: 1,
+                [attr]: proj2,
+            };
+        }
+    };
+
+    if (!cascadePath) {
+        return makeUserEntityProjection(entity);
+    }
+
+    if (prefix && paths[0] !== prefix) {
+        // 不在相关路径上的关系在这里不查
+        return {};
+    }
+        
+    return translateIter(entity, 0);
+}
+
+function makeRelationRefProjection<ED extends EntityDict & BaseEntityDict, T extends keyof ED> (
+    schema: StorageSchema<ED>, authDict: AuthDefDict<ED>,
+    entity: T, action: ED[T]['Action'], userId: string, prefix?: string) {
+    const proj: Partial<ED[T]['Selection']['data']> = {};
+    if (authDict[entity] && authDict[entity]?.actionAuth && authDict[entity]?.actionAuth![action]) {
+        const actionDef = authDict[entity]?.actionAuth![action]!;
+        if (actionDef instanceof Array) {
+            const proj2 = actionDef.map(
+                (ad) => {
+                    if (ad instanceof Array) {
+                        const proj3 = ad.map(
+                            (add) => translateAuthItemToProjection(schema, entity, add, userId, prefix)
+                        ).reduce(
+                            (prev, current) => merge(prev, current),
+                            {}
+                        ) as Partial<ED[T]['Selection']['data']>;
+                        return proj3;
+                    }
+                    return translateAuthItemToProjection(schema, entity, ad, userId, prefix);
+                }
+            ).reduce(
+                (prev, current) => merge(prev, current),
+                {}
+            ) as Partial<ED[T]['Selection']['data']>;
+            merge(proj, proj2);
+        }
+        else {
+            const proj2 = translateAuthItemToProjection(schema, entity, actionDef, userId);
+            merge(proj, proj2);
+        }
+        
+    }
+    return proj;
+}
 
 abstract class Node<
     ED extends EntityDict & BaseEntityDict,
@@ -30,7 +160,8 @@ abstract class Node<
     protected entity: T;
     // protected fullPath: string;
     protected schema: StorageSchema<ED>;
-    protected projection: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);      // 只在Page层有
+    private authDict: AuthDefDict<ED>;
+    protected projection?: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);      // 只在Page层有
     protected parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     protected dirty?: boolean;
     protected cache: Cache<ED, Cxt, FrontCxt, AD>;
@@ -38,15 +169,23 @@ abstract class Node<
     protected loadingMore: boolean;
     protected executing: boolean;
     protected modiIds: string[] | undefined;        //  对象所关联的modi
+    private actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]);
+    private cascadeActions?: () => {
+        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+    };
 
 
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>,
-        projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>,
+        projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
         parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
-        path?: string) {
+        path?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]),
+        cascadeActions?: () => {
+            [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+        }) {
         super();
         this.entity = entity;
         this.schema = schema;
+        this.authDict = authDict;
         this.cache = cache;
         this.projection = projection;
         this.parent = parent;
@@ -55,6 +194,8 @@ abstract class Node<
         this.loadingMore = false;
         this.executing = false;
         this.modiIds = undefined;
+        this.actions = actions;
+        this.cascadeActions = cascadeActions;
         if (parent) {
             assert(path);
             parent.addChild(path, this as any);
@@ -155,8 +296,47 @@ abstract class Node<
         return this.parent;
     }
 
-    protected getProjection() {
-        return typeof this.projection === 'function' ? (this.projection as Function)() : cloneDeep(this.projection);
+    protected getProjection(): ED[T]['Selection']['data'] | undefined {
+        const projection = typeof this.projection === 'function' ? (this.projection as Function)() : (this.projection && cloneDeep(this.projection));
+        // 根据actions和cascadeActions的定义，将对应的projection构建出来
+        const userId = this.cache.getCurrentUserId();
+        if (userId && projection) {
+            if (this.actions) {
+                const actions = typeof this.actions === 'function' ? this.actions() : this.actions;
+                for (const a of actions) {
+                    const action = typeof a === 'object' ? a.action : a;
+                    const proj = makeRelationRefProjection(this.schema, this.authDict, this.entity!, action, userId);
+                    merge(projection, proj);
+                }
+            }
+            
+            if (this.cascadeActions) {
+                const cas = this.cascadeActions();
+                for (const attr in cas) {
+                    const rel = this.judgeRelation(attr);
+                    assert(rel instanceof Array);
+                    for (const a of cas[attr]!) {
+                        const action = typeof a === 'object' ? a.action : a;
+                        if (rel[1]) {
+                            const proj = makeRelationRefProjection(this.schema, this.authDict, rel[0], action, this.entity as string);
+                            merge(projection, proj[rel[1].slice(0, rel[1].length -2)]);
+                        }
+                        else {
+                            const proj = makeRelationRefProjection(this.schema, this.authDict, rel[0], action, this.entity as string);
+                            merge(projection, proj[this.entity as string]);
+                        }
+
+                    }
+                }
+            }
+        }
+        
+        return projection;
+    }
+
+    setProjection(projection: ED[T]['Selection']['data']) {
+        assert(!this.projection);
+        this.projection = projection;
     }
 
     protected judgeRelation(attr: string) {
@@ -636,7 +816,8 @@ class ListNode<
         entity: T,
         schema: StorageSchema<ED>,
         cache: Cache<ED, Cxt, FrontCxt, AD>,
-        projection:
+        authDict: AuthDefDict<ED>,
+        projection?:
             | ED[T]['Selection']['data']
             | (() => Promise<ED[T]['Selection']['data']>),
         parent?:
@@ -645,9 +826,13 @@ class ListNode<
         path?: string,
         filters?: NamedFilterItem<ED, T>[],
         sorters?: NamedSorterItem<ED, T>[],
-        pagination?: Pagination
+        pagination?: Pagination,
+        actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]),
+        cascadeActions?: () => {
+            [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+        }
     ) {
-        super(entity, schema, cache, projection, parent, path);
+        super(entity, schema, cache, authDict, projection, parent, path, actions, cascadeActions);
         this.children = {};
         this.filters = filters || [];
         this.sorters = sorters || [];
@@ -662,10 +847,12 @@ class ListNode<
         return this.pagination;
     }
 
-    setPagination(pagination: Pagination) {
+    setPagination(pagination: Pagination, dontRefresh?: boolean) {
         const newPagination = Object.assign(this.pagination, pagination);
         this.pagination = newPagination;
-        this.refresh();
+        if (!dontRefresh) {
+            this.refresh();
+        }
     }
 
     getChild(path: string): SingleNode<ED, T, Cxt, FrontCxt, AD> | undefined {
@@ -1072,7 +1259,7 @@ class ListNode<
         return operations;
     }
 
-    getProjection(): ED[T]['Selection']['data'] {
+    getProjection() {
         const projection = super.getProjection();
         // List必须自主决定Projection
         /* if (this.children.length > 0) {
@@ -1149,12 +1336,8 @@ class ListNode<
             sorter,
             validParentFilter,
         } = this.constructSelection(true);
-        assert(
-            projection,
-            `页面没有定义投影「ListNode, ${this.entity as string}」`
-        );
         // 若不存在有效的父过滤条件（父有值或本结点就是顶层结点），则不能刷新
-        if (validParentFilter) {
+        if (validParentFilter && projection) {
             try {
                 this.setLoading(true);
                 if (append) {
@@ -1240,27 +1423,9 @@ class ListNode<
     }
 
     // 查看这个list上所有数据必须遵守的等值限制
-    getIntrinsticData() {
-        const data = {} as ED[T]['CreateSingle']['data'];
+    getIntrinsticFilters() {
         const { filters } = this.constructFilters();
-        const checkFilter = (filter: ED[T]['Selection']['filter']) => {
-            for (const key in filter) {                
-                if (this.schema[this.entity].attributes[key as string] && typeof filter[key] !== 'object') {
-                    assert(!data[key] || data[key] === filter[key]);
-                    Object.assign(data, {
-                        [key]: filter[key],
-                    });
-                }
-            }
-        };
-        filters.forEach(
-            (ele) => {
-                if (ele) {
-                    checkFilter(ele);
-                }
-            }
-        );
-        return data;
+        return combineFilters(filters);
     }
 }
 
@@ -1279,12 +1444,16 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         operation: ED[T]['CreateSingle'] | ED[T]['Update'] | ED[T]['Remove'];
     };
 
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>,
-        projection: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>,
+        projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
         parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
         path?: string,
-        id?: string) {
-        super(entity, schema, cache, projection, parent, path);
+        id?: string,
+        actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]),
+        cascadeActions?: () => {
+            [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+        }) {
+        super(entity, schema, cache, authDict, projection, parent, path, actions, cascadeActions);
         this.children = {};
         this.id = id;
 
@@ -1409,7 +1578,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             operation: ED[keyof ED]['Operation'];
         }> : [];
         const filter = this.getFilter();
-        if (filter) {
+        if (filter && projection) {
             //  这里必须用if，upsert提交后就会跑到没有filter的case
             const operations2 = this.composeOperations(noCascade);
 
@@ -1605,7 +1774,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             return this.parent.getProjection();
         }
         const projection = super.getProjection();
-        if (withDecendants) {
+        if (projection && withDecendants) {
             for (const k in this.children) {
                 if (k.indexOf(':') === -1) {
                     const rel = this.judgeRelation(k);
@@ -1655,27 +1824,27 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
         // SingleNode如果是非根结点，其id应该在第一次refresh的时候来确定        
         const projection = this.getProjection(true);
-        assert(projection, `页面没有定义投影「SingleNode, ${this.entity as string}」`);
         const filter = this.getFilter();
-        assert(filter);
-        this.setLoading(true);
-        this.publish();
-        try {
-            await this.cache.refresh(this.entity, {
-                data: projection,
-                filter,
-            }, undefined, undefined, ({ data: [value] }) => {
-                // 对于modi对象，在此缓存
-                if (this.schema[this.entity].toModi && value) {
-                    const { modi$entity } = value;
-                    this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id)
-                }
+        if (projection && filter) {
+            this.setLoading(true);
+            this.publish();
+            try {
+                await this.cache.refresh(this.entity, {
+                    data: projection,
+                    filter,
+                }, undefined, undefined, ({ data: [value] }) => {
+                    // 对于modi对象，在此缓存
+                    if (this.schema[this.entity].toModi && value) {
+                        const { modi$entity } = value;
+                        this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id)
+                    }
+                    this.setLoading(false);
+                });
+            }
+            catch (err) {
                 this.setLoading(false);
-            });
-        }
-        catch (err) {
-            this.setLoading(false);
-            throw err;
+                throw err;
+            }
         }
     }
 
@@ -1975,6 +2144,10 @@ export type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends 
     beforeExecute?: (operations: ED[T]['Operation'][]) => Promise<void>;
     afterExecute?: (operations: ED[T]['Operation'][]) => Promise<void>;
     id?: string;
+    actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]);
+    cascadeActions?: () => {
+        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+    };
 };
 
 
@@ -2000,6 +2173,7 @@ export class RunningTree<
 > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
+    private authDict: AuthDefDict<ED>;
     private root: Record<
         string,
         | SingleNode<ED, keyof ED, Cxt, FrontCxt, AD>
@@ -2008,15 +2182,16 @@ export class RunningTree<
     >;
 
     constructor(
-        aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         cache: Cache<ED, Cxt, FrontCxt, AD>,
-        schema: StorageSchema<ED>
+        schema: StorageSchema<ED>,
+        authDict: AuthDefDict<ED>
     ) {
         super();
         // this.aspectWrapper = aspectWrapper;
         this.cache = cache;
         this.schema = schema;
         this.root = {};
+        this.authDict = authDict;
     }
 
     createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>) {
@@ -2029,6 +2204,8 @@ export class RunningTree<
             projection,
             isList,
             id,
+            actions, 
+            cascadeActions,
         } = options;
         let node:
             | ListNode<ED, T, Cxt, FrontCxt, AD>
@@ -2037,40 +2214,76 @@ export class RunningTree<
         const { parent, path } = analyzePath(fullPath);
         const parentNode = parent ? this.findNode(parent) : undefined;
         if (this.findNode(fullPath)) {
-            // 目前只有一种情况合法，即parentNode是list，列表中的位置移动引起的重用
-            if (parentNode instanceof ListNode) {
-            } else if (process.env.NODE_ENV === 'development') {
-                console.warn(
-                    `创建node时发现path[${fullPath}]已有结点，本特性尚未测试充分，请谨防有坑`
-                );
+            const node = this.findNode(fullPath)!;
+            if (node instanceof ListNode) {
+                assert(isList && node.getEntity() === entity);
+                if (!node.getProjection() && projection) {
+                    node.setProjection(projection!);
+                    if (filters) {
+                        node.setNamedFilters(filters);
+                    }
+                    if (sorters) {
+                        node.setNamedSorters(sorters);
+                    }
+                    if (pagination) {
+                        node.setPagination(pagination, false);      // 创建成功后会统一refresh
+                    }
+                }
+                else if (projection){
+                    // 这里有一个例外是queryPanel这种和父结点共用此结点的抽象组件
+                    assert(false, `创建node时发现path[${fullPath}]已经存在有效的ListNod结点，这种情况不应该存在`);
+                }
             }
-            return this.findNode(fullPath)!;
+            else if (node instanceof SingleNode) {
+                assert(!isList && node.getEntity() === entity);
+                if (!node.getProjection() && projection) {
+                    node.setProjection(projection);
+                    if (id) {
+                        const id2 = node.getId();
+                        assert(id === id2, `重用path[${fullPath}]上的singleNode时，其上没有置有效id，这种情况id应当由父结点设置`);
+                    }
+                }
+                else {
+                    // 目前只有一种情况合法，即parentNode是list，列表中的位置移动引起的重用
+                    assert(parentNode instanceof ListNode, `创建node时发现path[${fullPath}]已有有效的SingleNode结点，本情况不应当存在`);
+                }
+            }
+            else {
+                assert(false, `创建node时发现path[${fullPath}]已有有效的VirtualNode结点，本情况不应当存在`);
+            }
+            return node;
         }
 
         if (entity) {
             if (isList) {
                 assert(!(parentNode instanceof ListNode));
-                assert(projection, `页面没有定义投影「${path}」`);
+                // assert(projection, `页面没有定义投影「${path}」`);
                 node = new ListNode<ED, T, Cxt, FrontCxt, AD>(
                     entity,
                     this.schema!,
                     this.cache,
+                    this.authDict,
                     projection,
                     parentNode,
                     path,
                     filters,
                     sorters,
-                    pagination
+                    pagination,
+                    actions,
+                    cascadeActions
                 );
             } else {
                 node = new SingleNode<ED, T, Cxt, FrontCxt, AD>(
                     entity,
                     this.schema!,
                     this.cache,
-                    projection!,
+                    this.authDict,
+                    projection,
                     parentNode as VirtualNode<ED, Cxt, FrontCxt, AD>, // 过编译
                     path,
-                    id
+                    id,
+                    actions,
+                    cascadeActions
                 );
             }
         } else {
@@ -2236,7 +2449,6 @@ export class RunningTree<
         if (node instanceof ListNode) {
             await node.refresh(1, true);
         } else if (node) {
-            // 有无entity的case不创建结点
             await node.refresh();
         }
     }
@@ -2392,10 +2604,10 @@ export class RunningTree<
         return node.removeNamedSorterByName(name, refresh);
     }
 
-    getIntrinsticData(path: string) {
+    getIntrinsticFilters(path: string) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        return node.getIntrinsticData();
+        return node.getIntrinsticFilters();
     }
 
     tryExecute(path: string) {
