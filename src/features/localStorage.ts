@@ -2,7 +2,7 @@ import { unset } from 'oak-domain/lib/utils/lodash';
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 import { Feature } from '../types/Feature';
 
-export class LocalStorage  extends Feature{
+export class LocalStorage  extends Feature {
     keys: Record<string, boolean>;
 
     constructor() {

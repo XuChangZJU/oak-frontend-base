@@ -1,6 +1,7 @@
 import { Aspect, Checker, StorageSchema, Connector, AuthDefDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { ColorDict } from 'oak-domain/lib/types/Style';
 import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
@@ -23,6 +24,6 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
     [K in keyof ED]?: {
         [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
     };
-}): {
+}, colorDict?: ColorDict<ED>): {
     features: import("./features").BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
 };

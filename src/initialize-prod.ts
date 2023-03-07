@@ -8,6 +8,7 @@ import {
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { ColorDict } from 'oak-domain/lib/types/Style';
 
 
 import { initialize as initBasicFeatures } from './features';
@@ -49,6 +50,7 @@ export function initialize<
             [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
         }
     },
+    colorDict?: ColorDict<ED>,
 ) {
     const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema, authDict));
 
@@ -68,7 +70,7 @@ export function initialize<
         },
     };
 
-    const features = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder()(cacheStore), cacheStore, relationDict || {}, authDict || {});
+    const features = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder()(cacheStore), cacheStore, relationDict || {}, authDict || {}, colorDict || {});
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
     if (actionDict) {

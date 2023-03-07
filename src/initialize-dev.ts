@@ -15,7 +15,7 @@ import { Exportation, Importation  } from 'oak-domain/lib/types/Port';
 import { createDynamicCheckers } from 'oak-domain/lib/checkers/index';
 import { createDynamicTriggers } from 'oak-domain/lib/triggers/index';
 
-import { Feature } from './types/Feature';
+import { ColorDict } from 'oak-domain/lib/types/Style';
 import { createDebugStore, clearMaterializedData } from './debugStore';
 
 import { BasicFeatures, initialize as initBasicFeatures } from './features';
@@ -67,6 +67,7 @@ export function initialize<
             [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
         }
     },
+    colorDict?: ColorDict<ED>,
     importations?: Importation<ED, keyof ED, any>[],
     exportations?: Exportation<ED, keyof ED, any>[]
 ) {
@@ -119,7 +120,7 @@ export function initialize<
         },
     };
 
-    const features = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder()(cacheStore), cacheStore, relationDict || {}, authDict || {});
+    const features = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder()(cacheStore), cacheStore, relationDict || {}, authDict || {}, colorDict || {});
     
     checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
     if (actionDict) {

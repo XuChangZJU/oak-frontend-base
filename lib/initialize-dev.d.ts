@@ -2,6 +2,7 @@ import { Aspect, Checker, Trigger, StorageSchema, Watcher, Routine, Timer, AuthD
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { Exportation, Importation } from 'oak-domain/lib/types/Port';
+import { ColorDict } from 'oak-domain/lib/types/Style';
 import { BasicFeatures } from './features';
 import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -28,6 +29,6 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
     [K in keyof ED]?: {
         [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
     };
-}, importations?: Importation<ED, keyof ED, any>[], exportations?: Exportation<ED, keyof ED, any>[]): {
+}, colorDict?: ColorDict<ED>, importations?: Importation<ED, keyof ED, any>[], exportations?: Exportation<ED, keyof ED, any>[]): {
     features: BasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
 };

@@ -1,5 +1,6 @@
 import { Aspect, AspectWrapper, AuthDefDict, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { ColorDict } from 'oak-domain/lib/types/Style';
 
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Cache } from './cache';
@@ -15,6 +16,7 @@ import { CacheStore } from '../cacheStore/CacheStore';
 import { Navigator } from './navigator';
 import { Port } from './port';
 import { Relation } from './relation';
+import { Style } from './style';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 
@@ -28,7 +30,8 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
                 [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
             }
         },
-        authDict: AuthDefDict<ED>) {
+        authDict: AuthDefDict<ED>,
+        colorDict: ColorDict<ED>) {
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store);
     const location = new Location();
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, authDict);
@@ -40,6 +43,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
     const navigator = new Navigator();
     const port = new Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper);
     const relation = new Relation<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, relationDict);
+    const style = new Style<ED>(colorDict);
     return {
         cache,
         location,
@@ -52,6 +56,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         navigator,
         port,
         relation,
+        style,
     } as BasicFeatures<ED, Cxt, FrontCxt, AD>;
 }
 
@@ -72,4 +77,5 @@ export type BasicFeatures<
     navigator: Navigator;
     port: Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
     relation: Relation<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
+    style: Style<ED>
 };
