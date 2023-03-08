@@ -47,7 +47,7 @@ function translateAuthItemToProjection<ED extends EntityDict & BaseEntityDict>(
         } */
         const projection = {
             id: 1,
-            [`user${firstLetterUpperCase(entity2 as string)}$${entity2 as string}`]: {
+            [`user${firstLetterUpperCase(entity2 as string)}$${entity2 as string}$244`]: {
                 $entity: `user${firstLetterUpperCase(entity2 as string)}`,
                 data: {
                     id: 1,
