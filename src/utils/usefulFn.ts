@@ -2,6 +2,7 @@ import assert from "assert";
 import { EntityDict } from "oak-domain/lib/types";
 import useFeatures from "../hooks/useFeatures";
 import { StorageSchema } from "oak-domain/lib/types";
+import { OakAbsAttrDef, DataTransformer, DataConverter } from "../types/AbstractComponent";
 
 export function getAttributes(attributes: Record<string, any>) {
     return Object.assign({}, attributes, {
@@ -55,4 +56,15 @@ export function resolutionPath(dataSchema: StorageSchema<EntityDict>, entity: st
         attr,
         attribute,
     }
+}
+
+export function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string): DataTransformer {
+    throw new Error('method not implemented');
+}
+
+export function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string) : {
+    columnDef: any;
+    converter: DataConverter;
+} {
+    throw new Error('method not implemented');
 }
