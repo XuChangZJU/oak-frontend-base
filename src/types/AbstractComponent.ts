@@ -19,6 +19,7 @@ export type OakAbsFullAttrDef = {
     label: string;
     value: string;
     width: 1 | 2 | 3 | 4;
+    type?: 'image' | 'file';
 };
 
 export type OakAbsAttrDef = OakAbsFullAttrDef | OakAbsNativeAttrDef;
