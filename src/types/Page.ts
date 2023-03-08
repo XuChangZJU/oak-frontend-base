@@ -9,6 +9,7 @@ import { NotificationProps } from './Notification';
 import { MessageProps } from './Message';
 import { AsyncContext } from "oak-domain/lib/store/AsyncRowStore";
 import { SyncContext } from "oak-domain/lib/store/SyncRowStore";
+import React from "react";
 
 export type PropertyOption = Record<string, WechatMiniprogram.Component.AllProperty | FunctionConstructor>;
 
@@ -79,7 +80,7 @@ type PropertyToData<T extends AllProperty> = T extends ShortProperty
     : FullPropertyToData<Exclude<T, ShortProperty>>
 type FullPropertyToData<T extends AllFullProperty> = ValueType<T['type']>
 type PropertyOptionToData<P extends PropertyOption> = {
-    [name in keyof P]: PropertyToData<P[name]>
+    [name in keyof P]?: PropertyToData<P[name]>
 };
 
 export type ActionDef<
@@ -454,7 +455,7 @@ export type MakeOakComponent<
         TProperty,
         TMethod
     >
-) => React.ComponentType<any>;
+) => (props: ComponentProps<IsList, TProperty>) => React.ReactElement;
 
 // 暴露给组件的方法
 export type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh' | 'aggregate' | 'checkOperation';

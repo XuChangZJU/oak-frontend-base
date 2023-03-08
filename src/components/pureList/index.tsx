@@ -142,7 +142,7 @@ function List(props: Props) {
                 const id = row?.id;
                 const oakActions = row?.oakActions;
                 return (
-                    <ActionBtnPanel id={id} oakActions={oakActions}  />
+                    <ActionBtnPanel oakId={id} oakActions={oakActions} />
                 )
             }
         })

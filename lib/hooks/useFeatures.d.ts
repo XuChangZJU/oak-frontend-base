@@ -1,0 +1,11 @@
+import { BasicFeatures } from '../features';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { Aspect, EntityDict } from 'oak-domain/lib/types';
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+declare type ED = EntityDict & BaseEntityDict;
+declare type Cxt = AsyncContext<ED>;
+declare type FrontCxt = SyncContext<ED>;
+declare type AD = Record<string, Aspect<ED, Cxt>>;
+export default function useFeatures(): BasicFeatures<ED, Cxt, FrontCxt, AD>;
+export {};

@@ -338,7 +338,8 @@ abstract class OakComponentBase<
     }
 
     t(key: string, params?: object) {
-        return this.props.t(key, params);
+        // t是i18n注入的
+        return (this.props.t as Function)(key, params);
     }
 
     execute(action?: ED[T]['Action'], messageProps?: boolean | MessageProps) {
@@ -940,6 +941,7 @@ export function createComponent<
                 // lifetimes?.show && lifetimes.show.call(this);
             }
             if (this.props.oakId !== prevProps.oakId) {
+                assert(this.props.oakId);       // 好像不可能把已有的id设空的界面需求吧
                 this.setId(this.props.oakId);
             }
             // todo 这里似乎还可能对oakProjection这些东西加以更新，等遇到再添加 by Xc

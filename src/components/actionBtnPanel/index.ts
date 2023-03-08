@@ -1,4 +1,5 @@
 export default OakComponent({
+    isList: false,
     properties: {
         entity: String,
         actions: {

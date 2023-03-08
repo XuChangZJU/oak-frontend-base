@@ -10,7 +10,7 @@ import {
 } from 'antd';
 import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { OakActionBtnProps } from '../../types/oakActionBtn';
+import { OakActionBtnProps } from '../../types/AbstractComponent';
 
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import Style from './web.module.less';

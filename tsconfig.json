@@ -71,12 +71,20 @@
     "miniprogram-api-typings"
   ],
   "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
+    "./**/*.ts",
+    "./**/*.tsx",
+    "./**/*.less",
+    "./**/*.wxml",
+    "./**/*.json"
   ],
   "exclude": [
+    "lib",
     "node_modules",
     "**/*.spec.ts",
-    "test"
+    "package.json",
+    "tsconfig.json",
+    "package-lock.json",
+    "test",
+    "scripts"
   ]
 }
