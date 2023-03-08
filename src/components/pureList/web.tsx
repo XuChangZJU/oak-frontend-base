@@ -136,7 +136,7 @@ export default function Render(
                 const oakActions = row?.oakActions;
                 assert(!!oakActions, '行数据中不存在oakActions, 请禁用(disableOp:true)或添加oakActions')
                 return (
-                    <ActionBtnPanel id={id} entity={entity} oakActions={oakActions} onClick={(id: string, action: string) => handleClick && handleClick(id, action)}  />
+                    <ActionBtnPanel oakId={id} entity={entity} oakActions={oakActions} onClick={(id: string, action: string) => handleClick && handleClick(id, action)}  />
                 )
             }
         })

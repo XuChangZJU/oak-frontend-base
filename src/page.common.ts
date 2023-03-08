@@ -158,11 +158,11 @@ function checkActionsAndCascadeEntities<
         option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>
     ) {
     const checkTypes = ['relation', 'row', 'logical', 'logicalRelation'] as CheckerType[];
-    const actions: ActionDef<ED, T>[] = this.props.oakActions || (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
+    const actions = this.props.oakActions || (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
     const legalActions = [] as ActionDef<ED, T>[];
     if (actions) {
         // todo 这里actions整体进行测试的性能应该要高于一个个去测试
-        for (const action of actions) {
+        for (const action of actions as ActionDef<ED, T>[]) {
             if (rows instanceof Array) {
                 assert(option.isList);
                 const filter = this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath!);

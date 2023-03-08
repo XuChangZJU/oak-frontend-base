@@ -76,8 +76,13 @@
     "./typings/*.d.ts"
   ],
   "exclude": [
+    "lib",
     "node_modules",
     "**/*.spec.ts",
-    "test"
+    "package.json",
+    "tsconfig.json",
+    "package-lock.json",
+    "test",
+    "scripts"
   ]
 }

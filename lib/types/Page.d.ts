@@ -1,5 +1,4 @@
 /// <reference types="wechat-miniprogram" />
-/// <reference types="react" />
 /// <reference types="wechat-miniprogram" />
 import { Aspect, EntityDict, CheckerType, AggregationResult } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -12,6 +11,7 @@ import { NotificationProps } from './Notification';
 import { MessageProps } from './Message';
 import { AsyncContext } from "oak-domain/lib/store/AsyncRowStore";
 import { SyncContext } from "oak-domain/lib/store/SyncRowStore";
+import React from "react";
 export declare type PropertyOption = Record<string, WechatMiniprogram.Component.AllProperty | FunctionConstructor>;
 export declare type DataOption = WechatMiniprogram.Component.DataOption;
 export declare type MethodOption = WechatMiniprogram.Component.MethodOption;
@@ -36,7 +36,7 @@ declare type AllProperty = AllFullProperty | ShortProperty;
 declare type PropertyToData<T extends AllProperty> = T extends ShortProperty ? ValueType<T> : FullPropertyToData<Exclude<T, ShortProperty>>;
 declare type FullPropertyToData<T extends AllFullProperty> = ValueType<T['type']>;
 declare type PropertyOptionToData<P extends PropertyOption> = {
-    [name in keyof P]: PropertyToData<P[name]>;
+    [name in keyof P]?: PropertyToData<P[name]>;
 };
 export declare type ActionDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     action: ED[T]['Action'];
@@ -85,6 +85,10 @@ export declare type MiniprogramStyleMethods = {
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 };
 export declare type ComponentProps<IsList extends boolean, TProperty extends PropertyOption> = IsList extends true ? PropertyOptionToData<OakListComponentProperties & OakComponentProperties & TProperty> : PropertyOptionToData<OakComponentProperties & TProperty>;
+export declare type ReactComponentProps<IsList extends boolean, TProperty extends PropertyOption> = ComponentProps<IsList, TProperty> & {
+    className?: string;
+    style?: Record<string, any>;
+};
 export declare type ComponentData<ED extends EntityDict & BaseEntityDict, T extends keyof ED, FormedData extends DataOption, TData extends DataOption> = TData & FormedData & OakComponentData<ED, T>;
 export declare type ComponentPublicThisType<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any> = {}, TProperty extends PropertyOption = {}, TMethod extends MethodOption = {}, EMethod extends Record<string, Function> = {}> = {
     subscribed: Array<() => void>;
@@ -249,7 +253,7 @@ export declare type OakListComoponetData<ED extends EntityDict & BaseEntityDict,
     oakSorters?: NonNullable<ED[T]['Selection']['sorter']>[];
     oakPagination?: Pagination;
 };
-export declare type MakeOakComponent<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>> = <T extends keyof ED, FormedData extends DataOption, IsList extends boolean, TData extends DataOption, TProperty extends PropertyOption, TMethod extends MethodOption>(options: OakComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => React.ComponentType<any>;
+export declare type MakeOakComponent<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>> = <T extends keyof ED, FormedData extends DataOption, IsList extends boolean, TData extends DataOption, TProperty extends PropertyOption, TMethod extends MethodOption>(options: OakComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => (props: ReactComponentProps<IsList, TProperty>) => React.ReactElement;
 export declare type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh' | 'aggregate' | 'checkOperation';
 export declare type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedFilter' | 'removeNamedFilter' | 'removeNamedFilterByName' | 'setNamedSorters' | 'addNamedSorter' | 'removeNamedSorter' | 'removeNamedSorterByName' | 'setPageSize' | 'setCurrentPage' | 'addItem' | 'removeItem' | 'updateItem' | 'resetItem' | 'recoverItem';
 export declare type WebComponentSingleMethodNames = 'update' | 'remove' | 'isCreation';
