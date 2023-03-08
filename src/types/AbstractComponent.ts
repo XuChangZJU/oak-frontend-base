@@ -25,7 +25,7 @@ export type OakAbsFullAttrDef = {
 export type OakAbsAttrDef = OakAbsFullAttrDef | OakAbsNativeAttrDef;
 
 import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
-type AttrRender = {
+export type AttrRender = {
     label: string;
     value: any;
     type: DataType;
