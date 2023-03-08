@@ -5,6 +5,11 @@ export type OakActionBtnProps = {
     ctxType?: string;
 };
 
+export type OakActionsProps = {
+    action: string;
+    label?: string;
+}
+
 export type OakAbsNativeAttrDef = {
     path: string;
     width?: 1 | 2 | 3 | 4;

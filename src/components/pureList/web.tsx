@@ -114,9 +114,9 @@ export default function Render(
             render,
         };
         // 类型如果是枚举类型，那么它的宽度一般不超过160
-        // if (attribute?.type === 'enum') {
-        //     Object.assign(column, {width: 160})
-        // }
+        if (attribute?.type === 'enum') {
+            Object.assign(column, {width: 160})
+        }
         return Object.assign(column, typeof ele !== 'string' && ele);
     }) as ColumnsType<any>;
     if (tableColumns && tableColumns) {
@@ -142,6 +142,6 @@ export default function Render(
         })
     }
     return (
-        <Table dataSource={data} scroll={{ x: 2200 }} columns={tableColumns} {...tableProps} ></Table>
+        <Table dataSource={data} scroll={{ x: 1500 }} columns={tableColumns} {...tableProps} ></Table>
     );
 }
