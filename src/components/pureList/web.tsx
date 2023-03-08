@@ -3,11 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { Table, Tag, TableProps } from 'antd';
 import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
 import assert from 'assert';
-import useFeatures from '../../hooks/useFeatures';
-import { getAttributes } from '../../utils/usefulFn';
+import { getAttributes, resolutionPath } from '../../utils/usefulFn';
 import { get } from 'oak-domain/lib/utils/lodash';
 import dayjs from 'dayjs';
 import ActionBtnPanel from '../actionBtnPanel';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { WebComponentProps } from '../../types/Page';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { ColorDict } from 'oak-domain/lib/types/Style';
+import { StorageSchema } from 'oak-domain/lib/types/Storage';
 
 type SelfColumn = {
     path?: string;
@@ -15,15 +19,6 @@ type SelfColumn = {
 
 type Column = SelfColumn & ColumnType<any>;
 
-
-type Props = {
-    entity: string;
-    data: any[];
-    columns: (Column | string)[];
-    disableOp?: boolean;
-    tableProps?: TableProps<any>;
-    handleClick?: (id: string, action: string) => void;
-}
   
 type RenderCellProps = {
     content: any;
@@ -31,6 +26,8 @@ type RenderCellProps = {
     path: string;
     attr: string;
     attrType: string;
+    t: (value: string) => string;
+    colorDict: ColorDict<EntityDict & BaseEntityDict>
 }
 
 function decodeTitle(entity: string, attr: string) {
@@ -41,49 +38,17 @@ function decodeTitle(entity: string, attr: string) {
     return t(`${entity}:attr.${attr}`)
 }
 
-// 解析路径， 获取属性类型、属性值、以及实体名称
-function Fn(entity: string, path: string) {
-    let _entity = entity;
-    let attr: string;
-    assert(!path.includes('['), '数组索引不需要携带[],请使用arr.0.value')
-    const features = useFeatures();
-    const dataSchema = features.cache.getSchema();
-    if (!path.includes('.')) {
-        attr = path;
-    }
-    else {
-        const strs = path.split('.');
-        // 最后一个肯定是属性
-        attr = strs.pop()!;
-        // 倒数第二个可能是类名可能是索引
-        _entity = strs.pop()!;
-        // 判断是否是数组索引
-        if (!Number.isNaN(Number(_entity))) {
-            _entity = strs.pop()!.split('$')[0];
-        }
-    }
-    const attributes = getAttributes(dataSchema[_entity as keyof typeof dataSchema].attributes);
-    const attribute = attributes[attr];
-    return {
-        entity: _entity,
-        attr,
-        attribute,
-    }
-}
 
 function RenderCell(props: RenderCellProps) {
-    const { content, entity, path, attr, attrType } = props;
+    const { content, entity, path, attr, attrType, t, colorDict } = props;
     const value = get(content, path);
-    const { t } = useTranslation();
-    const feature = useFeatures();
-    const colorDict = feature.style.getColorDict();
     if (!value) {
         return (<div>--</div>);
     }
     // 属性类型是enum要使用标签
     else if (attrType === 'enum') {
         return (
-            <Tag color={colorDict[entity][attr][String(value)]} >
+            <Tag color={colorDict![entity]![attr]![String(value)]} >
                 {t(`${entity}:v.${attr}.${value}`)}
             </Tag>
         )
@@ -96,9 +61,37 @@ function RenderCell(props: RenderCellProps) {
     )
 }
 
-function List(props: Props) {
-    const { data, columns, entity, disableOp = false, tableProps } = props;
-    const { t } = useTranslation();
+export default function Render(
+    props: WebComponentProps<
+        EntityDict & BaseEntityDict,
+        keyof EntityDict,
+        false,
+        {
+            entity: string;
+            data: any[];
+            columns: (Column | string)[];
+            disableOp?: boolean;
+            tableProps?: TableProps<any>;
+            handleClick?: (id: string, action: string) => void;
+            colorDict: ColorDict<EntityDict & BaseEntityDict>;
+            dataSchema: StorageSchema<EntityDict>;
+        },
+        {
+        }
+    >
+) {
+    const { methods, data: oakData } = props;
+    const { t } = methods;
+    const {
+        entity,
+        data,
+        columns,
+        disableOp = false,
+        tableProps,
+        handleClick,
+        colorDict,
+        dataSchema,
+    } = oakData;
     const tableColumns: ColumnsType<any> = columns.map((ele) => {
         let title: string = '';
         let render: (value: any, row: any) => React.ReactNode = () => <></>;
@@ -109,10 +102,10 @@ function List(props: Props) {
         else {
             path = ele.path;
         }
-        const { entity: useEntity, attr, attribute } = Fn(entity, path!) || {};
+        const { entity: useEntity, attr, attribute } = resolutionPath(dataSchema, entity, path!) || {};
         title = decodeTitle(useEntity, attr);
         render = (value, row) => (
-            <RenderCell entity={entity} content={row} path={path!} attr={attr} attrType={attribute.type} />
+            <RenderCell entity={entity} content={row} path={path!} attr={attr} attrType={attribute?.type} t={t} colorDict={colorDict} />
         );
         const column = {
             align: 'center',
@@ -141,15 +134,14 @@ function List(props: Props) {
             render: (value, row) => {
                 const id = row?.id;
                 const oakActions = row?.oakActions;
+                assert(!!oakActions, '行数据中不存在oakActions, 请禁用(disableOp:true)或添加oakActions')
                 return (
-                    <ActionBtnPanel oakId={id} oakActions={oakActions} />
+                    <ActionBtnPanel oakId={id} entity={entity} oakActions={oakActions} onClick={(id: string, action: string) => handleClick && handleClick(id, action)}  />
                 )
             }
         })
     }
     return (
-        <Table dataSource={data} scroll={{ x: 2200 }} columns={tableColumns} ></Table>
+        <Table dataSource={data} scroll={{ x: 2200 }} columns={tableColumns} {...tableProps} ></Table>
     );
 }
-
-export default List;

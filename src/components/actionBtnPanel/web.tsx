@@ -11,14 +11,14 @@ import {
 import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { OakActionBtnProps } from '../../types/AbstractComponent';
-
+import { useTranslation } from 'react-i18next';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import Style from './web.module.less';
 const { confirm } = Modal;
 
 type Item = {
     id: string,
-    label: string;
+    label?: string;
     action: string;
     type?: 'a' | 'button';
 };
@@ -29,7 +29,6 @@ function ItemComponent(
     }
 ) {
     const { id, label, type, onClick, action } = props;
-
     if (type === 'button') {
         return (
             <Button onClick={() => onClick(id, action)}>
@@ -49,6 +48,7 @@ export default function Render(
         false,
         {
             id: string;
+            entity: string;
             oakActions: OakActionBtnProps[];
             onClick: (id: string, action: string) => void;
         },
@@ -62,6 +62,7 @@ export default function Render(
         id,
         oakActions,
         onClick,
+        entity,
     } = data;
     return (
         <div className={Style.panelContainer}>
@@ -70,7 +71,7 @@ export default function Render(
                     return (
                         <ItemComponent
                             id={id}
-                            label={ele.label}
+                            label={ele.label || t(`common:${ele.action}`) || t(`${entity}:action.${ele.action}`)}
                             action={ele.action}
                             type="a"
                             onClick={(id, action) => onClick(id, action)}

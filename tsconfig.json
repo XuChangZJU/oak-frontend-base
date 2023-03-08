@@ -71,11 +71,9 @@
     "miniprogram-api-typings"
   ],
   "include": [
-    "./**/*.ts",
-    "./**/*.tsx",
-    "./**/*.less",
-    "./**/*.wxml",
-    "./**/*.json"
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "./typings/*.d.ts"
   ],
   "exclude": [
     "lib",

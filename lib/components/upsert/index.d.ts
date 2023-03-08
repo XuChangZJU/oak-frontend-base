@@ -10,5 +10,7 @@ declare const _default: (props: {
     oakAutoUnmount?: boolean | undefined;
     oakActions?: any[] | undefined;
     oakCascadeActions?: AnyObject | undefined;
+    attributes?: any[] | undefined;
+    data?: AnyObject | undefined;
 }) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;
