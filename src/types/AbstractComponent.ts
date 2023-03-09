@@ -35,6 +35,7 @@ export type AttrRender = {
     required?: boolean;
     path?: string;
     defaultValue?: any;
+    notNull?: boolean;
 };
 
 export type DataTransformer = (data: object) => AttrRender[];

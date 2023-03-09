@@ -19,11 +19,12 @@ import { AttrRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 
 function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => void) {
-    const { value, type, params, ref, label, defaultValue } = attrRender;
+    const { value, type, params, ref, label, defaultValue, notNull } = attrRender;
     switch (type) {
         case 'string': {
             return (
                 <Input
+                    allowClear={!notNull}
                     placeholder={`请输入${label}`}
                     value={value}
                     defaultValue={defaultValue}
@@ -36,7 +37,8 @@ function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => vo
         }
         case 'text': {
             return (
-                <TextArea 
+                <TextArea
+                    allowClear={!notNull}
                     placeholder={`请输入${label}`}
                     defaultValue={defaultValue}
                     value={value}
@@ -80,9 +82,12 @@ function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => vo
         case 'decimal': {
             const precision = params?.precision || 10;
             const scale = params?.scale || 0;
-            const max = Math.pow(10, precision - scale);
-            const min = 0;
-            
+            const threshold = Math.pow(10, precision - scale);
+            const scaleValue = Math.pow(10, 0 - scale);
+            const max = threshold - scaleValue;     // 小数在这里可能会有bug
+            const min = 0 - max;
+
+
             return (
                 <InputNumber
                     min={min}
@@ -90,10 +95,62 @@ function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => vo
                     keyboard={true}
                     defaultValue={defaultValue}
                     value={value}
-                    precision={0}
+                    precision={scale}
+                    step={scaleValue}
                     onChange={(value) => onValueChange(value)}
                 />
             );
+        }
+        case 'money': {
+            // money在数据上统一用分来存储
+            const valueShowed = parseFloat((value / 100).toFixed(2));
+            const defaultValueShowed = parseFloat((defaultValue / 100).toFixed(2));
+            return (
+                <InputNumber
+                    min={0}
+                    keyboard={true}
+                    defaultValue={defaultValueShowed}
+                    value={valueShowed}
+                    precision={2}
+                    step={0.01}
+                    addonAfter="￥"
+                    onChange={(value) => {
+                        if (value !== null) {
+                            const v2 = Math.round(value * 100);
+                            onValueChange(v2);
+                        }
+                        else {
+                            onValueChange(value);
+                        }
+                    }}
+                />
+            );
+        }
+        case 'datetime':
+        case 'date':
+        case 'time': {
+            const mode = type === 'time' ? 'time' : 'date';
+            return (
+                <DatePicker
+                    allowClear={!notNull}
+                    showTime={type === 'datetime'}
+                    placeholder={`请选择${label}`}
+                    format="YYYY-MM-DD HH:mm:ss"
+                    mode={mode}
+                    value={dayjs(value)}
+                    onChange={(value) => {                        
+                        if (value) {
+                            onValueChange(value.valueOf());
+                        }
+                        else {
+                            onValueChange(null);
+                        }
+                    }}
+                />
+            );
+        }
+        case 'boolean': {
+
         }
     }
 }

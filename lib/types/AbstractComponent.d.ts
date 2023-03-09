@@ -30,6 +30,7 @@ export declare type AttrRender = {
     required?: boolean;
     path?: string;
     defaultValue?: any;
+    notNull?: boolean;
 };
 export declare type DataTransformer = (data: object) => AttrRender[];
 export declare type DataConverter = (data: object) => Record<string, any>;
