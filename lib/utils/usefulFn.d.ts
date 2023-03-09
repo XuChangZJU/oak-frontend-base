@@ -1,30 +1,23 @@
 import { EntityDict } from "oak-domain/lib/types";
-import { StorageSchema } from "oak-domain/lib/types";
-import { OakAbsAttrDef, DataTransformer, DataConverter } from "../types/AbstractComponent";
-export declare function getAttributes(attributes: Record<string, any>): Record<string, any> & {
-    id: {
-        type: string;
-    };
-    $$createAt$$: {
-        type: string;
-    };
-    $$updateAt$$: {
-        type: string;
-    };
-    $$deleteAt$$: {
-        type: string;
-    };
-    $$seq$$: {
-        type: string;
-    };
-};
-export declare function resolutionPath(dataSchema: StorageSchema<EntityDict>, entity: string, path: string): {
-    entity: string;
+import { StorageSchema, Attribute } from "oak-domain/lib/types";
+import { OakAbsAttrDef, OakAbsAttrDef_Mobile, DataTransformer, DataConverter } from "../types/AbstractComponent";
+import { DataType } from "oak-domain/lib/types/schema/DataTypes";
+export declare function getAttributes(attributes: Record<string, Attribute>): Record<string, Attribute>;
+export declare function resolvePath(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string): {
+    entity: string | number;
     attr: string;
-    attribute: any;
+    attrType: DataType | "ref";
+    attribute: Attribute;
+};
+declare type ColumnDefProps = {
+    width: number;
+    title: string;
+    renderType: 'tag' | 'text' | 'button';
+    fixed?: 'right' | 'left';
 };
 export declare function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string): DataTransformer;
-export declare function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string): {
-    columnDef: any;
-    converter: DataConverter;
+export declare function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile): {
+    columnDef: ColumnDefProps[];
+    converter: DataConverter | undefined;
 };
+export {};

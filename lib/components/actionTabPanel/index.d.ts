@@ -5,13 +5,17 @@ declare const _default: (props: import("../..").ReactComponentProps<false, {
         type: ArrayConstructor;
         value: never[];
     };
-    mode: {
-        type: StringConstructor;
-        value: string;
+    rows: {
+        type: NumberConstructor;
+        value: number;
     };
     column: {
         type: NumberConstructor;
         value: number;
+    };
+    mode: {
+        type: StringConstructor;
+        value: string;
     };
 }>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;

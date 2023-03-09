@@ -4,12 +4,22 @@ import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef } from '../../types/AbstractComponent';
+import { AttrRender } from '../../types/AbstractComponent';
+export declare type ColSpanType = 1 | 2 | 3 | 4;
+declare type ColumnMapType = {
+    xxl: ColSpanType;
+    xl: ColSpanType;
+    lg: ColSpanType;
+    md: ColSpanType;
+    sm: ColSpanType;
+    xs: ColSpanType;
+};
 export default function Render(props: WebComponentProps<EntityDict & BaseEntityDict, keyof EntityDict, false, {
-    data: any[];
-    columns: OakAbsAttrDef[];
-    disableOp?: boolean;
+    entity: string;
     handleClick?: (id: string, action: string) => void;
     colorDict: ColorDict<EntityDict & BaseEntityDict>;
     dataSchema: StorageSchema<EntityDict>;
+    column: ColumnMapType;
+    renderData: AttrRender[];
 }, {}>): JSX.Element;
+export {};
