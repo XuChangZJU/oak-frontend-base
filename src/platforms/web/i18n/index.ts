@@ -34,7 +34,15 @@ async function translationService(
 ) {
     const url = `${process.env.PUBLIC_URL}/locales/${language}/${namespace}.json`;
     const response = await fetch(url);
-    const json = await response.json();
+    let json = {};
+    try {
+        json = await response.json();
+    } catch (e) {
+        if (process.env.NODE_ENV !== 'production') {
+            console.warn(`[i18n]:请求${url}失败`);
+        }
+    }
+   
     if (window.localStorage) {
         try {
             window.localStorage.setItem(
@@ -56,6 +64,7 @@ async function translationService(
         }
         assign(result, { [k]: v });
     });
+
     return result;
 }
 
