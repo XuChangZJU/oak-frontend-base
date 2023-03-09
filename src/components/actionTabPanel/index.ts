@@ -1,21 +1,10 @@
+
 export default OakComponent({
     isList: false,
-    properties: {
-        entity: String,
-        items: {
-            type: Array,
-            value: [],
-        },
-        mode: {
-            type: String,
-            value: 'cell',
-        },
-        column: {
-            type: Number,
-            value: 3,
-        },
-    },
     data: {
+        slideWidth: 0, //小程序使用
+        slideLeft: 0, //小程序使用
+        slideShow: false, //小程序使用
         commonAction: [
             'create',
             'update',
@@ -25,6 +14,25 @@ export default OakComponent({
             'grant',
             'revoke',
         ],
+    },
+    properties: {
+        entity: String,
+        items: {
+            type: Array,
+            value: [],
+        },
+        rows: {
+            type: Number,
+            value: 2,
+        },
+        column: {
+            type: Number,
+            value: 5,
+        },
+        mode: {
+            type: String,
+            value: 'text',
+        },
     },
     lifetimes: {
         ready: function () {
@@ -90,14 +98,10 @@ export default OakComponent({
             });
         },
         async handleClick(e: WechatMiniprogram.Touch) {
-            const { item, type } = e.currentTarget.dataset;
-            if (type === 'popover') {
-                const popover = this.selectComponent('#popover');
-                popover.onHide();
-            }
+            const { item } = e.currentTarget.dataset;
             if (item.alerted) {
                 const dialog = (this as any).selectComponent(
-                    '#my-action-btn-dialog'
+                    '#my-action-tab-dialog'
                 );
 
                 const { title, content, okText, cancelText } =
@@ -122,8 +126,13 @@ export default OakComponent({
                 return;
             }
         },
+        scroll(e: WechatMiniprogram.Touch) {
+            this.setData({
+                slideLeft: e.detail.scrollLeft * this.state.slideRatio,
+            });
+        },
         getItemsByMp() {
-            const { oakLegalActions, items, column } = this.state;
+            const { items, rows, column } = this.state;
             const items2 = items
                 .filter((ele: any) => {
                     const { show } = ele;
@@ -142,37 +151,33 @@ export default OakComponent({
                         text: text,
                     });
                 });
-
-            let newItems = items2;
-            let moreItems = [];
-            if (column && items2.length > column) {
-                newItems = [...items2].splice(0, column);
-                moreItems = [...items2].splice(column, items2.length);
+            const count = rows * column;
+            let num = 1;
+            if (items2.length > 0) {
+                num =
+                    items2.length % count !== 0
+                        ? parseInt((items2.length / count).toString(), 10) + 1
+                        : items2.length / count;
+            }
+            const tabNums = [];
+            for (let i = 1; i <= num; i++) {
+                tabNums.push(i);
             }
 
+            const res = wx.getSystemInfoSync();
+            const _totalLength = tabNums.length * 750; //分类列表总长度
+            const _ratio = (100 / _totalLength) * (750 / res.windowWidth); //滚动列表长度与滑条长度比例
+            const _showLength = (750 / _totalLength) * 100; //当前显示红色滑条的长度(保留两位小数)
+
             this.setState({
-                newItems,
-                moreItems,
+                tabNums,
+                slideWidth: _showLength,
+                totalLength: _totalLength,
+                slideShow: num > 1,
+                slideRatio: _ratio,
+                newItems: items2,
+                count,
             });
-        },
-        handleMoreClick(e: WechatMiniprogram.Touch) {
-            // 获取按钮元素的坐标信息
-            var id = e.currentTarget.id;
-            // let scrollTop = 0;
-            // wx.createSelectorQuery()
-            //     .selectViewport()
-            //     .scrollOffset(function (res) {
-            //         scrollTop = res.scrollTop;
-            //     })
-            //     .exec();
-            const popover = this.selectComponent('#popover');
-            wx.createSelectorQuery()
-                .in(this as any)
-                .select('#' + id)
-                .boundingClientRect((res) => {
-                    popover.onDisplay(res);
-                })
-                .exec();
         },
     },
 });

@@ -16,13 +16,19 @@ export type OakAbsNativeAttrDef = {
 };
 
 export type OakAbsFullAttrDef = {
+    path: string;
     label: string;
-    value: string;
     width: 1 | 2 | 3 | 4;
-    type?: 'image' | 'file';
+    type?: 'img' | 'file' | 'avatar';
 };
 
-export type OakAbsAttrDef = OakAbsFullAttrDef | OakAbsNativeAttrDef;
+export type OakAbsAttrDef = string | OakAbsFullAttrDef;
+
+export type OakAbsAttrDef_Mobile = {
+    titlePath: string;
+    statePath?: string;
+    rowsPath: OakAbsAttrDef[];
+}
 
 import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
 export type AttrRender = {    
@@ -41,5 +47,5 @@ export type AttrRender = {
 
 export type DataTransformer = (data: object) => AttrRender[];
 
-export type DataConverter = (data: object) => Record<string, any>;
+export type DataConverter = (data: any[]) => Record<string, any>;
 
