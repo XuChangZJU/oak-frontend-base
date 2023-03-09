@@ -1,12 +1,26 @@
 import assert from "assert";
 import { EntityDict } from "oak-domain/lib/types";
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import useFeatures from "../hooks/useFeatures";
 import { StorageSchema } from "oak-domain/lib/types";
 import { judgeRelation } from "oak-domain/lib/store/relation";
-import { OakAbsAttrDef, OakAbsAttrDef_Mobile, OakAbsFullAttrDef, DataTransformer, DataConverter } from "../types/AbstractComponent";
+import {
+    OakAbsAttrDef, OakAbsAttrDef_Mobile, OakAbsFullAttrDef,
+    DataTransformer, DataConverter, ColumnDefProps,
+    RenderWidth,
+} from "../types/AbstractComponent";
 import { Attributes } from "oak-domain/lib/types";
 import { get } from "oak-domain/lib/utils/lodash";
+import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
+import { ColorDict } from 'oak-domain/lib/types/Style';
+import dayjs from 'dayjs';
 
+const tableWidthMap: Record<number, number> = {
+    1: 100,
+    2: 200,
+    3: 300,
+    4: 400
+}
 
 export function getAttributes(attributes: Record<string, any>) {
     return Object.assign({}, attributes, {
@@ -27,6 +41,7 @@ export function getAttributes(attributes: Record<string, any>) {
         },
     });
 }
+
 
 export function resolutionPath(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string) {
     assert(!path.includes('['), '数组索引不需要携带[],请使用arr.0.value')
@@ -66,83 +81,123 @@ export function resolutionPath(dataSchema: StorageSchema<EntityDict>, entity: ke
     };
 }
 
+// 强制类型
+function isAttrbuteType(attribute: OakAbsAttrDef): OakAbsFullAttrDef {
+    return attribute as OakAbsFullAttrDef;
+}
+
+// 以下几个get方法只需要两个参数attribute和一个解析path对象，只是后者类型还没定义
+function getPath(attribute: OakAbsAttrDef) {
+    if (typeof attribute === 'string') {
+        return attribute;
+    }
+    return attribute.path;
+}
+
+
+function getLabel(attribute: OakAbsAttrDef, entity: keyof EntityDict, attr: string, t: (k: string, params?: object) => string) {
+    let label = t(`${entity}:attr.${attr}`);
+    if (isAttrbuteType(attribute).label) {
+        label = isAttrbuteType(attribute).label
+    }
+    return label;
+}
+
+// 目前width属性可以是undefined，只有特殊type或用户自定义才有值，这样其余attr属性可以自适应
+function getWidth(attribute: OakAbsAttrDef, attrType: string, useFor: 'table' | 'other') {
+    let width;
+    if (attrType === 'enum' && useFor === 'table') {
+        width = 1;
+    }
+    if (isAttrbuteType(attribute).width) {
+        width = isAttrbuteType(attribute).width
+    }
+    if (width && useFor === 'table') {
+        width = tableWidthMap[width];
+    }
+    return width;
+}
+
+function getValue(attribute: OakAbsAttrDef, data: any, path: string, entity: keyof EntityDict, attr: string, attrType: string, t: (k: string, params?: object) => string) {
+    let value = get(data, path);
+    // 枚举类型还要通过i18转一下中文
+    if (attrType === 'enum' && value) {
+        value = t(`${entity}:v.${attr}.${value}`);
+    }
+    // 如果是dateTime
+    if (attrType === 'dateTime' && value) {
+        value = dayjs(value).format("YYYY-MM-DD HH:mm")
+    }
+    if (isAttrbuteType(attribute).value) {
+        value = isAttrbuteType(attribute).value
+    }
+    return value;
+}
+
+function getType(attribute: OakAbsAttrDef, attrType: string) {
+    let type = attrType;
+    if (attrType === 'enum') {
+        type = 'tag'
+    }
+    if (isAttrbuteType(attribute).type) {
+        type = isAttrbuteType(attrType).type as string;
+    }
+    return type as DataType & ('img' | 'file' | 'avatar')
+}
+
 function getLabelI18(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string, t: (k: string, params?: object) => string) {
     const { attr, entity: entityI8n } = resolutionPath(dataSchema, entity, path);
     return t(`${entityI8n}:attr.${attr}`);
 }
-
-type ColumnDefProps = {
-    width: number;
-    title: string;
-    renderType: 'tag' | 'text' | 'button';
-    fixed?: 'right' | 'left';
-}
-
-const tableWidthMap = {
-    1: 100,
-    2: 200,
-    3: 300,
-    4: 400
-}
-export function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string): DataTransformer {
+export function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<EntityDict & BaseEntityDict>): DataTransformer {
     return (data: any) => {
         // 因为attrDefs里每一项可能是string可能是attrbute, 这里对其每一项进行判断，得到一个都是string类型得pathArr
         const renderArr = attrDefs.map((ele) => {
-            let path: string = typeof ele === 'string' ? ele : ele.path;
+            const path = getPath(ele);
             const { attrType, attr, attribute, entity: entityI8n } = resolutionPath(dataSchema, entity, path);
-            let label = t(`${entityI8n}:attr.${attr}`);
+            const label = getLabel(attribute, entity, attr, t);
+            const value = getValue(attribute, data, path, entity, attr, attrType, t);
+            const width = getWidth(attribute, attrType, "other") as RenderWidth;
             let type = attrType;
-            const value = get(data, path);
-            if (typeof ele !== 'string' && ele.label) {
-                label = ele.label;
+            let color = 'black';
+            // iState 等枚举类型直接转成中文
+            if (type === 'enum') {
+                if (colorDict) {
+                    color = colorDict[entityI8n]![attr]![value] as string;
+                }
             }
-            if (typeof ele !== 'string' && ele.type) {
-                type = ele.type
-            }
-            const renderObj = {
+            return {
                 label,
                 value,
-                type,
-                params: attribute.params,
+                type: getType(ele, attrType),
+                color,
+                width,
+                params: attribute.params as DataTypeParams,
             }
-            if (typeof ele !== 'string' && ele.width) {
-                Object.assign(ele, {
-                    width: ele.width
-                })
-            }
-            return renderObj;
         })
         
         return renderArr;
     }
 }
 
-export function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile,) : {
+export function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile, colorDict?: ColorDict<EntityDict & BaseEntityDict>) : {
     columnDef: ColumnDefProps[];
     converter: DataConverter | undefined;
 } {
     // web使用
     const columnDef: ColumnDefProps[] = attrDefs.map((ele) => {
-        let path: string = typeof ele === 'string' ? ele : ele.path;
+        const path = getPath(ele);
         const { attrType, attr, attribute, entity: entityI8n } = resolutionPath(dataSchema, entity, path);
-        let title = t(`${entityI8n}:attr.${attr}`);
-        let width: number = tableWidthMap[1];
-        let renderType = 'text';
-        // 枚举类型长度一般不超过200
-        if (attrType === 'enum') {
-            width = tableWidthMap[2];
-            renderType = 'tag';
-        }
-        if (typeof ele !== 'string' && ele.label) {
-            title = ele.label;
-        }
-        if (typeof ele !== 'string' && ele.type) {
-            renderType = ele.type
-        }
+        const title = getLabel(ele, entity, attr, t);
+        const width = getWidth(ele, attrType, "table");
+        const type = getType(ele, attrType);
         return {
             title,
             width,
-            renderType,
+            type,
+            path,
+            entity: entityI8n,
+            attr,
         } as ColumnDefProps;
     })
 
@@ -153,13 +208,20 @@ export function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, en
             const coverData = data.map((row) => {
                 const title = get(row, mobileAttrDef.titlePath);
                 const rows = mobileAttrDef.rowsPath.map((attrbute) => {
-                    const label = typeof attrbute === 'string'
-                    ? getLabelI18(dataSchema, entity, attrbute, t) : attrbute.label;
-                    const path = typeof attrbute === 'string' ? attrbute : attrbute.path;
-                    const value = get(row, path);
+                    const path = getPath(attrbute);
+                    const { attrType, attr, attribute, entity: entityI8n } = resolutionPath(dataSchema, entity, path);
+                    const label = getLabel(attribute, entity, attr, t);
+                    const value = getValue(attribute, row, path, entity, attr, attrType, t);
+                    let color = 'black';
+                    if (attrType === 'enum') {
+                        if (colorDict) {
+                            color = colorDict[entityI8n]![attr]![value] as string;
+                        }
+                    }
                     return {
                         label,
                         value,
+                        color,
                     }
                 })
                 return {

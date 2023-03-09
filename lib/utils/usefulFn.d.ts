@@ -1,6 +1,6 @@
 import { EntityDict } from "oak-domain/lib/types";
 import { StorageSchema } from "oak-domain/lib/types";
-import { OakAbsAttrDef, DataTransformer, DataConverter } from "../types/AbstractComponent";
+import { OakAbsAttrDef, OakAbsAttrDef_Mobile, DataTransformer, DataConverter } from "../types/AbstractComponent";
 export declare function getAttributes(attributes: Record<string, any>): Record<string, any> & {
     id: {
         type: string;
@@ -18,13 +18,21 @@ export declare function getAttributes(attributes: Record<string, any>): Record<s
         type: string;
     };
 };
-export declare function resolutionPath(dataSchema: StorageSchema<EntityDict>, entity: string, path: string): {
-    entity: string;
-    attr: string;
+export declare function resolutionPath(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string): {
+    entity: string | number;
+    attr: any;
+    attrType: any;
     attribute: any;
 };
-export declare function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string): DataTransformer;
-export declare function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string): {
-    columnDef: any;
-    converter: DataConverter;
+declare type ColumnDefProps = {
+    width: number;
+    title: string;
+    renderType: 'tag' | 'text' | 'button';
+    fixed?: 'right' | 'left';
 };
+export declare function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string): DataTransformer;
+export declare function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile): {
+    columnDef: ColumnDefProps[];
+    converter: DataConverter | undefined;
+};
+export {};
