@@ -12,6 +12,8 @@ import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
+import { OakAbsAttrDef } from '../../types/AbstractComponent';
+import { OakAbsFullAttrDef } from '../../types/AbstractComponent';
 
 type SelfColumn = {
     path?: string;
@@ -67,11 +69,9 @@ export default function Render(
         keyof EntityDict,
         false,
         {
-            entity: string;
             data: any[];
-            columns: (Column | string)[];
+            columns: OakAbsAttrDef[];
             disableOp?: boolean;
-            tableProps?: TableProps<any>;
             handleClick?: (id: string, action: string) => void;
             colorDict: ColorDict<EntityDict & BaseEntityDict>;
             dataSchema: StorageSchema<EntityDict>;
@@ -83,16 +83,19 @@ export default function Render(
     const { methods, data: oakData } = props;
     const { t } = methods;
     const {
-        entity,
+        oakEntity,
         data,
         columns,
         disableOp = false,
-        tableProps,
         handleClick,
         colorDict,
         dataSchema,
     } = oakData;
     const tableColumns: ColumnsType<any> = columns.map((ele) => {
+        if (ele.path) {
+            const { entity: useEntity, attr, attribute } = resolutionPath(dataSchema, entity, path!) || {};
+            
+        }
         let title: string = '';
         let render: (value: any, row: any) => React.ReactNode = () => <></>;
         let path: string | undefined;
@@ -102,7 +105,6 @@ export default function Render(
         else {
             path = ele.path;
         }
-        const { entity: useEntity, attr, attribute } = resolutionPath(dataSchema, entity, path!) || {};
         title = decodeTitle(useEntity, attr);
         render = (value, row) => (
             <RenderCell entity={entity} content={row} path={path!} attr={attr} attrType={attribute?.type} t={t} colorDict={colorDict} />
