@@ -36,6 +36,7 @@ export type AttrRender = {
     path?: string;
     defaultValue?: any;
     notNull?: boolean;
+    enum?: Array<{ label: string, value: string }>;
 };
 
 export type DataTransformer = (data: object) => AttrRender[];
