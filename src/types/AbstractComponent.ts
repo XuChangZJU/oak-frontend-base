@@ -25,13 +25,16 @@ export type OakAbsFullAttrDef = {
 export type OakAbsAttrDef = OakAbsFullAttrDef | OakAbsNativeAttrDef;
 
 import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
-export type AttrRender = {
+export type AttrRender = {    
     label: string;
     value: any;
     type: DataType;
-    params: DataTypeParams;
+    params?: DataTypeParams;
     width?: 1 | 2 | 3 | 4;
-    ref?: string;    
+    ref?: string;
+    required?: boolean;
+    path?: string;
+    defaultValue?: any;
 };
 
 export type DataTransformer = (data: object) => AttrRender[];
