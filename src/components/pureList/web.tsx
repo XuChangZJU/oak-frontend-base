@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Table, Tag, TableProps } from 'antd';
 import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
 import assert from 'assert';
-import { getAttributes, resolutionPath } from '../../utils/usefulFn';
+import { getAttributes, resolvePath } from '../../utils/usefulFn';
 import { get } from 'oak-domain/lib/utils/lodash';
 import dayjs from 'dayjs';
 import ActionBtnPanel from '../actionBtnPanel';
@@ -93,7 +93,7 @@ export default function Render(
     } = oakData;
     const tableColumns: ColumnsType<any> = columns.map((ele) => {
         if (ele.path) {
-            const { entity: useEntity, attr, attribute } = resolutionPath(dataSchema, entity, path!) || {};
+            const { entity: useEntity, attr, attribute } = resolvePath(dataSchema, entity, path!) || {};
             
         }
         let title: string = '';

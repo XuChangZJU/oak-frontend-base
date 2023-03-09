@@ -21,12 +21,14 @@ import { AttrRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 
 function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => void) {
-    const { value, type, params, ref, label, defaultValue, notNull } = attrRender;
+    const { value, type, params, ref, label, defaultValue, required } = attrRender;
     switch (type) {
-        case 'string': {
+        case 'string':
+        case 'varchar':
+        case 'char': {
             return (
                 <Input
-                    allowClear={!notNull}
+                    allowClear={!required}
                     placeholder={`请输入${label}`}
                     value={value}
                     defaultValue={defaultValue}
@@ -40,7 +42,7 @@ function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => vo
         case 'text': {
             return (
                 <TextArea
-                    allowClear={!notNull}
+                    allowClear={!required}
                     placeholder={`请输入${label}`}
                     defaultValue={defaultValue}
                     value={value}
@@ -134,7 +136,7 @@ function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => vo
             const mode = type === 'time' ? 'time' : 'date';
             return (
                 <DatePicker
-                    allowClear={!notNull}
+                    allowClear={!required}
                     showTime={type === 'datetime'}
                     placeholder={`请选择${label}`}
                     format="YYYY-MM-DD HH:mm:ss"
@@ -164,14 +166,14 @@ function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => vo
             );
         }
         case 'enum': {
-            const { enum: e } = attrRender;
+            const { enumeration } = attrRender;
             return (
                 <Radio.Group
                     value={value}
                     onChange={({ target }) => onValueChange(target.value)}
                 >
                     {
-                        e!.map(
+                        enumeration!.map(
                             ({ label, value }) => (
                                 <Radio value={value}>{label}</Radio>
                             )

@@ -19,7 +19,7 @@ export type OakAbsFullAttrDef = {
     path: string;
     label: string;
     width: 1 | 2 | 3 | 4;
-    type?: 'img' | 'file' | 'avatar';
+    type?: 'image' | 'file' | 'avatar';
 };
 
 export type OakAbsAttrDef = string | OakAbsFullAttrDef;
@@ -34,15 +34,14 @@ import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes'
 export type AttrRender = {    
     label: string;
     value: any;
-    type: DataType;
+    type: DataType | 'ref' | 'image' | 'file' | 'avatar';
     params?: DataTypeParams;
     width?: 1 | 2 | 3 | 4;
     ref?: string;
     required?: boolean;
     path?: string;
     defaultValue?: any;
-    notNull?: boolean;
-    enum?: Array<{ label: string, value: string }>;
+    enumeration?: Array<{ label: string, value: string }>;
 };
 
 export type DataTransformer = (data: object) => AttrRender[];
