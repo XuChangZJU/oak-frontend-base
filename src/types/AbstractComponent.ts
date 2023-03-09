@@ -31,13 +31,17 @@ export type OakAbsAttrDef_Mobile = {
 }
 
 import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
-type AttrRender = {
+export type AttrRender = {    
     label: string;
     value: any;
     type: DataType;
-    params: DataTypeParams;
+    params?: DataTypeParams;
     width?: 1 | 2 | 3 | 4;
-    ref?: string;    
+    ref?: string;
+    required?: boolean;
+    path?: string;
+    defaultValue?: any;
+    notNull?: boolean;
 };
 
 export type DataTransformer = (data: object) => AttrRender[];

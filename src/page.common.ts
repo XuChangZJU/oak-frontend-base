@@ -146,6 +146,9 @@ export async function onPathSet<
     if (entity && projection || oakProjection) {
         this.refresh();
     }
+    else {
+        this.reRender();
+    }
 }
 
 function checkActionsAndCascadeEntities<

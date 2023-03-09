@@ -1,14 +1,5 @@
-import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
 import { DataTransformer } from '../../types/AbstractComponent';
 import { makeDataTransformer } from '../../utils/usefulFn';
-type AttrRender = {
-    label: string;
-    value: any;
-    type: DataType;
-    params: DataTypeParams;
-    width?: 1 | 2 | 3 | 4;
-    ref?: string;    
-};
 
 export default OakComponent({
     isList: false,

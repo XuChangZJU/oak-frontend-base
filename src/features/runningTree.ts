@@ -2335,10 +2335,12 @@ export class RunningTree<
 
     getFreshValue(path: string) {
         const node = this.findNode(path);
-        assert(node instanceof ListNode || node instanceof SingleNode);
-        let value = node.getFreshValue();
-
-        return value;
+        if (node) {
+            assert(node instanceof ListNode || node instanceof SingleNode);
+            let value = node.getFreshValue();
+    
+            return value;
+        }
     }
 
     isDirty(path: string) {
