@@ -12,9 +12,11 @@ import {
     Cascader,
     Select,
     Tag,
+    Switch,
 } from 'antd';
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 const { TextArea } = Input;
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { AttrRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 
@@ -138,7 +140,7 @@ function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => vo
                     format="YYYY-MM-DD HH:mm:ss"
                     mode={mode}
                     value={dayjs(value)}
-                    onChange={(value) => {                        
+                    onChange={(value) => {
                         if (value) {
                             onValueChange(value.valueOf());
                         }
@@ -150,7 +152,36 @@ function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => vo
             );
         }
         case 'boolean': {
-
+            return (
+                <Switch
+                    checkedChildren={<CheckOutlined />}
+                    unCheckedChildren={<CloseOutlined />}
+                    checked={value}
+                    onChange={(checked) => {
+                        onValueChange(checked);
+                    }}
+                />
+            );
+        }
+        case 'enum': {
+            const { enum: e } = attrRender;
+            return (
+                <Radio.Group
+                    value={value}
+                    onChange={({ target }) => onValueChange(target.value)}
+                >
+                    {
+                        e!.map(
+                            ({ label, value }) => (
+                                <Radio value={value}>{label}</Radio>
+                            )
+                        )
+                    }
+                </Radio.Group>
+            );
+        }
+        default: {
+            throw new Error(`【Abstract Update】无法支持的数据类别${type}的渲染`);
         }
     }
 }
@@ -166,6 +197,7 @@ export default function render(props: WebComponentProps<
     }
 >) {
     const { renderData } = props.data;
+    const { update } = props.methods;
     return (
         <Form
             labelCol={{ span: 4 }}
@@ -186,7 +218,13 @@ export default function render(props: WebComponentProps<
                                 },
                             ]}
                         >
-
+                            <>
+                                {
+                                    makeAttrInput(ele, (value) => update({
+                                        [ele.path!]: value,
+                                    }))
+                                }
+                            </>
                         </Form.Item>
                     )
                 )
