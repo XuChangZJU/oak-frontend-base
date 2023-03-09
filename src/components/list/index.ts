@@ -1,10 +1,5 @@
 import { OakAbsAttrDef, OakAbsNativeAttrDef, OakAbsFullAttrDef } from '../../types/AbstractComponent';
 import { analyzeAttrDefForTable } from '../../utils/usefulFn';
-type RenderObj = {
-    label: string;
-    value: string;
-    type: string;
-}
 
 export default OakComponent({
     isList: false,
@@ -14,17 +9,16 @@ export default OakComponent({
         data: Array,
     },
     data: {
-        transformAttrFn: (attributes: OakAbsAttrDef[]): RenderObj[] => {
-
-            return [];
-        }
     },
     formData({ props, features }) {
         const { data } = props;
-        const { converter } = this.state;
-        const columns = converter(data);
+        const { converter, columnDef } = this.state;
+        const columns = columnDef;
+        const colorDict = features.style.getColorDict();
         return {
             columns,
+            mobileData: converter(data),
+            colorDict,
         }
     },
     lifetimes: {
@@ -34,6 +28,7 @@ export default OakComponent({
             const { converter, columnDef } = analyzeAttrDefForTable(schema, entity!, attributes!, (k, params) => this.t(k, params));
             this.setState({
                 converter,
+                columnDef,
             })
         }
     }

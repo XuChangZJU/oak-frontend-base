@@ -1,3 +1,5 @@
+export type RenderWidth = 1 | 2 | 3 | 4;
+
 export type OakActionBtnProps = {
     label: string;
     action: string;
@@ -12,14 +14,15 @@ export type OakActionsProps = {
 
 export type OakAbsNativeAttrDef = {
     path: string;
-    width?: 1 | 2 | 3 | 4;
+    width?: RenderWidth;
 };
 
 export type OakAbsFullAttrDef = {
     path: string;
     label: string;
-    width: 1 | 2 | 3 | 4;
-    type?: 'image' | 'file' | 'avatar';
+    value?: string;
+    width: RenderWidth;
+    type?: 'img' | 'file' | 'avatar';
 };
 
 export type OakAbsAttrDef = string | OakAbsFullAttrDef;
@@ -34,15 +37,26 @@ import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes'
 export type AttrRender = {    
     label: string;
     value: any;
-    type: DataType | 'ref' | 'image' | 'file' | 'avatar';
+    type: DataType & ('img' | 'file' | 'avatar' | 'ref');
+    color?: string;
     params?: DataTypeParams;
-    width?: 1 | 2 | 3 | 4;
+    width?: RenderWidth;
     ref?: string;
     required?: boolean;
     path?: string;
     defaultValue?: any;
     enumeration?: Array<{ label: string, value: string }>;
 };
+
+export type ColumnDefProps = {
+    width: number;
+    title: string;
+    entity: string; // enum类型还需要再转成中文 需要entity、attr
+    attr: string;
+    path: string;
+    type: DataType & ('img' | 'file' | 'avatar');
+    fixed?: 'right' | 'left';
+}
 
 export type DataTransformer = (data: object) => AttrRender[];
 
