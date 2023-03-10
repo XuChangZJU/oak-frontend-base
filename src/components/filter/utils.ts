@@ -1,4 +1,4 @@
-import { ColumnProps, Ops } from './column';
+import { ColumnProps, Ops } from '../../types/Filter';
 
 
 export function getOp(column: ColumnProps) {

@@ -282,15 +282,14 @@ export function analyzeDataUpsertTransformer<
                 attr,
                 label,
                 mode,
+                entity: refEntity,
                 projection,
                 filter,
                 title,
                 count,
                 allowNull,
+                titleLabel,
             } = ele;
-            const rel = judgeRelation(dataSchema, entity, attr);
-            assert(rel === 2 || rel === ele.entity);
-            const refEntity = typeof rel === 'string' ? rel : attr;
             assert(!mtoPickerDict[attr]);
             mtoPickerDict[attr] = {
                 mode,
@@ -300,13 +299,16 @@ export function analyzeDataUpsertTransformer<
                 title,
                 filter,
                 count,
+                titleLabel,
             };
+            const mtoAttr = attr === 'entityId' ? refEntity : attr.slice(0, attr.length - 2);
             return {
                 type: 'ref',
-                attr: typeof rel === 'string' ? `${attr}Id` : 'entityId',
+                attr,
                 mode,
-                get: (data: Record<string, any>) => title(data[attr]),
-                label: label || t(`${refEntity}:name`),
+                get: (data: Record<string, any>) => data && data[attr],
+                getRenderValue: (data: Record<string, any>) => data && title(data[mtoAttr as string]),
+                label: label || t(`${refEntity as string}:name`),
                 required: !allowNull,
             };
         }
@@ -314,10 +316,12 @@ export function analyzeDataUpsertTransformer<
     return {
         transformer: (data: any) =>
             transformerFixedPart.map((ele) => {
-                const { get } = ele;
+                const { get, getRenderValue } = ele;
                 const value = get(data);
+                const renderValue = getRenderValue && getRenderValue(data);
                 return {
                     value,
+                    renderValue,
                     ...ele,
                 } as AttrUpsertRender<ED>;
             }),

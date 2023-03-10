@@ -3,7 +3,7 @@ import { Input, Button, Space, Form, Modal } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
-import { ColSpanType, ColumnProps } from '../filter/column';
+import { ColSpanType, ColumnProps } from '../../types/Filter';
 import { getFilterName, getOp } from '../filter/utils';
 import EntityPicker from '../entityPicker';
 

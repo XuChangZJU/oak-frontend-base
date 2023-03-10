@@ -4,7 +4,7 @@ import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 import Filter from '../filter';
-import { ColSpanType, ColumnProps } from '../filter/column';
+import { ColSpanType, ColumnProps } from '../../types/Filter';
 import { getFilterName } from '../filter/utils';
 
 import Style from './web.module.less';

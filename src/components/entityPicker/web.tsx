@@ -16,27 +16,24 @@ export default function Render(
             projection: Record<string, any>;
             onSelect: (rows: ED[keyof ED]['Schema'][]) => void;
             multiple: boolean;
+            titleLabel: string;
         },
         {}
     >
 ) {
     const {
-        entity,
-        oakFullpath,
         oakLoading,
         rows,
-        projection,
         onSelect,
+        titleLabel,
         multiple = false,
     } = props.data;
     const { t } = props.methods;
 
-    const columns = Object.keys(projection)
-        .filter((ele) => ele !== 'id')
-        .map((ele) => ({
-            dataIndex: ele,
-            title: t(`${entity}:attr.${ele}`),
-        }));
+    const columns = [{
+        dataIndex: 'title',
+        title: titleLabel,
+    }]
 
     return (
         <>

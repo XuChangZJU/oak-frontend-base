@@ -23,7 +23,7 @@ dayjs.extend(localeData);
 import { get, set } from 'oak-domain/lib/utils/lodash'
 import { assert } from 'oak-domain/lib/utils/assert';
 
-import { ColumnProps, ColSpanType, Ops, ValueType } from './column';
+import { ColumnProps, ColSpanType, Ops, ValueType } from '../../types/Filter';
 import { getFilterName, getOp, getOp2 } from './utils';
 import ForeignKeyFilter from '../foreignKeyFilter';
 

@@ -6,13 +6,15 @@ export default OakComponent({
         const { entity } = this.props;
         return entity as keyof ED;
     },
-    projection() {
-        const { projection } = this.props;
-        return projection;
-    },
-    formData({ data: rows }) {
+    formData({ data = [] }) {
+        const { title } = this.props;
         return {
-            rows,
+            rows: data.map(
+                ele => ({
+                    id: ele.id,
+                    title: title!(ele)
+                })
+            ),
         };
     },
     isList: true,
@@ -21,9 +23,10 @@ export default OakComponent({
     },
     properties: {
         entity: String,
-        projection: Object,
         multiple: Boolean,
         onSelect: Function,
+        title: Function,
+        titleLabel: String,
     },
     methods: {},
 });
