@@ -64,5 +64,4 @@ export type ColumnProps = {
     ) => string;
     filterName?: string;
     colSpan?: ColSpanType;
-    placeholder?: string;
 };

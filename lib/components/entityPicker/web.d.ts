@@ -7,4 +7,5 @@ export default function Render(props: WebComponentProps<ED, keyof ED, false, {
     projection: Record<string, any>;
     onSelect: (rows: ED[keyof ED]['Schema'][]) => void;
     multiple: boolean;
+    titleLabel: string;
 }, {}>): JSX.Element;

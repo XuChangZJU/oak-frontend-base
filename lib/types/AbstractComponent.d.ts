@@ -34,7 +34,8 @@ export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, 
     attr: string;
     entity: T;
     projection: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
-    title: (row: ED[T]['Schema']) => string;
+    title: (row: Partial<ED[T]['Schema']>) => string;
+    titleLabel: string;
     filter?: ED[T]['Selection']['filter'] | (() => ED[T]['Selection']['filter']);
     count?: number;
     label?: string;
@@ -44,7 +45,8 @@ export declare type OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntity
     type: 'ref';
     attr: string;
     label: string;
-    value: any;
+    value: string;
+    renderValue: any;
     required?: boolean;
     mode: OakAbsRefAttrPickerDef<ED, T>['mode'];
 };

@@ -1,7 +1,7 @@
 /// <reference types="react" />
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
-import { ColumnProps } from '../filter/column';
+import { ColumnProps } from '../../types/Filter';
 export default function Render(props: WebComponentProps<ED, keyof ED, false, {
     entity: keyof ED;
     column: ColumnProps;

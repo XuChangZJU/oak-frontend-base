@@ -219,7 +219,7 @@ export default function Render(
                 <EntityPicker
                     multiple={multiple}
                     oakAutoUnmount={true}
-                    projection={projection}
+                    oakProjection={projection}
                     entity={attribute.ref}
                     oakPath={`$foreignKeyFilter-entity/picker-${entity}`}
                     onSelect={(

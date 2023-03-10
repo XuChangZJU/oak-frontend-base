@@ -1,7 +1,7 @@
 /// <reference types="react" />
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
-import { ColSpanType, ColumnProps } from '../filter/column';
+import { ColSpanType, ColumnProps } from '../../types/Filter';
 declare type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 declare type ColumnMapType = {
     xxl: ColSpanType;
