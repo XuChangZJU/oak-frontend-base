@@ -47,9 +47,16 @@ export default OakComponent({
         const { data } = this.props;
         const { transformer } = this.state;
         const renderData = transformer(data!);
+        const colorDict = this.features.style.getColorDict();
         return {
             renderData,
+            colorDict,
         };
+    },
+    listeners: {
+        data() {
+            this.reRender();
+        },
     },
     data: {
         transformer: (() => []) as DataTransformer,
@@ -58,7 +65,6 @@ export default OakComponent({
         ready() {
             const { attributes, entity } = this.props;
             const schema = this.features.cache.getSchema();
-
             const transformer = makeDataTransformer(
                 schema,
                 entity!,
@@ -77,5 +83,12 @@ export default OakComponent({
             }
             return this.t(`${entity}:attr.${attr}`);
         },
+        // preview(event: { currentTarget: { dataset: { src: string } } }) {
+        //     let currentUrl = event.currentTarget.dataset.src;
+        //     wx.previewImage({
+        //         current: currentUrl, // 当前显示图片的http链接
+        //         urls: this.state.image as string[], // 需要预览的图片http链接列表
+        //     });
+        // },
     },
 });
