@@ -53,8 +53,12 @@ export function getAttributes(attributes: Record<string, Attribute>) {
     }) as Record<string, Attribute>;
 }
 
-export function resolvePath<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, path: string) {
-    assert(!path.includes('['), '数组索引不需要携带[],请使用arr.0.value')
+export function resolvePath<ED extends EntityDict & BaseEntityDict>(
+    dataSchema: StorageSchema<ED>,
+    entity: keyof ED,
+    path: string
+) {
+    assert(!path.includes('['), '数组索引不需要携带[],请使用arr.0.value');
     const attrs = path.split('.');
 
     let idx = 0;
@@ -106,8 +110,12 @@ function getPath(attribute: OakAbsAttrDef) {
     return attribute.path;
 }
 
-
-function getLabel<ED extends EntityDict & BaseEntityDict>(attribute: OakAbsAttrDef, entity: keyof ED, attr: string, t: (k: string, params?: object) => string) {
+function getLabel<ED extends EntityDict & BaseEntityDict>(
+    attribute: OakAbsAttrDef,
+    entity: keyof ED,
+    attr: string,
+    t: (k: string, params?: object) => string
+) {
     let label = t(`${entity as string}:attr.${attr}`);
     if (isAttrbuteType(attribute).label) {
         label = isAttrbuteType(attribute).label;
@@ -134,7 +142,15 @@ function getWidth(
     return width;
 }
 
-function getValue<ED extends EntityDict & BaseEntityDict>(attribute: OakAbsAttrDef, data: any, path: string, entity: keyof ED, attr: string, attrType: string, t: (k: string, params?: object) => string) {
+function getValue<ED extends EntityDict & BaseEntityDict>(
+    attribute: OakAbsAttrDef,
+    data: any,
+    path: string,
+    entity: keyof ED,
+    attr: string,
+    attrType: string,
+    t: (k: string, params?: object) => string
+) {
     let value = get(data, path);
     // 枚举类型还要通过i18转一下中文
     if (attrType === 'enum' && value) {
@@ -161,44 +177,62 @@ function getType(attribute: OakAbsAttrDef, attrType: string) {
     return type as DataType & ('img' | 'file' | 'avatar');
 }
 
-function getLabelI18<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, path: string, t: (k: string, params?: object) => string) {
-    const { attr, entity: entityI8n } = resolvePath<ED>(dataSchema, entity, path);
+function getLabelI18<ED extends EntityDict & BaseEntityDict>(
+    dataSchema: StorageSchema<ED>,
+    entity: keyof ED,
+    path: string,
+    t: (k: string, params?: object) => string
+) {
+    const { attr, entity: entityI8n } = resolvePath<ED>(
+        dataSchema,
+        entity,
+        path
+    );
     return t(`${entityI8n as string}:attr.${attr}`);
 }
 
-export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<ED>): DataTransformer {
-    const transformerFixedPart = attrDefs.map(
-        (ele) => {
-            if (typeof ele === 'string') {
-                const path = ele;
-                const { attrType, attr, attribute, entity: entityI8n } = resolvePath(dataSchema, entity, path);
-                const label = t(`${entityI8n as string}:attr.${attr}`);
-                const type = attrType;
-                const ref = attribute.ref;
-                const required = attribute.notNull;
-                const defaultValue = attribute.default;
-                const enumeration = attribute.enumeration;
-                const params = attribute.params;
-                return {
-                    path,
-                    label,
-                    type,
-                    ref,
-                    required,
-                    defaultValue,
-                    enumeration,
-                    params,
-                };
-            }
-            else {
-                const { path, label, width, type } = ele;
-                return {
-                    path,
-                    label,
-                    width,
-                    type: type || 'varchar',
-                };
-            }
+export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(
+    dataSchema: StorageSchema<ED>,
+    entity: string,
+    attrDefs: OakAbsAttrDef[],
+    t: (k: string, params?: object) => string,
+    colorDict?: ColorDict<ED>
+): DataTransformer {
+    const transformerFixedPart = attrDefs.map((ele) => {
+        if (typeof ele === 'string') {
+            const path = ele;
+            const {
+                attrType,
+                attr,
+                attribute,
+                entity: entityI8n,
+            } = resolvePath(dataSchema, entity, path);
+            const label = t(`${entityI8n as string}:attr.${attr}`);
+            const type = attrType;
+            const ref = attribute.ref;
+            const required = attribute.notNull;
+            const defaultValue = attribute.default;
+            const enumeration = attribute.enumeration;
+            const params = attribute.params;
+            return {
+                path,
+                label,
+                type,
+                ref,
+                required,
+                defaultValue,
+                enumeration,
+                params,
+                attr,
+            };
+        } else {
+            const { path, label, width, type } = ele;
+            return {
+                path,
+                label,
+                width,
+                type: type || 'varchar',
+            };
         }
     });
     return (data: any) =>
@@ -212,14 +246,26 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(data
         });
 }
 
-export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile, colorDict?: ColorDict<ED>) : {
+export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(
+    dataSchema: StorageSchema<ED>,
+    entity: string,
+    attrDefs: OakAbsAttrDef[],
+    t: (k: string, params?: object) => string,
+    mobileAttrDef?: OakAbsAttrDef_Mobile,
+    colorDict?: ColorDict<ED>
+): {
     columnDef: ColumnDefProps[];
     converter: DataConverter | undefined;
 } {
     // web使用
     const columnDef: ColumnDefProps[] = attrDefs.map((ele) => {
         const path = getPath(ele);
-        const { attrType, attr, attribute, entity: entityI8n } = resolvePath<ED>(dataSchema, entity, path);
+        const {
+            attrType,
+            attr,
+            attribute,
+            entity: entityI8n,
+        } = resolvePath<ED>(dataSchema, entity, path);
         const title = getLabel(ele, entity, attr, t);
         const width = getWidth(ele, attrType, 'table');
         const type = getType(ele, attrType);
@@ -259,7 +305,9 @@ export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(d
                     let color = 'black';
                     if (attrType === 'enum') {
                         if (colorDict) {
-                            color = (<any>colorDict)[entityI8n]![attr]![value] as string;
+                            color = (<any>colorDict)[entityI8n]![attr]![
+                                value
+                            ] as string;
                         }
                     }
                     return {
