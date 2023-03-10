@@ -50,15 +50,13 @@ export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, 
     allowNull?: boolean;
 };
 
-export type OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Pick<
-    OakAbsRefAttrPickerDef<ED, T>,
-    'mode' | 'projection' | 'entity' | 'projection' | 'title' | 'filter' | 'count'
-> & {
+export type OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     type: 'ref';
-    attr?: string;          // 为undefined意味着是entity/entityId的指针
+    attr: string;
     label: string;
     value: any;
     required?: boolean;
+    mode: OakAbsRefAttrPickerDef<ED, T>['mode'],
 }
 
 export type OakAbsGeoAttrsDef = {

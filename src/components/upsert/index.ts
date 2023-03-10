@@ -1,7 +1,7 @@
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { DataUpsertTransformer } from '../../types/AbstractComponent';
-import { makeDataUpsertTransformer } from '../../utils/usefulFn';
+import { DataUpsertTransformer, OakAbsRefAttrPickerDef } from '../../types/AbstractComponent';
+import { analyzeDataUpsertTransformer } from '../../utils/usefulFn';
 
 export default OakComponent({
     isList: false,
@@ -24,6 +24,7 @@ export default OakComponent({
     },
     data: {
         transformer: (() => []) as DataUpsertTransformer<EntityDict & BaseEntityDict>,
+        mtoPickerDict: {} as Record<string, OakAbsRefAttrPickerDef<EntityDict & BaseEntityDict, keyof (EntityDict & BaseEntityDict)>>,
     },
     listeners: {
         data() {
@@ -31,13 +32,14 @@ export default OakComponent({
         },
     },
     lifetimes: {
-        ready() {
+        attached() {
             const { attributes, entity } = this.props;
             const schema = this.features.cache.getSchema();
             
-            const transformer = makeDataUpsertTransformer(schema, entity!, attributes!, (k, params) => this.t(k, params));
+            const { transformer, mtoPickerDict } = analyzeDataUpsertTransformer(schema, entity!, attributes!, (k, params) => this.t(k, params));
             this.setState({
                 transformer,
+                mtoPickerDict,
             });
         }
     }
