@@ -79,6 +79,7 @@ export default function Render(
             label: ele.label,
             span: 1,
             value: ele.value,
+            attr: ele.attr,
         };
         // 类型如果是日期占两格，文本类型占4格
         if (ele?.type === 'datetime') {
@@ -91,7 +92,11 @@ export default function Render(
         if (ele?.type === 'enum') {
             Object.assign(item, {
                 value: (
-                    <Tag color={colorDict![entity]![attr]![String(ele.value)]}>
+                    <Tag
+                        color={
+                            colorDict![entity]![ele.attr]![String(ele.value)]
+                        }
+                    >
                         {ele.value}
                     </Tag>
                 ),

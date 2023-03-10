@@ -10,7 +10,7 @@ export type OakActionBtnProps = {
 export type OakActionsProps = {
     action: string;
     label?: string;
-}
+};
 
 export type OakAbsNativeAttrDef = {
     path: string;
@@ -31,10 +31,13 @@ export type OakAbsAttrDef_Mobile = {
     titlePath: string;
     statePath?: string;
     rowsPath: OakAbsAttrDef[];
-}
+};
 
-import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
-export type AttrRender = {    
+import {
+    DataType,
+    DataTypeParams,
+} from 'oak-domain/lib/types/schema/DataTypes';
+export type AttrRender = {
     label: string;
     value: any;
     type: DataType & ('img' | 'file' | 'avatar' | 'ref');
@@ -45,7 +48,8 @@ export type AttrRender = {
     required?: boolean;
     path?: string;
     defaultValue?: any;
-    enumeration?: Array<{ label: string, value: string }>;
+    enumeration?: Array<{ label: string; value: string }>;
+    attr: string;
 };
 
 export type ColumnDefProps = {
@@ -56,9 +60,8 @@ export type ColumnDefProps = {
     path: string;
     type: DataType & ('img' | 'file' | 'avatar');
     fixed?: 'right' | 'left';
-}
+};
 
 export type DataTransformer = (data: object) => AttrRender[];
 
 export type DataConverter = (data: any[]) => Record<string, any>;
-
