@@ -5,6 +5,7 @@ import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
+import styles from './web.module.less';
 import {
     DataType,
     DataTypeParams,
@@ -74,7 +75,7 @@ export default function Render(
         renderData,
     } = oakData;
 
-    const data = renderData.map((ele) => {
+    const data = renderData?.map((ele) => {
         const item = {
             label: ele.label,
             span: 1,
@@ -82,9 +83,9 @@ export default function Render(
             attr: ele.attr,
         };
         // 类型如果是日期占两格，文本类型占4格
-        if (ele?.type === 'datetime') {
-            Object.assign(item, { span: 2 });
-        }
+        // if (ele?.type === 'datetime') {
+        //     Object.assign(item, { span: 2 });
+        // }
         if (ele?.type === 'text') {
             Object.assign(item, { span: 4 });
         }
@@ -93,32 +94,38 @@ export default function Render(
             Object.assign(item, {
                 value: (
                     <Tag
-                        color={
-                            colorDict![entity]![ele.attr]![String(ele.value)]
-                        }
+                    // color={
+                    //     colorDict![entity]![ele.attr]![String(ele.value)]
+                    // }
                     >
                         {ele.value}
                     </Tag>
                 ),
             });
         }
-        if (ele?.type === 'image') {
+        if (ele?.type === 'img') {
             Object.assign(item, {
                 value: (
                     <div>
                         {ele.value?.map((ele1: string | undefined) => (
-                            <Image src={ele1} />
+                            <Image
+                                src={ele1}
+                                width={120}
+                                height={120}
+                                className={styles.img}
+                            />
                         ))}
                     </div>
                 ),
                 span: 4,
             });
         }
-        return Object.assign(item, typeof ele !== 'string' && ele);
+        return Object.assign(item);
     });
+    console.log(data);
 
     return (
-        <Descriptions column={column}>
+        <Descriptions column={column} bordered>
             {data?.map((ele) => (
                 <Descriptions.Item label={ele.label} span={ele.span || 1}>
                     {ele.value}
