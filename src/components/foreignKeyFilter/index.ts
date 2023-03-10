@@ -1,7 +1,7 @@
 import { ED } from '../../types/AbstractComponent';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
-import { getAttributes } from '../query/utils';
+import { getAttributes } from '../filter/utils';
 
 export default OakComponent({
     entity() {

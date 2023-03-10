@@ -275,7 +275,7 @@ export function analyzeDataUpsertTransformer<
                 defaultValue,
                 enumeration,
                 params,
-                get: (data: Record<string, any>) => data[ele],
+                get: (data?: Record<string, any>) => data && data[ele],
             };
         } else {
             const {

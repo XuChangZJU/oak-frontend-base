@@ -3,8 +3,8 @@ import { Input, Button, Space, Form, Modal } from 'antd';
 import { CloseOutlined } from '@ant-design/icons';
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
-import { ColSpanType, ColumnProps } from '../query/column';
-import { getFilterName, getOp } from '../query/utils';
+import { ColSpanType, ColumnProps } from '../filter/column';
+import { getFilterName, getOp } from '../filter/utils';
 import EntityPicker from '../entityPicker';
 
 import { get, set } from 'oak-domain/lib/utils/lodash';

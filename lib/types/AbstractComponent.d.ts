@@ -66,6 +66,7 @@ export declare type AttrRender = {
     type: DataType | ('img' | 'file' | 'avatar' | 'ref');
     color?: string;
     width?: RenderWidth;
+    attr: string;
 };
 export declare type OakNativeAttrUpsertRender = {
     label: string;

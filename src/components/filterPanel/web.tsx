@@ -3,9 +3,9 @@ import { Input, Button, Space, Form, Badge, Row, Col } from 'antd';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
-import Query from '../query';
-import { ColSpanType, ColumnProps } from '../query/column';
-import { getFilterName } from '../query/utils';
+import Filter from '../filter';
+import { ColSpanType, ColumnProps } from '../filter/column';
+import { getFilterName } from '../filter/utils';
 
 import Style from './web.module.less';
 
@@ -122,7 +122,7 @@ export default function Render(
 
         const item = (
             <Col span={gridColumn * colSpan2}>
-                <Query column={column} entity={entity} oakPath={oakFullpath} />
+                <Filter column={column} entity={entity} oakPath={oakFullpath} />
             </Col>
         );
 
