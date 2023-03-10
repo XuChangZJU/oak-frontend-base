@@ -20,7 +20,8 @@ import dayjs from 'dayjs';
 import { AttrRender, AttrUpsertRender, OakAbsRefAttrPickerRender, OakNativeAttrUpsertRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 
-function makeAttrInput(attrRender: AttrUpsertRender<EntityDict & BaseEntityDict>, onValueChange: (value: any) => void) {
+type ED = EntityDict & BaseEntityDict;
+function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: any) => void) {
     const { value, type, params, label, defaultValue, required } = attrRender as OakNativeAttrUpsertRender;
     switch (type) {
         case 'string':
@@ -182,6 +183,9 @@ function makeAttrInput(attrRender: AttrUpsertRender<EntityDict & BaseEntityDict>
                 </Radio.Group>
             );
         }
+        case 'ref': {
+            const { mode, } = attrRender as OakAbsRefAttrPickerRender<ED, keyof ED>;
+        }
         default: {
             throw new Error(`【Abstract Update】无法支持的数据类别${type}的渲染`);
         }
@@ -189,11 +193,11 @@ function makeAttrInput(attrRender: AttrUpsertRender<EntityDict & BaseEntityDict>
 }
 
 export default function render(props: WebComponentProps<
-    EntityDict & BaseEntityDict,
+    ED,
     keyof EntityDict,
     false,
     {
-        renderData: AttrUpsertRender<EntityDict & BaseEntityDict>[];
+        renderData: AttrUpsertRender<ED>[];
         children: any;
     },
     {
@@ -225,7 +229,7 @@ export default function render(props: WebComponentProps<
                                 {
                                     makeAttrInput(ele, (value) => {
                                         if (ele.type === 'ref') {
-                                            const { attr, entity } = ele as OakAbsRefAttrPickerRender<EntityDict & BaseEntityDict, keyof (EntityDict & BaseEntityDict)>;
+                                            const { attr, entity } = ele as OakAbsRefAttrPickerRender<ED, keyof (ED)>;
                                             if (attr) {
                                                 update({
                                                     [attr]: value,

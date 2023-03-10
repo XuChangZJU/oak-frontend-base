@@ -42,6 +42,9 @@ export declare type ActionDef<ED extends EntityDict & BaseEntityDict, T extends 
     action: ED[T]['Action'];
     filter?: ED[T]['Selection']['filter'];
     data?: Partial<ED[T]['CreateSingle']['data']>;
+    label?: string;
+    color?: string;
+    key?: string;
 } | ED[T]['Action'];
 export declare type RowWithActions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<ED[T]['Schema']> & {
     '#oakLegalActions': ActionDef<ED, T>[];

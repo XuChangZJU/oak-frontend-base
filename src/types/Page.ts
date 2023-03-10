@@ -89,6 +89,9 @@ export type ActionDef<
         action: ED[T]['Action'],
         filter?: ED[T]['Selection']['filter'];
         data?: Partial<ED[T]['CreateSingle']['data']>;
+        label?: string;
+        color?: string;
+        key?: string;
     } | ED[T]['Action'];
 
 export type RowWithActions<

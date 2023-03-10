@@ -16,6 +16,7 @@ import {
     DataUpsertTransformer,
     AttrUpsertRender,
     OakAbsDerivedAttrDef,
+    OakAbsRefAttrPickerDef,
 } from '../types/AbstractComponent';
 import { Attributes } from 'oak-domain/lib/types';
 import { get } from 'oak-domain/lib/utils/lodash';
@@ -230,11 +231,14 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(data
         });
 }
 
-export function makeDataUpsertTransformer<ED extends EntityDict & BaseEntityDict>(
+export function analyzeDataUpsertTransformer<ED extends EntityDict & BaseEntityDict>(
     dataSchema: StorageSchema<ED>,
     entity: string,
     attrUpsertDefs: OakAbsAttrUpsertDef<ED>[],
     t: (k: string, params?: object) => string): DataUpsertTransformer<ED> {
+
+    const otmPickerDict: Record<string, OakAbsRefAttrPickerDef<ED, keyof ED>> = {};
+
     const transformerFixedPart = attrUpsertDefs.map(
         (ele) => {
             if (typeof ele === 'string') {
@@ -260,14 +264,19 @@ export function makeDataUpsertTransformer<ED extends EntityDict & BaseEntityDict
                 const rel = judgeRelation(dataSchema, entity, attr);
                 assert(rel === 2 || rel === ele.entity);
                 const refEntity = typeof rel === 'string' ? rel : attr;
-                return {
-                    type: 'ref',
-                    attr: typeof rel === 'string' && `${attr}Id`,
+                assert(!otmPickerDict[attr]);
+                otmPickerDict[attr] = {
+                    mode,
+                    attr,
                     entity: refEntity as keyof ED,
                     projection,
+                    title,
                     filter,
                     count,
-                    title,
+                };
+                return {
+                    type: 'ref',
+                    attr: typeof rel === 'string' ? `${attr}Id` : 'entityId',
                     mode,
                     get: (data: Record<string, any>) => title(data[attr]),
                     label: label || t(`${refEntity}:name`),
