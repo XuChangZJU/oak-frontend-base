@@ -5,8 +5,10 @@ export default OakComponent({
     isList: false,
     properties: {
         entity: String,
+        disabledOp: Boolean,
         attributes: Array,
         data: Array,
+        tablePagination: Object,
     },
     data: {
     },

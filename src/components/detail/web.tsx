@@ -87,16 +87,16 @@ export default function Render(
         if (ele?.type === 'text') {
             Object.assign(item, { span: 4 });
         }
-        //类型如果是枚举，用tag
-        if (ele?.type === 'enum') {
-            Object.assign(item, {
-                value: (
-                    <Tag color={colorDict![entity]![attr]![String(ele.value)]}>
-                        {ele.value}
-                    </Tag>
-                ),
-            });
-        }
+        // //类型如果是枚举，用tag
+        // if (ele?.type === 'enum') {
+        //     Object.assign(item, {
+        //         value: (
+        //             <Tag color={colorDict![entity]![attr]![String(ele.value)]}>
+        //                 {ele.value}
+        //             </Tag>
+        //         ),
+        //     });
+        // }
         if (ele?.type === 'image') {
             Object.assign(item, {
                 value: <Image src={ele.value} />,
