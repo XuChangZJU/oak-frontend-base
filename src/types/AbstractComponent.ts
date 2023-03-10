@@ -1,3 +1,6 @@
+import React from 'react';
+import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
+
 export type RenderWidth = 1 | 2 | 3 | 4;
 
 export type OakActionBtnProps = {
@@ -25,15 +28,16 @@ export type OakAbsFullAttrDef = {
     type?: 'img' | 'file' | 'avatar';
 };
 
+
 export type OakAbsAttrDef = string | OakAbsFullAttrDef;
 
-export type OakAbsAttrDef_Mobile = {
-    titlePath: string;
-    statePath?: string;
-    rowsPath: OakAbsAttrDef[];
+export type CardDef = {
+    // string:path ReactNode自主渲染
+    title: string | React.ReactNode,
+    state?: string | React.ReactNode,
+    rows: OakAbsAttrDef[];
 }
 
-import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
 export type AttrRender = {    
     label: string;
     value: any;

@@ -37,12 +37,27 @@ function ItemComponent(
     </a>;
 }
 
+function getLabel(actionItem: OakActionBtnProps, entity: string, t: (key: string) => string) {
+    if (actionItem.label) {
+        return actionItem.label
+    }
+    else {
+        if (actionItem.action === ('update' || 'create')) {
+            return t(`common:${actionItem.action}`)
+        }
+        else {
+            return t(`${entity}:action.${actionItem.action}`)
+        }
+    }
+}
+
 export default function Render(
     props: WebComponentProps<
         EntityDict & BaseEntityDict,
         keyof EntityDict,
         false,
         {
+            entity: string;
             oakActions: OakActionBtnProps[];
             onClick: (action: string) => void;
         },
@@ -55,6 +70,7 @@ export default function Render(
     const {
         oakActions,
         onClick,
+        entity,
     } = data;
     return (
         <div className={Style.panelContainer}>
@@ -62,7 +78,7 @@ export default function Render(
                 {oakActions?.map((ele, index: number) => {
                     return (
                         <ItemComponent
-                            label={ele.label}
+                            label={getLabel(ele, entity, t)}
                             action={ele.action}
                             type="a"
                             onClick={(action) => onClick(action)}

@@ -5,7 +5,7 @@ import useFeatures from "../hooks/useFeatures";
 import { StorageSchema, Attribute } from "oak-domain/lib/types";
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import {
-    OakAbsAttrDef, OakAbsAttrDef_Mobile, OakAbsFullAttrDef,
+    OakAbsAttrDef, CardDef, OakAbsFullAttrDef,
     DataTransformer, DataConverter, ColumnDefProps,
     RenderWidth,
     AttrRender,
@@ -205,7 +205,7 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(data
     );
 }
 
-export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile, colorDict?: ColorDict<ED>) : {
+export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: CardDef, colorDict?: ColorDict<ED>) : {
     columnDef: ColumnDefProps[];
     converter: DataConverter | undefined;
 } {
@@ -231,8 +231,8 @@ export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(d
     if (mobileAttrDef) {
         dataConverter = (data: any[]) => {
             const coverData = data.map((row) => {
-                const title = get(row, mobileAttrDef.titlePath);
-                const rows = mobileAttrDef.rowsPath.map((attribute) => {
+                const title = typeof mobileAttrDef.title === 'string' ? get(row, mobileAttrDef.title) : mobileAttrDef.title;
+                const rows = mobileAttrDef.rows.map((attribute) => {
                     const path = getPath(attribute);
                     const { attrType, attr, entity: entityI8n } = resolvePath(dataSchema, entity, path);
                     const label = getLabel(attribute, entity, attr, t);
@@ -252,7 +252,8 @@ export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(d
                 return {
                     title,
                     rows,
-                    iState: mobileAttrDef.statePath && get(row, mobileAttrDef.statePath)
+                    state: mobileAttrDef.state && typeof mobileAttrDef.state === 'string'
+                        ? get(row, mobileAttrDef.state) : mobileAttrDef.state
                 }
             })
             return coverData;
