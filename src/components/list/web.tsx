@@ -12,6 +12,8 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { OakAbsAttrDef, ColumnDefProps, AttrRender } from '../../types/AbstractComponent';
+import { Action, CascadeActionItem } from 'oak-domain/lib/types';
+import { Schema } from 'oak-domain/lib/base-app-domain/UserEntityGrant/Schema';
 
 
 type RenderCellProps = {
@@ -44,6 +46,8 @@ export default function Render(
         keyof EntityDict,
         false,
         {
+            entity: string;
+            schema: StorageSchema<EntityDict & BaseEntityDict>;
             columns: ColumnDefProps[],
             mobileData: AttrRender[]
             data: any;
@@ -51,6 +55,7 @@ export default function Render(
             colorDict: ColorDict<EntityDict & BaseEntityDict>;
             handleClick?: (id: string, action: string) => void;
             tablePagination?: PaginationProps;
+            onAction?: (row: any, action: Action, cascadeAction: CascadeActionItem) => void
         },
         {
         }
@@ -60,6 +65,8 @@ export default function Render(
     const { t } = methods;
     const [tableColumns, setTabelColumns] = useState([] as ColumnsType<any>);
     const {
+        entity,
+        schema,
         oakEntity,
         data,
         columns,
@@ -105,7 +112,13 @@ export default function Render(
                     const oakActions = row?.oakActions;
                     assert(!!oakActions, '行数据中不存在oakActions, 请禁用(disableOp:true)或添加oakActions')
                     return (
-                        <ActionBtn entity={oakEntity as string} actions={oakActions} onClick={(action: string) => handleClick && handleClick(id, action)}  />
+                        <ActionBtn
+                            schema={schema}
+                            entity={entity}
+                            actions={row?.['#oakLegalActions']}
+                            cascadeActions={row?.['#oakLegalCascadeActions']}
+                            onClick={(action: string) => handleClick && handleClick(id, action)}
+                        />
                     )
                 }
             })

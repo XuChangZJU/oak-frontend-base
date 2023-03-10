@@ -6,7 +6,12 @@ export default OakComponent({
             type: Array,
             value: [],
         },
+        cascadeActions: {
+            type: Array,
+            value: [],
+        },
         onClick: Object,
+        schema: Object,
     },
     data: {
     },

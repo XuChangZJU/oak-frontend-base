@@ -24,6 +24,7 @@ export default OakComponent({
                 converter,
                 columns: columnDef,
                 colorDict,
+                schema,
             })
         }
     }

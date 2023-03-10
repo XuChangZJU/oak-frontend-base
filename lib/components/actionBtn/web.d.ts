@@ -1,10 +1,17 @@
 /// <reference types="react" />
-import { WebComponentProps } from '../../types/Page';
+import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { OakActionBtnProps } from '../../types/AbstractComponent';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
-export default function Render(props: WebComponentProps<EntityDict & BaseEntityDict, keyof EntityDict, false, {
+import { StorageSchema } from 'oak-domain/lib/types/Storage';
+declare type ED = EntityDict & BaseEntityDict;
+declare type CascadeActionDef = {
+    [K in keyof EntityDict[keyof EntityDict]['Schema']]?: ActionDef<EntityDict & BaseEntityDict, keyof EntityDict>[];
+};
+export default function Render(props: WebComponentProps<ED, keyof EntityDict, false, {
+    schema: StorageSchema<ED>;
     entity: string;
-    oakActions: OakActionBtnProps[];
+    actions: ActionDef<ED, keyof EntityDict>[];
+    cascadeActions: CascadeActionDef;
     onClick: (action: string) => void;
 }, {}>): JSX.Element;
+export {};
