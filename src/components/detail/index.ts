@@ -47,8 +47,10 @@ export default OakComponent({
         const { data } = this.props;
         const { transformer } = this.state;
         const renderData = transformer(data!);
+        const colorDict = this.features.style.getColorDict();
         return {
             renderData,
+            colorDict,
         };
     },
     listeners: {
@@ -63,7 +65,6 @@ export default OakComponent({
         ready() {
             const { attributes, entity } = this.props;
             const schema = this.features.cache.getSchema();
-
             const transformer = makeDataTransformer(
                 schema,
                 entity!,

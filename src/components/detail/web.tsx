@@ -79,7 +79,7 @@ export default function Render(
         const item = {
             label: ele.label,
             span: 1,
-            value: ele.value,
+            value: ele.value || '未填写',
             attr: ele.attr,
         };
         // 类型如果是日期占两格，文本类型占4格
@@ -94,9 +94,9 @@ export default function Render(
             Object.assign(item, {
                 value: (
                     <Tag
-                    // color={
-                    //     colorDict![entity]![ele.attr]![String(ele.value)]
-                    // }
+                        color={
+                            colorDict![entity]![ele.attr]![String(ele.value)]
+                        }
                     >
                         {ele.value}
                     </Tag>
