@@ -235,9 +235,9 @@ export function analyzeDataUpsertTransformer<ED extends EntityDict & BaseEntityD
     dataSchema: StorageSchema<ED>,
     entity: string,
     attrUpsertDefs: OakAbsAttrUpsertDef<ED>[],
-    t: (k: string, params?: object) => string): DataUpsertTransformer<ED> {
+    t: (k: string, params?: object) => string) {
 
-    const otmPickerDict: Record<string, OakAbsRefAttrPickerDef<ED, keyof ED>> = {};
+    const mtoPickerDict: Record<string, OakAbsRefAttrPickerDef<ED, keyof ED>> = {};
 
     const transformerFixedPart = attrUpsertDefs.map(
         (ele) => {
@@ -264,8 +264,8 @@ export function analyzeDataUpsertTransformer<ED extends EntityDict & BaseEntityD
                 const rel = judgeRelation(dataSchema, entity, attr);
                 assert(rel === 2 || rel === ele.entity);
                 const refEntity = typeof rel === 'string' ? rel : attr;
-                assert(!otmPickerDict[attr]);
-                otmPickerDict[attr] = {
+                assert(!mtoPickerDict[attr]);
+                mtoPickerDict[attr] = {
                     mode,
                     attr,
                     entity: refEntity as keyof ED,
@@ -285,16 +285,19 @@ export function analyzeDataUpsertTransformer<ED extends EntityDict & BaseEntityD
             }
         }
     );
-    return (data: any) => transformerFixedPart.map(
-        (ele) => {
-            const { get } = ele;
-            const value = get(data);
-            return {
-                value,
-                ...ele,
-            } as AttrUpsertRender<ED>;
-        }
-    );
+    return {
+        transformer: (data: any) => transformerFixedPart.map(
+            (ele) => {
+                const { get } = ele;
+                const value = get(data);
+                return {
+                    value,
+                    ...ele,
+                } as AttrUpsertRender<ED>;
+            }
+        ),
+        mtoPickerDict,
+    };
 }
 
 export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(

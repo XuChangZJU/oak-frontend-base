@@ -228,26 +228,10 @@ export default function render(props: WebComponentProps<
                             <>
                                 {
                                     makeAttrInput(ele, (value) => {
-                                        if (ele.type === 'ref') {
-                                            const { attr, entity } = ele as OakAbsRefAttrPickerRender<ED, keyof (ED)>;
-                                            if (attr) {
-                                                update({
-                                                    [attr]: value,
-                                                });
-                                            }
-                                            else {
-                                                update({
-                                                    entity,
-                                                    entityId: value,
-                                                });
-                                            }
-                                        }
-                                        else {
-                                            const { attr } = ele;
-                                            update({
-                                                [attr]: value,
-                                            })
-                                        }
+                                        const { attr } = ele;
+                                        update({
+                                            [attr]: value,
+                                        })
                                     })
                                 }
                             </>

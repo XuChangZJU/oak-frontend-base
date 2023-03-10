@@ -39,12 +39,13 @@ export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, 
     label?: string;
     allowNull?: boolean;
 }
-export declare type OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Pick<OakAbsRefAttrPickerDef<ED, T>, 'mode' | 'projection' | 'entity' | 'projection' | 'title' | 'filter' | 'count'> & {
+export declare type OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     type: 'ref';
-    attr?: string;
+    attr: string;
     label: string;
     value: any;
     required?: boolean;
+    mode: OakAbsRefAttrPickerDef<ED, T>['mode'];
 };
 export declare type OakAbsGeoAttrsDef = {
     amapSecurityJsCode: string;
