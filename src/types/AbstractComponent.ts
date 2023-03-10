@@ -13,7 +13,7 @@ export type OakActionBtnProps = {
 export type OakActionsProps = {
     action: string;
     label?: string;
-}
+};
 
 export type OakAbsNativeAttrDef = {
     path: string;
@@ -35,7 +35,7 @@ export type OakAbsAttrDef_Mobile = {
     titlePath: string;
     statePath?: string;
     rowsPath: OakAbsAttrDef[];
-}
+};
 
 export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     mode: 'select' | 'list' | 'radio';
@@ -90,7 +90,7 @@ export type OakNativeAttrUpsertRender = {
     required?: boolean;
     attr: string;
     defaultValue?: any;
-    enumeration?: Array<{ label: string, value: string }>;
+    enumeration?: Array<{ label: string; value: string }>;
 };
 
 export type AttrUpsertRender<ED extends EntityDict & BaseEntityDict> = OakNativeAttrUpsertRender | OakAbsRefAttrPickerRender<ED, keyof ED>;
@@ -103,11 +103,10 @@ export type ColumnDefProps = {
     path: string;
     type: DataType & ('img' | 'file' | 'avatar');
     fixed?: 'right' | 'left';
-}
+};
 
 export type DataTransformer = (data: object) => AttrRender[];
 
 export type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict> = (data: object) => AttrUpsertRender<ED>[];
 
 export type DataConverter = (data: any[]) => Record<string, any>;
-

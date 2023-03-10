@@ -1,3 +1,5 @@
+import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 export declare type RenderWidth = 1 | 2 | 3 | 4;
 export declare type OakActionBtnProps = {
     label: string;
@@ -13,36 +15,70 @@ export declare type OakAbsNativeAttrDef = {
     path: string;
     width?: RenderWidth;
 };
-export declare type OakAbsFullAttrDef = {
+export declare type OakAbsDerivedAttrDef = {
     path: string;
     label: string;
     value?: string;
     width: RenderWidth;
     type?: 'img' | 'file' | 'avatar';
 };
-export declare type OakAbsAttrDef = string | OakAbsFullAttrDef;
+export declare type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
 export declare type OakAbsAttrDef_Mobile = {
     titlePath: string;
     statePath?: string;
     rowsPath: OakAbsAttrDef[];
 };
+export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
+    mode: 'select' | 'list' | 'radio';
+    attr: string;
+    entity: T;
+    projection: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
+    title: (row: ED[T]['Schema']) => string;
+    filter?: ED[T]['Selection']['filter'] | (() => ED[T]['Selection']['filter']);
+    count?: number;
+    label?: string;
+    allowNull?: boolean;
+}
+export declare type OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Pick<OakAbsRefAttrPickerDef<ED, T>, 'mode' | 'projection' | 'entity' | 'projection' | 'title' | 'filter' | 'count'> & {
+    type: 'ref';
+    attr?: string;
+    label: string;
+    value: any;
+    required?: boolean;
+};
+export declare type OakAbsGeoAttrsDef = {
+    amapSecurityJsCode: string;
+    amapKey: string;
+    type: 'getPoint';
+    attributes?: {
+        areaId?: string;
+        poiName?: string;
+        coordinate?: string;
+    };
+};
+export declare type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict> = OakAbsRefAttrPickerDef<ED, keyof ED> | string;
 import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
 export declare type AttrRender = {
     label: string;
     value: any;
-    type: DataType & ('img' | 'file' | 'avatar' | 'ref');
+    type: DataType | ('img' | 'file' | 'avatar' | 'ref');
     color?: string;
-    params?: DataTypeParams;
     width?: RenderWidth;
-    ref?: string;
+};
+export declare type OakNativeAttrUpsertRender = {
+    label: string;
+    value: any;
+    type: Omit<DataType, 'ref'>;
+    params?: DataTypeParams;
     required?: boolean;
-    path?: string;
+    attr: string;
     defaultValue?: any;
     enumeration?: Array<{
         label: string;
         value: string;
     }>;
 };
+export declare type AttrUpsertRender<ED extends EntityDict & BaseEntityDict> = OakNativeAttrUpsertRender | OakAbsRefAttrPickerRender<ED, keyof ED>;
 export declare type ColumnDefProps = {
     width: number;
     title: string;
@@ -53,4 +89,5 @@ export declare type ColumnDefProps = {
     fixed?: 'right' | 'left';
 };
 export declare type DataTransformer = (data: object) => AttrRender[];
+export declare type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict> = (data: object) => AttrUpsertRender<ED>[];
 export declare type DataConverter = (data: any[]) => Record<string, any>;
