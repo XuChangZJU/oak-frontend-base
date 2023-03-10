@@ -104,7 +104,13 @@ export default function Render(
         }
         if (ele?.type === 'image') {
             Object.assign(item, {
-                value: <Image src={ele.value} />,
+                value: (
+                    <div>
+                        {ele.value?.map((ele1: string | undefined) => (
+                            <Image src={ele1} />
+                        ))}
+                    </div>
+                ),
                 span: 4,
             });
         }
