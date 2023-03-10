@@ -1,5 +1,7 @@
-import { DataTransformer } from '../../types/AbstractComponent';
-import { makeDataTransformer } from '../../utils/usefulFn';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { DataUpsertTransformer } from '../../types/AbstractComponent';
+import { makeDataUpsertTransformer } from '../../utils/usefulFn';
 
 export default OakComponent({
     isList: false,
@@ -10,6 +12,7 @@ export default OakComponent({
         entity: String,
         attributes: Array,
         data: Object,
+        children: Object,
     },
     formData() {
         const { data } = this.props;
@@ -20,7 +23,7 @@ export default OakComponent({
         };
     },
     data: {
-        transformer: (() => []) as DataTransformer,
+        transformer: (() => []) as DataUpsertTransformer<EntityDict & BaseEntityDict>,
     },
     listeners: {
         data() {
@@ -32,7 +35,7 @@ export default OakComponent({
             const { attributes, entity } = this.props;
             const schema = this.features.cache.getSchema();
             
-            const transformer = makeDataTransformer(schema, entity!, attributes!, (k, params) => this.t(k, params));
+            const transformer = makeDataUpsertTransformer(schema, entity!, attributes!, (k, params) => this.t(k, params));
             this.setState({
                 transformer,
             });

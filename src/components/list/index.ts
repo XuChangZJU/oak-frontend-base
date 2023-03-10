@@ -1,4 +1,4 @@
-import { OakAbsAttrDef, OakAbsNativeAttrDef, OakAbsFullAttrDef, ColumnDefProps } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, OakAbsNativeAttrDef, ColumnDefProps } from '../../types/AbstractComponent';
 import { analyzeAttrDefForTable } from '../../utils/usefulFn';
 import assert from 'assert';
 

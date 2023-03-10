@@ -79,6 +79,7 @@ export default function Render(
             label: ele.label,
             span: 1,
             value: ele.value,
+            attr: ele.attr,
         };
         // 类型如果是日期占两格，文本类型占4格
         if (ele?.type === 'datetime') {
@@ -87,19 +88,29 @@ export default function Render(
         if (ele?.type === 'text') {
             Object.assign(item, { span: 4 });
         }
-        // //类型如果是枚举，用tag
-        // if (ele?.type === 'enum') {
-        //     Object.assign(item, {
-        //         value: (
-        //             <Tag color={colorDict![entity]![attr]![String(ele.value)]}>
-        //                 {ele.value}
-        //             </Tag>
-        //         ),
-        //     });
-        // }
+        //类型如果是枚举，用tag
+        if (ele?.type === 'enum') {
+            Object.assign(item, {
+                value: (
+                    <Tag
+                        color={
+                            colorDict![entity]![ele.attr]![String(ele.value)]
+                        }
+                    >
+                        {ele.value}
+                    </Tag>
+                ),
+            });
+        }
         if (ele?.type === 'image') {
             Object.assign(item, {
-                value: <Image src={ele.value} />,
+                value: (
+                    <div>
+                        {ele.value?.map((ele1: string | undefined) => (
+                            <Image src={ele1} />
+                        ))}
+                    </div>
+                ),
                 span: 4,
             });
         }

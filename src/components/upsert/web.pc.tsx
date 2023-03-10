@@ -17,11 +17,11 @@ import {
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 const { TextArea } = Input;
 import dayjs from 'dayjs';
-import { AttrRender } from '../../types/AbstractComponent';
+import { AttrRender, AttrUpsertRender, OakAbsRefAttrPickerRender, OakNativeAttrUpsertRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 
-function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => void) {
-    const { value, type, params, ref, label, defaultValue, required } = attrRender;
+function makeAttrInput(attrRender: AttrUpsertRender<EntityDict & BaseEntityDict>, onValueChange: (value: any) => void) {
+    const { value, type, params, label, defaultValue, required } = attrRender as OakNativeAttrUpsertRender;
     switch (type) {
         case 'string':
         case 'varchar':
@@ -166,7 +166,7 @@ function makeAttrInput(attrRender: AttrRender, onValueChange: (value: any) => vo
             );
         }
         case 'enum': {
-            const { enumeration } = attrRender;
+            const { enumeration } = attrRender as OakNativeAttrUpsertRender;;
             return (
                 <Radio.Group
                     value={value}
@@ -193,12 +193,13 @@ export default function render(props: WebComponentProps<
     keyof EntityDict,
     false,
     {
-        renderData: AttrRender[];
+        renderData: AttrUpsertRender<EntityDict & BaseEntityDict>[];
+        children: any;
     },
     {
     }
 >) {
-    const { renderData = [] } = props.data;
+    const { renderData = [], children } = props.data;
     const { update } = props.methods;
     return (
         <Form
@@ -222,14 +223,36 @@ export default function render(props: WebComponentProps<
                         >
                             <>
                                 {
-                                    makeAttrInput(ele, (value) => update({
-                                        [ele.path!]: value,
-                                    }))
+                                    makeAttrInput(ele, (value) => {
+                                        if (ele.type === 'ref') {
+                                            const { attr, entity } = ele as OakAbsRefAttrPickerRender<EntityDict & BaseEntityDict, keyof (EntityDict & BaseEntityDict)>;
+                                            if (attr) {
+                                                update({
+                                                    [attr]: value,
+                                                });
+                                            }
+                                            else {
+                                                update({
+                                                    entity,
+                                                    entityId: value,
+                                                });
+                                            }
+                                        }
+                                        else {
+                                            const { attr } = ele;
+                                            update({
+                                                [attr]: value,
+                                            })
+                                        }
+                                    })
                                 }
                             </>
                         </Form.Item>
                     )
                 )
+            }
+            {
+                children
             }
         </Form>
     );
