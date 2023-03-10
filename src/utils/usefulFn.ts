@@ -2,12 +2,13 @@ import assert from "assert";
 import { EntityDict } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import useFeatures from "../hooks/useFeatures";
-import { StorageSchema } from "oak-domain/lib/types";
+import { StorageSchema, Attribute } from "oak-domain/lib/types";
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import {
     OakAbsAttrDef, OakAbsAttrDef_Mobile, OakAbsFullAttrDef,
     DataTransformer, DataConverter, ColumnDefProps,
     RenderWidth,
+    AttrRender,
 } from "../types/AbstractComponent";
 import { Attributes } from "oak-domain/lib/types";
 import { get } from "oak-domain/lib/utils/lodash";
@@ -22,10 +23,13 @@ const tableWidthMap: Record<number, number> = {
     4: 400
 }
 
-export function getAttributes(attributes: Record<string, any>) {
+export function getAttributes(attributes: Record<string, Attribute>) {
     return Object.assign({}, attributes, {
         id: {
             type: 'char',
+            params: {
+                length: 36,
+            },
         },
         $$createAt$$: {
             type: 'datetime',
@@ -37,23 +41,27 @@ export function getAttributes(attributes: Record<string, any>) {
             type: 'datetime',
         },
         $$seq$$: {
-            type: 'datetime',
+            type: 'varchar',
+
         },
-    });
+    }) as Record<string, Attribute>;
 }
 
-
-export function resolutionPath(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string) {
+export function resolvePath(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string) {
     assert(!path.includes('['), '数组索引不需要携带[],请使用arr.0.value')
     const attrs = path.split('.');
 
     let idx = 0;
     let _entity = entity;
-    let attr;
-    let attrType;
-    let attribute;
+    let attr: string;
+    let attrType: DataType | 'ref';
+    let attribute: Attribute;
     while (idx <= attrs.length - 1) {
         attr = attrs[idx];
+        if (typeof parseInt(attr) === 'number') {
+            idx++;
+            continue;
+        }
         const relation = judgeRelation(dataSchema, _entity, attr);
         if (relation === 1) {
             const attributes = getAttributes(
@@ -62,7 +70,7 @@ export function resolutionPath(dataSchema: StorageSchema<EntityDict>, entity: ke
             attribute = attributes[attr];
             attrType = attribute.type;
             if (attrType === 'ref') {
-                attr = attribute.ref;
+                attr = attribute.ref as string;
             }
         } else if (relation === 2) {
             // entity entityId
@@ -75,9 +83,9 @@ export function resolutionPath(dataSchema: StorageSchema<EntityDict>, entity: ke
 
     return {
         entity: _entity,
-        attr,
-        attrType,
-        attribute,
+        attr: attr!,
+        attrType: attrType!,
+        attribute: attribute!,
     };
 }
 
@@ -146,38 +154,55 @@ function getType(attribute: OakAbsAttrDef, attrType: string) {
 }
 
 function getLabelI18(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string, t: (k: string, params?: object) => string) {
-    const { attr, entity: entityI8n } = resolutionPath(dataSchema, entity, path);
+    const { attr, entity: entityI8n } = resolvePath(dataSchema, entity, path);
     return t(`${entityI8n}:attr.${attr}`);
 }
+
 export function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<EntityDict & BaseEntityDict>): DataTransformer {
-    return (data: any) => {
-        // 因为attrDefs里每一项可能是string可能是attrbute, 这里对其每一项进行判断，得到一个都是string类型得pathArr
-        const renderArr = attrDefs.map((ele) => {
-            const path = getPath(ele);
-            const { attrType, attr, attribute, entity: entityI8n } = resolutionPath(dataSchema, entity, path);
-            const label = getLabel(attribute, entity, attr, t);
-            const value = getValue(attribute, data, path, entity, attr, attrType, t);
-            const width = getWidth(attribute, attrType, "other") as RenderWidth;
-            let type = attrType;
-            let color = 'black';
-            // iState 等枚举类型直接转成中文
-            if (type === 'enum') {
-                if (colorDict) {
-                    color = colorDict[entityI8n]![attr]![value] as string;
-                }
+    const transformerFixedPart = attrDefs.map(
+        (ele) => {
+            if (typeof ele === 'string') {
+                const path = ele;
+                const { attrType, attr, attribute, entity: entityI8n } = resolvePath(dataSchema, entity, path);
+                const label = t(`${entityI8n}:attr.${attr}`);
+                const type = attrType;
+                const ref = attribute.ref;
+                const required = attribute.notNull;
+                const defaultValue = attribute.default;
+                const enumeration = attribute.enumeration;
+                const params = attribute.params;
+                return {
+                    path,
+                    label,
+                    type,
+                    ref,
+                    required,
+                    defaultValue,
+                    enumeration,
+                    params,
+                };
             }
+            else {
+                const { path, label, width, type } = ele;
+                return {
+                    path,
+                    label,
+                    width,
+                    type: type || 'varchar',
+                };
+            }
+        }
+    );
+    return (data: any) => transformerFixedPart.map(
+        (ele) => {
+            const { path } = ele;
+            const value = get(data, path);
             return {
-                label,
                 value,
-                type: getType(ele, attrType),
-                color,
-                width,
-                params: attribute.params as DataTypeParams,
-            }
-        })
-        
-        return renderArr;
-    }
+                ...ele,
+            } as AttrRender;
+        }
+    );
 }
 
 export function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile, colorDict?: ColorDict<EntityDict & BaseEntityDict>) : {
@@ -187,7 +212,7 @@ export function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, en
     // web使用
     const columnDef: ColumnDefProps[] = attrDefs.map((ele) => {
         const path = getPath(ele);
-        const { attrType, attr, attribute, entity: entityI8n } = resolutionPath(dataSchema, entity, path);
+        const { attrType, attr, attribute, entity: entityI8n } = resolvePath(dataSchema, entity, path);
         const title = getLabel(ele, entity, attr, t);
         const width = getWidth(ele, attrType, "table");
         const type = getType(ele, attrType);
@@ -207,9 +232,9 @@ export function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, en
         dataConverter = (data: any[]) => {
             const coverData = data.map((row) => {
                 const title = get(row, mobileAttrDef.titlePath);
-                const rows = mobileAttrDef.rowsPath.map((attrbute) => {
-                    const path = getPath(attrbute);
-                    const { attrType, attr, attribute, entity: entityI8n } = resolutionPath(dataSchema, entity, path);
+                const rows = mobileAttrDef.rowsPath.map((attribute) => {
+                    const path = getPath(attribute);
+                    const { attrType, attr, entity: entityI8n } = resolvePath(dataSchema, entity, path);
                     const label = getLabel(attribute, entity, attr, t);
                     const value = getValue(attribute, row, path, entity, attr, attrType, t);
                     let color = 'black';

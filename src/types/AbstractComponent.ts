@@ -37,7 +37,7 @@ import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes'
 export type AttrRender = {    
     label: string;
     value: any;
-    type: DataType & ('img' | 'file' | 'avatar');
+    type: DataType & ('img' | 'file' | 'avatar' | 'ref');
     color?: string;
     params?: DataTypeParams;
     width?: RenderWidth;
@@ -45,8 +45,7 @@ export type AttrRender = {
     required?: boolean;
     path?: string;
     defaultValue?: any;
-    notNull?: boolean;
-    enum?: Array<{ label: string, value: string }>;
+    enumeration?: Array<{ label: string, value: string }>;
 };
 
 export type ColumnDefProps = {

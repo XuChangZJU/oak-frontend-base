@@ -1,17 +1,13 @@
 /// <reference types="react" />
 declare const _default: (props: import("../..").ReactComponentProps<false, {
-    entity: StringConstructor;
-    items: {
-        type: ArrayConstructor;
-        value: never[];
-    };
-    mode: {
+    name: {
         type: StringConstructor;
         value: string;
     };
-    column: {
-        type: NumberConstructor;
-        value: number;
+    size: NumberConstructor;
+    color: {
+        type: StringConstructor;
+        value: string;
     };
 }>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;

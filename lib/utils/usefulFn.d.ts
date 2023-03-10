@@ -1,38 +1,18 @@
 import { EntityDict } from "oak-domain/lib/types";
-import { StorageSchema } from "oak-domain/lib/types";
-import { OakAbsAttrDef, OakAbsAttrDef_Mobile, DataTransformer, DataConverter } from "../types/AbstractComponent";
-export declare function getAttributes(attributes: Record<string, any>): Record<string, any> & {
-    id: {
-        type: string;
-    };
-    $$createAt$$: {
-        type: string;
-    };
-    $$updateAt$$: {
-        type: string;
-    };
-    $$deleteAt$$: {
-        type: string;
-    };
-    $$seq$$: {
-        type: string;
-    };
-};
-export declare function resolutionPath(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string): {
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { StorageSchema, Attribute } from "oak-domain/lib/types";
+import { OakAbsAttrDef, OakAbsAttrDef_Mobile, DataTransformer, DataConverter, ColumnDefProps } from "../types/AbstractComponent";
+import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
+import { ColorDict } from 'oak-domain/lib/types/Style';
+export declare function getAttributes(attributes: Record<string, Attribute>): Record<string, Attribute>;
+export declare function resolvePath(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string): {
     entity: string | number;
-    attr: any;
-    attrType: any;
-    attribute: any;
+    attr: string;
+    attrType: DataType | "ref";
+    attribute: Attribute;
 };
-declare type ColumnDefProps = {
-    width: number;
-    title: string;
-    renderType: 'tag' | 'text' | 'button';
-    fixed?: 'right' | 'left';
-};
-export declare function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string): DataTransformer;
-export declare function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile): {
+export declare function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<EntityDict & BaseEntityDict>): DataTransformer;
+export declare function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile, colorDict?: ColorDict<EntityDict & BaseEntityDict>): {
     columnDef: ColumnDefProps[];
     converter: DataConverter | undefined;
 };
-export {};
