@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Table, Tag, TableProps } from 'antd';
+import { Table, Tag, TableProps, PaginationProps } from 'antd';
 import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
 import assert from 'assert';
-import { getAttributes, resolutionPath } from '../../utils/usefulFn';
 import { get } from 'oak-domain/lib/utils/lodash';
 import dayjs from 'dayjs';
-import ActionBtnPanel from '../actionBtnPanel';
+import ActionBtn from '../actionBtn';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -17,18 +16,15 @@ import { OakAbsFullAttrDef } from '../../types/AbstractComponent';
 
 
 type RenderCellProps = {
-    entity: string | number;
-    attr: string;
     value: string;
     type: string;
-    colorDict: string
-    t: (key: string) => string;
+    color: string
 }
 
 function RenderCell(props: RenderCellProps) {
-    const { value, type, entity, color } = props;
+    const { value, type, color } = props;
     if (!value) {
-        return (<div>--</div>);
+        return (<>--</>);
     }
     // 属性类型是enum要使用标签
     else if (type === 'tag') {
@@ -38,11 +34,8 @@ function RenderCell(props: RenderCellProps) {
             </Tag>
         )
     }
-    else if (attrType === 'datetime') {
-        return <div>{dayjs(value).format('YYYY-MM-DD HH:mm')}</div>
-    }
     return (
-        <div>{value}</div>
+        <>{value}</>
     )
 }
 
@@ -55,7 +48,10 @@ export default function Render(
             columns: ColumnDefProps[],
             mobileData: AttrRender[]
             data: any;
-            colorDict: ColorDict<EntityDict & BaseEntityDict>
+            disabledOp: boolean;
+            colorDict: ColorDict<EntityDict & BaseEntityDict>;
+            handleClick?: (id: string, action: string) => void;
+            tablePagination?: PaginationProps;
         },
         {
         }
@@ -63,33 +59,60 @@ export default function Render(
 ) {
     const { methods, data: oakData } = props;
     const { t } = methods;
-    const [tableColumns, setTabelColumns] = useState([]);
+    const [tableColumns, setTabelColumns] = useState([] as ColumnsType<any>);
     const {
         oakEntity,
         data,
         columns,
         colorDict,
+        disabledOp = false,
+        handleClick,
+        tablePagination,
     } = oakData;
     
     useEffect(() => {
-        const tableColumns = columns.map((ele) => ({
-            dataIndex: ele.path,
-            title: ele.title,
-            render: (v: string, row: any) => {
-                if (v && ele.renderType === 'text') {
-                    return <>{v}</>
+        const tableColumns: ColumnsType<any> = columns.map((ele) => {
+            const column = {
+                dataIndex: ele.path,
+                title: ele.title,
+                render: (v: string, row: any) => {
+                    if (v && ele.type === 'text') {
+                        return <>{v}</>
+                    }
+                    let value = get(row, ele.path);
+                    let color = 'black';
+                    if (ele.type === 'tag') {
+                        value = t(`${ele.entity}:v.${ele.attr}.${value}`);
+                        color = colorDict![ele.entity]![ele.attr]![value] as string;
+                    }
+                    return (<RenderCell color={color} value={value} type={ele.type} />)
                 }
-                let value = get(row, ele.path);
-                let color = 'black';
-                if (ele.renderType === 'tag') {
-                    value = t(`${ele.entity}:v.${ele.attr}.${value}`);
-                    color = colorDict![ele.entity]![ele.attr]![value] as string;
-                }
-                return (<RenderCell entity={oakEntity} attr={ele.attr} color={color} value={value} type={ele.renderType} t={t} />)
             }
-        }))
+            if (ele.width) {
+                Object.assign(ele, { width: ele.width });
+            }
+            return column;
+        })
+        if (!disabledOp) {
+                tableColumns.push({
+                fixed: 'right',
+                align: 'center',
+                title: '操作',
+                key: 'operation',
+                width: 300,
+                render: (value: any, row: any) => {
+                    const id = row?.id;
+                    const oakActions = row?.oakActions;
+                    assert(!!oakActions, '行数据中不存在oakActions, 请禁用(disableOp:true)或添加oakActions')
+                    return (
+                        <ActionBtn entity={oakEntity as string} actions={oakActions} onClick={(action: string) => handleClick && handleClick(id, action)}  />
+                    )
+                }
+            })
+        }
+        setTabelColumns(tableColumns)
     }, [data])
     return (
-        <Table dataSource={data} scroll={{ x: 1500 }} columns={columns} ></Table>
+        <Table dataSource={data} scroll={{ x: 1500 }} columns={tableColumns} pagination={tablePagination} ></Table>
     );
 }

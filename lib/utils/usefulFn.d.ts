@@ -5,14 +5,14 @@ import { OakAbsAttrDef, OakAbsAttrDef_Mobile, DataTransformer, DataConverter, Co
 import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 export declare function getAttributes(attributes: Record<string, Attribute>): Record<string, Attribute>;
-export declare function resolvePath(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string): {
-    entity: string | number;
+export declare function resolvePath<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, path: string): {
+    entity: keyof ED;
     attr: string;
     attrType: DataType | "ref";
     attribute: Attribute;
 };
-export declare function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<EntityDict & BaseEntityDict>): DataTransformer;
-export declare function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile, colorDict?: ColorDict<EntityDict & BaseEntityDict>): {
+export declare function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<ED>): DataTransformer;
+export declare function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile, colorDict?: ColorDict<ED>): {
     columnDef: ColumnDefProps[];
     converter: DataConverter | undefined;
 };

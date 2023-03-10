@@ -3,6 +3,9 @@ import { makeDataTransformer } from '../../utils/usefulFn';
 
 export default OakComponent({
     isList: false,
+    entity() {
+        return this.props.entity as any;
+    },
     properties: {
         entity: String,
         attributes: Array,
@@ -18,6 +21,11 @@ export default OakComponent({
     },
     data: {
         transformer: (() => []) as DataTransformer,
+    },
+    listeners: {
+        data() {
+            this.reRender();
+        },
     },
     lifetimes: {
         ready() {
