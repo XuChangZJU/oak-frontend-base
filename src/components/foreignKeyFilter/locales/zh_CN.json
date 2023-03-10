@@ -1,0 +1,16 @@
+
+{
+    "placeholder": {
+        "input": "请输入",
+        "select": "请选择"
+    },
+    "attr": {
+        "id": "编号",
+        "$$createAt$$": "创建时间",
+        "$$updateAt$$": "更新时间",
+        "$$deleteAt$$": "删除时间",
+        "$$seq$$": "序号"
+    },
+    "closed": "关闭",
+    "select": "请选择"
+}

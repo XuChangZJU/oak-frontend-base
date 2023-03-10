@@ -92,3 +92,4 @@ export declare type ColumnDefProps = {
 export declare type DataTransformer = (data: object) => AttrRender[];
 export declare type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict> = (data: object) => AttrUpsertRender<ED>[];
 export declare type DataConverter = (data: any[]) => Record<string, any>;
+export declare type ED = BaseEntityDict & EntityDict;

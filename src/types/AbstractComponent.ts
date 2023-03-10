@@ -108,3 +108,5 @@ export type DataTransformer = (data: object) => AttrRender[];
 export type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict> = (data: object) => AttrUpsertRender<ED>[];
 
 export type DataConverter = (data: any[]) => Record<string, any>;
+
+export type ED = BaseEntityDict & EntityDict;
