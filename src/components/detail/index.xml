@@ -12,8 +12,8 @@
             <view class="text-view" wx:if="{{item.type===image}}">
                 <text class="label">{{item.label}}</text>
                 <view class="img-view">
-                    <block wx:for="{{item.value}}" wx:key="index">
-                        <image class="img" src="{{item}}" data-src="{{item}}" mode="aspectFit" bindtap="preview" />
+                    <block wx:for="{{item.value}}" wx:key="index" wx:for-item="imgItem">
+                        <image class="img" src="{{imgItem}}" data-src="{{imgItem}}" data-list="{{item.value}}" mode="aspectFit" bindtap="preview" />
                     </block>
                 </view>
             </view>
