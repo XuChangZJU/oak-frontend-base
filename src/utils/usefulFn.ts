@@ -47,7 +47,7 @@ export function getAttributes(attributes: Record<string, Attribute>) {
     }) as Record<string, Attribute>;
 }
 
-export function resolvePath(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string) {
+export function resolvePath<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, path: string) {
     assert(!path.includes('['), '数组索引不需要携带[],请使用arr.0.value')
     const attrs = path.split('.');
 
@@ -58,7 +58,7 @@ export function resolvePath(dataSchema: StorageSchema<EntityDict>, entity: keyof
     let attribute: Attribute;
     while (idx <= attrs.length - 1) {
         attr = attrs[idx];
-        if (typeof parseInt(attr) === 'number') {
+        if (!isNaN(parseInt(attr))) {
             idx++;
             continue;
         }
@@ -74,9 +74,9 @@ export function resolvePath(dataSchema: StorageSchema<EntityDict>, entity: keyof
             }
         } else if (relation === 2) {
             // entity entityId
-            _entity = attr as keyof EntityDict;
+            _entity = attr as keyof ED;
         } else if (typeof relation === 'string') {
-            _entity = relation as keyof EntityDict;
+            _entity = relation as keyof ED;
         }
         idx++;
     }
@@ -103,8 +103,8 @@ function getPath(attribute: OakAbsAttrDef) {
 }
 
 
-function getLabel(attribute: OakAbsAttrDef, entity: keyof EntityDict, attr: string, t: (k: string, params?: object) => string) {
-    let label = t(`${entity}:attr.${attr}`);
+function getLabel<ED extends EntityDict & BaseEntityDict>(attribute: OakAbsAttrDef, entity: keyof ED, attr: string, t: (k: string, params?: object) => string) {
+    let label = t(`${entity as string}:attr.${attr}`);
     if (isAttrbuteType(attribute).label) {
         label = isAttrbuteType(attribute).label
     }
@@ -126,11 +126,11 @@ function getWidth(attribute: OakAbsAttrDef, attrType: string, useFor: 'table' | 
     return width;
 }
 
-function getValue(attribute: OakAbsAttrDef, data: any, path: string, entity: keyof EntityDict, attr: string, attrType: string, t: (k: string, params?: object) => string) {
+function getValue<ED extends EntityDict & BaseEntityDict>(attribute: OakAbsAttrDef, data: any, path: string, entity: keyof ED, attr: string, attrType: string, t: (k: string, params?: object) => string) {
     let value = get(data, path);
     // 枚举类型还要通过i18转一下中文
     if (attrType === 'enum' && value) {
-        value = t(`${entity}:v.${attr}.${value}`);
+        value = t(`${entity as string}:v.${attr}.${value}`);
     }
     // 如果是dateTime
     if (attrType === 'dateTime' && value) {
@@ -153,18 +153,18 @@ function getType(attribute: OakAbsAttrDef, attrType: string) {
     return type as DataType & ('img' | 'file' | 'avatar')
 }
 
-function getLabelI18(dataSchema: StorageSchema<EntityDict>, entity: keyof EntityDict, path: string, t: (k: string, params?: object) => string) {
-    const { attr, entity: entityI8n } = resolvePath(dataSchema, entity, path);
-    return t(`${entityI8n}:attr.${attr}`);
+function getLabelI18<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, path: string, t: (k: string, params?: object) => string) {
+    const { attr, entity: entityI8n } = resolvePath<ED>(dataSchema, entity, path);
+    return t(`${entityI8n as string}:attr.${attr}`);
 }
 
-export function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<EntityDict & BaseEntityDict>): DataTransformer {
+export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<ED>): DataTransformer {
     const transformerFixedPart = attrDefs.map(
         (ele) => {
             if (typeof ele === 'string') {
                 const path = ele;
                 const { attrType, attr, attribute, entity: entityI8n } = resolvePath(dataSchema, entity, path);
-                const label = t(`${entityI8n}:attr.${attr}`);
+                const label = t(`${entityI8n as string}:attr.${attr}`);
                 const type = attrType;
                 const ref = attribute.ref;
                 const required = attribute.notNull;
@@ -205,14 +205,14 @@ export function makeDataTransformer(dataSchema: StorageSchema<EntityDict>, entit
     );
 }
 
-export function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile, colorDict?: ColorDict<EntityDict & BaseEntityDict>) : {
+export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile, colorDict?: ColorDict<ED>) : {
     columnDef: ColumnDefProps[];
     converter: DataConverter | undefined;
 } {
     // web使用
     const columnDef: ColumnDefProps[] = attrDefs.map((ele) => {
         const path = getPath(ele);
-        const { attrType, attr, attribute, entity: entityI8n } = resolvePath(dataSchema, entity, path);
+        const { attrType, attr, attribute, entity: entityI8n } = resolvePath<ED>(dataSchema, entity, path);
         const title = getLabel(ele, entity, attr, t);
         const width = getWidth(ele, attrType, "table");
         const type = getType(ele, attrType);
@@ -240,7 +240,7 @@ export function analyzeAttrDefForTable(dataSchema: StorageSchema<EntityDict>, en
                     let color = 'black';
                     if (attrType === 'enum') {
                         if (colorDict) {
-                            color = colorDict[entityI8n]![attr]![value] as string;
+                            color = (<any>colorDict)[entityI8n]![attr]![value] as string;
                         }
                     }
                     return {

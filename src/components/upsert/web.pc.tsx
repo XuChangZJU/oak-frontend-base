@@ -198,7 +198,7 @@ export default function render(props: WebComponentProps<
     {
     }
 >) {
-    const { renderData } = props.data;
+    const { renderData = [] } = props.data;
     const { update } = props.methods;
     return (
         <Form
