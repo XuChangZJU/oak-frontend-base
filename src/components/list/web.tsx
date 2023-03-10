@@ -12,7 +12,6 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { OakAbsAttrDef, ColumnDefProps, AttrRender } from '../../types/AbstractComponent';
-import { OakAbsDerivedAttrDef } from '../../types/AbstractComponent';
 
 
 type RenderCellProps = {
@@ -71,10 +70,11 @@ export default function Render(
     } = oakData;
     
     useEffect(() => {
-        const tableColumns: ColumnsType<any> = columns.map((ele) => {
-            const column = {
+        const tableColumns: ColumnsType<any> = columns && columns.map((ele) => {
+            const column: ColumnType<any> = {
                 dataIndex: ele.path,
                 title: ele.title,
+                align: 'center',
                 render: (v: string, row: any) => {
                     if (v && ele.type === 'text') {
                         return <>{v}</>
@@ -93,7 +93,7 @@ export default function Render(
             }
             return column;
         })
-        if (!disabledOp) {
+        if (!disabledOp && tableColumns) {
                 tableColumns.push({
                 fixed: 'right',
                 align: 'center',

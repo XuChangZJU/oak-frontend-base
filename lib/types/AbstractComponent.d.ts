@@ -1,3 +1,4 @@
+/// <reference types="react" />
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 export declare type RenderWidth = 1 | 2 | 3 | 4;
@@ -23,10 +24,10 @@ export declare type OakAbsDerivedAttrDef = {
     type?: 'img' | 'file' | 'avatar';
 };
 export declare type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
-export declare type OakAbsAttrDef_Mobile = {
-    titlePath: string;
-    statePath?: string;
-    rowsPath: OakAbsAttrDef[];
+export declare type CardDef = {
+    title: string | React.ReactNode;
+    state?: string | React.ReactNode;
+    rows: OakAbsAttrDef[];
 };
 export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     mode: 'select' | 'list' | 'radio';

@@ -6,7 +6,7 @@ import { StorageSchema, Attribute } from 'oak-domain/lib/types';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
 import {
     OakAbsAttrDef,
-    OakAbsAttrDef_Mobile,
+    CardDef,
     DataTransformer,
     DataConverter,
     ColumnDefProps,
@@ -195,31 +195,40 @@ function getLabelI18<ED extends EntityDict & BaseEntityDict>(
     return t(`${entityI8n as string}:attr.${attr}`);
 }
 
-export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<ED>): DataTransformer {
-    const transformerFixedPart = attrDefs.map(
-        (ele) => {
-            if (typeof ele === 'string') {
-                const path = ele;
-                const { attrType, attr, attribute, entity: entityI8n } = resolvePath(dataSchema, entity, path);
-                const label = t(`${entityI8n as string}:attr.${attr}`);
-                const type = attrType;
-                return {
-                    path,
-                    label,
-                    type,
-                };
-            }
-            else {
-                const { path, label, width, type } = ele;
-                return {
-                    path,
-                    label,
-                    width,
-                    type: type || 'varchar',
-                };
-            }
+export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(
+    dataSchema: StorageSchema<ED>,
+    entity: string,
+    attrDefs: OakAbsAttrDef[],
+    t: (k: string, params?: object) => string,
+    colorDict?: ColorDict<ED>
+): DataTransformer {
+    const transformerFixedPart = attrDefs.map((ele) => {
+        if (typeof ele === 'string') {
+            const path = ele;
+            const {
+                attrType,
+                attr,
+                attribute,
+                entity: entityI8n,
+            } = resolvePath(dataSchema, entity, path);
+            const label = t(`${entityI8n as string}:attr.${attr}`);
+            const type = attrType;
+            return {
+                path,
+                label,
+                type,
+                attr,
+            };
+        } else {
+            const { path, label, width, type } = ele;
+            return {
+                path,
+                label,
+                width,
+                type: type || 'varchar',
+            };
         }
-    );
+    });
     return (data: any) =>
         transformerFixedPart.map((ele) => {
             const { path } = ele;
@@ -231,83 +240,92 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(data
         });
 }
 
-export function analyzeDataUpsertTransformer<ED extends EntityDict & BaseEntityDict>(
+export function analyzeDataUpsertTransformer<
+    ED extends EntityDict & BaseEntityDict
+>(
     dataSchema: StorageSchema<ED>,
     entity: string,
     attrUpsertDefs: OakAbsAttrUpsertDef<ED>[],
-    t: (k: string, params?: object) => string) {
+    t: (k: string, params?: object) => string
+) {
+    const mtoPickerDict: Record<
+        string,
+        OakAbsRefAttrPickerDef<ED, keyof ED>
+    > = {};
 
-    const mtoPickerDict: Record<string, OakAbsRefAttrPickerDef<ED, keyof ED>> = {};
-
-    const transformerFixedPart = attrUpsertDefs.map(
-        (ele) => {
-            if (typeof ele === 'string') {
-                const rel = judgeRelation(dataSchema, entity, ele);
-                assert(rel === 1);
-                const attrDef = dataSchema[entity].attributes[ele]; // upsert应该不会涉及createAt这些内置属性
-                const { type, notNull: required, default: defaultValue, enumeration, params } = attrDef;
-                const label = t(`${entity}:attr.${ele}`);
-                assert(type !== 'ref');
-                return {
-                    attr: ele,
-                    label,
-                    type,
-                    required,
-                    defaultValue,
-                    enumeration,
-                    params,
-                    get: (data: Record<string, any>) => data[ele],
-                };
-            }
-            else {
-                const { attr, label, mode, projection, filter, title, count, allowNull } = ele;
-                const rel = judgeRelation(dataSchema, entity, attr);
-                assert(rel === 2 || rel === ele.entity);
-                const refEntity = typeof rel === 'string' ? rel : attr;
-                assert(!mtoPickerDict[attr]);
-                mtoPickerDict[attr] = {
-                    mode,
-                    attr,
-                    entity: refEntity as keyof ED,
-                    projection,
-                    title,
-                    filter,
-                    count,
-                };
-                return {
-                    type: 'ref',
-                    attr: typeof rel === 'string' ? `${attr}Id` : 'entityId',
-                    mode,
-                    get: (data: Record<string, any>) => title(data[attr]),
-                    label: label || t(`${refEntity}:name`),
-                    required: !allowNull,
-                };
-            }
+    const transformerFixedPart = attrUpsertDefs.map((ele) => {
+        if (typeof ele === 'string') {
+            const rel = judgeRelation(dataSchema, entity, ele);
+            assert(rel === 1);
+            const attrDef = dataSchema[entity].attributes[ele]; // upsert应该不会涉及createAt这些内置属性
+            const {
+                type,
+                notNull: required,
+                default: defaultValue,
+                enumeration,
+                params,
+            } = attrDef;
+            const label = t(`${entity}:attr.${ele}`);
+            assert(type !== 'ref');
+            return {
+                attr: ele,
+                label,
+                type,
+                required,
+                defaultValue,
+                enumeration,
+                params,
+                get: (data: Record<string, any>) => data[ele],
+            };
+        } else {
+            const {
+                attr,
+                label,
+                mode,
+                projection,
+                filter,
+                title,
+                count,
+                allowNull,
+            } = ele;
+            const rel = judgeRelation(dataSchema, entity, attr);
+            assert(rel === 2 || rel === ele.entity);
+            const refEntity = typeof rel === 'string' ? rel : attr;
+            assert(!mtoPickerDict[attr]);
+            mtoPickerDict[attr] = {
+                mode,
+                attr,
+                entity: refEntity as keyof ED,
+                projection,
+                title,
+                filter,
+                count,
+            };
+            return {
+                type: 'ref',
+                attr: typeof rel === 'string' ? `${attr}Id` : 'entityId',
+                mode,
+                get: (data: Record<string, any>) => title(data[attr]),
+                label: label || t(`${refEntity}:name`),
+                required: !allowNull,
+            };
         }
-    );
+    });
     return {
-        transformer: (data: any) => transformerFixedPart.map(
-            (ele) => {
+        transformer: (data: any) =>
+            transformerFixedPart.map((ele) => {
                 const { get } = ele;
                 const value = get(data);
                 return {
                     value,
                     ...ele,
                 } as AttrUpsertRender<ED>;
-            }
-        ),
+            }),
         mtoPickerDict,
     };
 }
 
-export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(
-    dataSchema: StorageSchema<ED>,
-    entity: string,
-    attrDefs: OakAbsAttrDef[],
-    t: (k: string, params?: object) => string,
-    mobileAttrDef?: OakAbsAttrDef_Mobile,
-    colorDict?: ColorDict<ED>
-): {
+export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: CardDef, colorDict?: ColorDict<ED>) : {
     columnDef: ColumnDefProps[];
     converter: DataConverter | undefined;
 } {
@@ -338,8 +356,8 @@ export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(
     if (mobileAttrDef) {
         dataConverter = (data: any[]) => {
             const coverData = data.map((row) => {
-                const title = get(row, mobileAttrDef.titlePath);
-                const rows = mobileAttrDef.rowsPath.map((attribute) => {
+                const title = typeof mobileAttrDef.title === 'string' ? get(row, mobileAttrDef.title) : mobileAttrDef.title;
+                const rows = mobileAttrDef.rows.map((attribute) => {
                     const path = getPath(attribute);
                     const {
                         attrType,
@@ -373,11 +391,10 @@ export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(
                 return {
                     title,
                     rows,
-                    iState:
-                        mobileAttrDef.statePath &&
-                        get(row, mobileAttrDef.statePath),
-                };
-            });
+                    state: mobileAttrDef.state && typeof mobileAttrDef.state === 'string'
+                        ? get(row, mobileAttrDef.state) : mobileAttrDef.state
+                }
+            })
             return coverData;
         };
     }

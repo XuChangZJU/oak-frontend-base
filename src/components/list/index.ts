@@ -1,5 +1,6 @@
-import { OakAbsAttrDef, OakAbsNativeAttrDef, OakAbsDerivedAttrDef } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, OakAbsNativeAttrDef, ColumnDefProps } from '../../types/AbstractComponent';
 import { analyzeAttrDefForTable } from '../../utils/usefulFn';
+import assert from 'assert';
 
 export default OakComponent({
     isList: false,
@@ -12,25 +13,17 @@ export default OakComponent({
     },
     data: {
     },
-    formData({ props, features }) {
-        const { data } = props;
-        const { converter, columnDef } = this.state;
-        const columns = columnDef;
-        const colorDict = features.style.getColorDict();
-        return {
-            columns,
-            mobileData: converter(data),
-            colorDict,
-        }
-    },
     lifetimes: {
         async ready() {
             const { attributes, entity } = this.props;
             const schema = this.features.cache.getSchema();
+            const colorDict = this.features.style.getColorDict();
+            assert(!!attributes, 'attributes不能为空');
             const { converter, columnDef } = analyzeAttrDefForTable(schema, entity!, attributes!, (k, params) => this.t(k, params));
             this.setState({
                 converter,
-                columnDef,
+                columns: columnDef,
+                colorDict,
             })
         }
     }
