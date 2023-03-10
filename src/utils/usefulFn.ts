@@ -135,7 +135,7 @@ function getValue(attribute: OakAbsAttrDef, data: any, path: string, entity: key
 }
 
 function getType(attribute: OakAbsAttrDef, attrType: string) {
-    let type = attrType;
+    let type = 'text';
     if (attrType === 'enum') {
         type = 'tag'
     }
