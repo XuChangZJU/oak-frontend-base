@@ -1,4 +1,4 @@
-import { OakAbsAttrDef, OakAbsNativeAttrDef, OakAbsFullAttrDef } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, OakAbsNativeAttrDef, OakAbsDerivedAttrDef } from '../../types/AbstractComponent';
 import { analyzeAttrDefForTable } from '../../utils/usefulFn';
 
 export default OakComponent({

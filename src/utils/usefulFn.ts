@@ -5,10 +5,12 @@ import useFeatures from "../hooks/useFeatures";
 import { StorageSchema, Attribute } from "oak-domain/lib/types";
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import {
-    OakAbsAttrDef, OakAbsAttrDef_Mobile, OakAbsFullAttrDef,
+    OakAbsAttrDef, OakAbsAttrDef_Mobile, OakAbsDerivedAttrDef,
     DataTransformer, DataConverter, ColumnDefProps,
-    RenderWidth,
+    DataUpsertTransformer,
     AttrRender,
+    OakAbsAttrUpsertDef,
+    AttrUpsertRender,
 } from "../types/AbstractComponent";
 import { Attributes } from "oak-domain/lib/types";
 import { get } from "oak-domain/lib/utils/lodash";
@@ -90,8 +92,8 @@ export function resolvePath<ED extends EntityDict & BaseEntityDict>(dataSchema: 
 }
 
 // 强制类型
-function isAttrbuteType(attribute: OakAbsAttrDef): OakAbsFullAttrDef {
-    return attribute as OakAbsFullAttrDef;
+function isAttrbuteType(attribute: OakAbsAttrDef): OakAbsDerivedAttrDef {
+    return attribute as OakAbsDerivedAttrDef;
 }
 
 // 以下几个get方法只需要两个参数attribute和一个解析path对象，只是后者类型还没定义
@@ -166,20 +168,10 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(data
                 const { attrType, attr, attribute, entity: entityI8n } = resolvePath(dataSchema, entity, path);
                 const label = t(`${entityI8n as string}:attr.${attr}`);
                 const type = attrType;
-                const ref = attribute.ref;
-                const required = attribute.notNull;
-                const defaultValue = attribute.default;
-                const enumeration = attribute.enumeration;
-                const params = attribute.params;
                 return {
                     path,
                     label,
                     type,
-                    ref,
-                    required,
-                    defaultValue,
-                    enumeration,
-                    params,
                 };
             }
             else {
@@ -203,6 +195,64 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(data
             } as AttrRender;
         }
     );
+}
+
+export function makeDataUpsertTransformer<ED extends EntityDict & BaseEntityDict>(
+    dataSchema: StorageSchema<ED>,
+    entity: string,
+    attrUpsertDefs: OakAbsAttrUpsertDef<ED>[],
+    t: (k: string, params?: object) => string): DataUpsertTransformer<ED> {
+        const transformerFixedPart = attrUpsertDefs.map(
+            (ele) => {
+                if (typeof ele === 'string') {
+                    const rel = judgeRelation(dataSchema, entity, ele);
+                    assert (rel === 1); 
+                    const attrDef = dataSchema[entity].attributes[ele]; // upsert应该不会涉及createAt这些内置属性
+                    const { type, notNull: required, default: defaultValue, enumeration, params } = attrDef;
+                    const label = t(`${entity}:attr.${ele}`);
+                    assert(type !== 'ref');
+                    return {
+                        attr: ele,
+                        label,
+                        type,
+                        required,
+                        defaultValue,
+                        enumeration,
+                        params,
+                        get: (data: Record<string, any>) => data[ele],
+                    };
+                }
+                else {
+                    const { attr, label, mode, projection, filter, title, count, allowNull } = ele;
+                    const rel = judgeRelation(dataSchema, entity, attr);
+                    assert(rel === 2 || rel === ele.entity);
+                    const refEntity = typeof rel === 'string' ? rel : attr;
+                    return {
+                        type: 'ref',
+                        attr: typeof rel === 'string' && `${attr}Id`,
+                        entity: refEntity as keyof ED,
+                        projection,
+                        filter,
+                        count,
+                        title,
+                        mode,
+                        get: (data: Record<string, any>) => title(data[attr]),
+                        label: label || t(`${refEntity}:name`),
+                        required: !allowNull,
+                    };
+                }
+            }
+        );
+        return (data: any) => transformerFixedPart.map(
+            (ele) => {
+                const { get } = ele;
+                const value = get(data);
+                return {
+                    value,
+                    ...ele,
+                } as AttrUpsertRender<ED>;
+            }
+        );
 }
 
 export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: OakAbsAttrDef_Mobile, colorDict?: ColorDict<ED>) : {

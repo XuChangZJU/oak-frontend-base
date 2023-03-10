@@ -13,7 +13,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { OakAbsAttrDef, ColumnDefProps, AttrRender } from '../../types/AbstractComponent';
-import { OakAbsFullAttrDef } from '../../types/AbstractComponent';
+import { OakAbsDerivedAttrDef } from '../../types/AbstractComponent';
 
 
 type RenderCellProps = {
