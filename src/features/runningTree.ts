@@ -1246,9 +1246,9 @@ class ListNode<
             }
         }
 
-        // 如果没有创建相应的子结点，updates的更新也应该处理
+        // 如果没有创建相应的子结点，updates的更新也应该处理（临时代码，现在子结点会把父LIST上的create带走）
         for (const id in this.updates) {
-            if (!this.children[id]) {
+            if (!this.children[id] || !this.children[id].isDirty() || this.updates[id].operation.action !== 'create') {
                 operations.push({
                     entity: this.entity,
                     operation: cloneDeep(this.updates[id].operation),
