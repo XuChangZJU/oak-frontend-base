@@ -1,7 +1,8 @@
 import { ColumnProps, Ops } from '../../types/Filter';
-export declare function getOp(column: ColumnProps): string;
-export declare function getOp2(column: ColumnProps, op: Ops): string;
-export declare function getFilterName(column: ColumnProps): string;
+import { ED } from '../../types/AbstractComponent';
+export declare function getOp<ED2 extends ED>(column: ColumnProps<ED2, keyof ED2>): string;
+export declare function getOp2<ED2 extends ED>(column: ColumnProps<ED2, keyof ED2>, op: Ops): string;
+export declare function getFilterName<ED2 extends ED>(column: ColumnProps<ED2, keyof ED2>): string;
 export declare function getAttributes(attributes: Record<string, any>): Record<string, any> & {
     id: {
         type: string;

@@ -1,15 +1,16 @@
 import { ColumnProps, Ops } from '../../types/Filter';
+import { ED } from '../../types/AbstractComponent';
 
 
-export function getOp(column: ColumnProps) {
-    return `${column.attr}${column.op ? `.${column.op}` : ''}`;
+export function getOp<ED2 extends ED>(column: ColumnProps<ED2, keyof ED2>) {
+    return `${column.attr as string}${column.op ? `.${column.op}` : ''}`;
 }
 
-export function getOp2(column: ColumnProps, op: Ops) {
-    return `${column.attr}${column.op || op ? `.${column.op || op}` : ''}`;
+export function getOp2<ED2 extends ED>(column: ColumnProps<ED2, keyof ED2>, op: Ops) {
+    return `${column.attr as string}${column.op || op ? `.${column.op || op}` : ''}`;
 }
 
-export function getFilterName(column: ColumnProps) {
+export function getFilterName<ED2 extends ED>(column: ColumnProps<ED2, keyof ED2>) {
     return column.filterName || getOp(column);
 }
 

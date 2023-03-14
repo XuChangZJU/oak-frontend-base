@@ -21,7 +21,7 @@ import dayjs from 'dayjs';
 import { AttrRender, AttrUpsertRender, OakAbsRefAttrPickerRender, OakNativeAttrUpsertRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import assert from 'assert';
-import EntityPicker from '../entityPicker';
+import EntityPicker from '../picker';
 
 type ED = EntityDict & BaseEntityDict;
 function makeAttrInput(

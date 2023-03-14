@@ -105,4 +105,12 @@ export class Navigator extends Feature {
 
         return url2;
     }
+    
+    navigateBackOrRedirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>
+    ) {
+        console.error('浏览器暂无法获得history堆栈');
+        this.history.back();
+    }
 }

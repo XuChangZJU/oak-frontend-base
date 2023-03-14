@@ -39,7 +39,6 @@ export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, 
     filter?: ED[T]['Selection']['filter'] | (() => ED[T]['Selection']['filter']);
     count?: number;
     label?: string;
-    allowNull?: boolean;
 }
 export declare type OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     type: 'ref';

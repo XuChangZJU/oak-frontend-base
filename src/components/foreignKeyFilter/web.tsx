@@ -5,41 +5,41 @@ import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 import { ColSpanType, ColumnProps } from '../../types/Filter';
 import { getFilterName, getOp } from '../filter/utils';
-import EntityPicker from '../entityPicker';
+import EntityPicker from '../picker';
 
 import { get, set } from 'oak-domain/lib/utils/lodash';
 import { assert } from 'oak-domain/lib/utils/assert';
 import Style from './web.module.less';
 
 
-export default function Render(
+export default function Render<ED2 extends ED>(
     props: WebComponentProps<
         ED,
         keyof ED,
         false,
         {
-            entity: keyof ED;
-            column: ColumnProps;
+            entity: keyof ED2;
+            column: ColumnProps<ED2, keyof ED2>;
             onSearch: () => void;
             formItem: boolean;
         },
         {
             getNamedFilter: (name: string) => Record<string, any>;
-            getRefByAttr: (
-                entity: keyof ED,
-                attr: string
+            getRefByAttr: <T extends keyof ED2>(
+                entity: T,
+                attr: keyof ED2[T]['OpSchema'],
             ) => {
-                entity: keyof ED;
+                entity: keyof ED2;
                 attr: string;
                 attrType: string;
-                entityI18n: keyof ED;
+                entityI18n: keyof ED2;
                 attrI18n: string;
                 attribute: Record<string, any>;
             };
             getEntityData: (
-                entity: keyof ED,
+                entity: keyof ED2,
                 ids: string[]
-            ) => ED[keyof ED]['Schema'][];
+            ) => ED2[keyof ED2]['Schema'][];
         }
     >
 ) {
@@ -77,7 +77,7 @@ export default function Render(
     const name = getFilterName(column);
     const filter = getNamedFilter(name);
 
-    const params = getRefByAttr(entity, attr);
+    const params = getRefByAttr<keyof ED2>(entity, attr);
     if (!params) {
         return null;
     }
@@ -92,7 +92,7 @@ export default function Render(
     } = params;
 
     if (attribute.type !== 'ref') {
-        assert(false, `attr为${attr}，类型【${attribute.type}】不是ref`);
+        assert(false, `attr为${attr as string}，类型【${attribute.type}】不是ref`);
         return null;
     }
 
@@ -100,10 +100,10 @@ export default function Render(
     if (label && label.indexOf(':') === -1) {
         _label = label;
     } else {
-        _label = t(`${entityI18n}:attr.${attrI18n}`);
+        _label = t(`${entityI18n as string}:attr.${attrI18n}`);
     }
 
-    const inputKey = refProps?.inputKey || 'name';
+    const inputKey = 'name';
     const projection = refProps?.projection || { id: 1, name: 1 };
 
     let modalProps = {};
@@ -221,7 +221,7 @@ export default function Render(
                     oakAutoUnmount={true}
                     oakProjection={projection}
                     entity={attribute.ref}
-                    oakPath={`$foreignKeyFilter-entity/picker-${entity}`}
+                    oakPath={`$foreignKeyFilter-entity/picker-${entity as string}`}
                     onSelect={(
                         rows: ED[keyof ED]['Schema'][]
                     ) => {

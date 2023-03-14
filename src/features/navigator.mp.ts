@@ -121,4 +121,15 @@ export class Navigator extends Feature {
             });
         });
     }
+
+    navigateBackOrRedirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>
+    ) {
+        const pages = getCurrentPages();
+        if (pages.length > 1) {
+            return this.navigateBack();
+        }
+        return this.redirectTo(options, state);
+    }
 }

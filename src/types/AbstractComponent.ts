@@ -47,12 +47,9 @@ export interface OakAbsRefAttrPickerDef<
     projection: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
     title: (row: Partial<ED[T]['Schema']>) => string;
     titleLabel: string;
-    filter?:
-        | ED[T]['Selection']['filter']
-        | (() => ED[T]['Selection']['filter']);
+    filter?: ED[T]['Selection']['filter'] | (() => ED[T]['Selection']['filter']);
     count?: number;
     label?: string;
-    allowNull?: boolean;
 }
 
 export type OakAbsRefAttrPickerRender<

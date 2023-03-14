@@ -32,7 +32,7 @@ const DEFAULT_COLUMN_MAP: ColumnMapType = {
 };
 
 
-function transformColumns(columns: ColumnProps[]) {
+function transformColumns<ED2 extends ED>(columns: ColumnProps<ED2, keyof ED2>[]) {
     return columns.map((column, index) => {
         const _filterName = getFilterName(column);
 
@@ -61,14 +61,14 @@ function getSpan(colSpan: ColSpanType, column: ColSpanType) {
     return colSpan > column ? column : colSpan;
 }
 
-export default function Render(
+export default function Render<ED2 extends ED>(
     props: WebComponentProps<
         ED,
         keyof ED,
         false,
         {
             entity: string;
-            columns: Array<ColumnProps>;
+            columns: Array<ColumnProps<ED2, keyof ED2>>;
             onSearch: () => void;
             column?: ColSpanType | ColumnMapType;
             width: Width;

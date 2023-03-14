@@ -27,27 +27,27 @@ import { ColumnProps, ColSpanType, Ops, ValueType } from '../../types/Filter';
 import { getFilterName, getOp, getOp2 } from './utils';
 import ForeignKeyFilter from '../foreignKeyFilter';
 
-export default function Render(
+export default function Render<ED2 extends ED>(
     props: WebComponentProps<
-        ED,
-        keyof ED,
+        ED2,
+        keyof ED2,
         false,
         {
-            entity: keyof ED;
-            column: ColumnProps;
+            entity: keyof ED2;
+            column: ColumnProps<ED2, keyof ED2>;
             searchValue: string;
             onSearch: () => void;
         },
         {
             getNamedFilter: (name: string) => Record<string, any>;
-            getRefByAttr: (
-                entity: keyof ED,
-                attr: string
+            getRefByAttr: <T extends keyof ED2>(
+                entity: T,
+                attr: keyof ED2[T]['OpSchema']
             ) => {
-                entity: keyof ED;
+                entity: keyof ED2
                 attr: string;
                 attrType: string;
-                entityI18n: keyof ED;
+                entityI18n: keyof ED2;
                 attrI18n: string;
                 attribute: Record<string, any>
             };
@@ -67,7 +67,6 @@ export default function Render(
     const filter = getNamedFilter(name);
 
     const {
-        type = 'text',
         op,
         attr,
         label,
@@ -97,7 +96,7 @@ export default function Render(
     } else if (initinctiveAttributes.includes(attr2)) {
         _label = t(`attr.${attr2}`);
     } else {
-        _label = t(`${entityI18n}:attr.${attrI18n}`);
+        _label = t(`${entityI18n as string}:attr.${attrI18n}`);
     }
 
     const deleteFilter = (interval?: number) => {
@@ -134,7 +133,7 @@ export default function Render(
     if (attrType === '$text') {
         const ops: Ops[] = ['$search'];
         if (op) {
-            assert(ops.includes(op), assertMessage(attr, attrType, op, ops));
+            assert(ops.includes(op), assertMessage(attr as string, attrType, op, ops));
         }
         const {
             transformFilter = (column, value) => {
@@ -209,7 +208,7 @@ export default function Render(
             if (op) {
                 assert(
                     ops.includes(op),
-                    assertMessage(attr, attrType, op, ops)
+                    assertMessage(attr as string, attrType, op, ops)
                 );
             }
             V = (
@@ -238,7 +237,7 @@ export default function Render(
             if (op) {
                 assert(
                     ops.includes(op),
-                    assertMessage(attr, attrType, op, ops)
+                    assertMessage(attr as string, attrType, op, ops)
                 );
             }
             V = (
@@ -295,7 +294,7 @@ export default function Render(
             if (op) {
                 assert(
                     ops.includes(op),
-                    assertMessage(attr, attrType, op, ops)
+                    assertMessage(attr as string, attrType, op, ops)
                 );
             }
 
@@ -315,7 +314,7 @@ export default function Render(
             const options2 =
                 options ||
                 enumeration?.map((ele: string) => ({
-                    label: t(`${entityI18n}:v.${attrI18n}.${ele}`),
+                    label: t(`${entityI18n as string}:v.${attrI18n}.${ele}`),
                     value: ele,
                 }));
 
@@ -370,7 +369,7 @@ export default function Render(
                 assert(op, '选择时间范围，算子必须传入');
                 assert(
                     ops.includes(op),
-                    assertMessage(attr, attrType, op, ops)
+                    assertMessage(attr as string, attrType, op, ops)
                 );
                 const {
                     transformValue = (column, filter) => {
@@ -413,7 +412,7 @@ export default function Render(
                 if (op) {
                     assert(
                         ops.includes(op),
-                        assertMessage(attr, attrType, op, ops)
+                        assertMessage(attr as string, attrType, op, ops)
                     );
                 }
                 const {
@@ -467,7 +466,7 @@ export default function Render(
             if (op) {
                 assert(
                     ops.includes(op),
-                    assertMessage(attr, attrType, op, ops)
+                    assertMessage(attr as string, attrType, op, ops)
                 );
             }
 

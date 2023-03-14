@@ -287,7 +287,7 @@ export function analyzeDataUpsertTransformer<
                 filter,
                 title,
                 count,
-                allowNull,
+                // allowNull,
                 titleLabel,
             } = ele;
             assert(!mtoPickerDict[attr]);
@@ -309,7 +309,7 @@ export function analyzeDataUpsertTransformer<
                 get: (data: Record<string, any>) => data && data[attr],
                 getRenderValue: (data: Record<string, any>) => data && title(data[mtoAttr as string]),
                 label: label || t(`${refEntity as string}:name`),
-                required: !allowNull,
+                required: false, // 临时代码
             };
         }
     });

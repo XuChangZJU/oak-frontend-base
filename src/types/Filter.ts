@@ -1,4 +1,7 @@
-import { Dayjs } from 'dayjs'
+import { Dayjs } from 'dayjs';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { OakAbsRefAttrPickerDef } from './AbstractComponent';
 
 export type Ops =
     | '$gt'
@@ -20,10 +23,9 @@ export type ColSpanType = 1 | 2 | 3 | 4;
 
 export type ValueType = string | boolean | number | Array<Dayjs> | Dayjs;
 
-export type ColumnProps = {
-    attr: string;
+export type ColumnProps<ED extends BaseEntityDict & EntityDict, T extends keyof ED> = {
+    attr: keyof ED[T]['OpSchema'];
     label?: string;
-    type: 'text' | 'date' | 'picker' | 'select' | 'boolean';
     placeholder?: string;
     op?: Ops;
     selectProps?: {
@@ -42,26 +44,15 @@ export type ColumnProps = {
         range?: boolean;
         showTime?: boolean;
     };
-    refProps?: {
-        projection?: Record<string, any>;
-        filter?: Record<string, any>;
-        sorter?: Record<string, any>;
-        router?: {
-            pathname: string;
-            props?: Record<string, any>;
-            state?: Record<string, any>;
-        };
-        component?: React.ReactNode;
-        inputKey?: 'name' | string;
-    };
+    refProps?: Omit<OakAbsRefAttrPickerDef<ED, keyof ED>, 'label'>;
     transformFilter?: (
-        column: ColumnProps,
+        column: ColumnProps<ED, T>,
         value: ValueType
-    ) => Record<string, any>;
+    ) => ED[T]['Selection']['filter'];
     transformValue?: (
-        column: ColumnProps,
-        filter: Record<string, any>
-    ) => string;
+        column: ColumnProps<ED, T>,
+        filter: ED[T]['Selection']['filter']
+    ) => any;
     filterName?: string;
     colSpan?: ColSpanType;
 };
