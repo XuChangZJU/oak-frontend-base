@@ -31,32 +31,29 @@ export class Relation<
         this.relationDict = relationDict;
     }
 
-    getChildrenRelations<T extends keyof ED>(entity: T, userId: string, entityId: string) {
+    /**
+     * 这里本用户可以访问的relation应该用checker去逐个检查
+     * @param entity 
+     * @param userId 
+     * @param entityId 
+     * @returns 
+     */
+    getLegalRelations<T extends keyof ED>(entity: T, userId: string, entityId: string) {
+        const { relation } = this.cache.getSchema()[entity]!;
         const relationEntity = `user${firstLetterUpperCase(entity as string)}`;
-        const userRelations = this.cache.get(relationEntity as keyof ED, {
-            data: {
-                id: 1,
-                relation: 1,
-            },
-            filter: {
-                userId,
-                [`${entity as string}Id`]: entityId,
-            }
-        });
-        if (userRelations.length > 0) {
-            const relations = userRelations.map(ele => ele.relation) as NonNullable<ED[T]['Relation']>[];
-            const childrenRelations = [] as ED[T]['Relation'][];
-            relations.forEach(
-                (relation) => {
-                    if (this.relationDict[entity] && this.relationDict[entity]![relation]) {
-                        childrenRelations.push(...this.relationDict[entity]![relation]!);
-                    }
+        const legalRelations: ED[T]['Relation'][] = [];
+        relation!.forEach(
+            ele => {
+                const legal = this.cache.checkOperation(relationEntity as keyof ED, 'create', {
+                    relation: ele,
+                    [`${entity as string}Id`]: entityId,
+                }, undefined, ['logical', 'logicalRelation', 'relation']);
+                if (legal) {
+                    legalRelations.push(ele);
                 }
-            );
-            if (childrenRelations.length > 0) {
-                return uniq(childrenRelations);
             }
-        }
+        );
+        return legalRelations;
     }
 
 }

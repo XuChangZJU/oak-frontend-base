@@ -13,5 +13,12 @@ export declare class Relation<ED extends EntityDict & BaseEntityDict, Cxt extend
             [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
         };
     });
-    getChildrenRelations<T extends keyof ED>(entity: T, userId: string, entityId: string): ED[T]["Relation"][] | undefined;
+    /**
+     * 这里本用户可以访问的relation应该用checker去逐个检查
+     * @param entity
+     * @param userId
+     * @param entityId
+     * @returns
+     */
+    getLegalRelations<T extends keyof ED>(entity: T, userId: string, entityId: string): ED[T]["Relation"][];
 }
