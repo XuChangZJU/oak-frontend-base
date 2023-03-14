@@ -622,13 +622,19 @@ function translateListeners(listeners?: Record<string, (prev: Record<string, any
                 
                 const prev: Record<string, any> = {};
                 const next: Record<string, any> = {};
+                let dirty = false;
                 propNames.forEach(
                     (pn, idx) => {
                         prev[pn] = this.prevState[pn];
                         next[pn] = args[idx];
+                        if (prev[pn] !== next[pn]) {
+                            dirty = true;
+                        }
                     }
                 );
-                listeners[ln].call(this, prev, next);
+                if (dirty) {
+                    listeners[ln].call(this, prev, next);
+                }
             }
         }
 
