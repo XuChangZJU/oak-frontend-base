@@ -299,7 +299,7 @@ abstract class Node<
     protected getProjection(): ED[T]['Selection']['data'] | undefined {
         const projection = typeof this.projection === 'function' ? (this.projection as Function)() : (this.projection && cloneDeep(this.projection));
         // 根据actions和cascadeActions的定义，将对应的projection构建出来
-        const userId = this.cache.getCurrentUserId();
+        const userId = this.cache.getCurrentUserId(true);
         if (userId && projection) {
             if (this.actions) {
                 const actions = typeof this.actions === 'function' ? this.actions() : this.actions;

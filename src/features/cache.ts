@@ -53,9 +53,9 @@ export class Cache<
         return this.cacheStore.getSchema();
     }
 
-    getCurrentUserId() {
+    getCurrentUserId(allowUnloggedIn?: boolean) {
         const context = this.contextBuilder && this.contextBuilder();
-        return context?.getCurrentUserId();
+        return context?.getCurrentUserId(allowUnloggedIn);
     }
 
     async exec<K extends keyof AD>(
