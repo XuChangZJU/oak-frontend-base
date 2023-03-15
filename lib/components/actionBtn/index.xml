@@ -1,0 +1,31 @@
+<block wx:if="{{ newItems && newItems.length > 0 }}">
+    <view class="panel-container">
+        <block wx:if="{{ moreItems && moreItems.length > 0 }}">
+            <view id='more' class="more" catchtap="handleMoreClick">
+                更多
+            </view>
+            <popover id='popover'>
+                <block wx:for="{{ moreItems }}" wx:key="index">
+                    <popover-item hasline catchtap='handleClick' data-type="popover" data-item="{{ item }}">{{ item.text }}</popover-item>
+                </block>
+            </popover>
+        </block>
+
+
+        <view class="btn-container">
+
+            <block wx:for="{{ newItems }}" wx:key="index">
+                <l-button plain="{{true}}" shape="{{ item.buttonProps.shape || 'square'  }}" catchtap="handleClick" data-item="{{ item }}">
+      {{item.text}}
+                </l-button>
+            </block>
+        </view>
+    </view>
+
+
+
+
+    <l-dialog id="my-action-btn-dialog" bind:linconfirm="linconfirm" bind:lincancel="lincancel" />
+
+</block>
+

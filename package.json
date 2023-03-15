@@ -70,8 +70,12 @@
     },
     "scripts": {
         "clean": "rimraf lib/*",
-        "copy-files": "copyfiles -u 1 src/**/*.css src/**/wxs.js lib/",
-        "build": "tsc && npm run copy-files",
+        "copy-js": "copyfiles -u 1 src/**/*.js lib/",
+        "copy-svg": "copyfiles -u 1 src/**/*.svg lib/ & copyfiles -u 1 src/**/*.png lib/",
+        "copy-less": "copyfiles -u 1 src/**/*.wxss lib/",
+        "copy-wxs": "copyfiles -u 1 src/**/*.wxs lib/",
+        "copy-xml": "copyfiles -u 1 src/**/*.xml lib/ & copyfiles -u 1 src/**/*.wxml lib/",
+        "build": "tsc && npm run copy-js && npm run copy-less && npm run copy-wxs && npm run copy-svg && npm run copy-xml",
         "test": "ts-node ./test/test2.ts",
         "prepare": "rimraf node_modules/react & rimraf node_modules/react-dom & rimraf node_modules/react-router"
     },
