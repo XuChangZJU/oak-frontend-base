@@ -51,15 +51,15 @@ const oakBehavior = Behavior<
     DataOption,
     WechatMiniprogram.Component.PropertyOption,
     OakCommonComponentMethods<EDD, keyof EDD> &
-    OakListComponentMethods<EDD, keyof EDD> &
-    OakSingleComponentMethods<EDD, keyof EDD> & {
-        iAmThePage: () => boolean;
-        setState: (
-            data: Record<string, any>,
-            callback?: () => void
-        ) => void;
-        onLoad: (query: Record<string, any>) => Promise<void>;
-    },
+        OakListComponentMethods<EDD, keyof EDD> &
+        OakSingleComponentMethods<EDD, keyof EDD> & {
+            iAmThePage: () => boolean;
+            setState: (
+                data: Record<string, any>,
+                callback?: () => void
+            ) => void;
+            onLoad: (query: Record<string, any>) => Promise<void>;
+        },
     {
         prevState: Record<string, any>;
         state: Record<string, any>;
@@ -81,7 +81,7 @@ const oakBehavior = Behavior<
             FrontCxt,
             ADD & CommonAspectDict<EDD, Cxt>
         > &
-        FDD;
+            FDD;
         subscribed: Array<() => void>;
         oakOption: OakComponentOption<
             EDD,
@@ -196,9 +196,16 @@ const oakBehavior = Behavior<
             };
             if (properties) {
                 for (const key in properties) {
-                    const type2 = typeof properties[key] === 'object' ?
-                        (properties[key]! as WechatMiniprogram.Component.FullProperty<WechatMiniprogram.Component.ShortProperty>).type :
-                        (properties[key] as WechatMiniprogram.Component.ShortProperty);
+                    const type2 =
+                        typeof properties[key] === 'object'
+                            ? (
+                                  properties[
+                                      key
+                                  ]! as WechatMiniprogram.Component.FullProperty<WechatMiniprogram.Component.ShortProperty>
+                              ).type
+                            : (properties[
+                                  key
+                              ] as WechatMiniprogram.Component.ShortProperty);
                     if (query[key]) {
                         assignProps(query, key, type2!);
                     } else if (this.data) {
@@ -288,6 +295,10 @@ const oakBehavior = Behavior<
             return this.features.navigator.redirectTo(option, state);
         },
 
+        switchTab(option, state) {
+            return this.features.navigator.switchTab(option, state);
+        },
+
         clean(path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
@@ -309,7 +320,9 @@ const oakBehavior = Behavior<
         checkOperation(entity, action, data, filter, checkerTypes) {
             return this.features.cache.checkOperation(
                 entity,
-                action, data, filter,
+                action,
+                data,
+                filter,
                 checkerTypes
             );
         },
@@ -341,16 +354,17 @@ const oakBehavior = Behavior<
         },
 
         setFilters(filters, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-            this.features.runningTree.setNamedFilters(
-                path2,
-                filters
-            );
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            this.features.runningTree.setNamedFilters(path2, filters);
         },
 
         getFilters(path) {
             if (this.state.oakFullpath) {
-                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const path2 = path
+                    ? `${this.state.oakFullpath}.${path}`
+                    : this.state.oakFullpath;
                 const namedFilters = this.features.runningTree.getNamedFilters(
                     this.state.oakFullpath
                 );
@@ -365,7 +379,9 @@ const oakBehavior = Behavior<
 
         getFilterByName(name, path) {
             if (this.state.oakFullpath) {
-                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const path2 = path
+                    ? `${this.state.oakFullpath}.${path}`
+                    : this.state.oakFullpath;
                 const filter = this.features.runningTree.getNamedFilterByName(
                     path2,
                     name
@@ -380,7 +396,9 @@ const oakBehavior = Behavior<
         },
 
         addNamedFilter(namedFilter, refresh, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             this.features.runningTree.addNamedFilter(
                 path2,
                 namedFilter,
@@ -389,7 +407,9 @@ const oakBehavior = Behavior<
         },
 
         removeNamedFilter(namedFilter, refresh, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             this.features.runningTree.removeNamedFilter(
                 path2,
                 namedFilter,
@@ -398,7 +418,9 @@ const oakBehavior = Behavior<
         },
 
         removeNamedFilterByName(name, refresh, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             this.features.runningTree.removeNamedFilterByName(
                 path2,
                 name,
@@ -407,17 +429,19 @@ const oakBehavior = Behavior<
         },
 
         setNamedSorters(namedSorters, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-            this.features.runningTree.setNamedSorters(
-                path2,
-                namedSorters
-            );
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            this.features.runningTree.setNamedSorters(path2, namedSorters);
         },
 
         getSorters(path) {
             if (this.state.oakFullpath) {
-                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-                const namedSorters = this.features.runningTree.getNamedSorters(path2);
+                const path2 = path
+                    ? `${this.state.oakFullpath}.${path}`
+                    : this.state.oakFullpath;
+                const namedSorters =
+                    this.features.runningTree.getNamedSorters(path2);
                 const sorters = namedSorters
                     .map(({ sorter }) => {
                         if (typeof sorter === 'function') {
@@ -432,7 +456,9 @@ const oakBehavior = Behavior<
 
         getSorterByName(name, path) {
             if (this.state.oakFullpath) {
-                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const path2 = path
+                    ? `${this.state.oakFullpath}.${path}`
+                    : this.state.oakFullpath;
                 const sorter = this.features.runningTree.getNamedSorterByName(
                     path2,
                     name
@@ -447,12 +473,20 @@ const oakBehavior = Behavior<
         },
 
         addNamedSorter(namedSorter, refresh, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-            this.features.runningTree.addNamedSorter(path2, namedSorter, refresh);
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            this.features.runningTree.addNamedSorter(
+                path2,
+                namedSorter,
+                refresh
+            );
         },
 
         removeNamedSorter(namedSorter, refresh, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             this.features.runningTree.removeNamedSorter(
                 path2,
                 namedSorter,
@@ -461,38 +495,46 @@ const oakBehavior = Behavior<
         },
 
         removeNamedSorterByName(name, refresh, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-            this.features.runningTree.removeNamedSorterByName(path2, name, refresh);
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            this.features.runningTree.removeNamedSorterByName(
+                path2,
+                name,
+                refresh
+            );
         },
 
         getPagination(path) {
             if (this.state.oakFullpath) {
-                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+                const path2 = path
+                    ? `${this.state.oakFullpath}.${path}`
+                    : this.state.oakFullpath;
                 return this.features.runningTree.getPagination(path2);
             }
         },
 
         setPageSize(pageSize, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-            this.features.runningTree.setPageSize(
-                path2,
-                pageSize
-            );
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            this.features.runningTree.setPageSize(path2, pageSize);
         },
 
         setCurrentPage(currentPage, path) {
             assert(currentPage !== 0);
 
             if (this.state.oakEntity && this.state.oakFullpath) {
-                const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-                this.features.runningTree.setCurrentPage(
-                    path2,
-                    currentPage
-                );
+                const path2 = path
+                    ? `${this.state.oakFullpath}.${path}`
+                    : this.state.oakFullpath;
+                this.features.runningTree.setCurrentPage(path2, currentPage);
             }
         },
         addItem(data, beforeExecute, afterExecute, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             return this.features.runningTree.addItem(
                 path2,
                 data,
@@ -501,7 +543,9 @@ const oakBehavior = Behavior<
             );
         },
         updateItem(data, id, action, beforeExecute, afterExecute, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             return this.features.runningTree.updateItem(
                 path2,
                 data,
@@ -512,7 +556,9 @@ const oakBehavior = Behavior<
             );
         },
         removeItem(id, beforeExecute, afterExecute, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             return this.features.runningTree.removeItem(
                 path2,
                 id,
@@ -521,11 +567,10 @@ const oakBehavior = Behavior<
             );
         },
         recoverItem(id, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
-            return this.features.runningTree.recoverItem(
-                path2,
-                id
-            );
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            return this.features.runningTree.recoverItem(path2, id);
         },
         resetItem(id: string, path?: string) {
             const path2 = path
@@ -548,7 +593,9 @@ const oakBehavior = Behavior<
         },
 
         update(data, action, beforeExecute, afterExecute, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             return this.features.runningTree.update(
                 path2,
                 data,
@@ -558,7 +605,9 @@ const oakBehavior = Behavior<
             );
         },
         remove(beforeExecute, afterExecute, path) {
-            const path2 = path ? `${this.state.oakFullpath}.${path}` : this.state.oakFullpath;
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
             return this.features.runningTree.remove(
                 path2,
                 beforeExecute,
@@ -566,7 +615,10 @@ const oakBehavior = Behavior<
             );
         },
         async aggregate(aggregation) {
-            return await this.features.cache.aggregate(this.state.oakEntity, aggregation);
+            return await this.features.cache.aggregate(
+                this.state.oakEntity,
+                aggregation
+            );
         },
     },
     observers: {
@@ -578,7 +630,10 @@ const oakBehavior = Behavior<
         oakId(data) {
             if (data !== this.props.oakId) {
                 if (this.state.oakFullpath) {
-                    this.features.runningTree.setId(this.state.oakFullpath, data);
+                    this.features.runningTree.setId(
+                        this.state.oakFullpath,
+                        data
+                    );
                 }
             }
         },

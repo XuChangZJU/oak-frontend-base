@@ -22,6 +22,9 @@ export declare class Navigator extends Feature {
     redirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(options: {
         url: string;
     } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>): Promise<unknown>;
+    switchTab<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(options: {
+        url: string;
+    } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>): Promise<unknown>;
     navigateBack(delta?: number): Promise<unknown>;
     navigateBackOrRedirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(options: {
         url: string;

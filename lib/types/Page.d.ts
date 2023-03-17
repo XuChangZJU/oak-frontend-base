@@ -183,6 +183,7 @@ export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntity
     } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) => Promise<void>;
     navigateBack: (delta?: number) => Promise<void>;
     redirectTo: <T2 extends keyof ED>(options: Parameters<typeof wx.redirectTo>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) => Promise<void>;
+    switchTab: <T2 extends keyof ED>(options: Parameters<typeof wx.switchTab>[0] & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean) => Promise<void>;
     clean: (path?: string) => void;
     t(key: string, params?: object): string;
     execute: (action?: ED[T]['Action'], messageProps?: boolean | MessageProps) => Promise<void>;

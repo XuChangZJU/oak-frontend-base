@@ -97,6 +97,7 @@ export class Navigator extends Feature {
         });
     }
 
+    //  关闭当前页面，跳转到应用内的某个页面，但不允许跳转到tabBar页面。
     redirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
         options: { url: string } & OakNavigateToParameters<ED, T2>,
         state?: Record<string, any>
@@ -105,6 +106,22 @@ export class Navigator extends Feature {
         const url2 = this.constructUrl(url, Object.assign({}, rest, state));
         return new Promise((resolve, reject) => {
             wx.redirectTo({
+                url: url2,
+                success: () => resolve(undefined),
+                fail: (err) => reject(err),
+            });
+        });
+    }
+
+    //跳转到tabBar页面，并关闭其他所有非tabBar页面，用于跳转到主页。
+    switchTab<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>
+    ) {
+        const { url, ...rest } = options;
+        const url2 = this.constructUrl(url, Object.assign({}, rest, state));
+        return new Promise((resolve, reject) => {
+            wx.switchTab({
                 url: url2,
                 success: () => resolve(undefined),
                 fail: (err) => reject(err),
@@ -122,7 +139,10 @@ export class Navigator extends Feature {
         });
     }
 
-    navigateBackOrRedirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+    navigateBackOrRedirectTo<
+        ED extends EntityDict & BaseEntityDict,
+        T2 extends keyof ED
+    >(
         options: { url: string } & OakNavigateToParameters<ED, T2>,
         state?: Record<string, any>
     ) {

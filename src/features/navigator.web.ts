@@ -38,7 +38,10 @@ export class Navigator extends Feature {
         return this.namespace;
     }
 
-    async navigateTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+    async navigateTo<
+        ED extends EntityDict & BaseEntityDict,
+        T2 extends keyof ED
+    >(
         options: { url: string } & OakNavigateToParameters<ED, T2>,
         state?: Record<string, any>,
         disableNamespace?: boolean
@@ -47,11 +50,27 @@ export class Navigator extends Feature {
         this.history.push(url, state);
     }
 
-    async redirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+    async redirectTo<
+        ED extends EntityDict & BaseEntityDict,
+        T2 extends keyof ED
+    >(
         options: { url: string } & OakNavigateToParameters<ED, T2>,
         state?: Record<string, any>,
         disableNamespace?: boolean
     ) {
+        const url = this.getUrl(options, disableNamespace);
+        this.history.replace(url, state);
+    }
+
+    async switchTab<
+        ED extends EntityDict & BaseEntityDict,
+        T2 extends keyof ED
+    >(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>,
+        disableNamespace?: boolean
+    ) {
+        console.warn('浏览器无switchTab，为了适配小程序，小程序redirectTo无法跳到tabBar页面');
         const url = this.getUrl(options, disableNamespace);
         this.history.replace(url, state);
     }
@@ -95,7 +114,7 @@ export class Navigator extends Feature {
                 url2 = namespace + url2.substring(1, url2.length);
             } else {
                 url2 = namespace + (url2.startsWith('/') ? '' : '/') + url2;
-            }  
+            }
             // url2 =
             //     (this.namespace.startsWith('/') ? '' : '/') +
             //     (this.namespace === '/' ? '' : this.namespace) +
@@ -105,8 +124,11 @@ export class Navigator extends Feature {
 
         return url2;
     }
-    
-    navigateBackOrRedirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+
+    navigateBackOrRedirectTo<
+        ED extends EntityDict & BaseEntityDict,
+        T2 extends keyof ED
+    >(
         options: { url: string } & OakNavigateToParameters<ED, T2>,
         state?: Record<string, any>
     ) {

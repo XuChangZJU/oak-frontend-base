@@ -78,7 +78,7 @@ abstract class OakComponentBase<
         name: string,
         detail?: DetailType,
         options?: WechatMiniprogram.Component.TriggerEventOption
-    ) { }
+    ) {}
 
     sub(type: string, callback: Function) {
         this.features.eventBus.sub(type, callback);
@@ -169,6 +169,18 @@ abstract class OakComponentBase<
         disableNamespace?: boolean
     ) {
         return this.features.navigator.redirectTo(
+            options,
+            state,
+            disableNamespace
+        );
+    }
+
+    switchTab<T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>,
+        disableNamespace?: boolean
+    ) {
+        return this.features.navigator.switchTab(
             options,
             state,
             disableNamespace
@@ -323,11 +335,7 @@ abstract class OakComponentBase<
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.remove(
-            path2,
-            beforeExecute,
-            afterExecute
-        );
+        this.features.runningTree.remove(path2, beforeExecute, afterExecute);
     }
 
     clean(path?: string) {
@@ -355,12 +363,16 @@ abstract class OakComponentBase<
 
     checkOperation(
         entity: T,
-        action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'],
+        action: ED[T]['Action'],
+        data?: ED[T]['Update']['data'],
+        filter?: ED[T]['Update']['filter'],
         checkerTypes?: CheckerType[]
     ) {
         return this.features.cache.checkOperation(
             entity,
-            action, data, filter,
+            action,
+            data,
+            filter,
             checkerTypes
         );
     }
@@ -406,10 +418,7 @@ abstract class OakComponentBase<
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.setNamedFilters(
-            path2,
-            filters
-        );
+        this.features.runningTree.setNamedFilters(path2, filters);
     }
 
     getFilters(path?: string) {
@@ -417,7 +426,8 @@ abstract class OakComponentBase<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            const namedFilters = this.features.runningTree.getNamedFilters(path2);
+            const namedFilters =
+                this.features.runningTree.getNamedFilters(path2);
             const filters = namedFilters.map(({ filter }) => {
                 if (typeof filter === 'function') {
                     return (filter as Function)();
@@ -433,7 +443,10 @@ abstract class OakComponentBase<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            const filter = this.features.runningTree.getNamedFilterByName(path2, name);
+            const filter = this.features.runningTree.getNamedFilterByName(
+                path2,
+                name
+            );
             if (filter?.filter) {
                 if (typeof filter.filter === 'function') {
                     return (filter.filter as Function)();
@@ -443,18 +456,22 @@ abstract class OakComponentBase<
         }
     }
 
-    addNamedFilter(namedFilter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) {
+    addNamedFilter(
+        namedFilter: NamedFilterItem<ED, T>,
+        refresh?: boolean,
+        path?: string
+    ) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.addNamedFilter(
-            path2,
-            namedFilter,
-            refresh
-        );
+        this.features.runningTree.addNamedFilter(path2, namedFilter, refresh);
     }
 
-    removeNamedFilter(namedFilter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) {
+    removeNamedFilter(
+        namedFilter: NamedFilterItem<ED, T>,
+        refresh?: boolean,
+        path?: string
+    ) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
@@ -469,21 +486,14 @@ abstract class OakComponentBase<
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.removeNamedFilterByName(
-            path2,
-            name,
-            refresh
-        );
+        this.features.runningTree.removeNamedFilterByName(path2, name, refresh);
     }
 
     setNamedSorters(namedSorters: NamedSorterItem<ED, T>[], path?: string) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.setNamedSorters(
-            path2,
-            namedSorters
-        );
+        this.features.runningTree.setNamedSorters(path2, namedSorters);
     }
 
     getSorters(path?: string) {
@@ -491,7 +501,8 @@ abstract class OakComponentBase<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            const namedSorters = this.features.runningTree.getNamedSorters(path2);
+            const namedSorters =
+                this.features.runningTree.getNamedSorters(path2);
             const sorters = namedSorters
                 .map(({ sorter }) => {
                     if (typeof sorter === 'function') {
@@ -509,7 +520,10 @@ abstract class OakComponentBase<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            const sorter = this.features.runningTree.getNamedSorterByName(path2, name);
+            const sorter = this.features.runningTree.getNamedSorterByName(
+                path2,
+                name
+            );
             if (sorter?.sorter) {
                 if (typeof sorter.sorter === 'function') {
                     return (sorter.sorter as Function)();
@@ -519,18 +533,22 @@ abstract class OakComponentBase<
         }
     }
 
-    addNamedSorter(namedSorter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) {
+    addNamedSorter(
+        namedSorter: NamedSorterItem<ED, T>,
+        refresh?: boolean,
+        path?: string
+    ) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.addNamedSorter(
-            path2,
-            namedSorter,
-            refresh
-        );
+        this.features.runningTree.addNamedSorter(path2, namedSorter, refresh);
     }
 
-    removeNamedSorter(namedSorter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) {
+    removeNamedSorter(
+        namedSorter: NamedSorterItem<ED, T>,
+        refresh?: boolean,
+        path?: string
+    ) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
@@ -545,11 +563,7 @@ abstract class OakComponentBase<
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.removeNamedSorterByName(
-            path2,
-            name,
-            refresh
-        );
+        this.features.runningTree.removeNamedSorterByName(path2, name, refresh);
     }
 
     getPagination(path?: string) {
@@ -577,10 +591,7 @@ abstract class OakComponentBase<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            this.features.runningTree.setCurrentPage(
-                path2,
-                currentPage
-            );
+            this.features.runningTree.setCurrentPage(path2, currentPage);
         }
     }
 }
