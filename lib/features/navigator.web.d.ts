@@ -28,5 +28,6 @@ export declare class Navigator extends Feature {
     private getUrl;
     navigateBackOrRedirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(options: {
         url: string;
+        isTabBar?: boolean;
     } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>): void;
 }

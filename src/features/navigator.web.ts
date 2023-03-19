@@ -70,7 +70,9 @@ export class Navigator extends Feature {
         state?: Record<string, any>,
         disableNamespace?: boolean
     ) {
-        console.warn('浏览器无switchTab，为了适配小程序，小程序redirectTo无法跳到tabBar页面');
+        console.warn(
+            '浏览器无switchTab，为了适配小程序，小程序redirectTo无法跳到tabBar页面'
+        );
         const url = this.getUrl(options, disableNamespace);
         this.history.replace(url, state);
     }
@@ -105,9 +107,6 @@ export class Navigator extends Feature {
             const urls_0 = urls[0] || '';
             if (namespace === '/') {
                 url2 = url2;
-                // if (urls_0 === '/') {
-                //     url2 = url2.substring(1, url2.length);
-                // }
             } else if (namespace !== '/' && urls_0 === '') {
                 url2 = namespace + url2;
             } else if (namespace !== '/' && urls_0 === '/') {
@@ -115,11 +114,6 @@ export class Navigator extends Feature {
             } else {
                 url2 = namespace + (url2.startsWith('/') ? '' : '/') + url2;
             }
-            // url2 =
-            //     (this.namespace.startsWith('/') ? '' : '/') +
-            //     (this.namespace === '/' ? '' : this.namespace) +
-            //     (url2.startsWith('/') ? '' : '/') +
-            //     url2;
         }
 
         return url2;
@@ -129,7 +123,10 @@ export class Navigator extends Feature {
         ED extends EntityDict & BaseEntityDict,
         T2 extends keyof ED
     >(
-        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        options: { url: string; isTabBar?: boolean } & OakNavigateToParameters<
+            ED,
+            T2
+        >,
         state?: Record<string, any>
     ) {
         console.error('浏览器暂无法获得history堆栈');
