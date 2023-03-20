@@ -54,9 +54,18 @@ export default OakComponent({
         };
     },
     listeners: {
-        data() {
-            this.reRender();
+        data(prev, next) {
+            if (prev.data !== next.data) {
+                this.reRender();
+                console.log(123);
+            }
         },
+        // data() {
+        //     this.reRender();
+        // },
+        // attributes() {
+        //     this.reRender();
+        // },
     },
     data: {
         transformer: (() => []) as DataTransformer,
@@ -83,12 +92,15 @@ export default OakComponent({
             }
             return this.t(`${entity}:attr.${attr}`);
         },
-        // preview(event: { currentTarget: { dataset: { src: string } } }) {
-        //     let currentUrl = event.currentTarget.dataset.src;
-        //     wx.previewImage({
-        //         current: currentUrl, // 当前显示图片的http链接
-        //         urls: this.state.image as string[], // 需要预览的图片http链接列表
-        //     });
-        // },
+        preview(event: {
+            currentTarget: { dataset: { src: string; list: string[] } };
+        }) {
+            let currentUrl = event.currentTarget.dataset.src;
+            let urlList = event.currentTarget.dataset.list;
+            wx.previewImage({
+                current: currentUrl, // 当前显示图片的http链接
+                urls: urlList, // 需要预览的图片http链接列表
+            });
+        },
     },
 });

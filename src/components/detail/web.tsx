@@ -98,7 +98,8 @@ export default function Render(
                             colorDict![entity]![ele.attr]![String(ele.value)]
                         }
                     >
-                        {ele.value}
+                        {/* {ele.value} */}
+                        {t(`${entity}:v.${ele.attr}.${ele.value}`)}
                     </Tag>
                 ),
             });
