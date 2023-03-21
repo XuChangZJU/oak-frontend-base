@@ -10,7 +10,7 @@ export default OakComponent({
             type: Array,
             value: [],
         },
-        onClick: Object,
+        onAction: Object,
         schema: Object,
     },
     data: {

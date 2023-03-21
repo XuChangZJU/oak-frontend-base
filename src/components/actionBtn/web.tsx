@@ -6,15 +6,14 @@ import {
 } from 'antd';
 import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { OakActionBtnProps } from '../../types/AbstractComponent';
+import { ED } from '../../types/AbstractComponent';
 
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import Style from './web.module.less';
 import { resolvePath } from '../../utils/usefulFn';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
+import { CascadeActionProps } from '../../types/AbstractComponent';
 const { confirm } = Modal;
-
-type ED = EntityDict & BaseEntityDict;
 
 type Item = {
     label: string;
@@ -76,7 +75,7 @@ export default function Render(
             entity: string;
             actions: ActionDef<ED, keyof EntityDict>[];
             cascadeActions: CascadeActionDef;
-            onClick: (action: string) => void;
+            onAction: (action?: string, cascadeAction?: CascadeActionProps) => void;
         },
         {
         }
@@ -87,7 +86,7 @@ export default function Render(
     const {
         schema,
         actions,
-        onClick,
+        onAction,
         entity,
         cascadeActions,
     } = data;
@@ -102,12 +101,12 @@ export default function Render(
                                 type="a"
                                 onClick={() => {
                                     const action = typeof ele !== 'string' ? ele.action : ele;
-                                    onClick(action);
+                                    onAction(action, undefined);
                                 }}
                             />
                         );
                     })}
-                    {Object.keys(cascadeActions).map((key, index: number) => {
+                    {cascadeActions && Object.keys(cascadeActions).map((key, index: number) => {
                         const cascadeActionArr = cascadeActions[key];
                         if (cascadeActionArr && cascadeActionArr.length) {
                             cascadeActionArr.map((ele) => (
@@ -116,7 +115,7 @@ export default function Render(
                                     type="a"
                                     onClick={() => {
                                         const action = typeof ele !== 'string' ? ele.action : ele;
-                                        onClick(action);
+                                        onAction(undefined, {path: key, action});
                                     }}
                                 />
                             ))

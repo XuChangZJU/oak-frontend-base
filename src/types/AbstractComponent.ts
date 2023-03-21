@@ -84,6 +84,7 @@ import {
     DataType,
     DataTypeParams,
 } from 'oak-domain/lib/types/schema/DataTypes';
+import { ActionDef } from './Page';
 export type AttrRender = {
     label: string;
     value: any;
@@ -127,3 +128,9 @@ export type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict> = (
 export type DataConverter = (data: any[]) => Record<string, any>;
 
 export type ED = BaseEntityDict & EntityDict;
+
+export type CascadeActionProps = {
+    path: string,
+    action: string,
+}
+export type onActionFnDef = (row: any, action: string, cascadeAction?: CascadeActionProps) => void

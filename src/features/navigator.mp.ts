@@ -143,12 +143,16 @@ export class Navigator extends Feature {
         ED extends EntityDict & BaseEntityDict,
         T2 extends keyof ED
     >(
-        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        options: { url: string; isTabBar?: boolean } & OakNavigateToParameters<ED, T2>,
         state?: Record<string, any>
     ) {
         const pages = getCurrentPages();
         if (pages.length > 1) {
             return this.navigateBack();
+        }
+        const isTabBar = options?.isTabBar;
+        if (isTabBar) {
+            return this.switchTab(options, state);
         }
         return this.redirectTo(options, state);
     }
