@@ -96,7 +96,7 @@ function translateAuthItemToProjection<ED extends EntityDict & BaseEntityDict>(
             }
         }
         else {
-            const proj2 = translateIter(rel === 2 ? attr: rel as keyof ED, iter + 1);
+            const proj2 = translateIter(rel === 2 ? attr : rel as keyof ED, iter + 1);
             return {
                 id: 1,
                 [attr]: proj2,
@@ -112,11 +112,11 @@ function translateAuthItemToProjection<ED extends EntityDict & BaseEntityDict>(
         // 不在相关路径上的关系在这里不查
         return {};
     }
-        
+
     return translateIter(entity, 0);
 }
 
-function makeRelationRefProjection<ED extends EntityDict & BaseEntityDict, T extends keyof ED> (
+function makeRelationRefProjection<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
     schema: StorageSchema<ED>, authDict: AuthDefDict<ED>,
     entity: T, action: ED[T]['Action'], userId: string, prefix?: string) {
     const proj: Partial<ED[T]['Selection']['data']> = {};
@@ -146,7 +146,7 @@ function makeRelationRefProjection<ED extends EntityDict & BaseEntityDict, T ext
             const proj2 = translateAuthItemToProjection(schema, entity, actionDef, userId);
             merge(proj, proj2);
         }
-        
+
     }
     return proj;
 }
@@ -218,43 +218,39 @@ abstract class Node<
     /**
      * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
      */
-    getActiveModies(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): BaseEntityDict['modi']['OpSchema'][] | undefined {
-        const childPath = this.getChildPath(child);
-        if (childPath.includes(':next')) {
-            const { modiIds } = this;
-            // 如果是需要modi的路径，在这里应该就可以返回了，目前应该不存在modi嵌套modi
-            if (modiIds && modiIds.length > 0) {
-                const modies = this.cache.get('modi', {
-                    data: {
-                        id: 1,
-                        targetEntity: 1,
-                        entity: 1,
-                        entityId: 1,
-                        iState: 1,
-                        action: 1,
-                        data: 1,
-                        filter: 1,
+    getActiveModiOperations(): Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
+    }> | undefined {
+        const { modiIds } = this;
+        if (modiIds && modiIds.length > 0) {
+            const modies = this.cache.get('modi', {
+                data: {
+                    id: 1,
+                    targetEntity: 1,
+                    entity: 1,
+                    entityId: 1,
+                    iState: 1,
+                    action: 1,
+                    data: 1,
+                    filter: 1,
+                },
+                filter: {
+                    id: {
+                        $in: modiIds,
                     },
-                    filter: {
-                        id: {
-                            $in: modiIds,
-                        },
-                        iState: 'active',
-                    }
-                });
-                return modies as BaseEntityDict['modi']['OpSchema'][];
-            }
-            return [];
+                    iState: 'active',
+                }
+            });
+            assert(modies);
+            return createOperationsFromModies(modies as ED['modi']['OpSchema'][]);
         }
-        const { toModi } = this.schema[this.entity];
-        if (toModi) {
-            // 如果这就是一个toModi的对象，则不用再向上查找了
-            return;
-        }
+        // 如果当前层没有，向上查找。只要有就返回，目前应该不存在多层modi
         if (this.parent) {
-            return this.parent.getActiveModies(this);
+            if (this.parent instanceof ListNode || this.parent instanceof SingleNode) {
+                return this.parent.getActiveModiOperations();
+            }
         }
-        return;
     }
 
     setDirty() {
@@ -309,7 +305,7 @@ abstract class Node<
                     merge(projection, proj);
                 }
             }
-            
+
             if (this.cascadeActions) {
                 const cas = this.cascadeActions();
                 for (const attr in cas) {
@@ -319,7 +315,7 @@ abstract class Node<
                         const action = typeof a === 'object' ? a.action : a;
                         if (rel[1]) {
                             const proj = makeRelationRefProjection(this.schema, this.authDict, rel[0], action, this.entity as string);
-                            merge(projection, proj[rel[1].slice(0, rel[1].length -2)]);
+                            merge(projection, proj[rel[1].slice(0, rel[1].length - 2)]);
                         }
                         else {
                             const proj = makeRelationRefProjection(this.schema, this.authDict, rel[0], action, this.entity as string);
@@ -330,7 +326,7 @@ abstract class Node<
                 }
             }
         }
-        
+
         return projection;
     }
 
@@ -358,324 +354,6 @@ const DEFAULT_PAGINATION: Pagination = {
     pageSize: 20,
     append: true,
     more: true,
-}
-
-function mergeOperationData<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
-    entity: T,
-    schema: StorageSchema<ED>,
-    from: ED[T]['Operation']['data'],
-    into: ED[T]['Operation']['data']
-) {
-    for (const attr in from) {
-        if (!into[attr]) {
-            into[attr] = from[attr];
-        }
-        else {
-            const rel = judgeRelation(schema, entity, attr);
-            if (rel === 2) {
-                /**
-                 * 多对一的关系，这里不可能from是remove吧
-                 */
-                const result = mergeOperationOper(attr, schema, (from[attr] as any), (into[attr] as any));
-                assert(!result);
-            }
-            else if (typeof rel === 'string') {
-                const result = mergeOperationOper(rel, schema, (from[attr] as any), (into[attr] as any));
-                assert(!result);
-            }
-            else if (rel instanceof Array && !attr.endsWith('$$aggr')) {
-                /**
-                 * 两个一对多的list要合并，直接合并list就可以了，前端设计上应该不可能出现两个一对多的list相交的case
-                 * $extraFile$XXX:1     $extraFile$XXX:2
-                 */
-                // (into[attr] as unknown as ED[keyof ED]['Operation'][]).push(...(from[attr] as unknown as ED[keyof ED]['Operation'][]));
-                const [entity2] = rel;
-                const mergeInner = (item: ED[keyof ED]['Operation']) => {
-                    const {
-                        index,
-                        eliminated,
-                    } = findOperationToMerge(entity2, schema, item, into[attr] as any);
-                    if (!index) {
-                        (into[attr] as any).push(item);
-                    }
-                    else {
-                        const result2 = mergeOperationOper(entity2, schema, item, index);
-                        if (result2) {
-                            pull(into[attr] as any, index);
-                        }
-                    }
-
-                    for (const eli of eliminated) {
-                        pull((into[attr] as unknown as ED[keyof ED]['Operation'][]), eli);
-                    }
-                };
-                if (from[attr] instanceof Array) {
-                    for (const operation of from[attr] as unknown as ED[keyof ED]['Operation'][]) {
-                        mergeInner(operation);
-                    }
-                }
-                else {
-                    assert(false);      // 前台感觉是跑不出这个case的
-                    mergeInner(from[attr] as unknown as ED[keyof ED]['Operation']);
-                }
-            }
-            else {
-                into[attr] = from[attr];
-            }
-        }
-    }
-}
-
-/**
- * 确定两个Operation要merge
- * @param entity 
- * @param schema 
- * @param from 
- * @param into 
- */
-function mergeOperationOper<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
-    entity: T,
-    schema: StorageSchema<ED>,
-    from: Omit<ED[T]['Operation'], 'id'>,
-    into: ED[T]['Operation']
-) {
-    const { action, data, filter } = from;
-    const { data: dataTo } = into;
-    if (action === 'create') {
-        assert(into.action === 'create');
-        /**
-         * 前端的页面设计，如果要merge两个create动作，要么都是single，要么都是array
-         * 不应该出现array和single并存的case
-         */
-        if (dataTo instanceof Array) {
-            assert(data instanceof Array);
-            data.forEach(
-                ele => assert(ele.id)
-            );
-            dataTo.push(...data);
-        }
-        else {
-            assert(!(data instanceof Array));
-            mergeOperationData(entity, schema, data, dataTo);
-        }
-        return false;
-    }
-    else if (action === 'remove') {
-        assert(into.action === 'create');
-        // create和remove动作相抵消
-        const { data: operData } = into;
-        if (operData instanceof Array) {
-            for (const operData2 of operData) {
-                if (operData2.id === filter!.id) {
-                    if (operData.length > 0) {
-                        Object.assign(into, {
-                            data: pull(operData, operData2)
-                        });
-                        return false;
-                    }
-                    else {
-                        return true;
-                    }
-                }
-            }
-        }
-        else {
-            // 当前action都是update
-            if (operData.id === filter!.id) {
-                return true;
-            }
-        }
-    }
-    else {
-        assert(into.action !== 'remove');
-        if (into.action === 'create') {
-            const { data: operData } = into;
-            if (operData instanceof Array) {
-                for (const operData2 of operData) {
-                    if (operData2.id === filter!.id) {
-                        mergeOperationData(entity, schema, data, operData2);
-                        return false;
-                    }
-                }
-            }
-            else {
-                if (operData.id === filter!.id) {
-                    mergeOperationData(entity, schema, data, operData);
-                    return false;
-                }
-            }
-        }
-        else {
-            mergeOperationData(entity, schema, data, dataTo);
-            if (action !== 'update') {
-                assert(into.action === 'update' || into.action === action);
-                if (process.env.NODE_ENV === 'development') {
-                    console.warn(`合并了${action}到update动作，请确认合理性`);
-                }
-                into.action = action;
-            }
-            return false;
-        }
-    }
-
-    assert(false); // merge必须成功
-}
-
-function mergeOperationTrigger<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
-    from: Operation<ED, T, true>,
-    to: Operation<ED, T>
-) {
-    const { beforeExecute: be1, afterExecute: ae1 } = from;
-
-    if (be1) {
-        assert(!to.beforeExecute);
-        to.beforeExecute = be1;
-    }
-    if (ae1) {
-        assert(!to.afterExecute);
-        to.afterExecute = ae1;
-    }
-}
-
-function findOperationToMerge<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
-    entity: T,
-    schema: StorageSchema<ED>,
-    from: Omit<ED[T]['Operation'], 'id'>,
-    existed: ED[T]['Operation'][]
-): {
-    index: ED[T]['Operation'] | undefined;
-    eliminated: ED[T]['Operation'][];
-} {
-    const { action, filter } = from;
-    const eliminated: ED[T]['Operation'][] = [];
-    if (action === 'create') {
-        // action不可能和当前已经的某个动作发生merge
-        return {
-            index: undefined,
-            eliminated,
-        };
-    }
-    for (const toOperation of existed) {
-        if (action === toOperation.action) {
-            switch (action) {
-                case 'create': {
-                    // 两个create不可能merge，如果是many to one，则不用走到这里判断
-                    break;
-                }
-                default: {
-                    // update/remove只合并filter完全相同的项
-                    const { filter: filter2, data: data2 } = toOperation;
-                    assert(filter && filter2, '更新动作目前应该都有谓词条件');
-                    if (same(entity, schema, filter, filter2)) {
-                        return {
-                            index: toOperation,
-                            eliminated,
-                        };
-                    }
-                }
-            }
-        }
-        else {
-            if (action === 'update' && toOperation.action === 'create') {
-                // 更新刚create的数据，直接加在上面
-                const { data: operData } = toOperation;
-                if (operData instanceof Array) {
-                    for (const operData2 of operData) {
-                        if (operData2.id === filter!.id) {
-                            return {
-                                index: toOperation,
-                                eliminated,
-                            };
-                        }
-                    }
-                }
-                else {
-                    if (operData.id === filter!.id) {
-                        return {
-                            index: toOperation,
-                            eliminated,
-                        };
-                    }
-                }
-            }
-            else if (action === 'remove') {
-                if (toOperation.action === 'create') {
-                    // create和remove动作相抵消
-                    const { data: operData } = toOperation;
-                    if (operData instanceof Array) {
-                        for (const operData2 of operData) {
-                            if (operData2.id === filter!.id) {
-                                return {
-                                    index: toOperation,
-                                    eliminated,
-                                };
-                            }
-                        }
-                    }
-                    else {
-                        if (operData.id === filter!.id) {
-                            return {
-                                index: toOperation,
-                                eliminated,
-                            };
-                        }
-                    }
-                }
-                else {
-                    // update，此时把相同id的update直接去掉
-                    const { filter: operFilter } = toOperation;
-                    if (filter?.id === operFilter?.id) {
-                        eliminated.push(toOperation);
-                    }
-                }
-            }
-        }
-    }
-    // 到这儿说明merge不了
-    return {
-        index: undefined,
-        eliminated,
-    };
-}
-/**
- * 尝试将operation行为merge到现有的operation中去
- * @param operation 
- * @param existed 
- * @return 是否merge成功
- */
-function tryMergeOperationToExisted<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
-    entity: T,
-    schema: StorageSchema<ED>,
-    operation: Operation<ED, T, true>,
-    existed: Operation<ED, T>[]
-) {
-    const { oper } = operation;
-    // 有动作的operation是不能合并的
-    const existedOperations = existed.filter(ele => !ele.afterExecute && !ele.beforeExecute).map(ele => ele.oper);
-    const {
-        index,
-        eliminated,
-    } = findOperationToMerge(entity, schema, oper, existedOperations);
-
-    if (index) {
-        // 可以合并
-        const origin = existed.find(ele => ele.oper === index);
-        assert(origin);
-        const result = mergeOperationOper(entity, schema, oper, index);
-        if (result) {
-            // 说明相互抵消了
-            pull(existed, origin);
-        }
-        else {
-            mergeOperationTrigger(operation, origin);
-        }
-    }
-    for (const eli of eliminated) {
-        const origin = existed.find(ele => ele.oper === eli);
-        pull(existed, origin);
-    }
-
-    return !!index;
 }
 
 class ListNode<
@@ -793,15 +471,16 @@ class ListNode<
          */
         if (needRefresh) {
             const { filter, sorter } = this.constructSelection(true);
-            const result = this.cache.get(this.getEntity(), {
-                data: {
-                    id: 1,
-                },
-                filter,
-                sorter,
-            });
-            this.ids = result.map((ele) => ele.id) as unknown as string[];
-            // 此时有可能原来的children上的id发生了变化
+            if (filter) {
+                const result = this.cache.get(this.getEntity(), {
+                    data: {
+                        id: 1,
+                    },
+                    filter,
+                    sorter,
+                });
+                this.ids = result.map((ele) => ele.id) as unknown as string[];
+            }
         }
     }
 
@@ -999,74 +678,37 @@ class ListNode<
         }
     }
 
-    getFreshValue(): Array<Partial<ED[T]['Schema']>> {
-        // 在createOperation中的数据也是要返回的
-        const createdIds: string[] = [];
-        for (const k in this.updates) {
-            const { operation } = this.updates[k];
-            if (operation.action === 'create') {
-                const { data } = operation;
-                assert(!(data instanceof Array));
-                createdIds.push(data.id!);
+    getFreshValue(context: FrontCxt): Array<Partial<ED[T]['Schema']>> {
+        /**
+         * 如果当前结点有父结点，根据filter去取数据（一对多的cascade取数据，父结点上可能有本结点相关的create动作）
+         * 如果当前结点没有父结点，根据ids和自己所属的create去取数据
+         */
+        const { data, sorter, filter } = this.constructSelection(true);
+        const parent = this.getParent();
+        let filter2: ED[T]['Selection']['filter'];
+        if (!(parent instanceof SingleNode)) {
+            const { ids, updates } = this;
+            let ids2 = ids ? [...ids] : [];
+            for (const u in updates) {
+                if (updates[u].operation.action === 'create') {
+                    ids2.push(updates[u].operation.data.id);
+                }
             }
+            filter2 = ids2.length > 0 ? {
+                id: {
+                    $in: ids2,
+                },
+            } : undefined;
         }
-
-        // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
-        const modies = this.parent && this.parent.getActiveModies(this);
-        const operations = modies
-            ? (createOperationsFromModies(modies) as Array<{
-                entity: keyof ED;
-                operation: ED[keyof ED]['Operation'];
-            }>)
-            : [];
-
-        // 所有的子结点将数据应用到最新
-        for (const id in this.children) {
-            const childOperation = this.children[id].composeOperations();
-            if (childOperation) {
-                operations.push(...childOperation);
-            }
+        else {
+            filter2 = filter;
         }
-
-        // 如果没有子结点但是有相关更新，这里也要应用上
-        Object.keys(this.updates).forEach((id) => {
-            if (!this.children[id]) {
-                operations.push({
-                    entity: this.entity,
-                    operation: this.updates[id].operation,
-                });
-            }
-        });
-
-        // 如果有modi，则不能以ids作为当前对象，需要向上层获得filter应用了modi之后再找过
-        const selection = this.constructSelection(true);
-        if (selection.validParentFilter || createdIds.length > 0) {
-            if (undefined === modies) {
-                Object.assign(selection, {
-                    filter: {
-                        id: {
-                            $in: createdIds.concat(this.ids || []),
-                        },
-                    },
-                });
-            } else if (createdIds.length > 0) {
-                const { filter } = selection;
-                Object.assign(selection, {
-                    filter: combineFilters(
-                        [filter, { id: { $in: createdIds } }].filter(
-                            (ele) => !!ele
-                        ),
-                        true
-                    ),
-                });
-            }
-
-            const result = this.cache.tryRedoOperationsThenSelect(
-                this.entity,
-                selection,
-                operations,
-                this.isLoading() || this.isLoadingMore()
-            );
+        if (filter2) {
+            const result = this.cache.get(this.entity, {
+                data,
+                filter: filter2,
+                sorter,
+            }, undefined, context);
             return result;
         }
         return [];
@@ -1230,29 +872,25 @@ class ListNode<
     }
 
     composeOperations():
-        | Array<{ entity: T; operation: ED[T]['Operation'] }>
+        | Array<{ entity: keyof ED; operation: ED[keyof ED]['Operation'] }>
         | undefined {
         if (!this.dirty) {
             return;
         }
 
-        // 目前只支持updateItem，还不支持在list上更新
-        const operations: Array<{ entity: T; operation: ED[T]['Operation'] }> =
-            [];
+        const operations: Array<{ entity: keyof ED; operation: ED[keyof ED]['Operation'] }> = [];
+
+        for (const id in this.updates) {
+            operations.push({
+                entity: this.entity,
+                operation: cloneDeep(this.updates[id].operation),
+            });
+        }
+
         for (const id in this.children) {
             const childOperation = this.children[id].composeOperations();
             if (childOperation) {
                 operations.push(...childOperation);
-            }
-        }
-
-        // 如果没有创建相应的子结点，updates的更新也应该处理（临时代码，现在子结点会把父LIST上的create带走）
-        for (const id in this.updates) {
-            if (!this.children[id] || !this.children[id].isDirty() || this.updates[id].operation.action !== 'create') {
-                operations.push({
-                    entity: this.entity,
-                    operation: cloneDeep(this.updates[id].operation),
-                });
             }
         }
 
@@ -1269,8 +907,7 @@ class ListNode<
         return projection;
     }
 
-    private constructFilters(withParent?: true) {
-        let validParentFilter = true;
+    private constructFilters(context?: FrontCxt, withParent?: boolean) {
         const { filters: ownFilters } = this;
         const filters = ownFilters.map((ele) => {
             const { filter } = ele;
@@ -1282,20 +919,17 @@ class ListNode<
 
         if (withParent && this.parent) {
             if (this.parent instanceof SingleNode) {
-                const filterOfParent = this.parent.getParentFilter<T>(this);
+                const filterOfParent = this.parent.getParentFilter<T>(this, context);
                 if (filterOfParent) {
                     filters.push(filterOfParent as any);
                 } else {
                     // 说明有父结点但是却没有相应的约束，此时不应该去refresh(是一个insert动作)
-                    validParentFilter = false;
+                    return undefined;
                 }
             }
         }
 
-        return {
-            filters,
-            validParentFilter,
-        };
+        return filters;
     }
 
     constructSelection(withParent?: true) {
@@ -1312,16 +946,14 @@ class ListNode<
             })
             .filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
 
-        const { validParentFilter, filters } = this.constructFilters(withParent);
+        const filters = this.constructFilters(undefined, withParent);
 
-        const filters2 = filters.filter((ele) => !!ele);
-        const filter =
-            filters2.length > 0 ? combineFilters<ED, T>(filters2) : {};
+        const filters2 = filters?.filter((ele) => !!ele);
+        const filter = filters2 ? combineFilters<ED, T>(filters2) : undefined;
         return {
             data,
             filter,
             sorter: sorterArr,
-            validParentFilter,
         };
     }
 
@@ -1334,10 +966,9 @@ class ListNode<
             data: projection,
             filter,
             sorter,
-            validParentFilter,
         } = this.constructSelection(true);
-        // 若不存在有效的父过滤条件（父有值或本结点就是顶层结点），则不能刷新
-        if (validParentFilter && projection) {
+        // 若不存在有效的过滤条件（若有父结点但却为空时），则不能刷新
+        if (filter && projection) {
             try {
                 this.setLoading(true);
                 if (append) {
@@ -1424,8 +1055,8 @@ class ListNode<
 
     // 查看这个list上所有数据必须遵守的等值限制
     getIntrinsticFilters() {
-        const { filters } = this.constructFilters();
-        return combineFilters(filters);
+        const filters = this.constructFilters();
+        return combineFilters(filters || []);
     }
 }
 
@@ -1434,7 +1065,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
-    private id?: string;
+    private id: string;
     private children: {
         [K: string]: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     };
@@ -1455,37 +1086,14 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }) {
         super(entity, schema, cache, authDict, projection, parent, path, actions, cascadeActions);
         this.children = {};
-        this.id = id;
 
-        if (this.isCreatedByParent()) {
-            // 这样说明是父结点（ListNode）创建的本结点，置dirty就行了
-            this.setDirty();
-        }
-        else if (!this.getFilter()) {
-            // 没有任何的filter，是创建动作
+        if (!id) {
+            // 不传id是创建动作
             this.create({});
+            this.id = this.operation!.operation.data.id;
         }
-    }
-
-    private isCreatedByParent() {
-        const parent = this.getParent();
-        if (parent instanceof ListNode) {
-            const operation = parent.getChildOperation(this);
-            if (operation?.action === 'create') {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private tryGetParentFilter() {
-        const parent = this.getParent();
-        if (parent instanceof SingleNode) {
-            const filter = parent.getParentFilter<T>(this);
-            return filter;
-        }
-        else if (parent instanceof ListNode) {
-            return parent.getParentFilter(this);
+        else {
+            this.id = id;
         }
     }
 
@@ -1539,20 +1147,19 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             throw new Error('结点没有clean之前是不能setId的');
         }
         this.id = id;
+        this.operation = undefined;
+        this.publish();
     }
 
     unsetId() {
-        this.id = undefined;
+        this.create({});
+        this.id = this.operation!.operation.data.id;
         this.publish();
     }
 
     // 最好用getFreshValue取值
     getId() {
-        if (this.id) {
-            return this.id;
-        }
-        const value = this.getFreshValue(true);
-        return value?.id;
+        return this.id;
     }
 
     getChildren() {
@@ -1568,34 +1175,22 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         unset(this.children, path);
     }
 
-    getFreshValue(noCascade?: boolean): Partial<ED[T]['Schema']> | undefined {
+    getFreshValue(context?: FrontCxt): Partial<ED[T]['Schema']> | undefined {
         const projection = this.getProjection(false);
-
-        // 如果本结点是在modi路径上，需要将modi更新之后再得到后项
-        const modies = this.parent && this.parent.getActiveModies(this);
-        const operations = modies ? createOperationsFromModies(modies) as Array<{
-            entity: keyof ED;
-            operation: ED[keyof ED]['Operation'];
-        }> : [];
-        const filter = this.getFilter();
-        if (filter && projection) {
-            //  这里必须用if，upsert提交后就会跑到没有filter的case
-            const operations2 = this.composeOperations(noCascade);
-
-            if (operations2) {
-                operations.push(...operations2);
-            }
-
-            const result = this.cache.tryRedoOperationsThenSelect(this.entity, {
+        const { id } = this;
+        if (projection) {
+            const result = this.cache.get(this.entity, {
                 data: projection,
-                filter,
-            }, operations, this.isLoading());
+                filter: {
+                    id,
+                },
+            }, undefined, context);
             return result[0];
         }
     }
 
     isCreation() {
-        const operations = this.composeOperations(true);
+        const operations = this.composeOperations();
         // 如果是create，一定在第一个
         return !!(operations && operations[0]?.operation.action === 'create');
     }
@@ -1640,14 +1235,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     update(data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
         if (!this.operation) {
             // 还是有可能是create
-            const isCreate = !this.id && !this.tryGetParentFilter();
-            const operation: ED[T]['Update'] = isCreate ? {
-                id: generateNewId(),
-                action: 'create',
-                data: Object.assign({}, data, {
-                    id: generateNewId(),
-                }),
-            } : {
+            const operation: ED[T]['Update'] = {
                 id: generateNewId(),
                 action: action || 'update',
                 data,
@@ -1681,14 +1269,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             id: generateNewId(),
             action: 'remove',
             data: {},
+            filter: {
+                id: this.id,
+            },
         };
-        if (this.id) {
-            Object.assign(operation, {
-                filter: {
-                    id: this.id,
-                },
-            });
-        }
         this.operation = {
             operation,
             beforeExecute,
@@ -1697,31 +1281,28 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         this.setDirty();
     }
 
-    composeOperations(noCascade?: boolean): Array<{
-        entity: T;
-        operation: ED[T]['Operation'];
+    composeOperations(): Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
     }> | undefined {
-        if (!this.dirty) {
-            return;
-        }
-        const operation: ED[T]['Operation'] = this.operation ? cloneDeep(this.operation.operation) : {
-            id: generateNewId(),
-            action: 'update',
-            data: {},
-        };
+        if (this.dirty) {
+            const operations = [] as Array<{
+                entity: keyof ED;
+                operation: ED[keyof ED]['Operation'];
+            }>;
+            const operation: ED[T]['Operation'] = this.operation ? cloneDeep(this.operation.operation) : {
+                id: generateNewId(),
+                action: 'update',
+                data: {},
+                filter: {
+                    id: this.id,
+                }
+            };
 
-        const filter = this.getFilter();
-        assert(filter);
-        Object.assign(operation, {
-            filter,
-        });
-
-        if (!noCascade) {
             for (const ele in this.children) {
+                const ele2 = ele.includes(':') ? ele.slice(0, ele.indexOf(':')) : ele;
                 const child = this.children[ele];
                 const childOperations = child!.composeOperations();
-                const sliceIdx = ele.indexOf(':');
-                const ele2 = sliceIdx > 0 ? ele.slice(0, sliceIdx) : ele;
                 if (childOperations) {
                     if (child instanceof SingleNode) {
                         assert(childOperations.length === 1);
@@ -1735,38 +1316,21 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         const childOpers = childOperations.map(
                             ele => ele.operation
                         );
-                        if (operation.data[ele2]) {
-                            operation.data[ele2].push(...childOpers);
+                        if (!operation.data[ele2]) {
+                            operation.data[ele2] = childOpers;
                         }
                         else {
-                            operation.data[ele2] = childOpers;
+                            operation.data[ele2].push(...childOpers);
                         }
                     }
                 }
             }
+            operations.push({
+                entity: this.entity,
+                operation: operation!,
+            });
+            return operations;
         }
-        const operations = [] as Array<{
-            entity: T;
-            operation: ED[T]['Operation'];
-        }>;
-        const parent = this.getParent();
-        if (parent instanceof ListNode) {
-            const parentOperation = parent.getChildOperation(this);
-            if (parentOperation) {
-                // 现在只需要处理一种情况，就是在list上create，在这里update
-                assert(parentOperation.action === 'create');
-                operations.push({
-                    entity: this.entity,
-                    operation: parentOperation,
-                });
-            }
-        }
-        operations.push({
-            entity: this.entity,
-            operation: operation!,
-        });
-
-        return operations;
     }
 
     getProjection(withDecendants?: boolean) {
@@ -1859,18 +1423,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     getFilter(): ED[T]['Selection']['filter'] | undefined {
-        if (this.id) {
-            return {
-                id: this.id,
-            };
-        }
-        if (this.operation && this.operation.operation.action === 'create') {
-            return {
-                id: this.operation.operation.data.id!,
-            };
-        }
-        const parentFilter = this.tryGetParentFilter();
-        return parentFilter;
+        return {
+            id: this.id,
+        };
     }
 
     /**
@@ -1879,45 +1434,45 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
      * @param disableOperation 
      * @returns 
      */
-    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>): ED[T2]['Selection']['filter'] | undefined {
-        const value = this.getFreshValue(true);
+    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, context?: FrontCxt): ED[T2]['Selection']['filter'] | undefined {
+        const value = this.getFreshValue(context);
 
         for (const key in this.children) {
             if (childNode === this.children[key]) {
-                const sliceIdx = key.indexOf(':');
-                const key2 = sliceIdx > 0 ? key.slice(0, sliceIdx) : key;
-                const rel = this.judgeRelation(key2);
+                const rel = this.judgeRelation(key);
                 if (rel === 2) {
+                    assert(false, '当前SingleNode应该自主管理id');
                     // 基于entity/entityId的多对一
-                    if (value) {
-                        // 要么没有行(因为属性不全所以没有返回行，比如从list -> detail)；如果取到了行但此属性为空，则说明一定是singleNode到singleNode的create
-                        if (value?.entityId) {
-                            assert(value?.entity === this.children[key].getEntity());
-                            return {
-                                id: value!.entityId!,
-                            };
-                        }
-                        return;
-                    }
-                    const filter = this.getFilter();
-                    if (filter) {
-                        return {
-                            id: {
-                                $in: {
-                                    entity: this.entity,
-                                    data: {
-                                        entityId: 1,
-                                    },
-                                    filter: addFilterSegment(filter, {
-                                        entity: childNode.getEntity(),
-                                    }),
-                                }
-                            },
-                        };
-                    }
+                    /*  if (value) {
+                         // 要么没有行(因为属性不全所以没有返回行，比如从list -> detail)；如果取到了行但此属性为空，则说明一定是singleNode到singleNode的create
+                         if (value?.entityId) {
+                             assert(value?.entity === this.children[key].getEntity());
+                             return {
+                                 id: value!.entityId!,
+                             };
+                         }
+                         return;
+                     }
+                     const filter = this.getFilter();
+                     if (filter) {
+                         return {
+                             id: {
+                                 $in: {
+                                     entity: this.entity,
+                                     data: {
+                                         entityId: 1,
+                                     },
+                                     filter: addFilterSegment(filter, {
+                                         entity: childNode.getEntity(),
+                                     }),
+                                 }
+                             },
+                         };
+                     } */
                 }
                 else if (typeof rel === 'string') {
-                    if (value) {
+                    assert(false, '当前SingleNode应该自主管理id');
+                    /* if (value) {
                         // 要么没有行(因为属性不全所以没有返回行，比如从list -> detail)；如果取到了行但此属性为空，则说明一定是singleNode到singleNode的create
                         if (value && value[`${rel}Id`]) {
                             return {
@@ -1939,10 +1494,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                                 },
                             },
                         };
-                    }
+                    } */
                 }
                 else {
-                    assert(rel instanceof Array && !key2.endsWith('$$aggr'));
+                    assert(rel instanceof Array && !key.endsWith('$$aggr'));
                     if (rel[1]) {
                         // 基于普通外键的一对多
                         if (value) {
@@ -2204,7 +1759,7 @@ export class RunningTree<
             projection,
             isList,
             id,
-            actions, 
+            actions,
             cascadeActions,
         } = options;
         let node:
@@ -2230,7 +1785,7 @@ export class RunningTree<
                         node.setPagination(pagination, false);      // 创建成功后会统一refresh
                     }
                 }
-                else if (projection){
+                else if (projection) {
                     // 这里有一个例外是queryPanel这种和父结点共用此结点的抽象组件
                     // assert(false, `创建node时发现path[${fullPath}]已经存在有效的ListNod结点，这种情况不应该存在`);
                 }
@@ -2336,10 +1891,25 @@ export class RunningTree<
 
     getFreshValue(path: string) {
         const node = this.findNode(path);
+        const paths = path.split('.');
+        const root = this.root[paths[0]];
+        // todo 判定modi
+        const includeModi = path.includes(':next');
         if (node) {
+            const opers = root?.composeOperations();
+            const context = this.cache.begin();
+            if (opers) {
+                this.cache.redoOperation(opers, context);
+            }
             assert(node instanceof ListNode || node instanceof SingleNode);
-            let value = node.getFreshValue();
-    
+            if (includeModi) {
+                const opers2 = node.getActiveModiOperations();
+                if (opers2) {
+                    this.cache.redoOperation(opers2, context);
+                }
+            }
+            const value = node.getFreshValue(context);
+            context.rollback();
             return value;
         }
     }

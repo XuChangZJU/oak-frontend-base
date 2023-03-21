@@ -49,12 +49,19 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
     }>, allowMiss?: boolean): Partial<ED[T]["Schema"]>[];
+    redoOperation(opers: Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
+    }>, context: FrontCxt): void;
     private getInner;
-    get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], allowMiss?: boolean): Partial<ED[T]["Schema"]>[];
+    get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], allowMiss?: boolean, context?: FrontCxt): Partial<ED[T]["Schema"]>[];
     judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | 2 | string[];
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;
     getCachedData(): { [T in keyof ED]?: ED[T]["OpSchema"][] | undefined; };
     getFullData(): any;
     resetInitialData(): void;
+    begin(): FrontCxt;
+    commit(context: FrontCxt): void;
+    rollback(context: FrontCxt): void;
 }

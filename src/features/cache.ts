@@ -200,7 +200,6 @@ export class Cache<
             context.rollback();
             return false;
         }
-
     }
 
     /**
@@ -246,6 +245,24 @@ export class Cache<
         }
     }
 
+    redoOperation(opers: Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
+    }>, context: FrontCxt) {
+        opers.forEach(
+            (oper) => {
+                const { entity, operation } = oper;
+                this.cacheStore!.operate(entity, operation, context, {
+                    dontCollect: true,
+                    dontCreateOper: true,
+                    blockTrigger: true,
+                    dontCreateModi: true,
+                });
+            }
+        );
+        return;
+    }
+
     private getInner<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], context: SyncContext<ED>, allowMiss?: boolean, includedDeleted?: boolean): Partial<ED[T]['Schema']>[] {
         try {
             const result = this.cacheStore!.select(
@@ -284,10 +301,11 @@ export class Cache<
         entity: T,
         selection: ED[T]['Selection'],
         allowMiss?: boolean,
+        context?: FrontCxt,
     ) {
-        const context = this.contextBuilder!();
+        const context2 = context ||  this.contextBuilder!();
 
-        return this.getInner(entity, selection, context, allowMiss);
+        return this.getInner(entity, selection, context2, allowMiss);
     }
 
     judgeRelation(entity: keyof ED, attr: string) {
@@ -312,5 +330,19 @@ export class Cache<
 
     resetInitialData() {
         return this.cacheStore!.resetInitialData();
+    }
+
+    begin() {
+        const context = this.contextBuilder!();
+        context.begin();
+        return context;
+    }
+
+    commit(context: FrontCxt) {
+        context.commit();
+    }
+
+    rollback(context: FrontCxt) {
+        context.rollback();
     }
 }

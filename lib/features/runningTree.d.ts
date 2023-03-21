@@ -34,7 +34,10 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     /**
      * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
      */
-    getActiveModies(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): BaseEntityDict['modi']['OpSchema'][] | undefined;
+    getActiveModiOperations(): Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
+    }> | undefined;
     setDirty(): void;
     isDirty(): boolean;
     isLoading(): boolean;
@@ -82,7 +85,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     addNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(name: string, refresh: boolean): void;
-    getFreshValue(): Array<Partial<ED[T]['Schema']>>;
+    getFreshValue(context: FrontCxt): Array<Partial<ED[T]['Schema']>>;
     addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     removeItem(id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     recoverItem(id: string): void;
@@ -100,16 +103,15 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     doAfterTrigger(): Promise<void>;
     getParentFilter(childNode: SingleNode<ED, T, Cxt, FrontCxt, AD>): ED[T]['Selection']['filter'] | undefined;
     composeOperations(): Array<{
-        entity: T;
-        operation: ED[T]['Operation'];
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
     }> | undefined;
     getProjection(): ED[T]["Selection"]["data"] | undefined;
     private constructFilters;
     constructSelection(withParent?: true): {
         data: ED[T]["Selection"]["data"];
-        filter: ED[T]["Selection"]["filter"] | {};
+        filter: ED[T]["Selection"]["filter"] | undefined;
         sorter: ED[T]["Selection"]["sorter"];
-        validParentFilter: boolean;
     };
     refresh(pageNumber?: number, getCount?: true, append?: boolean): Promise<void>;
     loadMore(): Promise<void>;
@@ -119,36 +121,34 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     getIntrinsticFilters(): ED[T]["Selection"]["filter"];
 }
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
-    private id?;
+    private id;
     private children;
     private operation?;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, id?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     });
-    private isCreatedByParent;
-    private tryGetParentFilter;
     protected getChildPath(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): string;
     checkIfClean(): void;
     destroy(): void;
     getChild(path: string): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     setId(id: string): void;
     unsetId(): void;
-    getId(): string | undefined;
+    getId(): string;
     getChildren(): {
         [K: string]: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     };
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
-    getFreshValue(noCascade?: boolean): Partial<ED[T]['Schema']> | undefined;
+    getFreshValue(context?: FrontCxt): Partial<ED[T]['Schema']> | undefined;
     isCreation(): boolean;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     update(data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     remove(beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
-    composeOperations(noCascade?: boolean): Array<{
-        entity: T;
-        operation: ED[T]['Operation'];
+    composeOperations(): Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
     }> | undefined;
     getProjection(withDecendants?: boolean): ED[T]["Selection"]["data"] | undefined;
     refresh(): Promise<void>;
@@ -160,7 +160,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
      * @param disableOperation
      * @returns
      */
-    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>): ED[T2]['Selection']['filter'] | undefined;
+    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, context?: FrontCxt): ED[T2]['Selection']['filter'] | undefined;
 }
 declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private dirty;
@@ -232,7 +232,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     getPagination(path: string): Pagination;
     setId(path: string, id: string): void;
     unsetId(path: string): void;
-    getId(path: string): string | undefined;
+    getId(path: string): string;
     setPageSize<T extends keyof ED>(path: string, pageSize: number): void;
     setCurrentPage<T extends keyof ED>(path: string, currentPage: number): void;
     getNamedFilters<T extends keyof ED>(path: string): NamedFilterItem<ED, keyof ED>[];
