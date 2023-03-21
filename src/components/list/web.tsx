@@ -7,13 +7,14 @@ import { get } from 'oak-domain/lib/utils/lodash';
 import dayjs from 'dayjs';
 import ActionBtn from '../actionBtn';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { WebComponentProps } from '../../types/Page';
+import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef, ColumnDefProps, AttrRender } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, CascadeActionProps } from '../../types/AbstractComponent';
 import { Action, CascadeActionItem } from 'oak-domain/lib/types';
 import { Schema } from 'oak-domain/lib/base-app-domain/UserEntityGrant/Schema';
+type ED = EntityDict & BaseEntityDict;
 
 
 type RenderCellProps = {
@@ -40,12 +41,15 @@ function RenderCell(props: RenderCellProps) {
     )
 }
 
+
 export default function Render(
     props: WebComponentProps<
         EntityDict & BaseEntityDict,
         keyof EntityDict,
         false,
         {
+            loading: boolean;
+            extraActions: string[];
             entity: string;
             schema: StorageSchema<EntityDict & BaseEntityDict>;
             columns: ColumnDefProps[],
@@ -55,7 +59,7 @@ export default function Render(
             colorDict: ColorDict<EntityDict & BaseEntityDict>;
             handleClick?: (id: string, action: string) => void;
             tablePagination?: PaginationProps;
-            onAction?: (row: any, action: Action, cascadeAction: CascadeActionItem) => void
+            onAction?: onActionFnDef;
         },
         {
         }
@@ -65,8 +69,10 @@ export default function Render(
     const { t } = methods;
     const [tableColumns, setTabelColumns] = useState([] as ColumnsType<any>);
     const {
+        loading,
         entity,
         schema,
+        extraActions,
         oakEntity,
         data,
         columns,
@@ -74,6 +80,7 @@ export default function Render(
         disabledOp = false,
         handleClick,
         tablePagination,
+        onAction,
     } = oakData;
     
     useEffect(() => {
@@ -88,7 +95,7 @@ export default function Render(
                     }
                     let value = get(row, ele.path);
                     let color = 'black';
-                    if (ele.type === 'tag') {
+                    if (ele.type === 'tag' && value) {
                         value = t(`${ele.entity}:v.${ele.attr}.${value}`);
                         color = colorDict![ele.entity]![ele.attr]![value] as string;
                     }
@@ -109,15 +116,18 @@ export default function Render(
                 width: 300,
                 render: (value: any, row: any) => {
                     const id = row?.id;
-                    const oakActions = row?.oakActions;
+                    const oakActions = row?.['#oakLegalActions'] as string[];
                     assert(!!oakActions, '行数据中不存在oakActions, 请禁用(disableOp:true)或添加oakActions')
+                    if (extraActions && extraActions.length) {
+                        oakActions.unshift(...extraActions)
+                    }
                     return (
                         <ActionBtn
                             schema={schema}
                             entity={entity}
                             actions={row?.['#oakLegalActions']}
                             cascadeActions={row?.['#oakLegalCascadeActions']}
-                            onClick={(action: string) => handleClick && handleClick(id, action)}
+                            onAction={(action: string, cascadeAction: CascadeActionProps) => onAction && onAction(row, action, cascadeAction)}
                         />
                     )
                 }
@@ -126,6 +136,6 @@ export default function Render(
         setTabelColumns(tableColumns)
     }, [data])
     return (
-        <Table dataSource={data} scroll={{ x: 1500 }} columns={tableColumns} pagination={tablePagination} ></Table>
+        <Table loading={loading} dataSource={data} scroll={{ x: 1500 }} columns={tableColumns} pagination={tablePagination} ></Table>
     );
 }

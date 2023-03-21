@@ -96,3 +96,8 @@ export declare type DataTransformer = (data: object) => AttrRender[];
 export declare type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict> = (data: object) => AttrUpsertRender<ED>[];
 export declare type DataConverter = (data: any[]) => Record<string, any>;
 export declare type ED = BaseEntityDict & EntityDict;
+export declare type CascadeActionProps = {
+    path: string;
+    action: string;
+};
+export declare type onActionFnDef = (row: any, action: string, cascadeAction?: CascadeActionProps) => void;

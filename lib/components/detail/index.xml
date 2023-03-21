@@ -8,20 +8,29 @@
                 <l-tag bg-color="{{StateColorMp[iState]}}" shape="circle"> {{t('rsContract:v.iState.' + iState)}}</l-tag>
             </view>
         </view> -->
-        <view class="card-content" wx:for="{{renderData}}">
-            <view class="text-view" wx:if="{{item.type===image}}">
-                <text class="label">{{item.label}}</text>
-                <view class="img-view">
-                    <block wx:for="{{item.value}}" wx:key="index" wx:for-item="imgItem">
-                        <image class="img" src="{{imgItem}}" data-src="{{imgItem}}" data-list="{{item.value}}" mode="aspectFit" bindtap="preview" />
-                    </block>
+        <view class="card-content">
+            <view wx:for="{{renderData}}">
+                <view class="text-view" wx:if="{{item.type === 'img'}}">
+                    <text class="label">{{item.label}}</text>
+                    <view class="img-view">
+                        <block wx:for="{{item.value}}" wx:key="index" wx:for-item="imgItem">
+                            <image class="img" src="{{imgItem}}" data-src="{{imgItem}}" data-list="{{item.value}}" mode="aspectFit" bindtap="preview" />
+                        </block>
+                    </view>
+                </view>
+                <view class="text-view" wx:if="{{item.type === 'enum'}}">
+                    <text class="label">{{item.label}}</text>
+                    <view class="img-view">
+                        <!-- <block wx:for="{{item.value}}" wx:key="index" wx:for-item="imgItem"> -->
+                         {{t(entity+':v.' + item.attr + '.' + item.value)}}
+                        <!-- </block> -->
+                    </view>
+                </view>
+                <view class="text-view" wx:if="{{item.type !== 'img' && item.type !== 'enum'}}">
+                    <text class="label">{{item.label}}</text>
+                    <text>{{item.value || '未填写'}}</text>
                 </view>
             </view>
-            <view class="text-view">
-                <text class="label">{{item.label}}</text>
-                <text>{{item.value}}</text>
-            </view>
-           
         </view>
     </view>
 </view>

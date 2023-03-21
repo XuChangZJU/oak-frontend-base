@@ -6,9 +6,11 @@ export default OakComponent({
     isList: false,
     properties: {
         entity: String,
+        extraActions: Array,
         disabledOp: Boolean,
         attributes: Array,
         data: Array,
+        loading: Boolean,
         tablePagination: Object,
     },
     data: {
@@ -18,7 +20,8 @@ export default OakComponent({
             const { attributes, entity } = this.props;
             const schema = this.features.cache.getSchema();
             const colorDict = this.features.style.getColorDict();
-            assert(!!attributes, 'attributes不能为空');
+            assert(!!entity, 'list属性entity不能为空');
+            assert(!!attributes, 'list属性attributes不能为空');
             const { converter, columnDef } = analyzeAttrDefForTable(schema, entity!, attributes!, (k, params) => this.t(k, params));
             this.setState({
                 converter,

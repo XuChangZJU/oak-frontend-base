@@ -5,9 +5,10 @@ import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { ColumnDefProps, AttrRender } from '../../types/AbstractComponent';
-import { Action, CascadeActionItem } from 'oak-domain/lib/types';
+import { ColumnDefProps, AttrRender, onActionFnDef } from '../../types/AbstractComponent';
 export default function Render(props: WebComponentProps<EntityDict & BaseEntityDict, keyof EntityDict, false, {
+    loading: boolean;
+    extraActions: string[];
     entity: string;
     schema: StorageSchema<EntityDict & BaseEntityDict>;
     columns: ColumnDefProps[];
@@ -17,5 +18,5 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
     colorDict: ColorDict<EntityDict & BaseEntityDict>;
     handleClick?: (id: string, action: string) => void;
     tablePagination?: PaginationProps;
-    onAction?: (row: any, action: Action, cascadeAction: CascadeActionItem) => void;
+    onAction?: onActionFnDef;
 }, {}>): JSX.Element;
