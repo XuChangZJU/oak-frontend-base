@@ -1140,16 +1140,8 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     setId(id: string) {
-        /**
-         * 似乎只有最顶层设置了id的结点的这种情况才需要刷新，
-         * 如果是子结点，这里的id可以从父结点获得，这个操作是因为create action所引起，可以无视（userRelation/byMobile会跑出来）
-         */
-        if (this.dirty) {
-            throw new Error('结点没有clean之前是不能setId的');
-        }
         this.id = id;
-        this.operation = undefined;
-        this.publish();
+        this.clean();
     }
 
     unsetId() {
@@ -1309,8 +1301,8 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         }
                         else {
                             // 目前应该只允许一种情况，就是父create，子update
-                            assert(operation.data[ele].action === 'create' && childOperations[0].operation.action === 'update');
-                            Object.assign(operation.data[ele].data, childOperations[0].operation.data);
+                            assert(operation.data[ele2].action === 'create' && childOperations[0].operation.action === 'update');
+                            Object.assign(operation.data[ele2].data, childOperations[0].operation.data);
                         }
                     }
                     else {
@@ -1898,17 +1890,17 @@ export class RunningTree<
         // todo 判定modi
         const includeModi = path.includes(':next');
         if (node) {
-            const opers = root?.composeOperations();
             const context = this.cache.begin();
-            if (opers) {
-                this.cache.redoOperation(opers, context);
-            }
             assert(node instanceof ListNode || node instanceof SingleNode);
             if (includeModi) {
                 const opers2 = node.getActiveModiOperations();
                 if (opers2) {
                     this.cache.redoOperation(opers2, context);
                 }
+            }
+            const opers = root?.composeOperations();
+            if (opers) {
+                this.cache.redoOperation(opers, context);
             }
             const value = node.getFreshValue(context);
             context.rollback();
