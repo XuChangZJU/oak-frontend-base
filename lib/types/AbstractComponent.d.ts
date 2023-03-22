@@ -30,6 +30,7 @@ export declare type CardDef = {
     rows: OakAbsAttrDef[];
 };
 export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
+    type: 'ref';
     mode: 'select' | 'list' | 'radio';
     attr: string;
     entity: T;
@@ -37,18 +38,15 @@ export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, 
     title: (row: Partial<ED[T]['Schema']>) => string;
     titleLabel: string;
     filter?: ED[T]['Selection']['filter'] | (() => ED[T]['Selection']['filter']);
+    sorter?: ED[T]['Selection']['sorter'] | (() => ED[T]['Selection']['sorter']);
     count?: number;
     label?: string;
 }
-export declare type OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
-    type: 'ref';
-    attr: string;
+export interface OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> extends OakAbsRefAttrPickerDef<ED, T> {
     label: string;
-    value: string;
-    renderValue: any;
     required?: boolean;
-    mode: OakAbsRefAttrPickerDef<ED, T>['mode'];
-};
+    value: string;
+}
 export declare type OakAbsGeoAttrsDef = {
     amapSecurityJsCode: string;
     amapKey: string;

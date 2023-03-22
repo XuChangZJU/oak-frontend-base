@@ -248,11 +248,6 @@ export function analyzeDataUpsertTransformer<
     attrUpsertDefs: OakAbsAttrUpsertDef<ED>[],
     t: (k: string, params?: object) => string
 ) {
-    const mtoPickerDict: Record<
-        string,
-        OakAbsRefAttrPickerDef<ED, keyof ED>
-    > = {};
-
     const transformerFixedPart = attrUpsertDefs.map((ele) => {
         if (typeof ele === 'string') {
             const rel = judgeRelation(dataSchema, entity, ele);
@@ -281,55 +276,31 @@ export function analyzeDataUpsertTransformer<
             const {
                 attr,
                 label,
-                mode,
-                entity: refEntity,
-                projection,
-                filter,
-                title,
-                count,
-                // allowNull,
-                titleLabel,
+                ...rest
             } = ele;
-            assert(!mtoPickerDict[attr]);
-            mtoPickerDict[attr] = {
-                mode,
-                attr,
-                entity: refEntity as keyof ED,
-                projection,
-                title,
-                filter,
-                count,
-                titleLabel,
-            };
-            const mtoAttr = attr === 'entityId' ? refEntity : attr.slice(0, attr.length - 2);
+            const rel = judgeRelation(dataSchema, entity, attr);
+            const origAttr = rel === 2 ? 'entityId' : `${attr}Id`;
             return {
-                type: 'ref',
-                attr,
-                mode,
-                get: (data: Record<string, any>) => data && data[attr],
-                getRenderValue: (data: Record<string, any>) => data && title(data[mtoAttr as string]),
-                label: label || t(`${refEntity as string}:name`),
-                required: false, // 临时代码
+                required: !!(dataSchema[entity].attributes[origAttr]!.notNull),
+                label: label || (rel === 2 ? t(`${attr}:name`) : t(`${entity}:attr.${attr}`)),
+                ...rest,
+                get: (data?: Record<string, any>) => data && data[origAttr],
+                attr: origAttr,
             };
         }
     });
-    return {
-        transformer: (data: any) =>
-            transformerFixedPart.map((ele) => {
-                const { get, getRenderValue } = ele;
-                const value = get(data);
-                const renderValue = getRenderValue && getRenderValue(data);
-                return {
-                    value,
-                    renderValue,
-                    ...ele,
-                } as AttrUpsertRender<ED>;
-            }),
-        mtoPickerDict,
-    };
+    return (data: any) =>
+        transformerFixedPart.map((ele) => {
+            const { get } = ele;
+            const value = get(data);
+            return {
+                value,
+                ...ele,
+            } as AttrUpsertRender<ED>;
+        });
 }
 
-export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: CardDef, colorDict?: ColorDict<ED>) : {
+export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: CardDef, colorDict?: ColorDict<ED>): {
     columnDef: ColumnDefProps[];
     converter: DataConverter | undefined;
 } {

@@ -12,6 +12,7 @@ export default OakComponent({
         entityId: String,
         entityIds: Array,
         pickerDef: Object,      // OakAbsRefAttrPickerDef
+        onChange: Function,
     },
     formData() {
         const { multiple, entityIds, entityId, pickerDef } = this.props;
@@ -45,14 +46,7 @@ export default OakComponent({
         };
     },
     data: {
-        data: undefined as { id: string, title: string }[] | undefined,
-        pickerEntity: undefined as keyof ED | undefined,
-        pickerProjection: {} as ED[keyof ED]['Selection']['data'],
-        pickerFilter: {} as ED[keyof ED]['Selection']['filter'],
-        pickerTitleFn: undefined as ((data: any) => string) | undefined,
-        pickerTitleLabel: '',
-        pickerAttr: '',
-        pickerDialogTitle: '',
+        data: undefined as { id: string, title: string }[] | undefined,        
     },
     listeners: {
         entityId() {
@@ -78,7 +72,7 @@ export default OakComponent({
             else if (mode === 'select') {
                 // select也先取（可以点击再取，但这样初始状态不好渲染）
                 assert(!multiple, '选择为多项时不支持multiple');
-                assert(typeof count === 'number' && count <= 20, 'radio类型的外键选择，总数必须小于20');
+                assert(typeof count === 'number' && count <= 20, 'select类型的外键选择，总数必须小于20');
             }
             else {
                 return;
@@ -102,25 +96,5 @@ export default OakComponent({
                 data: data2,
             });
         },
-        openPicker(attr: string) {
-            const { entity, projection, filter, title, titleLabel } = this.state.mtoPickerDict[attr];
-            const proj = typeof projection === 'function' ? projection() : projection;
-            const filter2 = typeof filter === 'function' ? filter() : filter;
-
-            this.setState({
-                pickerEntity: entity,
-                pickerProjection: proj,
-                pickerFilter: filter2,
-                pickerTitleFn: title,
-                pickerTitleLabel: titleLabel,
-                pickerAttr: attr,
-                pickerDialogTitle: `选择${this.t(`${entity}:name`)}`,
-            });
-        },
-        closePicker() {
-            this.setState({
-                pickerEntity: undefined,
-            });
-        }
     }
 });

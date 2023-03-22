@@ -10,7 +10,7 @@ import {
 } from 'antd';
 import { WebComponentProps } from '../../types/Page';
 import { ToYuan, ToCent } from 'oak-domain/lib/utils/money';
-import { ED } from '../../types/AbstractComponent';
+import { ED, OakAbsRefAttrPickerDef } from '../../types/AbstractComponent';
 import { initinctiveAttributes } from 'oak-domain/lib/types/Entity';
 import dayjs, { Dayjs } from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
@@ -25,7 +25,7 @@ import { assert } from 'oak-domain/lib/utils/assert';
 
 import { ColumnProps, ColSpanType, Ops, ValueType } from '../../types/Filter';
 import { getFilterName, getOp, getOp2 } from './utils';
-import ForeignKeyFilter from '../foreignKeyFilter';
+import RefAttr from '../refAttr';
 
 export default function Render<ED2 extends ED>(
     props: WebComponentProps<
@@ -92,7 +92,7 @@ export default function Render<ED2 extends ED>(
         _label = label;
     }
     else if (['$text'].includes(attr2)) {
-         _label = t(`attr.${attr2}`);
+        _label = t(`attr.${attr2}`);
     } else if (initinctiveAttributes.includes(attr2)) {
         _label = t(`attr.${attr2}`);
     } else {
@@ -156,7 +156,7 @@ export default function Render<ED2 extends ED>(
                             });
                         }}
                         allowClear
-                        onPressEnter={() => {}}
+                        onPressEnter={() => { }}
                     />
                 </>
             </Form.Item>
@@ -181,7 +181,7 @@ export default function Render<ED2 extends ED>(
                         setFilterAndResetFilter(val2);
                     }}
                     allowClear
-                    onPressEnter={() => {}}
+                    onPressEnter={() => { }}
                 />
             );
             break;
@@ -197,7 +197,7 @@ export default function Render<ED2 extends ED>(
                         setFilterAndResetFilter(val);
                     }}
                     allowClear
-                    onPressEnter={() => {}}
+                    onPressEnter={() => { }}
                 />
             );
             break;
@@ -220,7 +220,7 @@ export default function Render<ED2 extends ED>(
                         setFilterAndResetFilter(val);
                     }}
                     allowClear
-                    onPressEnter={() => {}}
+                    onPressEnter={() => { }}
                 />
             );
             break;
@@ -249,7 +249,7 @@ export default function Render<ED2 extends ED>(
                         setFilterAndResetFilter(val);
                     }}
                     allowClear
-                    onPressEnter={() => {}}
+                    onPressEnter={() => { }}
                 />
             );
             break;
@@ -469,16 +469,26 @@ export default function Render<ED2 extends ED>(
                     assertMessage(attr as string, attrType, op, ops)
                 );
             }
-
-            V = (
-                <ForeignKeyFilter
-                    formItem={false}
-                    entity={entity as string}
-                    oakPath={oakFullpath}
-                    column={column}
-                />
-            );
-
+            if (op && ['$in', '$nin'].includes(op)) {
+                V = (
+                    <RefAttr
+                        multiple={true}
+                        entityIds={_value}
+                        pickerDef={column.refProps as OakAbsRefAttrPickerDef<ED, keyof ED>}
+                        onChange={(ids: string[]) => { console.log(ids, '这里等测试到了再写(Xc)') }}
+                    />
+                );
+            }
+            else {
+                V = (
+                    <RefAttr
+                        multiple={false}
+                        entityIds={_value}
+                        pickerDef={column.refProps as OakAbsRefAttrPickerDef<ED, keyof ED>}
+                        onChange={(id: string) => { console.log(id, '这里等测试到了再写(Xc)') }}
+                    />
+                );
+            }
             break;
         }
         default: {

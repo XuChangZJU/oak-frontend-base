@@ -18,21 +18,12 @@ import {
 import { CheckOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons';
 const { TextArea } = Input;
 import dayjs from 'dayjs';
-import { AttrRender, AttrUpsertRender, OakAbsRefAttrPickerRender, OakNativeAttrUpsertRender } from '../../types/AbstractComponent';
+import { AttrRender, AttrUpsertRender, OakAbsRefAttrPickerDef, OakAbsRefAttrPickerRender, OakNativeAttrUpsertRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
-import assert from 'assert';
-import EntityPicker from '../picker';
+import RefAttr from '../refAttr';
 
 type ED = EntityDict & BaseEntityDict;
-function makeAttrInput(
-    attrRender: AttrUpsertRender<ED>,
-    onValueChange: (value: any) => void,
-    mtoData: Record<string, Array<{
-        id: string;
-        title: string;
-    }>>,
-    openPicker: (attr: string) => void,
-    closePicker: () => void) {
+function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: any) => void) {
     const { value, type, params, label, defaultValue, required } = attrRender as OakNativeAttrUpsertRender;
     switch (type) {
         case 'string':
@@ -195,65 +186,14 @@ function makeAttrInput(
             );
         }
         case 'ref': {
-            const { mode, attr, renderValue } = attrRender as OakAbsRefAttrPickerRender<ED, keyof ED>;
-            switch (mode) {
-                case 'radio': {
-                    const data = mtoData[attr];
-                    if (data) {
-                        return (
-                            <Radio.Group onChange={({ target}) => onValueChange(target.value)} value={value}>
-                                {
-                                    data.map(
-                                        ele => (<Radio value={ele.id}>{ele.title}</Radio>)
-                                    )
-                                }
-                            </Radio.Group>
-                        );
-                    }
-                    else {
-                        return <div>loading</div>
-                    }
-                }
-                case 'select': {
-                    const data = mtoData[attr];
-                    if (data) {
-                        return (
-                            <Select
-                                value={value}
-                                onChange={onValueChange}
-                                style={{ width: '40%' }}
-                                options={data.map(
-                                    ele => ({
-                                        value: ele.id,
-                                        label: ele.title,
-                                    })
-                                )}
-                                allowClear
-                            ></Select>
-                        );
-                    }
-                    else {
-                        return <div>loading</div>
-                    }
-                }
-                case 'list': {
-                    return (
-                        <Space>
-                            <div>{renderValue}</div>
-                            <Button
-                                type="primary"
-                                shape="circle"
-                                icon={<EditOutlined />}
-                                onClick={() => openPicker(attr)}
-                            />
-                        </Space>
-                    );
-                }
-                default: {
-                    assert(false, `暂不支持的mode「${mode}」`);
-                }
-            }
-
+            return (
+                <RefAttr
+                    multiple={false}
+                    entityId={value}
+                    pickerDef={attrRender as OakAbsRefAttrPickerDef<ED, keyof ED>}
+                    onChange={(value: string) => {onValueChange(value)}}
+                />
+            );
         }
         default: {
             throw new Error(`【Abstract Update】无法支持的数据类别${type}的渲染`);
@@ -268,90 +208,47 @@ export default function render(props: WebComponentProps<
     {
         renderData: AttrUpsertRender<ED>[];
         children: any;
-        mtoData: Record<string, Array<{
-            id: string;
-            title: string;
-        }>>;
-        pickerEntity?: keyof ED;
-        pickerProjection?: ED[keyof ED]['Selection']['data'];
-        pickerFilter?: ED[keyof ED]['Selection']['filter'];
-        pickerTitleFn?: (data: any) => string;
-        pickerTitleLabel?: string;
-        pickerAttr?: string;
-        pickerDialogTitle?: string;
-    },
-    {
-        refreshData: (attr: string) => void;
-        openPicker: (attr: string) => void;
-        closePicker: () => void;
     }
 >) {
-    const { renderData = [], children, mtoData, pickerEntity, pickerAttr, pickerDialogTitle,
-        pickerProjection, pickerFilter, oakFullpath, pickerTitleFn, pickerTitleLabel } = props.data;
-    const { update, refreshData, openPicker, closePicker } = props.methods;
+    const { renderData = [], children } = props.data;
+    const { update } = props.methods;
     return (
-        <>
-            <Form
-                labelCol={{ span: 4 }}
-                layout="horizontal"
-                style={{
-                    margin: '0px auto',
-                    maxWidth: 675,
-                }}
-            >
-                {
-                    renderData.map(
-                        (ele) => (
-                            <Form.Item
-                                label={ele.label}
-                                rules={[
-                                    {
-                                        required: ele.required,
-                                    },
-                                ]}
-                            >
-                                <>
-                                    {
-                                        makeAttrInput(ele, (value) => {
-                                            const { attr } = ele;
-                                            update({
-                                                [attr]: value,
-                                            })
-                                        }, mtoData, openPicker, closePicker)
-                                    }
-                                </>
-                            </Form.Item>
-                        )
+        <Form
+            labelCol={{ span: 4 }}
+            layout="horizontal"
+            style={{
+                margin: '0px auto',
+                maxWidth: 675,
+            }}
+        >
+            {
+                renderData.map(
+                    (ele) => (
+                        <Form.Item
+                            label={ele.label}
+                            rules={[
+                                {
+                                    required: ele.required,
+                                },
+                            ]}
+                        >
+                            <>
+                                {
+                                    makeAttrInput(ele, (value) => {
+                                        const { attr } = ele;
+                                        update({
+                                            [attr]: value,
+                                        })
+                                    })
+                                }
+                            </>
+                        </Form.Item>
                     )
-                }
-                {
-                    children
-                }
-            </Form>
-            <Modal
-                title={pickerDialogTitle}
-                open={!!pickerEntity}
-                closable={true}
-                onCancel={closePicker}
-                destroyOnClose={true}
-                footer={null}
-            >
-                <EntityPicker
-                    oakPath={`$${oakFullpath}-entityPicker`}
-                    entity={pickerEntity as string}
-                    oakProjection={pickerProjection}
-                    oakFilters={[{ filter: pickerFilter }]}
-                    title={pickerTitleFn!}
-                    titleLabel={pickerTitleLabel}
-                    onSelect={(value: any) => {
-                        const [{ id }] = value;
-                        update({
-                            [pickerAttr!]: id,
-                        });
-                        closePicker();
-                    }}
-                />
-            </Modal>
-        </>
+                )
+            }
+            {
+                children
+            }
+        </Form>
     );
 }

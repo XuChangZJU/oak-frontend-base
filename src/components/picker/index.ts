@@ -18,9 +18,6 @@ export default OakComponent({
         };
     },
     isList: true,
-    data: {
-        open: false,
-    },
     properties: {
         entity: String,
         multiple: Boolean,

@@ -916,10 +916,11 @@ export function createComponent<
                 lifetimes?.show && lifetimes.show.call(this);
             }
             else {
-                if (!option.entity) {
+                // 这个if看不太懂，先注掉，不确定有无问题。by Xc 20230322
+                // if (!option.entity) {
                     lifetimes?.ready && lifetimes.ready.call(this);
                     lifetimes?.show && lifetimes.show.call(this);
-                }
+                // }
                 this.reRender();
             }
             if (option.features) {
