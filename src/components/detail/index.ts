@@ -57,7 +57,6 @@ export default OakComponent({
         data(prev, next) {
             if (prev.data !== next.data) {
                 this.reRender();
-                console.log(123);
             }
         },
         // data() {
