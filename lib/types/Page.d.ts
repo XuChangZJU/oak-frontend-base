@@ -200,9 +200,9 @@ export declare type OakSingleComponentMethods<ED extends EntityDict & BaseEntity
     setId: (id: string) => void;
     unsetId: () => void;
     getId: () => string | undefined;
+    create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
     update: (data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
     remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
-    isCreation: (path?: string) => boolean;
 };
 export declare type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     loadMore: () => Promise<void>;
@@ -260,7 +260,7 @@ export declare type OakListComoponetData<ED extends EntityDict & BaseEntityDict,
 export declare type MakeOakComponent<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>> = <T extends keyof ED, FormedData extends DataOption, IsList extends boolean, TData extends DataOption, TProperty extends PropertyOption, TMethod extends MethodOption>(options: OakComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => (props: ReactComponentProps<IsList, TProperty>) => React.ReactElement;
 export declare type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh' | 'aggregate' | 'checkOperation';
 export declare type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedFilter' | 'removeNamedFilter' | 'removeNamedFilterByName' | 'setNamedSorters' | 'addNamedSorter' | 'removeNamedSorter' | 'removeNamedSorterByName' | 'setPageSize' | 'setCurrentPage' | 'addItem' | 'removeItem' | 'updateItem' | 'resetItem' | 'recoverItem';
-export declare type WebComponentSingleMethodNames = 'update' | 'remove' | 'isCreation';
+export declare type WebComponentSingleMethodNames = 'update' | 'remove' | 'create';
 export declare type WebComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, TData extends DataOption = {}, TMethod extends MethodOption = {}> = {
     methods: TMethod & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
     data: TData & OakComponentData<ED, T> & (IsList extends true ? OakListComoponetData<ED, T> : {});

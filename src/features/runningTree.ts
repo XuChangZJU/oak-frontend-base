@@ -1066,7 +1066,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
-    private id: string;
+    private id?: string;
     private children: {
         [K: string]: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     };
@@ -1153,8 +1153,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     unsetId() {
-        this.create({});
-        this.id = this.operation!.operation.data.id;
+        this.id = undefined;
         this.publish();
     }
 
@@ -1190,12 +1189,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
     }
 
-    isCreation() {
-        const operations = this.composeOperations();
-        // 如果是create，一定在第一个
-        return !!(operations && operations[0]?.operation.action === 'create');
-    }
-
 
     async doBeforeTrigger(): Promise<void> {
         if (this.operation?.beforeExecute) {
@@ -1221,6 +1214,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
         const id = generateNewId();
+        assert(!this.id && !this.dirty, 'create前要保证singleNode为空');
         this.operation = {
             operation: {
                 id: generateNewId(),
@@ -1230,6 +1224,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             beforeExecute,
             afterExecute,
         };
+        this.id = id;
         this.setDirty();
     }
 
@@ -1307,10 +1302,16 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 if (childOperations) {
                     if (child instanceof SingleNode) {
                         assert(childOperations.length === 1);
-                        assert(!operation.data[ele2]);      // 多对一的子结点不应该有多项
-                        Object.assign(operation.data, {
-                            [ele2]: childOperations[0].operation,
-                        });
+                        if (!operation.data[ele2]) {
+                            Object.assign(operation.data, {
+                                [ele2]: childOperations[0].operation,
+                            });
+                        }
+                        else {
+                            // 目前应该只允许一种情况，就是父create，子update
+                            assert(operation.data[ele].action === 'create' && childOperations[0].operation.action === 'update');
+                            Object.assign(operation.data[ele].data, childOperations[0].operation.data);
+                        }
                     }
                     else {
                         assert(child instanceof ListNode);
@@ -1383,7 +1384,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
 
         // 如果是新建，也不用refresh
-        if (this.isCreation()) {
+        if (this.operation?.operation.action === 'create') {
             return;
         }
 
@@ -2197,12 +2198,6 @@ export class RunningTree<
         const node = this.findNode(path)!;
         const operations = node.composeOperations();
         return operations;
-    }
-
-    isCreation(path: string) {
-        const node = this.findNode(path)!;
-        assert(node instanceof SingleNode);
-        return node.isCreation();
     }
 
     async execute<T extends keyof ED>(path: string, action?: ED[T]['Action']) {

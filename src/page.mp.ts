@@ -585,13 +585,6 @@ const oakBehavior = Behavior<
             return this.features.runningTree.unsetId(this.state.oakFullpath);
         },
 
-        isCreation(path?: string) {
-            const path2 = path
-                ? `${this.state.oakFullpath}.${path}`
-                : this.state.oakFullpath;
-            return this.features.runningTree.isCreation(path2);
-        },
-
         update(data, action, beforeExecute, afterExecute, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
@@ -604,6 +597,19 @@ const oakBehavior = Behavior<
                 afterExecute
             );
         },
+
+        create(data, beforeExecute, afterExecute, path) {
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            return this.features.runningTree.create(
+                path2,
+                data,
+                beforeExecute,
+                afterExecute
+            );
+        },
+
         remove(beforeExecute, afterExecute, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`

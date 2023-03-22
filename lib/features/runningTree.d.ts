@@ -121,7 +121,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     getIntrinsticFilters(): ED[T]["Selection"]["filter"];
 }
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
-    private id;
+    private id?;
     private children;
     private operation?;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, id?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
@@ -133,14 +133,13 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     getChild(path: string): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     setId(id: string): void;
     unsetId(): void;
-    getId(): string;
+    getId(): string | undefined;
     getChildren(): {
         [K: string]: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     };
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
     getFreshValue(context?: FrontCxt): Partial<ED[T]['Schema']> | undefined;
-    isCreation(): boolean;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
@@ -232,7 +231,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     getPagination(path: string): Pagination;
     setId(path: string, id: string): void;
     unsetId(path: string): void;
-    getId(path: string): string;
+    getId(path: string): string | undefined;
     setPageSize<T extends keyof ED>(path: string, pageSize: number): void;
     setCurrentPage<T extends keyof ED>(path: string, currentPage: number): void;
     getNamedFilters<T extends keyof ED>(path: string): NamedFilterItem<ED, keyof ED>[];
@@ -253,7 +252,6 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
         entity: keyof ED;
         operation: ED[keyof ED]["Operation"];
     }[] | undefined;
-    isCreation(path: string): boolean;
     execute<T extends keyof ED>(path: string, action?: ED[T]['Action']): Promise<{
         result: Awaited<ReturnType<AD["operate"]>>;
         message: string | null | undefined;

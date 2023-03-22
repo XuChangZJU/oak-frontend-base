@@ -78,7 +78,7 @@ abstract class OakComponentBase<
         name: string,
         detail?: DetailType,
         options?: WechatMiniprogram.Component.TriggerEventOption
-    ) {}
+    ) { }
 
     sub(type: string, callback: Function) {
         this.features.eventBus.sub(type, callback);
@@ -301,13 +301,6 @@ abstract class OakComponentBase<
         this.features.runningTree.create(this.state.oakFullpath, data, beforeExecute, afterExecute);
     } */
 
-    isCreation(path?: string) {
-        const path2 = path
-            ? `${this.state.oakFullpath}.${path}`
-            : this.state.oakFullpath;
-        return this.features.runningTree.isCreation(path2);
-    }
-
     update<T extends keyof ED>(
         data: ED[T]['Update']['data'],
         action?: ED[T]['Action'],
@@ -322,6 +315,23 @@ abstract class OakComponentBase<
             path2,
             data,
             action,
+            beforeExecute,
+            afterExecute
+        );
+    }
+
+    create<T extends keyof ED>(
+        data: Omit<ED[T]['CreateSingle']['data'], 'id'>,
+        beforeExecute?: () => Promise<void>,
+        afterExecute?: () => Promise<void>,
+        path?: string
+    ) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        this.features.runningTree.create(
+            path2,
+            data,
             beforeExecute,
             afterExecute
         );
@@ -682,7 +692,7 @@ export function createComponent<
     > & {
         getRender: () => React.ComponentType<any>;
     };
-    
+
     if (option.observers) {
         console.error('observers即将废弃（已经没有效果），请使用listeners重写');
     }
@@ -815,12 +825,15 @@ export function createComponent<
                 update: (data: ED[T]['Update']['data'], action: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
                     return this.update(data, action, beforeExecute, afterExecute, path);
                 },
+                create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>,
+                    beforeExecute?: () => Promise<void>,
+                    afterExecute?: () => Promise<void>,
+                    path?: string) => {
+                    return this.create(data, beforeExecute, afterExecute, path);
+                },
                 remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
                     return this.remove(beforeExecute, afterExecute, path);
                 },
-                isCreation: (path?: string) => {
-                    return this.isCreation(path);
-                }
             } as Record<WebComponentSingleMethodNames, Function>);
 
             if (methods) {
