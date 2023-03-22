@@ -108,7 +108,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     }> | undefined;
     getProjection(): ED[T]["Selection"]["data"] | undefined;
     private constructFilters;
-    constructSelection(withParent?: true): {
+    constructSelection(withParent?: true, context?: FrontCxt): {
         data: ED[T]["Selection"]["data"];
         filter: ED[T]["Selection"]["filter"] | undefined;
         sorter: ED[T]["Selection"]["sorter"];

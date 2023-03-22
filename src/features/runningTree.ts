@@ -683,7 +683,7 @@ class ListNode<
          * 如果当前结点有父结点，根据filter去取数据（一对多的cascade取数据，父结点上可能有本结点相关的create动作）
          * 如果当前结点没有父结点，根据ids和自己所属的create去取数据
          */
-        const { data, sorter, filter } = this.constructSelection(true);
+        const { data, sorter, filter } = this.constructSelection(true, context);
         const parent = this.getParent();
         let filter2: ED[T]['Selection']['filter'];
         if (!(parent instanceof SingleNode)) {
@@ -932,7 +932,7 @@ class ListNode<
         return filters;
     }
 
-    constructSelection(withParent?: true) {
+    constructSelection(withParent?: true, context?: FrontCxt) {
         const { sorters } = this;
         const data = this.getProjection();
         assert(data, '取数据时找不到projection信息');
@@ -946,7 +946,7 @@ class ListNode<
             })
             .filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
 
-        const filters = this.constructFilters(undefined, withParent);
+        const filters = this.constructFilters(context, withParent);
 
         const filters2 = filters?.filter((ele) => !!ele);
         const filter = filters2 ? combineFilters<ED, T>(filters2) : undefined;
