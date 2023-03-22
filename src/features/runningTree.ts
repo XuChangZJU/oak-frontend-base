@@ -2008,9 +2008,9 @@ export class RunningTree<
     isLoadingMore(path: string) {
         const node = this.findNode(path);
         assert(
-            node && (node instanceof SingleNode || node instanceof ListNode)
+            !node || (node instanceof SingleNode || node instanceof ListNode)
         );
-        return node.isLoadingMore();
+        return node?.isLoadingMore();
     }
 
     isExecuting(path: string) {

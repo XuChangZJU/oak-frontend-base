@@ -225,7 +225,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     update<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     remove(path: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     isLoading(path: string): boolean | undefined;
-    isLoadingMore(path: string): boolean;
+    isLoadingMore(path: string): boolean | undefined;
     isExecuting(path: string): boolean;
     refresh(path: string): Promise<void>;
     loadMore(path: string): Promise<void>;
