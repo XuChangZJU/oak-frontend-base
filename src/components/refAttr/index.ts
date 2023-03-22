@@ -4,9 +4,9 @@ import { OakAbsRefAttrPickerDef } from '../../types/AbstractComponent';
 
 export default OakComponent({
     isList: false,
-    entity() {
+    /* entity() {
         return this.props.pickerDef!.entity as keyof ED;
-    },
+    }, */
     properties: {
         multiple: Boolean,
         entityId: String,

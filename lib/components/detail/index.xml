@@ -22,8 +22,9 @@
                     <text class="label">{{item.label}}</text>
                     <view class="img-view">
                         <!-- <block wx:for="{{item.value}}" wx:key="index" wx:for-item="imgItem"> -->
-                         {{t(entity+':v.' + item.attr + '.' + item.value)}}
+                         <!-- {{t(entity+':v.' + item.attr + '.' + item.value)}} -->
                         <!-- </block> -->
+                        <!-- <l-tag  shape="circle"> {{t(entity+':v.' + item.attr + '.' + item.value)}}</l-tag> -->
                     </view>
                 </view>
                 <view class="text-view" wx:if="{{item.type !== 'img' && item.type !== 'enum'}}">
