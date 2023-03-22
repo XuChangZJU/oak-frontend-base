@@ -257,10 +257,11 @@ abstract class Node<
         if (!this.dirty) {
             this.dirty = true;
         }
-        this.publish();
+        // 现在必须要将父结点都置dirty了再publish，因为整棵树是在一起redoOperation了
         if (this.parent) {
             this.parent.setDirty();
         }
+        this.publish();
     }
 
     isDirty() {
@@ -292,10 +293,10 @@ abstract class Node<
         return this.parent;
     }
 
-    protected getProjection(): ED[T]['Selection']['data'] | undefined {
+    protected getProjection(context?: FrontCxt): ED[T]['Selection']['data'] | undefined {
         const projection = typeof this.projection === 'function' ? (this.projection as Function)() : (this.projection && cloneDeep(this.projection));
         // 根据actions和cascadeActions的定义，将对应的projection构建出来
-        const userId = this.cache.getCurrentUserId(true);
+        const userId = context ? context.getCurrentUserId() : this.cache.getCurrentUserId(true);
         if (userId && projection) {
             if (this.actions) {
                 const actions = typeof this.actions === 'function' ? this.actions() : this.actions;
@@ -897,8 +898,8 @@ class ListNode<
         return operations;
     }
 
-    getProjection() {
-        const projection = super.getProjection();
+    getProjection(context?: FrontCxt) {
+        const projection = super.getProjection(context);
         // List必须自主决定Projection
         /* if (this.children.length > 0) {
             const subProjection = await this.children[0].getProjection();
@@ -934,7 +935,7 @@ class ListNode<
 
     constructSelection(withParent?: true, context?: FrontCxt) {
         const { sorters } = this;
-        const data = this.getProjection();
+        const data = this.getProjection(context);
         assert(data, '取数据时找不到projection信息');
         const sorterArr = sorters
             .map((ele) => {
@@ -1176,7 +1177,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     getFreshValue(context?: FrontCxt): Partial<ED[T]['Schema']> | undefined {
-        const projection = this.getProjection(false);
+        const projection = this.getProjection(context, false);
         const { id } = this;
         if (projection) {
             const result = this.cache.get(this.entity, {
@@ -1333,17 +1334,17 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
     }
 
-    getProjection(withDecendants?: boolean) {
+    getProjection(context?: FrontCxt, withDecendants?: boolean) {
         if (this.parent && this.parent instanceof ListNode) {
-            return this.parent.getProjection();
+            return this.parent.getProjection(context);
         }
-        const projection = super.getProjection();
+        const projection = super.getProjection(context);
         if (projection && withDecendants) {
             for (const k in this.children) {
                 if (k.indexOf(':') === -1) {
                     const rel = this.judgeRelation(k);
                     if (rel === 2) {
-                        const subProjection = this.children[k].getProjection(true);
+                        const subProjection = this.children[k].getProjection(context, true);
                         Object.assign(projection, {
                             entity: 1,
                             entityId: 1,
@@ -1351,7 +1352,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         });
                     }
                     else if (typeof rel === 'string') {
-                        const subProjection = this.children[k].getProjection(true);
+                        const subProjection = this.children[k].getProjection(context, true);
                         Object.assign(projection, {
                             [`${k}Id`]: 1,
                             [k]: subProjection,
@@ -1387,7 +1388,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
 
         // SingleNode如果是非根结点，其id应该在第一次refresh的时候来确定        
-        const projection = this.getProjection(true);
+        const projection = this.getProjection(undefined, true);
         const filter = this.getFilter();
         if (projection && filter) {
             this.setLoading(true);

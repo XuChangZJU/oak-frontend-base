@@ -46,7 +46,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     isExecuting(): boolean;
     setExecuting(executing: boolean): void;
     getParent(): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD> | undefined;
-    protected getProjection(): ED[T]['Selection']['data'] | undefined;
+    protected getProjection(context?: FrontCxt): ED[T]['Selection']['data'] | undefined;
     setProjection(projection: ED[T]['Selection']['data']): void;
     protected judgeRelation(attr: string): string | 0 | 1 | 2 | string[];
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
@@ -106,7 +106,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
     }> | undefined;
-    getProjection(): ED[T]["Selection"]["data"] | undefined;
+    getProjection(context?: FrontCxt): ED[T]["Selection"]["data"] | undefined;
     private constructFilters;
     constructSelection(withParent?: true, context?: FrontCxt): {
         data: ED[T]["Selection"]["data"];
@@ -150,7 +150,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
     }> | undefined;
-    getProjection(withDecendants?: boolean): ED[T]["Selection"]["data"] | undefined;
+    getProjection(context?: FrontCxt, withDecendants?: boolean): ED[T]["Selection"]["data"] | undefined;
     refresh(): Promise<void>;
     clean(): void;
     getFilter(): ED[T]['Selection']['filter'] | undefined;
