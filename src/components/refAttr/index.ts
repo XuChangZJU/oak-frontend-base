@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { ED } from '../../types/AbstractComponent';
+import { ED, OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 import { OakAbsRefAttrPickerDef } from '../../types/AbstractComponent';
 
 export default OakComponent({
@@ -11,12 +11,12 @@ export default OakComponent({
         multiple: Boolean,
         entityId: String,
         entityIds: Array,
-        pickerDef: Object,      // OakAbsRefAttrPickerDef
+        pickerDef: Object,      // OakAbsRefAttrPickerRender
         onChange: Function,
     },
     formData() {
         const { multiple, entityIds, entityId, pickerDef } = this.props;
-        const { entity, projection, title } = pickerDef as OakAbsRefAttrPickerDef<ED, keyof ED>;
+        const { entity, projection, title } = pickerDef as OakAbsRefAttrPickerRender<ED, keyof ED>;
         if (multiple) {
             const rows = entityIds && this.features.cache.get(entity, {
                 data: typeof projection === 'function' ? projection() : projection,

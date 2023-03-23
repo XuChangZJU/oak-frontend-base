@@ -190,7 +190,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                 <RefAttr
                     multiple={false}
                     entityId={value}
-                    pickerDef={attrRender as OakAbsRefAttrPickerDef<ED, keyof ED>}
+                    pickerDef={attrRender as OakAbsRefAttrPickerRender<ED, keyof ED>}
                     onChange={(value: string) => {onValueChange(value)}}
                 />
             );

@@ -16,7 +16,7 @@ import {
     Switch,
 } from 'antd';
 import { CheckOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons';
-import { OakAbsRefAttrPickerDef, OakNativeAttrUpsertRender } from '../../types/AbstractComponent';
+import { OakAbsRefAttrPickerDef, OakAbsRefAttrPickerRender, OakNativeAttrUpsertRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import Picker from '../picker';
 
@@ -33,7 +33,7 @@ export default function render(props: WebComponentProps<
         multiple: boolean;
         renderValue: string;
         data?: { id: string, title: string }[];
-        pickerDef: OakAbsRefAttrPickerDef<ED, keyof ED>;
+        pickerDef: OakAbsRefAttrPickerRender<ED, keyof ED>;
         onChange: (value: any) => void;
     }
 >) {
@@ -42,7 +42,7 @@ export default function render(props: WebComponentProps<
     const { mode } = pickerDef;
     const [visibile, setVisible] = useState(false);
 
-    if ((!data && mode !== 'list') || !renderValue) {
+    if (!data && mode !== 'list') {
         return <div> loading... </div>
     }
     else {
@@ -99,12 +99,15 @@ export default function render(props: WebComponentProps<
                 const s = typeof sorter === 'function' ? sorter() : sorter;
                 return (
                     <Space>
-                        <div>{renderValue}</div>
-                        <Button
-                            type="primary"
-                            shape="circle"
-                            icon={<EditOutlined />}
+                        <Input
+                            value={renderValue}
+                            allowClear
                             onClick={() => setVisible(true)}
+                            onChange={({ currentTarget }) => {
+                                if (!currentTarget.value) {
+                                    onChange(undefined);
+                                }
+                            }}                            
                         />
                         <Modal
                             title={`选择${t(`${pickerDef.entity}:name`)}`}

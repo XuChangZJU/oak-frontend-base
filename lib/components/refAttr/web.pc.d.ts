@@ -1,7 +1,7 @@
 /// <reference types="react" />
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { OakAbsRefAttrPickerDef } from '../../types/AbstractComponent';
+import { OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 declare type ED = EntityDict & BaseEntityDict;
 export default function render(props: WebComponentProps<ED, keyof EntityDict, false, {
@@ -13,7 +13,7 @@ export default function render(props: WebComponentProps<ED, keyof EntityDict, fa
         id: string;
         title: string;
     }[];
-    pickerDef: OakAbsRefAttrPickerDef<ED, keyof ED>;
+    pickerDef: OakAbsRefAttrPickerRender<ED, keyof ED>;
     onChange: (value: any) => void;
 }>): JSX.Element;
 export {};
