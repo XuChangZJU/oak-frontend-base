@@ -2,6 +2,10 @@ export default OakComponent({
     isList: false,
     properties: {
         entity: String,
+        extraActions: {
+            type: Array,
+            value: [],
+        },
         actions: {
             type: Array,
             value: [],
@@ -16,6 +20,12 @@ export default OakComponent({
     data: {
     },
     lifetimes: {
+        async ready() {
+            const { actions, extraActions } = this.props;
+            if (extraActions && actions && extraActions.length) {
+                actions.unshift(...extraActions);
+            }
+        }
     },
     methods: {
     },

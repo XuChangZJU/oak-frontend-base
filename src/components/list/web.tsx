@@ -41,6 +41,7 @@ function RenderCell(props: RenderCellProps) {
     )
 }
 
+const tableProps = {};
 
 export default function Render(
     props: WebComponentProps<
@@ -54,12 +55,13 @@ export default function Render(
             schema: StorageSchema<EntityDict & BaseEntityDict>;
             columns: ColumnDefProps[],
             mobileData: AttrRender[]
-            data: any;
+            data: any[];
             disabledOp: boolean;
             colorDict: ColorDict<EntityDict & BaseEntityDict>;
             handleClick?: (id: string, action: string) => void;
             tablePagination?: PaginationProps;
             onAction?: onActionFnDef;
+            rowSelection?: TableProps<any[]>['rowSelection']
         },
         {
         }
@@ -67,6 +69,7 @@ export default function Render(
 ) {
     const { methods, data: oakData } = props;
     const { t } = methods;
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [tableColumns, setTabelColumns] = useState([] as ColumnsType<any>);
     const {
         loading,
@@ -81,6 +84,7 @@ export default function Render(
         handleClick,
         tablePagination,
         onAction,
+        rowSelection,
     } = oakData;
     
     useEffect(() => {
@@ -95,9 +99,10 @@ export default function Render(
                     }
                     let value = get(row, ele.path);
                     let color = 'black';
-                    if (ele.type === 'tag' && value) {
-                        value = t(`${ele.entity}:v.${ele.attr}.${value}`);
+                    if (ele.type === 'tag' && !!value) {
+                        assert(!!colorDict?.[ele.entity]?.[ele.attr]?.[value], `${entity}实体iState颜色定义缺失`)
                         color = colorDict![ele.entity]![ele.attr]![value] as string;
+                        value = t(`${ele.entity}:v.${ele.attr}.${value}`);
                     }
                     return (<RenderCell color={color} value={value} type={ele.type} />)
                 }
@@ -117,14 +122,12 @@ export default function Render(
                 render: (value: any, row: any) => {
                     const id = row?.id;
                     const oakActions = row?.['#oakLegalActions'] as string[];
-                    assert(!!oakActions, '行数据中不存在oakActions, 请禁用(disableOp:true)或添加oakActions')
-                    if (extraActions && extraActions.length) {
-                        oakActions.unshift(...extraActions)
-                    }
+                    assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
                     return (
                         <ActionBtn
                             schema={schema}
                             entity={entity}
+                            extraActions={extraActions}
                             actions={row?.['#oakLegalActions']}
                             cascadeActions={row?.['#oakLegalCascadeActions']}
                             onAction={(action: string, cascadeAction: CascadeActionProps) => onAction && onAction(row, action, cascadeAction)}
@@ -136,6 +139,43 @@ export default function Render(
         setTabelColumns(tableColumns)
     }, [data])
     return (
-        <Table loading={loading} dataSource={data} scroll={{ x: 1500 }} columns={tableColumns} pagination={tablePagination} ></Table>
+        <Table
+            rowKey="id"
+            rowSelection={rowSelection?.type && {
+                type: rowSelection?.type,
+                selectedRowKeys,
+                onChange: (selectedRowKeys, row, info) => {
+                    setSelectedRowKeys(selectedRowKeys);
+                    rowSelection?.onChange && rowSelection?.onChange(selectedRowKeys, row, info);
+                }
+            }}
+            loading={loading}
+            dataSource={data}
+            scroll={{ x: 1500 }}
+            columns={tableColumns}
+            pagination={tablePagination}
+            onRow={(record) => {
+                return {
+                    onClick: () => {
+                        const index = selectedRowKeys.findIndex((ele) => ele === record.id);
+                        if (rowSelection?.type === 'checkbox') {
+                            if (index !== -1) {
+                                selectedRowKeys.splice(index, 1)
+                            }
+                            else {
+                                selectedRowKeys.push(record.id)
+                            }
+                            setSelectedRowKeys([...selectedRowKeys]);
+                        }
+                        else {
+                            setSelectedRowKeys([record.id])
+                        }
+                        const row = data.filter((ele) => selectedRowKeys.includes(ele.id));
+                        rowSelection?.onChange && rowSelection?.onChange(selectedRowKeys, row, {type: 'all'});
+                    }
+                }
+            }}
+        >
+        </Table>
     );
 }
