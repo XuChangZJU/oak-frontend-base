@@ -15,8 +15,7 @@ import {
     Tag,
     Switch,
 } from 'antd';
-import { CheckOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons';
-import { OakAbsRefAttrPickerDef, OakAbsRefAttrPickerRender, OakNativeAttrUpsertRender } from '../../types/AbstractComponent';
+import { OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import Picker from '../picker';
 
@@ -33,13 +32,13 @@ export default function render(props: WebComponentProps<
         multiple: boolean;
         renderValue: string;
         data?: { id: string, title: string }[];
-        pickerDef: OakAbsRefAttrPickerRender<ED, keyof ED>;
+        pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
         onChange: (value: any) => void;
     }
 >) {
-    const { pickerDef, renderValue, data, multiple, onChange, entityId, entityIds } = props.data;
+    const { pickerRender, renderValue, data, multiple, onChange, entityId, entityIds } = props.data;
     const { t } = props.methods;
-    const { mode } = pickerDef;
+    const { mode } = pickerRender;
     const [visibile, setVisible] = useState(false);
 
     if (!data && mode !== 'list') {
@@ -52,14 +51,13 @@ export default function render(props: WebComponentProps<
                     <Select
                         value={entityId}
                         onChange={onChange}
-                        style={{ width: '50%' }}
                         options={data!.map(
                             ele => ({
                                 value: ele.id,
                                 label: ele.title,
                             })
                         )}
-                        allowClear
+                        allowClear={!pickerRender.required}
                     ></Select>
                 );
             }
@@ -93,7 +91,7 @@ export default function render(props: WebComponentProps<
                 );
             }
             case 'list': {
-                const { entity, projection, title, titleLabel, filter, sorter } = pickerDef;
+                const { entity, projection, title, titleLabel, filter, sorter, required } = pickerRender;
                 const p = typeof projection === 'function' ? projection() : projection;
                 const f = typeof filter === 'function' ? filter() : filter;
                 const s = typeof sorter === 'function' ? sorter() : sorter;
@@ -101,7 +99,7 @@ export default function render(props: WebComponentProps<
                     <Space>
                         <Input
                             value={renderValue}
-                            allowClear
+                            allowClear={!required}
                             onClick={() => setVisible(true)}
                             onChange={({ currentTarget }) => {
                                 if (!currentTarget.value) {
@@ -110,7 +108,7 @@ export default function render(props: WebComponentProps<
                             }}                            
                         />
                         <Modal
-                            title={`选择${t(`${pickerDef.entity}:name`)}`}
+                            title={`选择${t(`${pickerRender.entity}:name`)}`}
                             open={visibile}
                             closable={true}
                             onCancel={() => setVisible(false)}

@@ -11,12 +11,12 @@ export default OakComponent({
         multiple: Boolean,
         entityId: String,
         entityIds: Array,
-        pickerDef: Object,      // OakAbsRefAttrPickerRender
+        pickerRender: Object,      // OakAbsRefAttrPickerRender
         onChange: Function,
     },
     formData() {
-        const { multiple, entityIds, entityId, pickerDef } = this.props;
-        const { entity, projection, title } = pickerDef as OakAbsRefAttrPickerRender<ED, keyof ED>;
+        const { multiple, entityIds, entityId, pickerRender } = this.props;
+        const { entity, projection, title } = pickerRender as OakAbsRefAttrPickerRender<ED, keyof ED>;
         if (multiple) {
             const rows = entityIds && this.features.cache.get(entity, {
                 data: typeof projection === 'function' ? projection() : projection,
@@ -63,8 +63,8 @@ export default OakComponent({
     },
     methods: {
         async refreshData() {
-            const { pickerDef, multiple } = this.props;
-            const { mode, entity, projection, filter, count, title } = pickerDef as OakAbsRefAttrPickerDef<ED, keyof ED>;
+            const { pickerRender, multiple } = this.props;
+            const { mode, entity, projection, filter, count, title } = pickerRender as OakAbsRefAttrPickerDef<ED, keyof ED>;
             if (mode === 'radio') {
                 // radio的要先取数据出来
                 assert(typeof count === 'number' && count <= 5, 'radio类型的外键选择，总数必须小于5');

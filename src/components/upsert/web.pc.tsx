@@ -190,7 +190,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                 <RefAttr
                     multiple={false}
                     entityId={value}
-                    pickerDef={attrRender as OakAbsRefAttrPickerRender<ED, keyof ED>}
+                    pickerRender={attrRender as OakAbsRefAttrPickerRender<ED, keyof ED>}
                     onChange={(value: string) => {onValueChange(value)}}
                 />
             );
@@ -218,7 +218,7 @@ export default function render(props: WebComponentProps<
             layout="horizontal"
             style={{
                 margin: '0px auto',
-                maxWidth: 675,
+                maxWidth: '100%',
             }}
         >
             {

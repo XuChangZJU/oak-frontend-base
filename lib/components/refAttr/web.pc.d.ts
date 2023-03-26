@@ -13,7 +13,7 @@ export default function render(props: WebComponentProps<ED, keyof EntityDict, fa
         id: string;
         title: string;
     }[];
-    pickerDef: OakAbsRefAttrPickerRender<ED, keyof ED>;
+    pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
     onChange: (value: any) => void;
 }>): JSX.Element;
 export {};

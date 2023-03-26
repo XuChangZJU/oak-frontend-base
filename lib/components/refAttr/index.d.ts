@@ -3,7 +3,7 @@ declare const _default: (props: import("../..").ReactComponentProps<false, {
     multiple: BooleanConstructor;
     entityId: StringConstructor;
     entityIds: ArrayConstructor;
-    pickerDef: ObjectConstructor;
+    pickerRender: ObjectConstructor;
     onChange: FunctionConstructor;
 }>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;

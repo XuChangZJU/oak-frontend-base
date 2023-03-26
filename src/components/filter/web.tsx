@@ -474,7 +474,7 @@ export default function Render<ED2 extends ED>(
                     <RefAttr
                         multiple={true}
                         entityIds={_value}
-                        pickerDef={column.refProps as OakAbsRefAttrPickerDef<ED, keyof ED>}
+                        pickerRender={column.refProps}
                         onChange={(ids: string[]) => { console.log(ids, '这里等测试到了再写(Xc)') }}
                     />
                 );
@@ -484,7 +484,7 @@ export default function Render<ED2 extends ED>(
                     <RefAttr
                         multiple={false}
                         entityIds={_value}
-                        pickerDef={column.refProps as OakAbsRefAttrPickerDef<ED, keyof ED>}
+                        pickerRender={column.refProps}
                         onChange={(id: string) => { console.log(id, '这里等测试到了再写(Xc)') }}
                     />
                 );

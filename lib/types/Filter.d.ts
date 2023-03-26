@@ -1,7 +1,7 @@
 import { Dayjs } from 'dayjs';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { OakAbsRefAttrPickerDef } from './AbstractComponent';
+import { OakAbsRefAttrPickerRender } from './AbstractComponent';
 export declare type Ops = '$gt' | '$lt' | '$gte' | '$lte' | '$eq' | '$ne' | '$startsWith' | '$endsWith' | '$includes' | '$in' | '$nin' | '$between' | '$text' | '$search';
 export declare type ColSpanType = 1 | 2 | 3 | 4;
 export declare type ValueType = string | boolean | number | Array<Dayjs> | Dayjs;
@@ -22,7 +22,7 @@ export declare type ColumnProps<ED extends BaseEntityDict & EntityDict, T extend
         range?: boolean;
         showTime?: boolean;
     };
-    refProps?: Omit<OakAbsRefAttrPickerDef<ED, keyof ED>, 'label'>;
+    refProps?: Omit<OakAbsRefAttrPickerRender<ED, keyof ED>, 'label'>;
     transformFilter?: (column: ColumnProps<ED, T>, value: ValueType) => ED[T]['Selection']['filter'];
     transformValue?: (column: ColumnProps<ED, T>, filter: ED[T]['Selection']['filter']) => any;
     filterName?: string;
