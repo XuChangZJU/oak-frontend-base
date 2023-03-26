@@ -1,6 +1,10 @@
 /// <reference types="react" />
 declare const _default: (props: import("../..").ReactComponentProps<false, {
     entity: StringConstructor;
+    extraActions: {
+        type: ArrayConstructor;
+        value: never[];
+    };
     actions: {
         type: ArrayConstructor;
         value: never[];

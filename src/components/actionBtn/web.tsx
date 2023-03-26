@@ -44,7 +44,7 @@ function getLabel(actionItem: ActionDef<ED, keyof EntityDict>, entity: string, t
         return actionItem.label!
     }
     else {
-        if (actionItem === ('update' || 'create')) {
+        if (['update', 'create', 'detail'].includes(actionItem)) {
             return t(`common:action.${actionItem}`)
         }
         else {
@@ -92,7 +92,7 @@ export default function Render(
     } = data;
     return (
         <div className={Style.panelContainer}>
-            <Space>
+            <Space align='center'>
                 <>
                     {actions?.map((ele, index: number) => {
                         return (
