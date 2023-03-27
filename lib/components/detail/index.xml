@@ -25,6 +25,7 @@
                          <!-- {{t(entity+':v.' + item.attr + '.' + item.value)}} -->
                         <!-- </block> -->
                         <!-- <l-tag  shape="circle"> {{t(entity+':v.' + item.attr + '.' + item.value)}}</l-tag> -->
+                        <l-tag bg-color="{{colorDict[entity][item.attr][item.value]}}" shape="circle"> {{t(entity+':v.' + item.attr + '.' + item.value)}}</l-tag>
                     </view>
                 </view>
                 <view class="text-view" wx:if="{{item.type !== 'img' && item.type !== 'enum'}}">
