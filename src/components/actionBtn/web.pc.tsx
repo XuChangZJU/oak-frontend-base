@@ -3,22 +3,41 @@ import {
     Space,
     Button,
     Modal,
-    Divider,
-    Popover,
-    Typography,
 } from 'antd';
-import {
-  MoreOutlined,
-} from '@ant-design/icons';
 import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ED } from '../../types/AbstractComponent';
 
 import { EntityDict } from 'oak-domain/lib/types/Entity';
-import Style from './mobile.module.less';
+import Style from './web.module.less';
 import { resolvePath } from '../../utils/usefulFn';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { CascadeActionProps } from '../../types/AbstractComponent';
+const { confirm } = Modal;
+
+type Item = {
+    label: string;
+    type?: 'a' | 'button';
+};
+
+function ItemComponent(
+    props: Item & {
+        onClick: () => void;
+    }
+) {
+    const { label, type, onClick } = props;
+
+    if (type === 'button') {
+        return (
+            <Button onClick={() => onClick()}>
+                {label}
+            </Button>
+        );
+    }
+    return <a onClick={() => onClick()}>
+        {label}
+    </a>;
+}
 
 function getLabel(actionItem: ActionDef<ED, keyof EntityDict>, entity: string, t: (key: string) => string) {
     if (typeof actionItem !=='string') {
@@ -71,54 +90,39 @@ export default function Render(
         entity,
         cascadeActions,
     } = data;
-    const items = actions.map((ele) => ({
-        label: getLabel(ele, entity, t),
-        onClick: () => onAction(typeof ele !== 'string' ? ele.action : ele, undefined),
-    }))
-    cascadeActions && Object.keys(cascadeActions).map((key, index: number) => {
-        const cascadeActionArr = cascadeActions[key];
-        if (cascadeActionArr && cascadeActionArr.length) {
-            cascadeActionArr.forEach((ele) => {
-                items.push({
-                    label: getLabel2(schema, key, ele, entity, t),
-                    onClick: () => onAction(undefined, {path: key, action: typeof ele !== 'string' ? ele.action : ele}),
-                })
-            })
-        }
-    })
-    const moreItems = items.splice(2);
     return (
-        <div className={Style.container}>
-            {items && items.map((ele, index:number) => (
+        <div className={Style.panelContainer}>
+            <Space align='center'>
                 <>
-                    <div className={Style.btn} onClick={ele.onClick}>
-                        <Typography.Link>
-                            {ele.label}
-                        </Typography.Link>
-                    </div>
-                    {index !== items.length - 1 && (
-                        <Divider type="vertical"></Divider>
-                    )}
+                    {actions?.map((ele, index: number) => {
+                        return (
+                            <ItemComponent
+                                label={getLabel(ele, entity, t)}
+                                type="a"
+                                onClick={() => {
+                                    const action = typeof ele !== 'string' ? ele.action : ele;
+                                    onAction(action, undefined);
+                                }}
+                            />
+                        );
+                    })}
+                    {cascadeActions && Object.keys(cascadeActions).map((key, index: number) => {
+                        const cascadeActionArr = cascadeActions[key];
+                        if (cascadeActionArr && cascadeActionArr.length) {
+                            cascadeActionArr.map((ele) => (
+                                <ItemComponent
+                                    label={getLabel2(schema, key, ele, entity, t)}
+                                    type="a"
+                                    onClick={() => {
+                                        const action = typeof ele !== 'string' ? ele.action : ele;
+                                        onAction(undefined, {path: key, action});
+                                    }}
+                                />
+                            ))
+                        }
+                    })}
                 </>
-            ))}
-            <Divider type="vertical" />
-            {moreItems && moreItems.length > 0 && (
-                <Popover
-                    placement='topRight'
-                    content={
-                        <Space direction="vertical">
-                            {moreItems.map((ele) => (
-                                <Button size="small" type="link" onClick={ele.onClick}>
-                                    {ele.label}
-                                </Button>
-                            ))}
-                        </Space>
-                    }
-                    trigger="click"
-                >
-                    <Button type='link' icon={<MoreOutlined />}></Button>
-                </Popover>
-            )}
+            </Space>
         </div>
     );
 }

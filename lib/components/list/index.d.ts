@@ -2,9 +2,10 @@
 declare const _default: (props: import("../..").ReactComponentProps<false, {
     entity: StringConstructor;
     extraActions: ArrayConstructor;
-    onAction: ObjectConstructor;
+    onAction: FunctionConstructor;
     disabledOp: BooleanConstructor;
     attributes: ArrayConstructor;
+    attributesMb: ObjectConstructor;
     data: ArrayConstructor;
     loading: BooleanConstructor;
     tablePagination: ObjectConstructor;

@@ -1,0 +1,77 @@
+.card {
+    margin: 10px;
+    margin-bottom: 0px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+    box-shadow: 0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12);
+    .titleView {
+        padding: 10px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 0.8px solid rgba(200, 200, 200, 0.2);
+        .title {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+    }
+    .cardContent {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+    .textView {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        .label {
+            color: #888;
+        }
+        .value {
+            margin-left: 8px;
+        }
+    }
+    .stateView {
+        display: flex;
+        align-items: center;
+    }
+    .badge {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--oak-color-success);
+      margin-right: 5px;
+    }
+    .success {
+        background-color: var(--oak-color-success);
+    }
+    .error {
+        background-color: var(--oak-color-error);
+    }
+    .waring {
+        background-color: var(--oak-color-waring);
+    }
+    .default {
+        background-color: var(--oak-color-primary);
+    }
+}
+[class='text-view']:not(:last-child) {
+    margin-bottom: 8px;
+}
+.container {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+.loadingView {
+    min-height: 300px;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}

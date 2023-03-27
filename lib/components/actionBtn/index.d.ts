@@ -9,11 +9,7 @@ declare const _default: (props: import("../..").ReactComponentProps<false, {
         type: ArrayConstructor;
         value: never[];
     };
-    cascadeActions: {
-        type: ArrayConstructor;
-        value: never[];
-    };
+    cascadeActions: ObjectConstructor;
     onAction: ObjectConstructor;
-    schema: ObjectConstructor;
 }>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;

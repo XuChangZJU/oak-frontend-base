@@ -1,0 +1,47 @@
+<view class="container">
+    <block wx:if="{{oakLoading}}">
+        <view class="loading">
+            <l-loading show="{{true}}" type="circle">
+            </l-loading>
+        </view>
+    </block>
+    <block wx:else>
+        <block wx:if="{{mobileData && mobileData.length}}">
+            <view class="list-container">
+                <view class="card" wx:for="{{mobileData}}" wx:key="{{item.record.id}}">
+                    <view class="title-view">
+                        <view class="title">
+                            {{item.title}}
+                        </view>
+                        <view class="state-view">
+                            <view class="badge {{item.state.color}}"></view>
+                            <view>
+                                {{item.state.value}}
+                            </view>
+                        </view>
+                    </view>
+                    <block wx:if="{{item.rows && item.rows.length > 0}}">
+                        <view class="card-content">
+                            <block wx:for="{{item.rows}}" wx:for-item="row">
+                                <view class="text-view">
+                                    <text class="label">{{row.label}}</text>
+                                    <text>{{row.value}}</text>
+                                </view>
+                            </block>
+                        </view>
+                    </block>
+                    <block wx:if="{{!disabledOp}}">
+                        <action-btn
+                            data-row="{{item}}"
+                            entity="{{entity}}"
+                            extraActions="{{extraActions}}"
+                            actions="{{item.record?.['#oakLegalActions']}}"
+                            cascadeActions="{{item.record?.['#oakLegalCascadeActions']}}"
+                            bind:onAction="onAction"
+                        />
+                    </block>
+                </view>
+            </view>
+        </block>
+    </block>
+</view>

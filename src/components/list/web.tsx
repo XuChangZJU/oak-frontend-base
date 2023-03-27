@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Table, Tag, TableProps, PaginationProps } from 'antd';
+import { Spin } from 'antd';
 import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
 import assert from 'assert';
 import { get } from 'oak-domain/lib/utils/lodash';
@@ -14,34 +14,13 @@ import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, CascadeActionProps } from '../../types/AbstractComponent';
 import { Action, CascadeActionItem } from 'oak-domain/lib/types';
 import { Schema } from 'oak-domain/lib/base-app-domain/UserEntityGrant/Schema';
+import styles from './mobile.module.less';
+import classnames from 'classnames';
 type ED = EntityDict & BaseEntityDict;
 
-
-type RenderCellProps = {
-    value: string;
-    type: string;
-    color: string
+type CascadeActionDef = {
+    [K in keyof EntityDict[keyof EntityDict]['Schema']]?: ActionDef<EntityDict & BaseEntityDict, keyof EntityDict>[];
 }
-
-function RenderCell(props: RenderCellProps) {
-    const { value, type, color } = props;
-    if (!value) {
-        return (<>--</>);
-    }
-    // 属性类型是enum要使用标签
-    else if (type === 'tag') {
-        return (
-            <Tag color={color} >
-                {value}
-            </Tag>
-        )
-    }
-    return (
-        <>{value}</>
-    )
-}
-
-const tableProps = {};
 
 export default function Render(
     props: WebComponentProps<
@@ -49,133 +28,83 @@ export default function Render(
         keyof EntityDict,
         false,
         {
-            loading: boolean;
-            extraActions: string[];
             entity: string;
-            schema: StorageSchema<EntityDict & BaseEntityDict>;
-            columns: ColumnDefProps[],
-            mobileData: AttrRender[]
-            data: any[];
-            disabledOp: boolean;
-            colorDict: ColorDict<EntityDict & BaseEntityDict>;
-            handleClick?: (id: string, action: string) => void;
-            tablePagination?: PaginationProps;
+            extraActions: string[];
+            mobileData: {
+                title: any;
+                rows: { label: string; value: string }[];
+                state: { color: string; value: string };
+                record: any,
+            }[];
             onAction?: onActionFnDef;
-            rowSelection?: TableProps<any[]>['rowSelection']
+            disabledOp: boolean;
         },
         {
         }
     >
 ) {
-    const { methods, data: oakData } = props;
+    const { methods, data } = props;
     const { t } = methods;
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-    const [tableColumns, setTabelColumns] = useState([] as ColumnsType<any>);
     const {
-        loading,
+        oakLoading,
         entity,
-        schema,
         extraActions,
-        oakEntity,
-        data,
-        columns,
-        colorDict,
-        disabledOp = false,
-        handleClick,
-        tablePagination,
+        mobileData,
         onAction,
-        rowSelection,
-    } = oakData;
-    
-    useEffect(() => {
-        const tableColumns: ColumnsType<any> = columns && columns.map((ele) => {
-            const column: ColumnType<any> = {
-                dataIndex: ele.path,
-                title: ele.title,
-                align: 'center',
-                render: (v: string, row: any) => {
-                    if (v && ele.type === 'text') {
-                        return <>{v}</>
-                    }
-                    let value = get(row, ele.path);
-                    let color = 'black';
-                    if (ele.type === 'tag' && !!value) {
-                        assert(!!colorDict?.[ele.entity]?.[ele.attr]?.[value], `${entity}实体iState颜色定义缺失`)
-                        color = colorDict![ele.entity]![ele.attr]![value] as string;
-                        value = t(`${ele.entity}:v.${ele.attr}.${value}`);
-                    }
-                    return (<RenderCell color={color} value={value} type={ele.type} />)
-                }
-            }
-            if (ele.width) {
-                Object.assign(ele, { width: ele.width });
-            }
-            return column;
-        })
-        if (!disabledOp && tableColumns) {
-                tableColumns.push({
-                fixed: 'right',
-                align: 'center',
-                title: '操作',
-                key: 'operation',
-                width: 300,
-                render: (value: any, row: any) => {
-                    const id = row?.id;
-                    const oakActions = row?.['#oakLegalActions'] as string[];
-                    assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
-                    return (
-                        <ActionBtn
-                            schema={schema}
-                            entity={entity}
-                            extraActions={extraActions}
-                            actions={row?.['#oakLegalActions']}
-                            cascadeActions={row?.['#oakLegalCascadeActions']}
-                            onAction={(action: string, cascadeAction: CascadeActionProps) => onAction && onAction(row, action, cascadeAction)}
-                        />
-                    )
-                }
-            })
-        }
-        setTabelColumns(tableColumns)
-    }, [data])
+        disabledOp = false,
+    } = data;
     return (
-        <Table
-            rowKey="id"
-            rowSelection={rowSelection?.type && {
-                type: rowSelection?.type,
-                selectedRowKeys,
-                onChange: (selectedRowKeys, row, info) => {
-                    setSelectedRowKeys(selectedRowKeys);
-                    rowSelection?.onChange && rowSelection?.onChange(selectedRowKeys, row, info);
-                }
-            }}
-            loading={loading}
-            dataSource={data}
-            scroll={{ x: 1500 }}
-            columns={tableColumns}
-            pagination={tablePagination}
-            onRow={(record) => {
-                return {
-                    onClick: () => {
-                        const index = selectedRowKeys.findIndex((ele) => ele === record.id);
-                        if (rowSelection?.type === 'checkbox') {
-                            if (index !== -1) {
-                                selectedRowKeys.splice(index, 1)
-                            }
-                            else {
-                                selectedRowKeys.push(record.id)
-                            }
-                            setSelectedRowKeys([...selectedRowKeys]);
-                        }
-                        else {
-                            setSelectedRowKeys([record.id])
-                        }
-                        const row = data.filter((ele) => selectedRowKeys.includes(ele.id));
-                        rowSelection?.onChange && rowSelection?.onChange(selectedRowKeys, row, {type: 'all'});
-                    }
-                }
-            }}
-        >
-        </Table>
+        <div className={styles.container}>
+            {oakLoading ? (
+                <div className={styles.loadingView}>
+                    <Spin size='large' />
+                </div>
+            ) : (
+                <>
+                    {mobileData && mobileData.map((ele) => (
+                        <div className={styles.card}>
+                            {ele.title && (
+                                <div className={styles.titleView}>
+                                    <div className={styles.title}>
+                                        {ele.title}
+                                    </div>
+                                    {ele.state && (
+                                        <div className={styles.stateView}>
+                                            <div className={classnames(styles.badge, styles[ele.state.color])}></div>
+                                            <div>
+                                                {ele.state.value}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            <div className={styles.cardContent}>
+                                {ele.rows && ele.rows.map((row) => (
+                                    <div className={styles.textView}>
+                                        <div className={styles.label}>
+                                            {row.label}
+                                        </div>
+                                        <div className={styles.value}>
+                                            {row.value}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            {!disabledOp && (
+                                <div style={{ display: 'flex', alignItems: 'center', padding: 10 }}>
+                                    <ActionBtn
+                                        entity={entity}
+                                        extraActions={extraActions}
+                                        actions={ele.record?.['#oakLegalActions']}
+                                        cascadeActions={ele.record?.['#oakLegalCascadeActions']}
+                                        onAction={(action: string, cascadeAction: CascadeActionProps) => onAction && onAction(ele.record, action, cascadeAction)}
+                                    />
+                                </div>
+                            )}
+                        </div> 
+                    ))}
+                </>
+            )}
+        </div>
     );
 }

@@ -302,7 +302,6 @@ export function analyzeDataUpsertTransformer<
 
 export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: CardDef, colorDict?: ColorDict<ED>): {
     columnDef: ColumnDefProps[];
-    converter: DataConverter | undefined;
 } {
     // web使用
     const columnDef: ColumnDefProps[] = attrDefs.map((ele) => {
@@ -325,56 +324,70 @@ export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(d
             attr,
         } as ColumnDefProps;
     });
-
-    // 移动端使用
-    let dataConverter;
-    if (mobileAttrDef) {
-        dataConverter = (data: any[]) => {
-            const coverData = data.map((row) => {
-                const title = typeof mobileAttrDef.title === 'string' ? get(row, mobileAttrDef.title) : mobileAttrDef.title;
-                const rows = mobileAttrDef.rows.map((attribute) => {
-                    const path = getPath(attribute);
-                    const {
-                        attrType,
-                        attr,
-                        entity: entityI8n,
-                    } = resolvePath(dataSchema, entity, path);
-                    const label = getLabel(attribute, entity, attr, t);
-                    const value = getValue(
-                        attribute,
-                        row,
-                        path,
-                        entity,
-                        attr,
-                        attrType,
-                        t
-                    );
-                    let color = 'black';
-                    if (attrType === 'enum') {
-                        if (colorDict) {
-                            color = (<any>colorDict)[entityI8n]![attr]![
-                                value
-                            ] as string;
-                        }
-                    }
-                    return {
-                        label,
-                        value,
-                        color,
-                    };
-                });
-                return {
-                    title,
-                    rows,
-                    state: mobileAttrDef.state && typeof mobileAttrDef.state === 'string'
-                        ? get(row, mobileAttrDef.state) : mobileAttrDef.state
-                }
-            })
-            return coverData;
-        };
-    }
     return {
         columnDef,
-        converter: dataConverter,
     };
+}
+
+export function analyzeAttrMobileForCard<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, t: (k: string, params?: object) => string, mobileAttrDef: CardDef, colorDict: ColorDict<ED>) {
+    return (data: any[]) => {
+        // 遍历用户传入的数据源
+        const coverData = data.map((row) => {
+            // title如果是path进行解析
+            const title = typeof mobileAttrDef.title === 'string' ? get(row, mobileAttrDef.title) : mobileAttrDef.title;
+            // rows即卡片主体要渲染的数据
+            const rows = mobileAttrDef.rows.map((attribute) => {
+                const path = getPath(attribute);
+                const {
+                    attrType,
+                    attr,
+                    entity: entityI8n,
+                } = resolvePath(dataSchema, entity, path);
+                const label = getLabel(attribute, entity, attr, t);
+                const value = getValue(
+                    attribute,
+                    row,
+                    path,
+                    entity,
+                    attr,
+                    attrType,
+                    t
+                );
+                return {
+                    label,
+                    value,
+                };
+            });
+            // 处理state 卡片右上角的stateView要显示的内容
+            let color = 'default';
+            let state;
+            if (mobileAttrDef.state && typeof mobileAttrDef.state === 'string') {
+                const {
+                    attr,
+                    entity: entityI8n,
+                } = resolvePath(dataSchema, entity, mobileAttrDef.state);
+                const rowValue = get(row, mobileAttrDef.state);
+                const value = t(`${String(entityI8n)}:v.${attr}.${rowValue}`)
+                if (colorDict) {
+                    color = (<any>colorDict)[entityI8n]![attr]![
+                        rowValue
+                    ] as string;
+                }
+                state = {
+                    color,
+                    value
+                }
+            }
+            else {
+                state = mobileAttrDef.state;
+            }
+            return {
+                title,
+                rows,
+                state,
+                record: row,
+            }
+        })
+        return coverData;
+    }
 }
