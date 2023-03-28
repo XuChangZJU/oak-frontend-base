@@ -125,7 +125,7 @@ export default function Render(
                 }
             }
             if (ele.width) {
-                Object.assign(ele, { width: ele.width });
+                Object.assign(column, { width: ele.width });
             }
             return column;
         })
@@ -135,7 +135,7 @@ export default function Render(
                 align: 'center',
                 title: '操作',
                 key: 'operation',
-                width: opSizeForWidth[width],
+                width: opSizeForWidth[width] || 300,
                 render: (value: any, row: any) => {
                     const id = row?.id;
                     const oakActions = row?.['#oakLegalActions'] as string[];
@@ -154,6 +154,7 @@ export default function Render(
         }
         setTabelColumns(tableColumns)
     }, [data])
+    console.log(tableColumns);
     return (
         <Table
             size={sizeForWidth[width]}
