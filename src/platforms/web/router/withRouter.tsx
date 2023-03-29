@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useWidth } from './../responsive';
 
@@ -87,14 +87,19 @@ function getQuery(url: string, properties?: Record<string, FunctionConstructor |
 const withRouter = (Component: React.ComponentType<any>, { path, properties }: {path?: string, properties?: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty> }) => {
     const ComponentWithRouterProp = (props: any) => {
         const location = useLocation();
+        const routerParams = useParams(); // 取路由 xx/:abbr 通过这个函数取到
         const width = useWidth();
         const { t, i18n } = useTranslation();
         const { forwardedRef, ...rest } = props;
 
         let params = {};
         let routeMatch = false;
-        if (path && location.pathname.toLowerCase().includes(path.toLowerCase())) {
-            params = getParams(location as Location, properties);
+        if (path && (props.customRouter || location.pathname.toLowerCase().includes(path.toLowerCase()))) {
+            params = Object.assign(
+                params,
+                getParams(location as Location, properties),
+                routerParams
+            );
             routeMatch = true;
         }
 

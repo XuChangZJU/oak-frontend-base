@@ -28,7 +28,7 @@ import { ColorDict } from 'oak-domain/lib/types/Style';
 import dayjs from 'dayjs';
 
 const tableWidthMap: Record<number, number> = {
-    1: 100,
+    1: 140,
     2: 200,
     3: 300,
     4: 400,
@@ -161,7 +161,7 @@ function getValue<ED extends EntityDict & BaseEntityDict>(
         value = t(`${entity as string}:v.${attr}.${value}`);
     }
     // 如果是dateTime
-    if (attrType === 'dateTime' && value) {
+    if (attrType === 'datetime' && value) {
         value = dayjs(value).format('YYYY-MM-DD HH:mm');
     }
     if (isAttrbuteType(attribute).value) {

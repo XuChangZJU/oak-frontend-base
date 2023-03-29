@@ -1,6 +1,6 @@
 <view class="container">
-    <block wx:for="{{items}}">
-        <view class="btn" bindtap="{{item.onClick}}">
+    <block wx:for="{{items}}" wx:key="index">
+        <view class="btn" data-action="{{item.action}}" data-path="{{item.path}}" bindtap="onActionMp">
             <view class="btn-text">
                 {{item.label}}
             </view>
@@ -11,7 +11,21 @@
     </block>
     <view class="divider"></view>
     <block wx:if="{{moreItems && moreItems.length > 0}}">
-        <text>更多</text>
+        <view class="btn-icon" bindtap="handleShow">
+            <oak-icon name="switch" size="24"></oak-icon>
+        </view>
+        <l-popup show="{{showMore}}" content-align="center">
+            <view class="draw-container">
+                <view class="title-view">
+                    操作
+                </view>
+                <view class="draw-content">
+                    <view class="draw-cell border" wx:for="{{moreItems}}" wx:key="index" data-path="{{item.path}}" data-action="{{item.action}}" bindtap="onActionMp">
+                        {{item.label}}
+                    </view>
+                </view>
+            </view>
+        </l-popup>
     </block>
 </view>
 

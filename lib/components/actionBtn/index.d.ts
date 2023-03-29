@@ -1,5 +1,5 @@
 /// <reference types="react" />
-declare const _default: (props: import("../..").ReactComponentProps<false, {
+declare const _default: (props: import("../../types/Page").ReactComponentProps<false, {
     entity: StringConstructor;
     extraActions: {
         type: ArrayConstructor;
@@ -10,6 +10,6 @@ declare const _default: (props: import("../..").ReactComponentProps<false, {
         value: never[];
     };
     cascadeActions: ObjectConstructor;
-    onAction: ObjectConstructor;
+    onAction: FunctionConstructor;
 }>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;
