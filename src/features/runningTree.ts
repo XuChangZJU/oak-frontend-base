@@ -745,6 +745,7 @@ class ListNode<
         ) {
             // 如果是新增项，在这里抵消
             unset(this.updates, id);
+            this.removeChild(id);
         } else {
             this.updates[id] = {
                 beforeExecute,
@@ -1140,8 +1141,12 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     setId(id: string) {
-        this.id = id;
-        this.clean();
+        if (id !== this.id) {
+            this.id = id;
+            if (this.dirty) {
+                console.warn('setId时结点是dirty，请确认代码无误');
+            }
+        }
     }
 
     unsetId() {
