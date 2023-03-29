@@ -1144,6 +1144,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (id !== this.id) {
             this.id = id;
             assert(!this.dirty, 'setId时结点是dirty，在setId之前应当处理掉原有的update');
+            this.publish();
         }
     }
 
