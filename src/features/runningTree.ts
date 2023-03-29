@@ -1091,8 +1091,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
         if (!id) {
             // 不传id是创建动作
-            this.create({});
-            this.id = this.operation!.operation.data.id;
+            if (!this.parent || this.parent instanceof VirtualNode) {
+                this.create({});
+                this.id = this.operation!.operation.data.id;
+            }
         }
         else {
             this.id = id;
