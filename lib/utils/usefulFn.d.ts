@@ -9,7 +9,7 @@ export declare function getAttributes(attributes: Record<string, Attribute>): Re
 export declare function resolvePath<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, path: string): {
     entity: keyof ED;
     attr: string;
-    attrType: "ref" | DataType;
+    attrType: DataType | "ref";
     attribute: Attribute;
 };
 export declare function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<ED>): DataTransformer;

@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import assert from 'assert';
+import React, { useEffect, useState } from 'react';
 import OlMap from 'ol/Map';
 import Feature from 'ol/Feature';
 import XYZ from 'ol/source/XYZ';
@@ -9,11 +10,13 @@ import MultiPoint from 'ol/geom/MultiPoint';
 import { Style, Circle, Fill, Stroke } from 'ol/style';
 
 import View from 'ol/View';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import DragPan from 'ol/interaction/DragPan';
+import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import 'ol/ol.css';
 import Styles from './web.module.less';
 import { locate } from '../../../utils/locate';
+import { Point } from 'ol/geom';
 
 const prefix = Math.ceil(Math.random() * 1000);
 
@@ -23,6 +26,7 @@ type MapProps = {
     zoom?: number;
     unzoomable?: boolean;
     undragable?: boolean;
+    disableWheelZoom?: boolean;
     style?: object;
     autoLocate?: boolean;
     markers?: Array<[number, number]>;
@@ -32,10 +36,12 @@ const DEFAULT_CENTER = [120.123, 30.259];     // 浙大玉泉
 const DEFAULT_ZOOM = 15;
 
 export default function Map(props: MapProps) {
-    let map: OlMap;
     const { id } = props;
-    useEffect(() => {
-        map = new OlMap({
+    const [map, setMap] = useState<OlMap>();
+
+
+    useEffect(() => {        
+        const map2 = new OlMap({
             target: `map-${id || prefix}`,
             layers: [
                 new TileLayer({
@@ -58,7 +64,7 @@ export default function Map(props: MapProps) {
         });
         
         if (props.undragable) {
-            map.getInteractions().forEach(
+            map2.getInteractions().forEach(
                 (ele) => {
                     if (ele instanceof DragPan) {
                         ele.setActive(false);
@@ -66,56 +72,71 @@ export default function Map(props: MapProps) {
                 }
             );
         }
+        if (props.disableWheelZoom) {
+            map2.getInteractions().forEach(
+                (ele) => {
+                    if (ele instanceof MouseWheelZoom) {
+                        ele.setActive(false);
+                    }
+                }
+            )
+        }
         if (props.autoLocate) {
             locate().then(
                 ({ latitude, longitude }) => {
-                    map.getView().setCenter(fromLonLat([longitude, latitude]));
+                    map2.getView().setCenter(fromLonLat([longitude, latitude]));
                 }
             );
         }
+        setMap(map2);
     }, []);
 
     useEffect(() => {
-        if (props.center) {
-            map && map.getView().setCenter(fromLonLat(props.center))
+        if (props.center && map) {
+            const originCenter = map.getView().getCenter();
+            if (originCenter) {
+                const oc2 = toLonLat(originCenter);
+                if (oc2[0] !== props.center[0] || oc2[1] !== props.center[1]) {
+                    map.getView().animate({
+                        center: fromLonLat(props.center),
+                        duration: 500,
+                    });
+                }
+            }
+            else {
+                map.getView().setCenter(fromLonLat(props.center));
+            }
         }
     }, [props.center]);
 
     useEffect(() => {
         // marker好像没有效果，以后再调
         if (props.markers && map) {
-            let markerLayer = map.getLayers().get('markLayer') as VectorLayer<VectorSource>;
-            if (!markerLayer) {
-                markerLayer = new VectorLayer({
-                    source: new VectorSource(),
-                });
-                map.getLayers().set('markLayer', markerLayer);
-            }
+            const markerLayer = map.getAllLayers().find(
+                ele => ele instanceof VectorLayer
+            );
+            assert(markerLayer && markerLayer instanceof VectorLayer);
             let feature = markerLayer.getSource()!.getFeatureById('markers');
             if (feature) {
-                feature.setGeometry(new MultiPoint(props.markers.map(ele => fromLonLat(ele))));
+                // feature.setGeometry(new MultiPoint(props.markers.map(ele => fromLonLat(ele))));
+                feature.setGeometry(new Point(fromLonLat(props.markers[0])));
             }
             else {
-                feature = new Feature(new MultiPoint(props.markers.map(ele => fromLonLat(ele))));
+                // feature = new Feature(new MultiPoint(props.markers.map(ele => fromLonLat(ele))));
+                feature = new Feature(new Point(fromLonLat(props.markers[0])));
                 feature.setStyle(
                     new Style({
                         image: new Circle({
                             // 点的颜色
                             fill: new Fill({
-                                color: '#F00'
+                                color: 'red',
                             }),
                             // 圆形半径
-                            radius: 5
-                        }),
-                        // 线样式
-                        stroke: new Stroke({
-                            color: '#0F0',
-                            lineCap: 'round',       // 设置线的两端为圆头
-                            width: 5                
+                            radius: 10
                         }),
                         // 填充样式
                         fill: new Fill({
-                            color: '#00F'
+                            color: 'red',
                         })
                     })
                 );

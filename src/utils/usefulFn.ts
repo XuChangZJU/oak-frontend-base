@@ -17,6 +17,8 @@ import {
     AttrUpsertRender,
     OakAbsDerivedAttrDef,
     OakAbsRefAttrPickerDef,
+    OakAbsGeoAttrDef,
+    OakNativeAttrUpsertRender,
 } from '../types/AbstractComponent';
 import { Attributes } from 'oak-domain/lib/types';
 import { get } from 'oak-domain/lib/utils/lodash';
@@ -248,31 +250,36 @@ export function analyzeDataUpsertTransformer<
     attrUpsertDefs: OakAbsAttrUpsertDef<ED>[],
     t: (k: string, params?: object) => string
 ) {
+    let geoDef: OakAbsGeoAttrDef | undefined = undefined;
+    const makeNativeFixedPart = (attr: string) => {
+        const attrDef = dataSchema[entity].attributes[attr]; // upsert应该不会涉及createAt这些内置属性
+        const {
+            type,
+            notNull: required,
+            default: defaultValue,
+            enumeration,
+            params,
+        } = attrDef;
+        const label = t(`${entity}:attr.${attr}`);
+        assert(type !== 'ref');
+        return {
+            attr,
+            label,
+            type: type as OakNativeAttrUpsertRender['type'],
+            required,
+            defaultValue,
+            enumeration,
+            params,
+            get: (data?: Record<string, any>) => data && data[attr],
+        };
+    };
     const transformerFixedPart = attrUpsertDefs.map((ele) => {
         if (typeof ele === 'string') {
             const rel = judgeRelation(dataSchema, entity, ele);
             assert(rel === 1);
-            const attrDef = dataSchema[entity].attributes[ele]; // upsert应该不会涉及createAt这些内置属性
-            const {
-                type,
-                notNull: required,
-                default: defaultValue,
-                enumeration,
-                params,
-            } = attrDef;
-            const label = t(`${entity}:attr.${ele}`);
-            assert(type !== 'ref');
-            return {
-                attr: ele,
-                label,
-                type,
-                required,
-                defaultValue,
-                enumeration,
-                params,
-                get: (data?: Record<string, any>) => data && data[ele],
-            };
-        } else {
+            return makeNativeFixedPart(ele);
+            
+        } else if (ele.type === 'ref') {
             const {
                 attr,
                 label,
@@ -288,10 +295,29 @@ export function analyzeDataUpsertTransformer<
                 attr: origAttr,
             };
         }
-    });
+        else if (ele.type === 'geo') {
+            assert(!geoDef, '只能定义一个geo渲染对象');
+            geoDef = ele;
+        }
+    }).filter(
+        ele => !!ele
+    );
+    if (geoDef) {
+        // 暂时只放出poiName和coordinate
+        const { attributes } = geoDef as OakAbsGeoAttrDef;
+        let attr = attributes?.coordinate || 'coordinate';
+        transformerFixedPart.push(Object.assign(makeNativeFixedPart(attr), {
+            type: 'coordinate',
+            extra: attributes,
+        }));
+        attr = attributes?.poiName || 'poiName';
+        transformerFixedPart.push(Object.assign(makeNativeFixedPart(attr), {
+            type: 'poiName',
+        }));
+    }
     return (data: any) =>
         transformerFixedPart.map((ele) => {
-            const { get } = ele;
+            const { get } = ele!;
             const value = get(data);
             return {
                 value,

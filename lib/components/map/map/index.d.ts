@@ -6,6 +6,7 @@ declare type MapProps = {
     zoom?: number;
     unzoomable?: boolean;
     undragable?: boolean;
+    disableWheelZoom?: boolean;
     style?: object;
     autoLocate?: boolean;
     markers?: Array<[number, number]>;

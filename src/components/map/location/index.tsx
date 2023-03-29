@@ -21,7 +21,7 @@ type LocationProps = {
     poiName?: string;
     coordinate?: [number, number];
     areaId?: string;
-    onSelect: (selected: {
+    onLocated: (selected: {
         poiName: string,
         coordinate: [number, number],
         areaId: string
@@ -30,10 +30,11 @@ type LocationProps = {
 
 type Mode = 'dragMap' | 'searchPoi';
 
-type Poi = {
+export type Poi = {
     id: string;
     areaId: string;
     poiName: string;
+    detail: string;
     coordinate: [number, number];
 };
 
@@ -73,6 +74,7 @@ export default function Location(props: LocationProps) {
         return null;
     }
 
+    const center = currentPoi?.coordinate || props.coordinate;
     return (
         <Row gutter={[16, 16]} style={{
             width: '100%',
@@ -82,8 +84,8 @@ export default function Location(props: LocationProps) {
                 <Map
                     style={{ height: '100%' }}
                     id="location-map"
-                    center={props.coordinate}
-                    markers={props.coordinate ? [props.coordinate] : undefined}
+                    center={center}
+                    markers={center? [center] : undefined}
                 />
             </Col>
             <Col xs={24} sm={10}>
@@ -92,7 +94,7 @@ export default function Location(props: LocationProps) {
                     header={
                         <Input
                             ref={searchRef}
-                            placeholder="搜索地点"
+                            placeholder="请输入完整名称（如“浙江大学”）而非简称（如“浙大”）"
                             value={searchValue}
                             allowClear
                             onChange={(e) => {
@@ -163,9 +165,15 @@ export default function Location(props: LocationProps) {
                                             <div
                                                 key={poi.id}
                                                 onClick={() => {
+                                                    console.log(poi);
                                                     setCurrentPoi(
                                                         poi
                                                     );
+                                                    props.onLocated({
+                                                        poiName: poi.detail,
+                                                        coordinate: poi.coordinate,
+                                                        areaId: poi.areaId,
+                                                    });
                                                 }}
                                             >
                                                 <List.Item
@@ -186,7 +194,7 @@ export default function Location(props: LocationProps) {
                                                 >
                                                     <List.Item.Meta
                                                         title={
-                                                            poi.poiName
+                                                            poi.detail
                                                         }
                                                     />
                                                 </List.Item>
