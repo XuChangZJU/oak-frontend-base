@@ -333,9 +333,13 @@ export function analyzeAttrMobileForCard<ED extends EntityDict & BaseEntityDict>
     return (data: any[]) => {
         // 遍历用户传入的数据源
         const coverData = data.map((row) => {
+            let title = '';
             // title如果是path进行解析
-            const title = typeof mobileAttrDef.title === 'string' ? get(row, mobileAttrDef.title) : mobileAttrDef.title;
+            if (mobileAttrDef.title) {
+                title = typeof mobileAttrDef.title === 'string' ? get(row, mobileAttrDef.title) : mobileAttrDef.title;
+            }
             // rows即卡片主体要渲染的数据
+            assert(!!(mobileAttrDef.rows && mobileAttrDef.rows.length), 'attributeMb中的rows不能为空')
             const rows = mobileAttrDef.rows.map((attribute) => {
                 const path = getPath(attribute);
                 const {

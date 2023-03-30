@@ -79,6 +79,7 @@ export default function Render(
             tablePagination?: PaginationProps;
             onAction?: onActionFnDef;
             rowSelection?: TableProps<any[]>['rowSelection']
+            scroll?: TableProps<any[]>['scroll']
         },
         {
         }
@@ -103,6 +104,7 @@ export default function Render(
         onAction,
         rowSelection,
         width,
+        scroll,
     } = oakData;
     useEffect(() => {
         const tableColumns: ColumnsType<any> = columns && columns.map((ele) => {
@@ -169,9 +171,9 @@ export default function Render(
             }}
             loading={loading}
             dataSource={data}
-            scroll={{ x: 1500 }}
             columns={tableColumns}
             pagination={tablePagination}
+            scroll={{...scroll}}
             onRow={(record) => {
                 return {
                     onClick: () => {

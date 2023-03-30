@@ -15,14 +15,18 @@ export default OakComponent({
         loading: Boolean,
         tablePagination: Object,
         rowSelection: Object,
+        scroll: Object,
     },
     formData({ props }) {
         const { converter } = this.state;
         const { data } = props;
-        const mobileData = converter(data!);
-        return {
-            mobileData,
+        if (converter) {
+            const mobileData = converter(data!);
+            return {
+                mobileData,
+            }
         }
+        return {}
     },
     data: {
         converter: ((data: any) => <any>[])
@@ -40,14 +44,19 @@ export default OakComponent({
             const colorDict = this.features.style.getColorDict();
             assert(!!data, 'data不能为空');
             assert(!!entity, 'list属性entity不能为空');
-            assert(!!attributes, 'list属性attributes不能为空');
-            const { columnDef } = analyzeAttrDefForTable(schema, entity!, attributes!, (k, params) => this.t(k, params), attributesMb as CardDef);
-            const converter = analyzeAttrMobileForCard(schema, entity!, (k, params) => this.t(k, params), attributesMb as CardDef, colorDict);
-            this.setState({
-                converter,
-                columns: columnDef,
-                colorDict,
-            });
+            if (attributes && attributes.length) {
+                const { columnDef } = analyzeAttrDefForTable(schema, entity!, attributes!, (k, params) => this.t(k, params), attributesMb as CardDef);
+                this.setState({
+                    columns: columnDef,
+                    colorDict,
+                });
+            }
+            if (attributesMb) {
+                const converter = analyzeAttrMobileForCard(schema, entity!, (k, params) => this.t(k, params), attributesMb as CardDef, colorDict);
+                this.setState({
+                    converter,
+                })
+            }
         }
     },
     methods: {
