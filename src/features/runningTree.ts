@@ -745,6 +745,7 @@ class ListNode<
         ) {
             // 如果是新增项，在这里抵消
             unset(this.updates, id);
+            this.removeChild(id);
         } else {
             this.updates[id] = {
                 beforeExecute,
@@ -1089,7 +1090,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         this.children = {};
 
         if (!id) {
-            // 不传id是创建动作
+            // 不传id先假设是创建动作
             this.create({});
             this.id = this.operation!.operation.data.id;
         }
@@ -1140,8 +1141,11 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     setId(id: string) {
-        this.id = id;
-        this.clean();
+        if (id !== this.id) {
+            this.id = id;
+            assert(!this.dirty, 'setId时结点是dirty，在setId之前应当处理掉原有的update');
+            this.publish();
+        }
     }
 
     unsetId() {
@@ -1247,6 +1251,22 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             Object.assign(operation.data, data);
             if (action && operation.action !== action) {
                 operation.action = action;
+            }
+        }
+
+        // 处理外键，如果update的数据中有相应的外键，其子对象上的动作应当被clean掉
+        for (const attr in data) {
+            if (attr === 'entityId') {
+                assert(data.entity, '设置entityId时请将entity也传入');
+                if (this.children[data.entity]) {
+                    this.children[data.entity].clean();
+                }
+            }
+            else if (this.schema[this.entity]!.attributes[attr as any]?.type === 'ref') {
+                const refKey = attr.slice(0, attr.length - 2);
+                if (this.children[refKey]) {
+                    this.children[refKey].clean();
+                }
             }
         }
         this.setDirty();
@@ -1396,6 +1416,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         const { modi$entity } = value;
                         this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id)
                     }
+                    
+                    // 刷新后所有的更新都应当被丢弃（子层上可能会自动建立了this.create动作） 这里可能会有问题 by Xc 20230329
+                    this.clean();
                     this.setLoading(false);
                 });
             }

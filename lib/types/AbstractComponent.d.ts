@@ -47,17 +47,16 @@ export interface OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntityDic
     required?: boolean;
     value: string;
 }
-export declare type OakAbsGeoAttrsDef = {
-    amapSecurityJsCode: string;
-    amapKey: string;
-    type: 'getPoint';
+export interface OakAbsGeoAttrDef {
+    type: 'geo';
+    category: 'point';
     attributes?: {
         areaId?: string;
         poiName?: string;
         coordinate?: string;
     };
-};
-export declare type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict> = OakAbsRefAttrPickerDef<ED, keyof ED> | string;
+}
+export declare type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict> = OakAbsGeoAttrDef | OakAbsRefAttrPickerDef<ED, keyof ED> | string;
 import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
 export declare type AttrRender = {
     label: string;
@@ -70,7 +69,7 @@ export declare type AttrRender = {
 export declare type OakNativeAttrUpsertRender = {
     label: string;
     value: any;
-    type: Omit<DataType, 'ref'>;
+    type: Omit<DataType, 'ref'> | 'coordinate' | 'poiName';
     params?: DataTypeParams;
     required?: boolean;
     attr: string;
@@ -79,6 +78,7 @@ export declare type OakNativeAttrUpsertRender = {
         label: string;
         value: string;
     }>;
+    extra?: any;
 };
 export declare type AttrUpsertRender<ED extends EntityDict & BaseEntityDict> = OakNativeAttrUpsertRender | OakAbsRefAttrPickerRender<ED, keyof ED>;
 export declare type ColumnDefProps = {

@@ -17,6 +17,7 @@ import { Navigator } from './navigator';
 import { Port } from './port';
 import { Relation } from './relation';
 import { Style } from './style';
+import { Geo } from './geo';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 
@@ -36,6 +37,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
     const location = new Location();
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, authDict);
     const locales = new Locales(aspectWrapper);
+    const geo = new Geo(aspectWrapper);
     const eventBus = new EventBus();
     const localStorage = new LocalStorage();
     const notification = new Notification();
@@ -57,6 +59,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         port,
         relation,
         style,
+        geo,
     } as BasicFeatures<ED, Cxt, FrontCxt, AD>;
 }
 
@@ -77,5 +80,6 @@ export type BasicFeatures<
     navigator: Navigator;
     port: Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
     relation: Relation<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
-    style: Style<ED>
+    style: Style<ED>;
+    geo: Geo<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
 };

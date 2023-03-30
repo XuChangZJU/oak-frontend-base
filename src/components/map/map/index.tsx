@@ -1,22 +1,32 @@
-import React, { useEffect } from 'react';
+import assert from 'assert';
+import React, { useEffect, useState } from 'react';
 import OlMap from 'ol/Map';
+import Feature from 'ol/Feature';
 import XYZ from 'ol/source/XYZ';
+import VectorSource from 'ol/source/Vector';
 import TileLayer from 'ol/layer/Tile';
+import VectorLayer from 'ol/layer/Vector';
+import MultiPoint from 'ol/geom/MultiPoint';
+import { Style, Circle, Fill, Stroke } from 'ol/style';
 
 import View from 'ol/View';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, toLonLat } from 'ol/proj';
 import DragPan from 'ol/interaction/DragPan';
+import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import 'ol/ol.css';
 import Styles from './web.module.less';
 import { locate } from '../../../utils/locate';
+import { Point } from 'ol/geom';
 
 const prefix = Math.ceil(Math.random() * 1000);
 
 type MapProps = {
+    id?: string;
     center?: [number, number],
     zoom?: number;
     unzoomable?: boolean;
     undragable?: boolean;
+    disableWheelZoom?: boolean;
     style?: object;
     autoLocate?: boolean;
     markers?: Array<[number, number]>;
@@ -26,10 +36,13 @@ const DEFAULT_CENTER = [120.123, 30.259];     // 浙大玉泉
 const DEFAULT_ZOOM = 15;
 
 export default function Map(props: MapProps) {
-    let map: OlMap;
-    useEffect(() => {
-        map = new OlMap({
-            target: `map-${prefix}`,
+    const { id } = props;
+    const [map, setMap] = useState<OlMap>();
+
+
+    useEffect(() => {        
+        const map2 = new OlMap({
+            target: `map-${id || prefix}`,
             layers: [
                 new TileLayer({
                     source: new XYZ({
@@ -37,6 +50,9 @@ export default function Map(props: MapProps) {
                         wrapX: false,
                     }),
                 }),
+                new VectorLayer({
+                    source: new VectorSource(),
+                })
             ],
             view: new View({
                 center: fromLonLat(props.center || DEFAULT_CENTER),
@@ -48,7 +64,7 @@ export default function Map(props: MapProps) {
         });
         
         if (props.undragable) {
-            map.getInteractions().forEach(
+            map2.getInteractions().forEach(
                 (ele) => {
                     if (ele instanceof DragPan) {
                         ele.setActive(false);
@@ -56,30 +72,81 @@ export default function Map(props: MapProps) {
                 }
             );
         }
+        if (props.disableWheelZoom) {
+            map2.getInteractions().forEach(
+                (ele) => {
+                    if (ele instanceof MouseWheelZoom) {
+                        ele.setActive(false);
+                    }
+                }
+            )
+        }
         if (props.autoLocate) {
             locate().then(
                 ({ latitude, longitude }) => {
-                    map.getView().setCenter(fromLonLat([longitude, latitude]));
+                    map2.getView().setCenter(fromLonLat([longitude, latitude]));
                 }
             );
         }
+        setMap(map2);
     }, []);
 
     useEffect(() => {
-        if (props.center) {
-            map && map.getView().setCenter(fromLonLat(props.center))
+        if (props.center && map) {
+            const originCenter = map.getView().getCenter();
+            if (originCenter) {
+                const oc2 = toLonLat(originCenter);
+                if (oc2[0] !== props.center[0] || oc2[1] !== props.center[1]) {
+                    map.getView().animate({
+                        center: fromLonLat(props.center),
+                        duration: 500,
+                    });
+                }
+            }
+            else {
+                map.getView().setCenter(fromLonLat(props.center));
+            }
         }
     }, [props.center]);
 
     useEffect(() => {
-        if (props.markers) {
-            let markerLayer = map.getLayers().get('markerLayer');
-            if (!markerLayer) {
-                // todo 
+        // marker好像没有效果，以后再调
+        if (props.markers && map) {
+            const markerLayer = map.getAllLayers().find(
+                ele => ele instanceof VectorLayer
+            );
+            assert(markerLayer && markerLayer instanceof VectorLayer);
+            let feature = markerLayer.getSource()!.getFeatureById('markers');
+            if (feature) {
+                // feature.setGeometry(new MultiPoint(props.markers.map(ele => fromLonLat(ele))));
+                feature.setGeometry(new Point(fromLonLat(props.markers[0])));
             }
+            else {
+                // feature = new Feature(new MultiPoint(props.markers.map(ele => fromLonLat(ele))));
+                feature = new Feature(new Point(fromLonLat(props.markers[0])));
+                feature.setStyle(
+                    new Style({
+                        image: new Circle({
+                            // 点的颜色
+                            fill: new Fill({
+                                color: 'red',
+                            }),
+                            // 圆形半径
+                            radius: 10
+                        }),
+                        // 填充样式
+                        fill: new Fill({
+                            color: 'red',
+                        })
+                    })
+                );
+                feature.setId('markers');
+                markerLayer.getSource()!.addFeature(feature);
+            }
+            map.render();
         }
     }, [props.markers]);
 
-    return <div id={`map-${prefix}`} className={Styles.map} style={props.style} />;
+    return <div id={`map-${id || prefix}`} className={Styles.map} style={props.style} />;
 };
 

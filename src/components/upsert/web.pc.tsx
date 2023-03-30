@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import {
@@ -21,14 +21,23 @@ import dayjs from 'dayjs';
 import { AttrRender, AttrUpsertRender, OakAbsRefAttrPickerDef, OakAbsRefAttrPickerRender, OakNativeAttrUpsertRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import RefAttr from '../refAttr';
+import Location, { Poi } from '../map/location';
+import Map from '../map/map';
 
 type ED = EntityDict & BaseEntityDict;
-function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: any) => void) {
+function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: any, extra?: Record<string, any>) => void) {
+    const [sl, setSl] = useState(false);
+    const [poi, setPoi] = useState<{
+        poiName: string;
+        coordinate: [number, number];
+        areaId: string;
+    } | undefined>(undefined);
     const { value, type, params, label, defaultValue, required } = attrRender as OakNativeAttrUpsertRender;
     switch (type) {
         case 'string':
         case 'varchar':
-        case 'char': {
+        case 'char':
+        case 'poiName': {
             return (
                 <Input
                     allowClear={!required}
@@ -191,10 +200,87 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                     multiple={false}
                     entityId={value}
                     pickerRender={attrRender as OakAbsRefAttrPickerRender<ED, keyof ED>}
-                    onChange={(value: string) => {onValueChange(value)}}
+                    onChange={(value: string) => { onValueChange(value) }}
                 />
             );
         }
+        case 'coordinate': {
+            const { coordinate } = value || {};
+            const { extra } = attrRender as OakNativeAttrUpsertRender;
+            const poiNameAttr = extra?.poiName || 'poiName';
+            const areaIdAttr = extra?.areaId || 'areaId';
+            return (
+                <>
+                    <Modal
+                        width='80vw'
+                        open={sl}
+                        closable={false}
+                        onCancel={() => setSl(false)}
+                        okText="确认"                        
+                        cancelText="取消"
+                        okButtonProps={{
+                            disabled: !poi,
+                        }}
+                        onOk={() => {
+                            if (poi) {
+                                const { poiName, coordinate, areaId } = poi;
+                                onValueChange({
+                                    type: 'point',
+                                    coordinate,
+                                }, {
+                                    [poiNameAttr]: poiName,
+                                    [areaIdAttr]: areaId,
+                                });
+                            }
+                            setSl(false);
+                        }}
+                    >
+                        <Location
+                            coordinate={coordinate}
+                            onLocated={(poi) => setPoi(poi)}
+                        />
+                    </Modal>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            width: '100%',
+                        }}
+                    >
+                        <Space direction="vertical" size={8}>
+                            <Space align="center">
+                                <Button
+                                    type="dashed"
+                                    onClick={() => {
+                                        setSl(true);
+                                    }}
+                                >
+                                    {value
+                                        ? '重选位置'
+                                        : '选择位置'}
+                                </Button>
+                            </Space>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    width: '100%',
+                                }}
+                            >
+                                <Map
+                                    undragable={true}
+                                    disableWheelZoom={true}
+                                    style={{ height: 300 }}
+                                    autoLocate={true}
+                                    center={coordinate}
+                                    markers={coordinate ? [coordinate] : undefined}
+                                />
+                            </div>
+                        </Space>
+                    </div>
+                </>
+            );
+        }        
         default: {
             throw new Error(`【Abstract Update】无法支持的数据类别${type}的渲染`);
         }
@@ -234,10 +320,11 @@ export default function render(props: WebComponentProps<
                         >
                             <>
                                 {
-                                    makeAttrInput(ele, (value) => {
+                                    makeAttrInput(ele, (value, extra) => {
                                         const { attr } = ele;
                                         update({
                                             [attr]: value,
+                                            ...extra,
                                         })
                                     })
                                 }
