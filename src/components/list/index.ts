@@ -65,7 +65,7 @@ export default OakComponent({
             const { action, cascadeAction } = e.detail;
             const { row } = e.currentTarget.dataset;
             this.triggerEvent('onAction', {
-                row,
+                record: row,
                 action,
                 cascadeAction,
             })
