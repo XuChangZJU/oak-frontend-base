@@ -25,13 +25,18 @@ export default OakComponent({
         showMore: false,
     },
     lifetimes: {
-        // 在list组件render之后 才走进这个组件，应该不会存在没有数据的问题
+        // 在Tabel组件render之后 才走进这个组件，应该不会存在没有数据的问题
         async ready() {
             const { actions, extraActions, onAction, entity, cascadeActions } = this.props;
             const schema = this.features.cache.getSchema();
+            let column = 2;
+            if (process.env.OAK_PLATFORM === 'web') {
+                column = 6;
+            }
             if (extraActions && actions && extraActions.length) {
                 // 用户传的action默认排在前面
                 actions.unshift(...extraActions);
+                console.log(actions);
                 // 每一项里的action 和 path 用在小程序这边, onClick用于web
                 const items = actions.map((ele) => ({
                     action: typeof ele !== 'string' ? ele.action : ele,
@@ -52,7 +57,8 @@ export default OakComponent({
                         })
                     }
                 })
-                const moreItems = items.splice(2);
+                const moreItems = items.splice(column);
+                console.log(items)
                 this.setState({
                     items,
                     moreItems

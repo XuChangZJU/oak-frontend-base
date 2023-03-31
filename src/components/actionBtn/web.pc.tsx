@@ -75,6 +75,7 @@ export default function Render(
         keyof EntityDict,
         false,
         {
+            items: { action: string; label: string, path: string; onClick: () => void }[];
             schema: StorageSchema<ED>;
             entity: string;
             actions: ActionDef<ED, keyof EntityDict>[];
@@ -93,39 +94,24 @@ export default function Render(
         onAction,
         entity,
         cascadeActions,
+        items,
     } = data;
     return (
         <div className={Style.panelContainer}>
-            <Space align='center'>
-                <>
-                    {actions?.map((ele, index: number) => {
-                        return (
-                            <ItemComponent
-                                label={getLabel(ele, entity, t)}
-                                type="a"
-                                onClick={() => {
-                                    const action = typeof ele !== 'string' ? ele.action : ele;
-                                    onAction(action, undefined);
-                                }}
-                            />
-                        );
-                    })}
-                    {cascadeActions && Object.keys(cascadeActions).map((key, index: number) => {
-                        const cascadeActionArr = cascadeActions[key];
-                        if (cascadeActionArr && cascadeActionArr.length) {
-                            cascadeActionArr.map((ele) => (
+            <Space align='center' style={{ width: '100%' }}>
+                <Space align='center'>
+                    <>
+                        {items?.map((ele, index: number) => {
+                            return (
                                 <ItemComponent
-                                    label={getLabel2(schema, key, ele, entity, t)}
+                                    label={ele.label}
                                     type="a"
-                                    onClick={() => {
-                                        const action = typeof ele !== 'string' ? ele.action : ele;
-                                        onAction(undefined, {path: key, action});
-                                    }}
+                                    onClick={ele.onClick}
                                 />
-                            ))
-                        }
-                    })}
-                </>
+                            );
+                        })}
+                    </>
+                </Space>
             </Space>
         </div>
     );
