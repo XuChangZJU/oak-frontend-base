@@ -34,7 +34,11 @@ function ItemComponent(
             </Button>
         );
     }
-    return <a onClick={() => onClick()}>
+    return <a onClick={(e) => {
+        onClick()
+        e.stopPropagation();
+        return false;
+    }}>
         {label}
     </a>;
 }

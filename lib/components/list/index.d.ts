@@ -10,5 +10,6 @@ declare const _default: (props: import("../..").ReactComponentProps<false, {
     loading: BooleanConstructor;
     tablePagination: ObjectConstructor;
     rowSelection: ObjectConstructor;
+    scroll: ObjectConstructor;
 }>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;

@@ -18,7 +18,7 @@ export declare function analyzeAttrDefForTable<ED extends EntityDict & BaseEntit
     columnDef: ColumnDefProps[];
 };
 export declare function analyzeAttrMobileForCard<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, t: (k: string, params?: object) => string, mobileAttrDef: CardDef, colorDict: ColorDict<ED>): (data: any[]) => {
-    title: any;
+    title: string;
     rows: {
         label: string;
         value: any;

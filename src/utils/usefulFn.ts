@@ -17,7 +17,6 @@ import {
     AttrUpsertRender,
     OakAbsDerivedAttrDef,
     OakAbsRefAttrPickerDef,
-    OakAbsGeoAttrDef,
     OakNativeAttrUpsertRender,
 } from '../types/AbstractComponent';
 import { Attributes } from 'oak-domain/lib/types';

@@ -21,4 +21,5 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
     tablePagination?: PaginationProps;
     onAction?: onActionFnDef;
     rowSelection?: TableProps<any[]>['rowSelection'];
+    scroll?: TableProps<any[]>['scroll'];
 }, {}>): JSX.Element;
