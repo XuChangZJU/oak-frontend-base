@@ -122,6 +122,9 @@ function getLabel<ED extends EntityDict & BaseEntityDict>(
     t: (k: string, params?: object) => string
 ) {
     let label = t(`${entity as string}:attr.${attr}`);
+    if (attr === '$$createAt$$' || attr === '$$updateAt$$' || attr === '$$deleteAt$$') {
+        label = t(`common:${attr}`);
+    }
     if (isAttrbuteType(attribute).label) {
         label = isAttrbuteType(attribute).label;
     }
@@ -175,6 +178,9 @@ function getType(attribute: OakAbsAttrDef, attrType: string) {
     let type = 'text';
     if (attrType === 'enum') {
         type = 'tag';
+    }
+    if (attrType === 'datetime') {
+        type = 'datetime'
     }
     if (isAttrbuteType(attribute).type) {
         type = isAttrbuteType(attrType).type as string;

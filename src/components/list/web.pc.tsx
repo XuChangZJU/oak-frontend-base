@@ -123,6 +123,9 @@ export default function Render(
                         color = colorDict![ele.entity]![ele.attr]![value] as string;
                         value = t(`${ele.entity}:v.${ele.attr}.${value}`);
                     }
+                    if (ele.type === 'datetime' && !!value) {
+                        value = dayjs(value).format('YYYY-MM-DD HH:mm')
+                    }
                     return (<RenderCell color={color} value={value} type={ele.type} />)
                 }
             }
