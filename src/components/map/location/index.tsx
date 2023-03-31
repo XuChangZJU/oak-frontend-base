@@ -15,7 +15,7 @@ import Map from '../map';
 import Styles from './web.module.less';
 
 // todo
-import useFeatures from '../../../../lib/hooks/useFeatures';
+import useFeatures from '../../../hooks/useFeatures';
 
 type LocationProps = {
     poiName?: string;
