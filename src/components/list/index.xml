@@ -36,7 +36,7 @@
                         extraActions="{{extraActions}}"
                         actions="{{item.record['#oakLegalActions']}}"
                         cascadeActions="{{item.record['#oakLegalCascadeActions']}}"
-                        bind:onAction="onAction"
+                        bind:onAction="onActionMp"
                     />
                 </block>
             </view>

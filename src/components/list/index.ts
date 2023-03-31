@@ -60,11 +60,15 @@ export default OakComponent({
         }
     },
     methods: {
-        onAction(e: WechatMiniprogram.TouchEvent) {
+        onActionMp(e: WechatMiniprogram.TouchEvent) {
             const { onAction } = this.props;
             const { action, cascadeAction } = e.detail;
             const { row } = e.currentTarget.dataset;
-            onAction && onAction(row, action, cascadeAction);
+            this.triggerEvent('onAction', {
+                row,
+                action,
+                cascadeAction,
+            })
         }
     }
 });
