@@ -101,7 +101,8 @@ export async function onPathSet<
         this.subscribed.push(
             features.runningTree.subscribeNode(
                 (path2) => {
-                    if (path2 === this.state.oakFullpath) {
+                    // 父结点改变，子结点要重渲染
+                    if (this.state.oakFullpath.includes(path2)) {
                         this.reRender();
                     }
                 },

@@ -988,9 +988,9 @@ class ListNode<
                     },
                     undefined,
                     getCount,
-                    ({ data, count }) => {
+                    ({ ids, count }) => {
                         this.pagination.currentPage = currentPage3 + 1;
-                        this.pagination.more = data.length === pageSize;
+                        this.pagination.more = ids.length === pageSize;
                         this.setLoading(false);
                         if (append) {
                             this.loadingMore = false;
@@ -998,8 +998,6 @@ class ListNode<
                         if (getCount) {
                             this.pagination.total = count;
                         }
-
-                        const ids = data.map((ele) => ele.id!) as string[];
                         if (append) {
                             this.ids = (this.ids || []).concat(ids);
                         } else {
@@ -1407,20 +1405,21 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             this.setLoading(true);
             this.publish();
             try {
-                await this.cache.refresh(this.entity, {
+                const { data: [value] } = await this.cache.refresh(this.entity, {
                     data: projection,
                     filter,
-                }, undefined, undefined, ({ data: [value] }) => {
-                    // 对于modi对象，在此缓存
-                    if (this.schema[this.entity].toModi && value) {
-                        const { modi$entity } = value;
-                        this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id)
-                    }
-                    
+                }, undefined, undefined, () => {                   
                     // 刷新后所有的更新都应当被丢弃（子层上可能会自动建立了this.create动作） 这里可能会有问题 by Xc 20230329
-                    this.clean();
                     this.setLoading(false);
+                    this.clean();
                 });
+                 // 对于modi对象，在此缓存modiIds
+                 if (this.schema[this.entity].toModi && value) {
+                    const { modi$entity } = value;
+                    this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id);
+                    this.publish();
+                }
+                
             }
             catch (err) {
                 this.setLoading(false);

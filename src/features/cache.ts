@@ -93,15 +93,24 @@ export class Cache<
         getCount?: true,
         callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
     ) {
-        const { result } = await this.exec('select', {
+        const { result: { ids, count } } = await this.exec('select', {
             entity,
             selection,
             option,
             getCount,
         }, callback);
-        return result as {
-            data: Partial<ED[T]['Schema']>[];
-            count?: number;
+
+        const selection2 = Object.assign({}, selection, {
+            filter: {
+                id: {
+                    $in: ids,
+                }
+            }
+        });
+        const data = this.get(entity, selection2);
+        return {
+            data: data as Partial<ED[T]['Schema']>[],
+            count,
         };
     }
 
