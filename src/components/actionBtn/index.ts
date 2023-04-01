@@ -33,18 +33,25 @@ export default OakComponent({
             if (process.env.OAK_PLATFORM === 'web') {
                 column = 6;
             }
-            if (actions && actions.length) {
-                if (extraActions && extraActions.length) {
+            if (extraActions?.length || actions?.length) {
+                const actions2 = actions || [];
+                if (extraActions) {
                     // 用户传的action默认排在前面
-                    actions.unshift(...extraActions);
+                    actions2.unshift(...extraActions);
                 }
+             
                 // 每一项里的action 和 path 用在小程序这边, onClick用于web
-                const items = actions.map((ele) => ({
+                const items = actions2.map((ele) => ({
                     action: typeof ele !== 'string' ? ele.action : ele,
                     path: '',
                     label: this.getLabel(ele, entity!),
-                    onClick: () => onAction && onAction(typeof ele !== 'string' ? ele.action : ele, undefined),
-                }))
+                    onClick: () =>
+                        onAction &&
+                        onAction(
+                            typeof ele !== 'string' ? ele.action : ele,
+                            undefined
+                        ),
+                }));
                 cascadeActions && Object.keys(cascadeActions).map((key, index: number) => {
                     const cascadeActionArr = cascadeActions[key];
                     if (cascadeActionArr && cascadeActionArr.length) {
