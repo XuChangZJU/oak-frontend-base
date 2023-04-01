@@ -33,10 +33,11 @@ export default OakComponent({
             if (process.env.OAK_PLATFORM === 'web') {
                 column = 6;
             }
-            if (extraActions && actions && extraActions.length) {
-                // 用户传的action默认排在前面
-                actions.unshift(...extraActions);
-                console.log(actions);
+            if (actions && actions.length) {
+                if (extraActions && extraActions.length) {
+                    // 用户传的action默认排在前面
+                    actions.unshift(...extraActions);
+                }
                 // 每一项里的action 和 path 用在小程序这边, onClick用于web
                 const items = actions.map((ele) => ({
                     action: typeof ele !== 'string' ? ele.action : ele,
@@ -58,7 +59,6 @@ export default OakComponent({
                     }
                 })
                 const moreItems = items.splice(column);
-                console.log(items)
                 this.setState({
                     items,
                     moreItems
