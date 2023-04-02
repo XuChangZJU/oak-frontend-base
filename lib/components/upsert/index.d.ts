@@ -1,5 +1,6 @@
 /// <reference types="react" />
 declare const _default: (props: import("../..").ReactComponentProps<false, {
+    helps: ObjectConstructor;
     entity: StringConstructor;
     attributes: ArrayConstructor;
     data: ObjectConstructor;

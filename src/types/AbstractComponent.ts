@@ -52,6 +52,7 @@ export interface OakAbsRefAttrPickerDef<
     sorter?: ED[T]['Selection']['sorter'] | (() => ED[T]['Selection']['sorter']);
     count?: number;
     label?: string;
+    placeholder?: string;
 }
 
 export interface OakAbsRefAttrPickerRender<
@@ -63,7 +64,7 @@ export interface OakAbsRefAttrPickerRender<
     value: string;
 };
 
-export interface OakAbsGeoAttrDef {
+export interface OakAbsGeoAttrUpsertDef {
     type: 'geo';
     category: 'point';
     attributes?: {
@@ -73,11 +74,26 @@ export interface OakAbsGeoAttrDef {
     };
 };
 
+export interface OakAbsNativeAttrUpsertDef<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
+    A extends keyof ED[T]['OpSchema']> {
+    attr: A,
+    type: ED[T]['OpSchema'][A],
+    label?: string;
+    placeholder?: string;
+    max?: number;
+    min?: number;
+    maxLength?: number;
+    defaultValue?: any;
+    required?: boolean;
+};
 
 export type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict> =
-    | OakAbsGeoAttrDef
+    | OakAbsGeoAttrUpsertDef
     | OakAbsRefAttrPickerDef<ED, keyof ED>
-    | string;
+    | string
+    | OakAbsNativeAttrUpsertDef<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>;
 
 import {
     DataType,
@@ -92,20 +108,21 @@ export type AttrRender = {
     attr: string;
 };
 
-export type OakNativeAttrUpsertRender = {
+export interface OakAbsNativeAttrUpsertRender<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
+    A extends keyof ED[T]['OpSchema']
+> extends Omit<OakAbsNativeAttrUpsertDef<ED, T, A>, 'type'> {
     label: string;
     value: any;
     type: Omit<DataType, 'ref'> | 'coordinate' | 'poiName';
-    params?: DataTypeParams;
-    required?: boolean;
-    attr: string;
-    defaultValue?: any;
     enumeration?: Array<{ label: string; value: string }>;
     extra?: any;
+    params: DataTypeParams;
 };
 
 export type AttrUpsertRender<ED extends EntityDict & BaseEntityDict> =
-    | OakNativeAttrUpsertRender
+    | OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>
     | OakAbsRefAttrPickerRender<ED, keyof ED>;
 
 export type ColumnDefProps = {

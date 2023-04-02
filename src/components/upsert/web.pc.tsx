@@ -18,7 +18,7 @@ import {
 import { CheckOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons';
 const { TextArea } = Input;
 import dayjs from 'dayjs';
-import { AttrRender, AttrUpsertRender, OakAbsRefAttrPickerDef, OakAbsRefAttrPickerRender, OakNativeAttrUpsertRender } from '../../types/AbstractComponent';
+import { AttrRender, AttrUpsertRender, OakAbsRefAttrPickerDef, OakAbsRefAttrPickerRender, OakAbsNativeAttrUpsertRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import RefAttr from '../refAttr';
 import Location, { Poi } from '../map/location';
@@ -32,7 +32,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
         coordinate: [number, number];
         areaId: string;
     } | undefined>(undefined);
-    const { value, type, params, label, defaultValue, required } = attrRender as OakNativeAttrUpsertRender;
+    const { value, type, label, params, defaultValue, enumeration, required, placeholder, min, max, maxLength } = attrRender as OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>;
     switch (type) {
         case 'string':
         case 'varchar':
@@ -41,10 +41,10 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
             return (
                 <Input
                     allowClear={!required}
-                    placeholder={`请输入${label}`}
+                    placeholder={placeholder || `请输入${label}`}
                     value={value}
                     defaultValue={defaultValue}
-                    maxLength={params && params.length}
+                    maxLength={maxLength}
                     onChange={({ target: { value } }) => {
                         onValueChange(value);
                     }}
@@ -59,7 +59,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                     defaultValue={defaultValue}
                     value={value}
                     rows={6}
-                    maxLength={params && params.length || 1000}
+                    maxLength={maxLength || 1000}
                     onChange={({ target: { value } }) => {
                         onValueChange(value);
                     }}
@@ -67,7 +67,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
             );
         }
         case 'int': {
-            const SIGNED_THRESHOLDS = {
+            /* const SIGNED_THRESHOLDS = {
                 1: [-128, 127],
                 2: [-32768, 32767],
                 4: [-2147483648, 2147483647],
@@ -78,11 +78,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                 2: [0, 65535],
                 4: [0, 4294967295],
                 8: [0, Number.MAX_SAFE_INTEGER],
-            };
-            const width = (params?.width || 4) as 4;
-            const min = params?.min !== undefined ? params.min : (params?.signed ? SIGNED_THRESHOLDS[width][0] : UNSIGNED_THRESHOLDS[width][0]);
-            const max = params?.max !== undefined ? params.max : (params?.signed ? SIGNED_THRESHOLDS[width][1] : UNSIGNED_THRESHOLDS[width][1]);
-
+            }; */
             return (
                 <InputNumber
                     min={min}
@@ -98,12 +94,11 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
         case 'decimal': {
             const precision = params?.precision || 10;
             const scale = params?.scale || 0;
-            const threshold = Math.pow(10, precision - scale);
             const scaleValue = Math.pow(10, 0 - scale);
+            /* 
+            const threshold = Math.pow(10, precision - scale);
             const max = threshold - scaleValue;     // 小数在这里可能会有bug
-            const min = 0 - max;
-
-
+            const min = 0 - max; */
             return (
                 <InputNumber
                     min={min}
@@ -178,7 +173,6 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
             );
         }
         case 'enum': {
-            const { enumeration } = attrRender as OakNativeAttrUpsertRender;;
             return (
                 <Radio.Group
                     value={value}
@@ -206,7 +200,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
         }
         case 'coordinate': {
             const { coordinate } = value || {};
-            const { extra } = attrRender as OakNativeAttrUpsertRender;
+            const { extra } = attrRender as OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>;
             const poiNameAttr = extra?.poiName || 'poiName';
             const areaIdAttr = extra?.areaId || 'areaId';
             return (
@@ -293,10 +287,11 @@ export default function render(props: WebComponentProps<
     false,
     {
         renderData: AttrUpsertRender<ED>[];
-        children: any;
+        helps?: Record<string, string>;
+        children: any;      // 暂时没用
     }
 >) {
-    const { renderData = [], children } = props.data;
+    const { renderData = [], helps } = props.data;
     const { update } = props.methods;
     return (
         <Form
@@ -314,9 +309,10 @@ export default function render(props: WebComponentProps<
                             label={ele.label}
                             rules={[
                                 {
-                                    required: ele.required,
+                                    required: !!ele.required,
                                 },
                             ]}
+                            help={helps && helps[ele.attr]}
                         >
                             <>
                                 {
@@ -332,9 +328,6 @@ export default function render(props: WebComponentProps<
                         </Form.Item>
                     )
                 )
-            }
-            {
-                children
             }
         </Form>
     );

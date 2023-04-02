@@ -9,6 +9,7 @@ export default OakComponent({
         return this.props.entity as any;
     },
     properties: {
+        helps: Object,      // Record<string, string>;
         entity: String,
         attributes: Array,
         data: Object,
