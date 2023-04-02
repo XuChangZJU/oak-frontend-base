@@ -159,7 +159,6 @@ export default function Render(
         }
         setTabelColumns(tableColumns)
     }, [data])
-    console.log(tableColumns);
     return (
         <Table
             size={sizeForWidth[width]}

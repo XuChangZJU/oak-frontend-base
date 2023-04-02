@@ -25,20 +25,33 @@ export default OakComponent({
         showMore: false,
     },
     lifetimes: {
-        // 在list组件render之后 才走进这个组件，应该不会存在没有数据的问题
+        // 在Tabel组件render之后 才走进这个组件，应该不会存在没有数据的问题
         async ready() {
             const { actions, extraActions, onAction, entity, cascadeActions } = this.props;
             const schema = this.features.cache.getSchema();
-            if (extraActions && actions && extraActions.length) {
-                // 用户传的action默认排在前面
-                actions.unshift(...extraActions);
+            let column = 2;
+            if (process.env.OAK_PLATFORM === 'web') {
+                column = 6;
+            }
+            if (extraActions?.length || actions?.length) {
+                const actions2 = actions || [];
+                if (extraActions) {
+                    // 用户传的action默认排在前面
+                    actions2.unshift(...extraActions);
+                }
+             
                 // 每一项里的action 和 path 用在小程序这边, onClick用于web
-                const items = actions.map((ele) => ({
+                const items = actions2.map((ele) => ({
                     action: typeof ele !== 'string' ? ele.action : ele,
                     path: '',
                     label: this.getLabel(ele, entity!),
-                    onClick: () => onAction && onAction(typeof ele !== 'string' ? ele.action : ele, undefined),
-                }))
+                    onClick: () =>
+                        onAction &&
+                        onAction(
+                            typeof ele !== 'string' ? ele.action : ele,
+                            undefined
+                        ),
+                }));
                 cascadeActions && Object.keys(cascadeActions).map((key, index: number) => {
                     const cascadeActionArr = cascadeActions[key];
                     if (cascadeActionArr && cascadeActionArr.length) {
@@ -52,7 +65,7 @@ export default OakComponent({
                         })
                     }
                 })
-                const moreItems = items.splice(2);
+                const moreItems = items.splice(column);
                 this.setState({
                     items,
                     moreItems
