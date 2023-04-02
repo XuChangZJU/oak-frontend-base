@@ -10,15 +10,12 @@ import {
     Button,
     DatePicker,
     Space,
-    Cascader,
-    Select,
-    Tag,
     Switch,
 } from 'antd';
-import { CheckOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons';
+import OakIcon from '../icon';
 const { TextArea } = Input;
 import dayjs from 'dayjs';
-import { AttrRender, AttrUpsertRender, OakAbsRefAttrPickerDef, OakAbsRefAttrPickerRender, OakAbsNativeAttrUpsertRender } from '../../types/AbstractComponent';
+import { AttrUpsertRender, OakAbsRefAttrPickerRender, OakAbsNativeAttrUpsertRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import RefAttr from '../refAttr';
 import Location, { Poi } from '../map/location';
@@ -145,7 +142,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                 <DatePicker
                     allowClear={!required}
                     showTime={type === 'datetime'}
-                    placeholder={`请选择${label}`}
+                    placeholder={placeholder}
                     format="YYYY-MM-DD HH:mm:ss"
                     mode={mode}
                     value={dayjs(value)}
@@ -163,8 +160,8 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
         case 'boolean': {
             return (
                 <Switch
-                    checkedChildren={<CheckOutlined />}
-                    unCheckedChildren={<CloseOutlined />}
+                    checkedChildren={<OakIcon name="right" />}
+                    unCheckedChildren={<OakIcon name="close" />}
                     checked={value}
                     onChange={(checked) => {
                         onValueChange(checked);
@@ -288,6 +285,7 @@ export default function render(props: WebComponentProps<
     {
         renderData: AttrUpsertRender<ED>[];
         helps?: Record<string, string>;
+        layout?: 'horizontal' | 'vertical';
         children: any;      // 暂时没用
     }
 >) {

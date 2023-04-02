@@ -75,149 +75,139 @@ export default function Location(props: LocationProps) {
     }
 
     const center = currentPoi?.coordinate || props.coordinate;
-    return (
-        <Row gutter={[16, 16]} style={{
-            width: '100%',
-            minHeight: 600,
-        }}>
-            <Col xs={24} sm={14}>
-                <Map
-                    style={{ height: '100%' }}
-                    id="location-map"
-                    center={center}
-                    markers={center? [center] : undefined}
+
+    const Locate = (
+        <List
+            className={Styles["location-list"]}
+            header={
+                <Input
+                    ref={searchRef}
+                    placeholder="请输入完整名称（如“浙江大学”）而非简称（如“浙大”）"
+                    value={searchValue}
+                    allowClear
+                    onChange={(e) => {
+                        setSearchValue(e.target.value);
+                    }}
+                    prefix={<SearchOutlined />}
+                    onFocus={() => {
+                        setMode('searchPoi');
+                    }}
+                    onBlur={() => {
+                    }}
                 />
-            </Col>
-            <Col xs={24} sm={10}>
-                <List
-                    className={Styles["location-list"]}
-                    header={
-                        <Input
-                            ref={searchRef}
-                            placeholder="请输入完整名称（如“浙江大学”）而非简称（如“浙大”）"
-                            value={searchValue}
-                            allowClear
-                            onChange={(e) => {
-                                setSearchValue(e.target.value);
-                            }}
-                            prefix={<SearchOutlined />}
-                            onFocus={() => {
-                                setMode('searchPoi');
-                            }}
-                            onBlur={() => {
-                            }}
-                        />
-                    }
-                >
-                    {/* {mode === 'dragMap' &&
-                        pois?.map((poi, index) => {
-                            return (
-                                <div
-                                    key={poi.id}
-                                    onClick={() => {
-                                        setRefresh(false);
-                                        setCurrentPoi(poi);
-                                    }}
-                                >
-                                    <List.Item
-                                        actions={[
-                                            <div
-                                                style={{
-                                                    width: 24,
-                                                }}
-                                            >
-                                                {currentPoi?.id ===
-                                                    poi.id && (
-                                                        <CheckCircleFilled
-                                                            className={`${prefixCls}-location-list-checked`}
-                                                        />
-                                                    )}
-                                            </div>,
-                                        ]}
+            }
+        >
+            {mode === 'searchPoi' && (
+                <React.Fragment>
+                    {searchLoading ? (
+                        <div
+                            className={Styles['location-list-meta']}
+                        >
+                            <Spin
+                                delay={0}
+                                spinning
+                                size="default"
+                            />
+                        </div>
+                    ) : (
+                        pois?.length
+                            ? pois.map((poi, index) => {
+                                return (
+                                    <div
+                                        key={poi.id}
+                                        onClick={() => {
+                                            console.log(poi);
+                                            setCurrentPoi(
+                                                poi
+                                            );
+                                            props.onLocated({
+                                                poiName: poi.detail,
+                                                coordinate: poi.coordinate,
+                                                areaId: poi.areaId,
+                                            });
+                                        }}
                                     >
-                                        <List.Item.Meta
-                                            title={poi.name}
-                                            description={`${poi.distance
-                                                    ? `${poi.distance}m内 | `
-                                                    : ''
-                                                }${poi.address}`}
-                                        />
-                                    </List.Item>
-                                </div>
-                            );
-                        })} */}
-                    {mode === 'searchPoi' && (
-                        <React.Fragment>
-                            {searchLoading ? (
+                                        <List.Item
+                                            actions={[
+                                                <div
+                                                    style={{
+                                                        width: 24,
+                                                    }}
+                                                >
+                                                    {currentPoi?.id ===
+                                                        poi.id && (
+                                                            <CheckCircleFilled
+                                                                className={Styles['location-list-checked']}
+                                                            />
+                                                        )}
+                                                </div>,
+                                            ]}
+                                        >
+                                            <List.Item.Meta
+                                                title={
+                                                    poi.detail
+                                                }
+                                            />
+                                        </List.Item>
+                                    </div>
+                                );
+                            })
+                            : (
                                 <div
                                     className={Styles['location-list-meta']}
                                 >
-                                    <Spin
-                                        delay={0}
-                                        spinning
-                                        size="default"
+                                    <Empty
+                                        description={`没有${searchValue}相关的地名搜索结果`}
+                                        image={
+                                            Empty.PRESENTED_IMAGE_SIMPLE
+                                        }
                                     />
                                 </div>
-                            ) : (
-                                pois?.length
-                                    ? pois.map((poi, index) => {
-                                        return (
-                                            <div
-                                                key={poi.id}
-                                                onClick={() => {
-                                                    console.log(poi);
-                                                    setCurrentPoi(
-                                                        poi
-                                                    );
-                                                    props.onLocated({
-                                                        poiName: poi.detail,
-                                                        coordinate: poi.coordinate,
-                                                        areaId: poi.areaId,
-                                                    });
-                                                }}
-                                            >
-                                                <List.Item
-                                                    actions={[
-                                                        <div
-                                                            style={{
-                                                                width: 24,
-                                                            }}
-                                                        >
-                                                            {currentPoi?.id ===
-                                                                poi.id && (
-                                                                    <CheckCircleFilled
-                                                                        className={Styles['location-list-checked']}
-                                                                    />
-                                                                )}
-                                                        </div>,
-                                                    ]}
-                                                >
-                                                    <List.Item.Meta
-                                                        title={
-                                                            poi.detail
-                                                        }
-                                                    />
-                                                </List.Item>
-                                            </div>
-                                        );
-                                    })
-                                    : (
-                                        <div
-                                            className={Styles['location-list-meta']}
-                                        >
-                                            <Empty
-                                                description={`没有${searchValue}相关的地名搜索结果`}
-                                                image={
-                                                    Empty.PRESENTED_IMAGE_SIMPLE
-                                                }
-                                            />
-                                        </div>
-                                    )
-                            )}
-                        </React.Fragment>
+                            )
                     )}
-                </List>
-            </Col>
-        </Row>
+                </React.Fragment>
+            )}
+        </List>
     );
+    if (window.innerWidth > window.innerHeight) {
+        return (
+            <Row gutter={[16, 16]} style={{
+                width: '100%',
+                minHeight: 600,
+            }}>
+                <Col xs={24} sm={14}>
+                    <Map
+                        style={{ height: '100%' }}
+                        id="location-map"
+                        center={center}
+                        markers={center ? [center] : undefined}
+                    />
+                </Col>
+                <Col xs={24} sm={10}>
+                    {Locate}
+                </Col>
+            </Row>
+        );
+    }
+    return (
+        <Col style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch',
+        }}>
+            <Row>
+                <Map
+                    style={{ height: 400, width: '100%' }}
+                    id="location-map"
+                    center={center}
+                    markers={center ? [center] : undefined}
+                />
+            </Row>
+            <Row style={{ flex: 1, marginLeft: 5, marginRight: 5 }}>
+                {Locate}                
+            </Row>
+        </Col>
+    )
 }

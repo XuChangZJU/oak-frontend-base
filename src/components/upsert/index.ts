@@ -14,6 +14,8 @@ export default OakComponent({
         attributes: Array,
         data: Object,
         children: Object,
+        layout: String,     // horizontal | vertical
+        mode: String,       // 'default' | 'card'
     },
     formData() {
         const { data } = this.props;
