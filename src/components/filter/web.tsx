@@ -473,8 +473,10 @@ export default function Render<ED2 extends ED>(
                 V = (
                     <RefAttr
                         multiple={true}
-                        entityIds={_value}
-                        pickerRender={column.refProps}
+                        entityIds={[_value]}
+                        pickerRender={Object.assign({}, column.refProps, {
+                            value: [_value],
+                        })}
                         onChange={(ids: string[]) => { console.log(ids, '这里等测试到了再写(Xc)') }}
                     />
                 );
@@ -483,8 +485,10 @@ export default function Render<ED2 extends ED>(
                 V = (
                     <RefAttr
                         multiple={false}
-                        entityIds={_value}
-                        pickerRender={column.refProps}
+                        entityId={_value}
+                        pickerRender={Object.assign({}, column.refProps, {
+                            value: _value,
+                        })}
                         onChange={(id: string) => { console.log(id, '这里等测试到了再写(Xc)') }}
                     />
                 );

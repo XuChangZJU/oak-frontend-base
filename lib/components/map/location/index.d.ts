@@ -16,5 +16,5 @@ export declare type Poi = {
     detail: string;
     coordinate: [number, number];
 };
-export default function Location(props: LocationProps): JSX.Element | null;
+export default function Location(props: LocationProps): JSX.Element;
 export {};

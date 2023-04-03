@@ -5,5 +5,7 @@ declare const _default: (props: import("../..").ReactComponentProps<false, {
     attributes: ArrayConstructor;
     data: ObjectConstructor;
     children: ObjectConstructor;
+    layout: StringConstructor;
+    mode: StringConstructor;
 }>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;

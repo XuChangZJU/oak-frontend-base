@@ -12,8 +12,8 @@ export declare function resolvePath<ED extends EntityDict & BaseEntityDict>(data
     attrType: DataType | "ref";
     attribute: Attribute;
 };
-export declare function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<ED>): DataTransformer;
-export declare function analyzeDataUpsertTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrUpsertDefs: OakAbsAttrUpsertDef<ED>[], t: (k: string, params?: object) => string): (data: any) => AttrUpsertRender<ED>[];
+export declare function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], colorDict?: ColorDict<ED>): DataTransformer;
+export declare function analyzeDataUpsertTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrUpsertDefs: OakAbsAttrUpsertDef<ED>[]): (data: any) => AttrUpsertRender<ED>[];
 export declare function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: CardDef, colorDict?: ColorDict<ED>): {
     columnDef: ColumnDefProps[];
 };

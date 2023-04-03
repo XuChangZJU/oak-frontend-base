@@ -1,7 +1,7 @@
 import { Dayjs } from 'dayjs';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { OakAbsRefAttrPickerRender } from './AbstractComponent';
+import { OakAbsRefAttrPickerDef } from './AbstractComponent';
 
 export type Ops =
     | '$gt'
@@ -44,7 +44,7 @@ export type ColumnProps<ED extends BaseEntityDict & EntityDict, T extends keyof 
         range?: boolean;
         showTime?: boolean;
     };
-    refProps?: Omit<OakAbsRefAttrPickerRender<ED, keyof ED>, 'label'>;
+    refProps?: OakAbsRefAttrPickerDef<ED, keyof ED>;
     transformFilter?: (
         column: ColumnProps<ED, T>,
         value: ValueType
