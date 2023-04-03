@@ -123,12 +123,11 @@ export default function Render(
         }
         return Object.assign(item);
     });
-    console.log(data);
 
     return (
         <Descriptions column={column} bordered>
             {data?.map((ele) => (
-                <Descriptions.Item label={ele.label} span={ele.span || 1}>
+                <Descriptions.Item label={t(ele.label)} span={ele.span || 1}>
                     {ele.value}
                 </Descriptions.Item>
             ))}

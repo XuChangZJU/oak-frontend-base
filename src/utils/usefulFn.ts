@@ -124,7 +124,11 @@ function getLabel<ED extends EntityDict & BaseEntityDict>(
     t: (k: string, params?: object) => string
 ) {
     let label = t(`${entity as string}:attr.${attr}`);
-    if (attr === '$$createAt$$' || attr === '$$updateAt$$' || attr === '$$deleteAt$$') {
+    if (
+        attr === '$$createAt$$' ||
+        attr === '$$updateAt$$' ||
+        attr === '$$deleteAt$$'
+    ) {
         label = t(`common:${attr}`);
     }
     if (isAttrbuteType(attribute).label) {
@@ -182,7 +186,7 @@ function getType(attribute: OakAbsAttrDef, attrType: string) {
         type = 'tag';
     }
     if (attrType === 'datetime') {
-        type = 'datetime'
+        type = 'datetime';
     }
     if (isAttrbuteType(attribute).type) {
         type = isAttrbuteType(attrType).type as string;
@@ -208,7 +212,7 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(
     dataSchema: StorageSchema<ED>,
     entity: string,
     attrDefs: OakAbsAttrDef[],
-    t: (k: string, params?: object) => string,
+    // t: (k: string, params?: object) => string,
     colorDict?: ColorDict<ED>
 ): DataTransformer {
     const transformerFixedPart = attrDefs.map((ele) => {
@@ -220,7 +224,7 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(
                 attribute,
                 entity: entityI8n,
             } = resolvePath(dataSchema, entity, path);
-            const label = t(`${entityI8n as string}:attr.${attr}`);
+            const label = `${entityI8n as string}:attr.${attr}`;
             const type = attrType;
             return {
                 path,
@@ -258,7 +262,14 @@ export function analyzeDataUpsertTransformer<
     t: (k: string, params?: object) => string
 ) {
     let geoDef: OakAbsGeoAttrUpsertDef | undefined = undefined;
-    const makeNativeFixedPart = (attr: string, def?: OakAbsNativeAttrUpsertDef<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>) => {
+    const makeNativeFixedPart = (
+        attr: string,
+        def?: OakAbsNativeAttrUpsertDef<
+            ED,
+            keyof ED,
+            keyof ED[keyof ED]['OpSchema']
+        >
+    ) => {
         const attrDef = dataSchema[entity].attributes[attr]; // upsert应该不会涉及createAt这些内置属性
         const {
             type,
@@ -272,65 +283,87 @@ export function analyzeDataUpsertTransformer<
         return {
             attr,
             label,
-            type: type as OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>['type'],
+            type: type as OakAbsNativeAttrUpsertRender<
+                ED,
+                keyof ED,
+                keyof ED[keyof ED]['OpSchema']
+            >['type'],
             required,
-            defaultValue: def?.hasOwnProperty('defaultValue') ? def!.defaultValue : defaultValue,
+            defaultValue: def?.hasOwnProperty('defaultValue')
+                ? def!.defaultValue
+                : defaultValue,
             enumeration,
             min: typeof def?.min === 'number' ? def.min : params?.min,
             max: typeof def?.max === 'number' ? def.max : params?.max,
-            maxLength: typeof def?.maxLength === 'number' ? def.maxLength : params?.length,
+            maxLength:
+                typeof def?.maxLength === 'number'
+                    ? def.maxLength
+                    : params?.length,
             get: (data?: Record<string, any>) => data && data[attr],
         };
     };
-    const transformerFixedPart = attrUpsertDefs.map((ele) => {
-        if (typeof ele === 'string') {
-            const rel = judgeRelation(dataSchema, entity, ele);
-            assert(rel === 1);
-            return makeNativeFixedPart(ele);            
-        } 
-        else if (ele.type === 'geo') {
-            assert(!geoDef, '只能定义一个geo渲染对象');
-            geoDef = ele as OakAbsGeoAttrUpsertDef;
-        }
-        else {
-            const {
-                attr,
-                label,
-                ...rest
-            } = ele as OakAbsRefAttrPickerDef<ED, keyof ED>;
-            const rel = judgeRelation(dataSchema, entity, attr);
-            if (rel === 1) {
-                const fixedPart = makeNativeFixedPart(attr, ele as OakAbsNativeAttrUpsertDef<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>);
-                return Object.assign(fixedPart, {
-                    label: label || t(`${entity}:attr.${attr}`),
+    const transformerFixedPart = attrUpsertDefs
+        .map((ele) => {
+            if (typeof ele === 'string') {
+                const rel = judgeRelation(dataSchema, entity, ele);
+                assert(rel === 1);
+                return makeNativeFixedPart(ele);
+            } else if (ele.type === 'geo') {
+                assert(!geoDef, '只能定义一个geo渲染对象');
+                geoDef = ele as OakAbsGeoAttrUpsertDef;
+            } else {
+                const { attr, label, ...rest } = ele as OakAbsRefAttrPickerDef<
+                    ED,
+                    keyof ED
+                >;
+                const rel = judgeRelation(dataSchema, entity, attr);
+                if (rel === 1) {
+                    const fixedPart = makeNativeFixedPart(
+                        attr,
+                        ele as OakAbsNativeAttrUpsertDef<
+                            ED,
+                            keyof ED,
+                            keyof ED[keyof ED]['OpSchema']
+                        >
+                    );
+                    return Object.assign(fixedPart, {
+                        label: label || t(`${entity}:attr.${attr}`),
+                        ...rest,
+                    });
+                }
+                const origAttr = rel === 2 ? 'entityId' : `${attr}Id`;
+                return {
+                    required:
+                        !!dataSchema[entity].attributes[origAttr]!.notNull,
+                    label:
+                        label ||
+                        (rel === 2
+                            ? t(`${attr}:name`)
+                            : t(`${entity}:attr.${attr}`)),
                     ...rest,
-                });
+                    get: (data?: Record<string, any>) => data && data[origAttr],
+                    attr: origAttr,
+                };
             }
-            const origAttr = rel === 2 ? 'entityId' : `${attr}Id`;
-            return {
-                required: !!(dataSchema[entity].attributes[origAttr]!.notNull),
-                label: label || (rel === 2 ? t(`${attr}:name`) : t(`${entity}:attr.${attr}`)),
-                ...rest,
-                get: (data?: Record<string, any>) => data && data[origAttr],
-                attr: origAttr,
-            };
-        }
-    }).filter(
-        ele => !!ele
-    );
+        })
+        .filter((ele) => !!ele);
     if (geoDef) {
         // 暂时只放出poiName和coordinate
         const { type, attributes, ...rest } = geoDef as OakAbsGeoAttrUpsertDef;
         let attr = attributes?.coordinate || 'coordinate';
-        transformerFixedPart.push(Object.assign(makeNativeFixedPart(attr), {
-            type: 'coordinate',
-            extra: attributes,
-        }));
+        transformerFixedPart.push(
+            Object.assign(makeNativeFixedPart(attr), {
+                type: 'coordinate',
+                extra: attributes,
+            })
+        );
         attr = attributes?.poiName || 'poiName';
-        transformerFixedPart.push(Object.assign(makeNativeFixedPart(attr), {
-            type: 'poiName',
-            ...rest,
-        }));
+        transformerFixedPart.push(
+            Object.assign(makeNativeFixedPart(attr), {
+                type: 'poiName',
+                ...rest,
+            })
+        );
     }
     return (data: any) =>
         transformerFixedPart.map((ele) => {
@@ -343,7 +376,14 @@ export function analyzeDataUpsertTransformer<
         });
 }
 
-export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, mobileAttrDef?: CardDef, colorDict?: ColorDict<ED>): {
+export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(
+    dataSchema: StorageSchema<ED>,
+    entity: string,
+    attrDefs: OakAbsAttrDef[],
+    t: (k: string, params?: object) => string,
+    mobileAttrDef?: CardDef,
+    colorDict?: ColorDict<ED>
+): {
     columnDef: ColumnDefProps[];
 } {
     // web使用
@@ -372,17 +412,31 @@ export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(d
     };
 }
 
-export function analyzeAttrMobileForCard<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: string, t: (k: string, params?: object) => string, mobileAttrDef: CardDef, colorDict: ColorDict<ED>) {
+export function analyzeAttrMobileForCard<
+    ED extends EntityDict & BaseEntityDict
+>(
+    dataSchema: StorageSchema<ED>,
+    entity: string,
+    t: (k: string, params?: object) => string,
+    mobileAttrDef: CardDef,
+    colorDict: ColorDict<ED>
+) {
     return (data: any[]) => {
         // 遍历用户传入的数据源
         const coverData = data.map((row) => {
             let title = '';
             // title如果是path进行解析
             if (mobileAttrDef.title) {
-                title = typeof mobileAttrDef.title === 'string' ? get(row, mobileAttrDef.title) : mobileAttrDef.title;
+                title =
+                    typeof mobileAttrDef.title === 'string'
+                        ? get(row, mobileAttrDef.title)
+                        : mobileAttrDef.title;
             }
             // rows即卡片主体要渲染的数据
-            assert(!!(mobileAttrDef.rows && mobileAttrDef.rows.length), 'attributeMb中的rows不能为空')
+            assert(
+                !!(mobileAttrDef.rows && mobileAttrDef.rows.length),
+                'attributeMb中的rows不能为空'
+            );
             const rows = mobileAttrDef.rows.map((attribute) => {
                 const path = getPath(attribute);
                 const {
@@ -408,13 +462,17 @@ export function analyzeAttrMobileForCard<ED extends EntityDict & BaseEntityDict>
             // 处理state 卡片右上角的stateView要显示的内容
             let color = 'default';
             let state;
-            if (mobileAttrDef.state && typeof mobileAttrDef.state === 'string') {
-                const {
-                    attr,
-                    entity: entityI8n,
-                } = resolvePath(dataSchema, entity, mobileAttrDef.state);
+            if (
+                mobileAttrDef.state &&
+                typeof mobileAttrDef.state === 'string'
+            ) {
+                const { attr, entity: entityI8n } = resolvePath(
+                    dataSchema,
+                    entity,
+                    mobileAttrDef.state
+                );
                 const rowValue = get(row, mobileAttrDef.state);
-                const value = t(`${String(entityI8n)}:v.${attr}.${rowValue}`)
+                const value = t(`${String(entityI8n)}:v.${attr}.${rowValue}`);
                 if (colorDict) {
                     color = (<any>colorDict)[entityI8n]![attr]![
                         rowValue
@@ -422,10 +480,9 @@ export function analyzeAttrMobileForCard<ED extends EntityDict & BaseEntityDict>
                 }
                 state = {
                     color,
-                    value
-                }
-            }
-            else {
+                    value,
+                };
+            } else {
                 state = mobileAttrDef.state;
             }
             return {
@@ -433,8 +490,8 @@ export function analyzeAttrMobileForCard<ED extends EntityDict & BaseEntityDict>
                 rows,
                 state,
                 record: row,
-            }
-        })
+            };
+        });
         return coverData;
-    }
+    };
 }
