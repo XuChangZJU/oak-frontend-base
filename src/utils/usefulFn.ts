@@ -258,8 +258,7 @@ export function analyzeDataUpsertTransformer<
 >(
     dataSchema: StorageSchema<ED>,
     entity: string,
-    attrUpsertDefs: OakAbsAttrUpsertDef<ED>[],
-    t: (k: string, params?: object) => string
+    attrUpsertDefs: OakAbsAttrUpsertDef<ED>[]
 ) {
     let geoDef: OakAbsGeoAttrUpsertDef | undefined = undefined;
     const makeNativeFixedPart = (
@@ -278,11 +277,9 @@ export function analyzeDataUpsertTransformer<
             enumeration,
             params,
         } = attrDef;
-        const label = t(`${entity}:attr.${attr}`);
         assert(type !== 'ref');
         return {
             attr,
-            label,
             type: type as OakAbsNativeAttrUpsertRender<
                 ED,
                 keyof ED,
@@ -292,7 +289,10 @@ export function analyzeDataUpsertTransformer<
             defaultValue: def?.hasOwnProperty('defaultValue')
                 ? def!.defaultValue
                 : defaultValue,
-            enumeration,
+            enumeration: enumeration?.map((ele) => ({
+                value: ele,
+                label: `${entity}:v.${attr}.${ele}`,
+            })),
             min: typeof def?.min === 'number' ? def.min : params?.min,
             max: typeof def?.max === 'number' ? def.max : params?.max,
             maxLength:
@@ -312,7 +312,7 @@ export function analyzeDataUpsertTransformer<
                 assert(!geoDef, '只能定义一个geo渲染对象');
                 geoDef = ele as OakAbsGeoAttrUpsertDef;
             } else {
-                const { attr, label, ...rest } = ele as OakAbsRefAttrPickerDef<
+                const { attr, ...rest } = ele as OakAbsRefAttrPickerDef<
                     ED,
                     keyof ED
                 >;
@@ -327,7 +327,6 @@ export function analyzeDataUpsertTransformer<
                         >
                     );
                     return Object.assign(fixedPart, {
-                        label: label || t(`${entity}:attr.${attr}`),
                         ...rest,
                     });
                 }
@@ -335,11 +334,6 @@ export function analyzeDataUpsertTransformer<
                 return {
                     required:
                         !!dataSchema[entity].attributes[origAttr]!.notNull,
-                    label:
-                        label ||
-                        (rel === 2
-                            ? t(`${attr}:name`)
-                            : t(`${entity}:attr.${attr}`)),
                     ...rest,
                     get: (data?: Record<string, any>) => data && data[origAttr],
                     attr: origAttr,

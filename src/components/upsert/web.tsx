@@ -27,7 +27,8 @@ import { AttrUpsertRender, OakAbsRefAttrPickerRender, OakAbsNativeAttrUpsertRend
 function makeAttrInput(
     attrRender: AttrUpsertRender<ED>,
     onValueChange: (value: any, extra?: Record<string, any>) => void,
-    t: (word: string) => string) {
+    t: (word: string) => string,
+    label: string) {
     const [sl, setSl] = useState(false);
     const [dt, setDt] = useState(false);
     const [poi, setPoi] = useState<{
@@ -35,7 +36,7 @@ function makeAttrInput(
         coordinate: [number, number];
         areaId: string;
     } | undefined>(undefined);
-    const { value, type, label, params, defaultValue, enumeration, required, placeholder, min, max, maxLength } = attrRender as OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>;
+    const { value, type, params, defaultValue, enumeration, required, placeholder, min, max, maxLength } = attrRender as OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>;
     switch (type) {
         case 'string':
         case 'varchar':
@@ -178,7 +179,7 @@ function makeAttrInput(
                     {
                         enumeration!.map(
                             ({ label, value }) => (
-                                <Radio value={value}>{label}</Radio>
+                                <Radio value={value}>{t(label)}</Radio>
                             )
                         )
                     }
@@ -286,6 +287,7 @@ export default function render(props: WebComponentProps<
     keyof EntityDict,
     false,
     {
+        entity: keyof ED;
         renderData: AttrUpsertRender<ED>[];
         helps?: Record<string, string>;
         layout?: 'horizontal' | 'vertical';
@@ -293,7 +295,7 @@ export default function render(props: WebComponentProps<
         children: any;      // 暂时没用
     }
 >) {
-    const { renderData = [], helps, layout = 'horizontal', mode = 'default' } = props.data;
+    const { renderData = [], helps, layout = 'horizontal', mode = 'default', entity } = props.data;
     const { update, t } = props.methods;
     return (
         <Form
@@ -303,12 +305,30 @@ export default function render(props: WebComponentProps<
             {
                 renderData.map(
                     (ele) => {
+                        // 因为i18n渲染机制的缘故，t必须放到这里来计算
+                        const { label, attr, type, required } = ele;
+                        let label2 = label;
+                        if (!label2) {
+                            if (type === 'ref') {
+                                const { entity: refEntity } = ele as OakAbsRefAttrPickerRender<ED, keyof ED>
+                                if (attr === 'entityId') {
+                                    // 反指
+                                    label2 = t(`${refEntity}:name`);
+                                }
+                                else {
+                                    label2 = t(`${entity}:attr.${attr}`);
+                                }
+                            }
+                            else {
+                                label2 = t(`${entity}:attr.${attr}`);                                
+                            }
+                        }
                         return (
                             <Form.Item
-                                label={ele.label}
+                                label={label2}
                                 rules={[
                                     {
-                                        required: !!ele.required,
+                                        required: !!required,
                                     },
                                 ]}
                                 help={helps && helps[ele.attr]}
@@ -321,7 +341,7 @@ export default function render(props: WebComponentProps<
                                                 [attr]: value,
                                                 ...extra,
                                             })
-                                        }, t)
+                                        }, t, label2)
                                     }
                                 </>
                             </Form.Item>

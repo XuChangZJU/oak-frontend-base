@@ -67,12 +67,7 @@ export default function Location(props: LocationProps) {
             setPois(undefined);
         }
 
-    }, [searchValue])
-
-    if (window.innerWidth < 500) {
-        // 窄屏
-        return null;
-    }
+    }, [searchValue]);
 
     const center = currentPoi?.coordinate || props.coordinate;
 
@@ -169,7 +164,7 @@ export default function Location(props: LocationProps) {
             )}
         </List>
     );
-    if (window.innerWidth > window.innerHeight) {
+    if (window.innerWidth > 480) {
         return (
             <Row gutter={[16, 16]} style={{
                 width: '100%',

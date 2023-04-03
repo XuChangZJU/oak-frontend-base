@@ -22,14 +22,14 @@ import Location, { Poi } from '../map/location';
 import Map from '../map/map';
 
 type ED = EntityDict & BaseEntityDict;
-function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: any, extra?: Record<string, any>) => void) {
+function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: any, extra?: Record<string, any>) => void, t: (keyword: string) => string, label: string) {
     const [sl, setSl] = useState(false);
     const [poi, setPoi] = useState<{
         poiName: string;
         coordinate: [number, number];
         areaId: string;
     } | undefined>(undefined);
-    const { value, type, label, params, defaultValue, enumeration, required, placeholder, min, max, maxLength } = attrRender as OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>;
+    const { value, type, params, defaultValue, enumeration, required, placeholder, min, max, maxLength } = attrRender as OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>;
     switch (type) {
         case 'string':
         case 'varchar':
@@ -178,7 +178,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                     {
                         enumeration!.map(
                             ({ label, value }) => (
-                                <Radio value={value}>{label}</Radio>
+                                <Radio value={value}>{t(label)}</Radio>
                             )
                         )
                     }
@@ -207,7 +207,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                         open={sl}
                         closable={false}
                         onCancel={() => setSl(false)}
-                        okText="确认"                        
+                        okText="确认"
                         cancelText="取消"
                         okButtonProps={{
                             disabled: !poi,
@@ -271,7 +271,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                     </div>
                 </>
             );
-        }        
+        }
         default: {
             throw new Error(`【Abstract Update】无法支持的数据类别${type}的渲染`);
         }
@@ -283,14 +283,15 @@ export default function render(props: WebComponentProps<
     keyof EntityDict,
     false,
     {
+        entity: keyof ED;
         renderData: AttrUpsertRender<ED>[];
         helps?: Record<string, string>;
         layout?: 'horizontal' | 'vertical';
         children: any;      // 暂时没用
     }
 >) {
-    const { renderData = [], helps } = props.data;
-    const { update } = props.methods;
+    const { renderData = [], helps, entity } = props.data;
+    const { update, t } = props.methods;
     return (
         <Form
             labelCol={{ span: 4 }}
@@ -302,29 +303,49 @@ export default function render(props: WebComponentProps<
         >
             {
                 renderData.map(
-                    (ele) => (
-                        <Form.Item
-                            label={ele.label}
-                            rules={[
-                                {
-                                    required: !!ele.required,
-                                },
-                            ]}
-                            help={helps && helps[ele.attr]}
-                        >
-                            <>
-                                {
-                                    makeAttrInput(ele, (value, extra) => {
-                                        const { attr } = ele;
-                                        update({
-                                            [attr]: value,
-                                            ...extra,
-                                        })
-                                    })
+                    (ele) => {
+                        // 因为i18n渲染机制的缘故，t必须放到这里来计算
+                        const { label, attr, type, required } = ele;
+                        let label2 = label;
+                        if (!label2) {
+                            if (type === 'ref') {
+                                const { entity: refEntity } = ele as OakAbsRefAttrPickerRender<ED, keyof ED>
+                                if (attr === 'entityId') {
+                                    // 反指
+                                    label2 = t(`${refEntity}:name`);
                                 }
-                            </>
-                        </Form.Item>
-                    )
+                                else {
+                                    label2 = t(`${entity}:attr.${attr}`);
+                                }
+                            }
+                            else {
+                                label2 = t(`${entity}:attr.${attr}`);                                
+                            }
+                        }
+                        return (
+                            <Form.Item
+                                label={label2}
+                                rules={[
+                                    {
+                                        required: !!required,
+                                    },
+                                ]}
+                                help={helps && helps[attr]}
+                            >
+                                <>
+                                    {
+                                        makeAttrInput(ele, (value, extra) => {
+                                            const { attr } = ele;
+                                            update({
+                                                [attr]: value,
+                                                ...extra,
+                                            })
+                                        }, t, label2!)
+                                    }
+                                </>
+                            </Form.Item>
+                        )
+                    }
                 )
             }
         </Form>
