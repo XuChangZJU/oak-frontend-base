@@ -254,8 +254,7 @@ export function analyzeDataUpsertTransformer<
 >(
     dataSchema: StorageSchema<ED>,
     entity: string,
-    attrUpsertDefs: OakAbsAttrUpsertDef<ED>[],
-    t: (k: string, params?: object) => string
+    attrUpsertDefs: OakAbsAttrUpsertDef<ED>[]
 ) {
     let geoDef: OakAbsGeoAttrUpsertDef | undefined = undefined;
     const makeNativeFixedPart = (attr: string, def?: OakAbsNativeAttrUpsertDef<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>) => {
@@ -267,15 +266,18 @@ export function analyzeDataUpsertTransformer<
             enumeration,
             params,
         } = attrDef;
-        const label = t(`${entity}:attr.${attr}`);
         assert(type !== 'ref');
         return {
             attr,
-            label,
             type: type as OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>['type'],
             required,
             defaultValue: def?.hasOwnProperty('defaultValue') ? def!.defaultValue : defaultValue,
-            enumeration,
+            enumeration: enumeration?.map(
+                ele => ({
+                    value: ele,
+                    label: `${entity}:v.${attr}.${ele}`,
+                })
+            ),
             min: typeof def?.min === 'number' ? def.min : params?.min,
             max: typeof def?.max === 'number' ? def.max : params?.max,
             maxLength: typeof def?.maxLength === 'number' ? def.maxLength : params?.length,
@@ -295,21 +297,18 @@ export function analyzeDataUpsertTransformer<
         else {
             const {
                 attr,
-                label,
                 ...rest
             } = ele as OakAbsRefAttrPickerDef<ED, keyof ED>;
             const rel = judgeRelation(dataSchema, entity, attr);
             if (rel === 1) {
                 const fixedPart = makeNativeFixedPart(attr, ele as OakAbsNativeAttrUpsertDef<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>);
                 return Object.assign(fixedPart, {
-                    label: label || t(`${entity}:attr.${attr}`),
                     ...rest,
                 });
             }
             const origAttr = rel === 2 ? 'entityId' : `${attr}Id`;
             return {
                 required: !!(dataSchema[entity].attributes[origAttr]!.notNull),
-                label: label || (rel === 2 ? t(`${attr}:name`) : t(`${entity}:attr.${attr}`)),
                 ...rest,
                 get: (data?: Record<string, any>) => data && data[origAttr],
                 attr: origAttr,

@@ -59,7 +59,6 @@ export interface OakAbsRefAttrPickerRender<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED
 > extends OakAbsRefAttrPickerDef<ED, T> {
-    label: string;
     required?: boolean;
     value: string;
 };
@@ -113,7 +112,6 @@ export interface OakAbsNativeAttrUpsertRender<
     T extends keyof ED,
     A extends keyof ED[T]['OpSchema']
 > extends Omit<OakAbsNativeAttrUpsertDef<ED, T, A>, 'type'> {
-    label: string;
     value: any;
     type: Omit<DataType, 'ref'> | 'coordinate' | 'poiName';
     enumeration?: Array<{ label: string; value: string }>;

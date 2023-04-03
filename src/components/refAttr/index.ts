@@ -2,6 +2,7 @@ import assert from 'assert';
 import { ED, OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 import { OakAbsRefAttrPickerDef } from '../../types/AbstractComponent';
 
+
 export default OakComponent({
     isList: false,
     /* entity() {

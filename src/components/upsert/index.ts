@@ -38,7 +38,7 @@ export default OakComponent({
             const { attributes, entity } = this.props;
             const schema = this.features.cache.getSchema();
 
-            const transformer = analyzeDataUpsertTransformer<ED>(schema, entity!, attributes!, (k, params) => this.t(k, params));
+            const transformer = analyzeDataUpsertTransformer<ED>(schema, entity!, attributes!);
             this.setState({
                 transformer,
             });
