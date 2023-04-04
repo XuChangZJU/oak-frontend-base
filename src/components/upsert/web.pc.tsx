@@ -15,21 +15,48 @@ import {
 import OakIcon from '../icon';
 const { TextArea } = Input;
 import dayjs from 'dayjs';
-import { AttrUpsertRender, OakAbsRefAttrPickerRender, OakAbsNativeAttrUpsertRender } from '../../types/AbstractComponent';
+import {
+    AttrUpsertRender,
+    OakAbsRefAttrPickerRender,
+    OakAbsNativeAttrUpsertRender,
+} from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import RefAttr from '../refAttr';
 import Location, { Poi } from '../map/location';
 import Map from '../map/map';
 
 type ED = EntityDict & BaseEntityDict;
-function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: any, extra?: Record<string, any>) => void, t: (keyword: string) => string, label: string) {
+function makeAttrInput(
+    attrRender: AttrUpsertRender<ED>,
+    onValueChange: (value: any, extra?: Record<string, any>) => void,
+    t: (keyword: string) => string,
+    label: string
+) {
     const [sl, setSl] = useState(false);
-    const [poi, setPoi] = useState<{
-        poiName: string;
-        coordinate: [number, number];
-        areaId: string;
-    } | undefined>(undefined);
-    const { value, type, params, defaultValue, enumeration, required, placeholder, min, max, maxLength } = attrRender as OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>;
+    const [poi, setPoi] = useState<
+        | {
+              poiName: string;
+              coordinate: [number, number];
+              areaId: string;
+          }
+        | undefined
+    >(undefined);
+    const {
+        value,
+        type,
+        params,
+        defaultValue,
+        enumeration,
+        required,
+        placeholder,
+        min,
+        max,
+        maxLength,
+    } = attrRender as OakAbsNativeAttrUpsertRender<
+        ED,
+        keyof ED,
+        keyof ED[keyof ED]['OpSchema']
+    >;
     switch (type) {
         case 'string':
         case 'varchar':
@@ -112,7 +139,9 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
         case 'money': {
             // money在数据上统一用分来存储
             const valueShowed = parseFloat((value / 100).toFixed(2));
-            const defaultValueShowed = parseFloat((defaultValue / 100).toFixed(2));
+            const defaultValueShowed = parseFloat(
+                (defaultValue / 100).toFixed(2)
+            );
             return (
                 <InputNumber
                     min={0}
@@ -126,8 +155,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                         if (value !== null) {
                             const v2 = Math.round(value * 100);
                             onValueChange(v2);
-                        }
-                        else {
+                        } else {
                             onValueChange(value);
                         }
                     }}
@@ -149,8 +177,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                     onChange={(value) => {
                         if (value) {
                             onValueChange(value.valueOf());
-                        }
-                        else {
+                        } else {
                             onValueChange(null);
                         }
                     }}
@@ -175,13 +202,9 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                     value={value}
                     onChange={({ target }) => onValueChange(target.value)}
                 >
-                    {
-                        enumeration!.map(
-                            ({ label, value }) => (
-                                <Radio value={value}>{t(label)}</Radio>
-                            )
-                        )
-                    }
+                    {enumeration!.map(({ label, value }) => (
+                        <Radio value={value}>{t(label)}</Radio>
+                    ))}
                 </Radio.Group>
             );
         }
@@ -190,20 +213,28 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                 <RefAttr
                     multiple={false}
                     entityId={value}
-                    pickerRender={attrRender as OakAbsRefAttrPickerRender<ED, keyof ED>}
-                    onChange={(value: string) => { onValueChange(value) }}
+                    pickerRender={
+                        attrRender as OakAbsRefAttrPickerRender<ED, keyof ED>
+                    }
+                    onChange={(value: string) => {
+                        onValueChange(value);
+                    }}
                 />
             );
         }
         case 'coordinate': {
             const { coordinate } = value || {};
-            const { extra } = attrRender as OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>;
+            const { extra } = attrRender as OakAbsNativeAttrUpsertRender<
+                ED,
+                keyof ED,
+                keyof ED[keyof ED]['OpSchema']
+            >;
             const poiNameAttr = extra?.poiName || 'poiName';
             const areaIdAttr = extra?.areaId || 'areaId';
             return (
                 <>
                     <Modal
-                        width='80vw'
+                        width="80vw"
                         open={sl}
                         closable={false}
                         onCancel={() => setSl(false)}
@@ -215,13 +246,16 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                         onOk={() => {
                             if (poi) {
                                 const { poiName, coordinate, areaId } = poi;
-                                onValueChange({
-                                    type: 'point',
-                                    coordinate,
-                                }, {
-                                    [poiNameAttr]: poiName,
-                                    [areaIdAttr]: areaId,
-                                });
+                                onValueChange(
+                                    {
+                                        type: 'point',
+                                        coordinate,
+                                    },
+                                    {
+                                        [poiNameAttr]: poiName,
+                                        [areaIdAttr]: areaId,
+                                    }
+                                );
                             }
                             setSl(false);
                         }}
@@ -246,9 +280,7 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                                         setSl(true);
                                     }}
                                 >
-                                    {value
-                                        ? '重选位置'
-                                        : '选择位置'}
+                                    {value ? '重选位置' : '选择位置'}
                                 </Button>
                             </Space>
                             <div
@@ -264,7 +296,9 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
                                     style={{ height: 300 }}
                                     autoLocate={true}
                                     center={coordinate}
-                                    markers={coordinate ? [coordinate] : undefined}
+                                    markers={
+                                        coordinate ? [coordinate] : undefined
+                                    }
                                 />
                             </div>
                         </Space>
@@ -273,25 +307,30 @@ function makeAttrInput(attrRender: AttrUpsertRender<ED>, onValueChange: (value: 
             );
         }
         default: {
-            throw new Error(`【Abstract Update】无法支持的数据类别${type}的渲染`);
+            throw new Error(
+                `【Abstract Update】无法支持的数据类别${type}的渲染`
+            );
         }
     }
 }
 
-export default function render(props: WebComponentProps<
-    ED,
-    keyof EntityDict,
-    false,
-    {
-        entity: keyof ED;
-        renderData: AttrUpsertRender<ED>[];
-        helps?: Record<string, string>;
-        layout?: 'horizontal' | 'vertical';
-        children: any;      // 暂时没用
-    }
->) {
+export default function render(
+    props: WebComponentProps<
+        ED,
+        keyof EntityDict,
+        false,
+        {
+            entity: keyof ED;
+            renderData: AttrUpsertRender<ED>[];
+            helps?: Record<string, string>;
+            layout?: 'horizontal' | 'vertical';
+            children: any; // 暂时没用
+        }
+    >
+) {
     const { renderData = [], helps, entity } = props.data;
     const { update, t } = props.methods;
+    console.log(renderData);
     return (
         <Form
             labelCol={{ span: 4 }}
@@ -301,53 +340,52 @@ export default function render(props: WebComponentProps<
                 maxWidth: '100%',
             }}
         >
-            {
-                renderData.map(
-                    (ele) => {
-                        // 因为i18n渲染机制的缘故，t必须放到这里来计算
-                        const { label, attr, type, required } = ele;
-                        let label2 = label;
-                        if (!label2) {
-                            if (type === 'ref') {
-                                const { entity: refEntity } = ele as OakAbsRefAttrPickerRender<ED, keyof ED>
-                                if (attr === 'entityId') {
-                                    // 反指
-                                    label2 = t(`${refEntity}:name`);
-                                }
-                                else {
-                                    label2 = t(`${entity}:attr.${attr}`);
-                                }
-                            }
-                            else {
-                                label2 = t(`${entity}:attr.${attr}`);                                
-                            }
-                        }
-                        return (
-                            <Form.Item
-                                label={label2}
-                                rules={[
-                                    {
-                                        required: !!required,
-                                    },
-                                ]}
-                                help={helps && helps[attr]}
-                            >
-                                <>
-                                    {
-                                        makeAttrInput(ele, (value, extra) => {
-                                            const { attr } = ele;
-                                            update({
-                                                [attr]: value,
-                                                ...extra,
-                                            })
-                                        }, t, label2!)
-                                    }
-                                </>
-                            </Form.Item>
-                        )
-                    }
-                )
-            }
+            {renderData.map((ele) => {
+                // 因为i18n渲染机制的缘故，t必须放到这里来计算
+                const { label, attr, type, required } = ele;
+                let label2 = label;
+                // if (!label2) {
+                //     if (type === 'ref') {
+                //         const { entity: refEntity } =
+                //             ele as OakAbsRefAttrPickerRender<ED, keyof ED>;
+                //         if (attr === 'entityId') {
+                //             // 反指
+                //             label2 = t(`${refEntity}:name`);
+                //         } else {
+                //             label2 = t(`${entity}:attr.${attr}`);
+                //         }
+                //     } else {
+                //         label2 = t(`${entity}:attr.${attr}`);
+                //     }
+                // }
+                return (
+                    <Form.Item
+                        label={label2}
+                        rules={[
+                            {
+                                required: !!required,
+                            },
+                        ]}
+                        help={helps && helps[attr]}
+                        name={required ? attr : ''}
+                    >
+                        <>
+                            {makeAttrInput(
+                                ele,
+                                (value, extra) => {
+                                    const { attr } = ele;
+                                    update({
+                                        [attr]: value,
+                                        ...extra,
+                                    });
+                                },
+                                t,
+                                label2!
+                            )}
+                        </>
+                    </Form.Item>
+                );
+            })}
         </Form>
     );
 }
