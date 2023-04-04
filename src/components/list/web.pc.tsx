@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Table, Tag, TableProps, PaginationProps } from 'antd';
+import { Table, Tag, TableProps, PaginationProps, Space, Button, Avatar } from 'antd';
 import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
 import assert from 'assert';
 import { get } from 'oak-domain/lib/utils/lodash';
@@ -14,12 +14,27 @@ import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, CascadeActionProps } from '../../types/AbstractComponent';
 import { Action, CascadeActionItem } from 'oak-domain/lib/types';
 import { Schema } from 'oak-domain/lib/base-app-domain/UserEntityGrant/Schema';
+import { getPath, getWidth, getValue, getLabel, resolvePath, getType } from '../../utils/usefulFn';
+import ImgBox from '../imgBox';
 type ED = EntityDict & BaseEntityDict;
 type Width = 'xl' | 'lg' | 'md' | 'sm' | 'xs';
 
+function getDownload(file: { filename: string; url: string }) {
+    const aLink = document.createElement('a');
+    fetch(file?.url)
+        .then((res) => res.blob())
+        .then((blob) => {
+            // 将链接地址字符内容转变成blob地址
+            aLink.href = URL.createObjectURL(blob);
+            aLink.download = file?.filename;
+            aLink.style.display = 'none';
+            document.body.appendChild(aLink);
+            aLink.click();
+        });
+},
 
 type RenderCellProps = {
-    value: string;
+    value: any;
     type: string;
     color: string
 }
@@ -35,6 +50,43 @@ function RenderCell(props: RenderCellProps) {
             <Tag color={color} >
                 {value}
             </Tag>
+        )
+    }
+    else if (type === 'img') {
+        if (value instanceof Array) {
+            return (
+                <Space>
+                    {value.map((ele) => (
+                        <ImgBox src={ele.url} width={120} height={70} />
+                    ))}
+                </Space>
+            )
+        }
+        return (
+            <ImgBox src={value.url} width={120} height={70} />
+        )
+    }
+    else if (type === 'avatar') {
+        return (
+            <Avatar src={value} />
+        )
+    }
+    else if (type === 'file') {
+        if (value instanceof Array) {
+            return (
+                <Space direction="vertical">
+                    {value.map((ele) => (
+                        <Button type="dashed" icon={} onClick={() => getDownload(ele)}>
+                            {ele.filename}
+                        </Button>
+                    ))}
+                </Space>
+            )
+        }
+        return (
+            <Button type="dashed" icon={} onClick={() => getDownload(value)}>
+                {value.filename}
+            </Button>
         )
     }
     return (
@@ -70,6 +122,7 @@ export default function Render(
             extraActions: string[];
             entity: string;
             schema: StorageSchema<EntityDict & BaseEntityDict>;
+            attributes: OakAbsAttrDef[],
             columns: ColumnDefProps[],
             mobileData: AttrRender[]
             data: any[];
@@ -105,32 +158,36 @@ export default function Render(
         rowSelection,
         width,
         scroll,
+        attributes,
     } = oakData;
     useEffect(() => {
-        const tableColumns: ColumnsType<any> = columns && columns.map((ele) => {
+        const tableColumns: ColumnsType<any> = attributes && attributes.map((ele) => {
+            const path = getPath(ele);
+            const {
+                attrType,
+                attr,
+                attribute,
+                entity: entityI8n,
+            } = resolvePath<ED>(schema, entity, path);
+            const title = getLabel(ele, entityI8n, attr, t);
+            const width = getWidth(ele, attrType, 'table');
+            const type = getType(ele, attrType);
             const column: ColumnType<any> = {
-                dataIndex: ele.path,
-                title: ele.title,
+                key: path,
+                title,
                 align: 'center',
                 render: (v: string, row: any) => {
-                    if (v && ele.type === 'text') {
-                        return <>{v}</>
-                    }
-                    let value = get(row, ele.path);
+                    const value = getValue(ele, row, path, entityI8n, attr, attrType, t);
                     let color = 'black';
-                    if (ele.type === 'tag' && !!value) {
-                        assert(!!colorDict?.[ele.entity]?.[ele.attr]?.[value], `${entity}实体iState颜色定义缺失`)
-                        color = colorDict![ele.entity]![ele.attr]![value] as string;
-                        value = t(`${ele.entity}:v.${ele.attr}.${value}`);
+                    if (type === 'tag' && !!value) {
+                        assert(!!colorDict?.[entityI8n]?.[attr]?.[value], `${entity}实体iState颜色定义缺失`)
+                        color = colorDict![entityI8n]![attr]![value] as string;
                     }
-                    if (ele.type === 'datetime' && !!value) {
-                        value = dayjs(value).format('YYYY-MM-DD HH:mm')
-                    }
-                    return (<RenderCell color={color} value={value} type={ele.type} />)
+                    return (<RenderCell color={color} value={value} type={type!} />)
                 }
             }
-            if (ele.width) {
-                Object.assign(column, { width: ele.width });
+            if (width) {
+                Object.assign(column, { width });
             }
             return column;
         })
@@ -180,20 +237,22 @@ export default function Render(
                 return {
                     onClick: () => {
                         const index = selectedRowKeys.findIndex((ele) => ele === record.id);
+                        let keys = selectedRowKeys;
                         if (rowSelection?.type === 'checkbox') {
                             if (index !== -1) {
-                                selectedRowKeys.splice(index, 1)
+                                keys.splice(index, 1)
                             }
                             else {
-                                selectedRowKeys.push(record.id)
+                                keys.push(record.id)
                             }
                             setSelectedRowKeys([...selectedRowKeys]);
                         }
                         else {
+                            keys = [record.id];
                             setSelectedRowKeys([record.id])
                         }
-                        const row = data.filter((ele) => selectedRowKeys.includes(ele.id));
-                        rowSelection?.onChange && rowSelection?.onChange(selectedRowKeys, row, {type: 'all'});
+                        const row = data.filter((ele) => keys.includes(ele.id));
+                        rowSelection?.onChange && rowSelection?.onChange(keys, row, {type: 'all'});
                     }
                 }
             }}

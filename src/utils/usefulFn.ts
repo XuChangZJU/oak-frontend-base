@@ -110,14 +110,14 @@ function isAttrbuteType(attribute: OakAbsAttrDef): OakAbsDerivedAttrDef {
 }
 
 // 以下几个get方法只需要两个参数attribute和一个解析path对象，只是后者类型还没定义
-function getPath(attribute: OakAbsAttrDef) {
+export function getPath(attribute: OakAbsAttrDef) {
     if (typeof attribute === 'string') {
         return attribute;
     }
     return attribute.path;
 }
 
-function getLabel<ED extends EntityDict & BaseEntityDict>(
+export function getLabel<ED extends EntityDict & BaseEntityDict>(
     attribute: OakAbsAttrDef,
     entity: keyof ED,
     attr: string,
@@ -138,7 +138,7 @@ function getLabel<ED extends EntityDict & BaseEntityDict>(
 }
 
 // 目前width属性可以是undefined，只有特殊type或用户自定义才有值，这样其余attr属性可以自适应
-function getWidth(
+export function getWidth(
     attribute: OakAbsAttrDef,
     attrType: string,
     useFor: 'table' | 'other'
@@ -156,7 +156,7 @@ function getWidth(
     return width;
 }
 
-function getValue<ED extends EntityDict & BaseEntityDict>(
+export function getValue<ED extends EntityDict & BaseEntityDict>(
     attribute: OakAbsAttrDef,
     data: any,
     path: string,
@@ -180,18 +180,17 @@ function getValue<ED extends EntityDict & BaseEntityDict>(
     return value;
 }
 
-function getType(attribute: OakAbsAttrDef, attrType: string) {
-    let type = 'text';
+export function getType(attribute: OakAbsAttrDef, attrType: string) {
     if (attrType === 'enum') {
-        type = 'tag';
+        return 'tag';
     }
     if (attrType === 'datetime') {
-        type = 'datetime';
+        return 'datetime';
     }
     if (isAttrbuteType(attribute).type) {
-        type = isAttrbuteType(attrType).type as string;
+        return isAttrbuteType(attrType).type;
     }
-    return type as DataType & ('img' | 'file' | 'avatar');
+    return attrType;
 }
 
 function getLabelI18<ED extends EntityDict & BaseEntityDict>(
@@ -368,42 +367,6 @@ export function analyzeDataUpsertTransformer<
                 ...ele,
             } as AttrUpsertRender<ED>;
         });
-}
-
-export function analyzeAttrDefForTable<ED extends EntityDict & BaseEntityDict>(
-    dataSchema: StorageSchema<ED>,
-    entity: string,
-    attrDefs: OakAbsAttrDef[],
-    t: (k: string, params?: object) => string,
-    mobileAttrDef?: CardDef,
-    colorDict?: ColorDict<ED>
-): {
-    columnDef: ColumnDefProps[];
-} {
-    // web使用
-    const columnDef: ColumnDefProps[] = attrDefs.map((ele) => {
-        const path = getPath(ele);
-        const {
-            attrType,
-            attr,
-            attribute,
-            entity: entityI8n,
-        } = resolvePath<ED>(dataSchema, entity, path);
-        const title = getLabel(ele, entity, attr, t);
-        const width = getWidth(ele, attrType, 'table');
-        const type = getType(ele, attrType);
-        return {
-            title,
-            width,
-            type,
-            path,
-            entity: entityI8n,
-            attr,
-        } as ColumnDefProps;
-    });
-    return {
-        columnDef,
-    };
 }
 
 export function analyzeAttrMobileForCard<

@@ -1,5 +1,5 @@
 import { CardDef } from '../../types/AbstractComponent';
-import { analyzeAttrDefForTable, analyzeAttrMobileForCard } from '../../utils/usefulFn';
+import { analyzeAttrMobileForCard } from '../../utils/usefulFn';
 import assert from 'assert';
 
 export default OakComponent({
@@ -44,13 +44,6 @@ export default OakComponent({
             const colorDict = this.features.style.getColorDict();
             assert(!!data, 'data不能为空');
             assert(!!entity, 'list属性entity不能为空');
-            if (attributes && attributes.length) {
-                const { columnDef } = analyzeAttrDefForTable(schema, entity!, attributes!, (k, params) => this.t(k, params), attributesMb as CardDef);
-                this.setState({
-                    columns: columnDef,
-                    colorDict,
-                });
-            }
             if (attributesMb) {
                 const converter = analyzeAttrMobileForCard(schema, entity!, (k, params) => this.t(k, params), attributesMb as CardDef, colorDict);
                 this.setState({
@@ -69,6 +62,6 @@ export default OakComponent({
                 action,
                 cascadeAction,
             })
-        }
+        },
     }
 });
