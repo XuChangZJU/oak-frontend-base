@@ -114,24 +114,26 @@ interface ComponentOption<
     IsList extends boolean,
     TData extends DataOption,
     TProperty extends PropertyOption,
+    TMethod extends Record<string, Function>,
+    EMethod extends Record<string, Function> = {},
     > {
-    entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => T);
+    entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => T);
     path?: string;
     isList: IsList;
     features?: (keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>))[];
-    cascadeActions?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => {
+    cascadeActions?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     },
-    actions?: ActionDef<ED, T>[] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ActionDef<ED, T>[]);
-    projection?: ED[T]['Selection']['data'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ED[T]['Selection']['data'] | undefined);
+    actions?: ActionDef<ED, T>[] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => ActionDef<ED, T>[]);
+    projection?: ED[T]['Selection']['data'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => ED[T]['Selection']['data'] | undefined);
     append?: boolean;
     pagination?: Pagination;
     filters?: Array<{
-        filter: ED[T]['Selection']['filter'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ED[T]['Selection']['filter'] | undefined);
+        filter: ED[T]['Selection']['filter'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => ED[T]['Selection']['filter'] | undefined);
         '#name'?: string;
     }>;
     sorters?: Array<{
-        sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => NonNullable<ED[T]['Selection']['sorter']>[number]);
+        sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => NonNullable<ED[T]['Selection']['sorter']>[number]);
         '#name'?: string;
     }>;
     formData?: (options: {
@@ -139,10 +141,11 @@ interface ComponentOption<
         features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<PropertyOptionToData<TProperty>>;
         legalActions: ActionDef<ED, T>[];
-    }) => FormedData & ThisType<ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList>>;
+    }) => FormedData;
     ns?: T | T[];
-    data?: ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => TData) | TData;
+    data?: ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => TData) | TData;
     properties?: TProperty;
+    methods?: TMethod;
 };
 
 export type MiniprogramStyleMethods = {
@@ -193,7 +196,7 @@ export type ComponentPublicThisType<
     TData extends Record<string, any> = {},
     TProperty extends PropertyOption = {},
     TMethod extends MethodOption = {},
-    EMethod extends Record<string, Function> = {}
+    EMethod extends Record<string, Function> = {},
     > = {
         subscribed: Array<() => void>;
         features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
@@ -244,10 +247,9 @@ export type OakComponentOption<
     TData extends Record<string, any>,
     TProperty extends PropertyOption,
     TMethod extends Record<string, Function>,
-    EMethod extends Record<string, Function> = {}
-    > = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty> &
+    EMethod extends Record<string, Function> = {},
+    > = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod> &
     Partial<{
-        methods: TMethod;
         lifetimes: {
             created?(): void;
             attached?(): void;
@@ -258,11 +260,8 @@ export type OakComponentOption<
             show?(): void;
             hide?(): void;
         };
-        observers: Record<string, (this: ComponentPublicThisType<
-            ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod
-        >, ...args: any[]) => any>;         // 待废弃
         listeners: Record<string, (this: ComponentPublicThisType<
-            ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod
+            ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod
         >, prev: Record<string, any>, next: Record<string, any>) => void>;
     }> &
     Partial<{
@@ -308,74 +307,74 @@ export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T ex
 export type OakCommonComponentMethods<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED
-> = {
-    setDisablePulldownRefresh: (able: boolean) => void;
-    sub: (type: string, callback: Function) => void;
-    unsub: (type: string, callback: Function) => void;
-    pub: (type: string, options?: any) => void;
-    unsubAll: (type: string) => void;
-    save: (key: string, item: any) => void;
-    load: (key: string) => any;
-    clear: () => void;
-    resolveInput: <K extends string>(
-        input: any,
-        keys?: K[]
-    ) => { dataset?: Record<string, any>; value?: string } & {
-        [k in K]?: any;
-    };
-    setNotification: (data: NotificationProps) => void;
-    consumeNotification: () => NotificationProps | undefined;
-    setMessage: (data: MessageProps) => void;
-    consumeMessage: () => MessageProps | undefined;
-    reRender: (extra?: Record<string, any>) => void;
-    getFreshValue: (
-        path?: string
-    ) =>
-        | Partial<ED[keyof ED]['Schema']>[]
-        | Partial<ED[keyof ED]['Schema']>
-        | undefined;
-    navigateTo: <T2 extends keyof ED>(
-        options: { url: string } & OakNavigateToParameters<ED, T2>,
-        state?: Record<string, any>,
-        disableNamespace?: boolean
-    ) => Promise<void>;
-    navigateBack: (delta?: number) => Promise<void>;
-    redirectTo: <T2 extends keyof ED>(
-        options: Parameters<typeof wx.redirectTo>[0] &
-            OakNavigateToParameters<ED, T2>,
-        state?: Record<string, any>,
-        disableNamespace?: boolean
-    ) => Promise<void>;
-    switchTab: <T2 extends keyof ED>(
-        options: Parameters<typeof wx.switchTab>[0] &
-            OakNavigateToParameters<ED, T2>,
-        state?: Record<string, any>,
-        disableNamespace?: boolean
-    ) => Promise<void>;
-    // setProps: (props: Record<string, any>, usingState?: true) => void;
-    clean: (path?: string) => void;
+    > = {
+        setDisablePulldownRefresh: (able: boolean) => void;
+        sub: (type: string, callback: Function) => void;
+        unsub: (type: string, callback: Function) => void;
+        pub: (type: string, options?: any) => void;
+        unsubAll: (type: string) => void;
+        save: (key: string, item: any) => void;
+        load: (key: string) => any;
+        clear: () => void;
+        resolveInput: <K extends string>(
+            input: any,
+            keys?: K[]
+        ) => { dataset?: Record<string, any>; value?: string } & {
+            [k in K]?: any;
+        };
+        setNotification: (data: NotificationProps) => void;
+        consumeNotification: () => NotificationProps | undefined;
+        setMessage: (data: MessageProps) => void;
+        consumeMessage: () => MessageProps | undefined;
+        reRender: (extra?: Record<string, any>) => void;
+        getFreshValue: (
+            path?: string
+        ) =>
+            | Partial<ED[keyof ED]['Schema']>[]
+            | Partial<ED[keyof ED]['Schema']>
+            | undefined;
+        navigateTo: <T2 extends keyof ED>(
+            options: { url: string } & OakNavigateToParameters<ED, T2>,
+            state?: Record<string, any>,
+            disableNamespace?: boolean
+        ) => Promise<void>;
+        navigateBack: (delta?: number) => Promise<void>;
+        redirectTo: <T2 extends keyof ED>(
+            options: Parameters<typeof wx.redirectTo>[0] &
+                OakNavigateToParameters<ED, T2>,
+            state?: Record<string, any>,
+            disableNamespace?: boolean
+        ) => Promise<void>;
+        switchTab: <T2 extends keyof ED>(
+            options: Parameters<typeof wx.switchTab>[0] &
+                OakNavigateToParameters<ED, T2>,
+            state?: Record<string, any>,
+            disableNamespace?: boolean
+        ) => Promise<void>;
+        // setProps: (props: Record<string, any>, usingState?: true) => void;
+        clean: (path?: string) => void;
 
-    t(key: string, params?: object): string;
-    execute: (
-        action?: ED[T]['Action'],
-        messageProps?: boolean | MessageProps
-    ) => Promise<void>;
-    checkOperation: (
-        entity: T,
-        action: ED[T]['Action'],
-        data?: ED[T]['Update']['data'],
-        filter?: ED[T]['Update']['filter'],
-        checkerTypes?: CheckerType[]
-    ) => boolean;
-    tryExecute: (path?: string) => boolean | Error;
-    getOperations: (
-        path?: string
-    ) => { operation: ED[T]['Operation']; entity: T }[] | undefined;
-    refresh: () => Promise<void>;
-    aggregate: (
-        aggregation: ED[T]['Aggregation']
-    ) => Promise<AggregationResult<ED[T]['Schema']>>;
-};
+        t(key: string, params?: object): string;
+        execute: (
+            action?: ED[T]['Action'],
+            messageProps?: boolean | MessageProps
+        ) => Promise<void>;
+        checkOperation: (
+            entity: T,
+            action: ED[T]['Action'],
+            data?: ED[T]['Update']['data'],
+            filter?: ED[T]['Update']['filter'],
+            checkerTypes?: CheckerType[]
+        ) => boolean;
+        tryExecute: (path?: string) => boolean | Error;
+        getOperations: (
+            path?: string
+        ) => { operation: ED[T]['Operation']; entity: T }[] | undefined;
+        refresh: () => Promise<void>;
+        aggregate: (
+            aggregation: ED[T]['Aggregation']
+        ) => Promise<AggregationResult<ED[T]['Schema']>>;
+    };
 
 export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     setId: (id: string) => void;

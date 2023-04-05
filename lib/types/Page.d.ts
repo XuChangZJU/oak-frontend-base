@@ -52,24 +52,24 @@ export declare type RowWithActions<ED extends EntityDict & BaseEntityDict, T ext
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     };
 };
-interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends DataOption, TProperty extends PropertyOption> {
-    entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => T);
+interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends DataOption, TProperty extends PropertyOption, TMethod extends Record<string, Function>, EMethod extends Record<string, Function> = {}> {
+    entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => T);
     path?: string;
     isList: IsList;
     features?: (keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>))[];
-    cascadeActions?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => {
+    cascadeActions?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     };
-    actions?: ActionDef<ED, T>[] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ActionDef<ED, T>[]);
-    projection?: ED[T]['Selection']['data'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ED[T]['Selection']['data'] | undefined);
+    actions?: ActionDef<ED, T>[] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => ActionDef<ED, T>[]);
+    projection?: ED[T]['Selection']['data'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => ED[T]['Selection']['data'] | undefined);
     append?: boolean;
     pagination?: Pagination;
     filters?: Array<{
-        filter: ED[T]['Selection']['filter'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => ED[T]['Selection']['filter'] | undefined);
+        filter: ED[T]['Selection']['filter'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => ED[T]['Selection']['filter'] | undefined);
         '#name'?: string;
     }>;
     sorters?: Array<{
-        sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => NonNullable<ED[T]['Selection']['sorter']>[number]);
+        sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => NonNullable<ED[T]['Selection']['sorter']>[number]);
         '#name'?: string;
     }>;
     formData?: (options: {
@@ -77,10 +77,11 @@ interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyo
         features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: Partial<PropertyOptionToData<TProperty>>;
         legalActions: ActionDef<ED, T>[];
-    }) => FormedData & ThisType<ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList>>;
+    }) => FormedData;
     ns?: T | T[];
-    data?: ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty>) => TData) | TData;
+    data?: ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => TData) | TData;
     properties?: TProperty;
+    methods?: TMethod;
 }
 export declare type MiniprogramStyleMethods = {
     animate(selector: string, keyFrames: WechatMiniprogram.Component.KeyFrame[], duration: number, callback?: () => void): void;
@@ -109,8 +110,7 @@ export declare type ComponentFullThisType<ED extends EntityDict & BaseEntityDict
     setState: (data: Partial<OakComponentData<ED, T>>, callback?: () => void) => void;
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 } & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
-export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any>, TProperty extends PropertyOption, TMethod extends Record<string, Function>, EMethod extends Record<string, Function> = {}> = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty> & Partial<{
-    methods: TMethod;
+export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any>, TProperty extends PropertyOption, TMethod extends Record<string, Function>, EMethod extends Record<string, Function> = {}> = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod> & Partial<{
     lifetimes: {
         created?(): void;
         attached?(): void;
@@ -121,8 +121,7 @@ export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T
         show?(): void;
         hide?(): void;
     };
-    observers: Record<string, (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>, ...args: any[]) => any>;
-    listeners: Record<string, (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>, prev: Record<string, any>, next: Record<string, any>) => void>;
+    listeners: Record<string, (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>, prev: Record<string, any>, next: Record<string, any>) => void>;
 }> & Partial<{
     wechatMp: {
         externalClasses?: string[];

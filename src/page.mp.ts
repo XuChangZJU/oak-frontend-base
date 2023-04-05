@@ -731,10 +731,6 @@ export function createComponent<
     >,
     features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD,
 ) {
-    if (option.observers) {
-        console.error('observers即将废弃（已经没有效果），请使用listeners重写');
-    }
-
     const {
         entity,
         data,

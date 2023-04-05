@@ -31,7 +31,7 @@ function getDownload(file: { filename: string; url: string }) {
             document.body.appendChild(aLink);
             aLink.click();
         });
-},
+}
 
 type RenderCellProps = {
     value: any;
@@ -76,7 +76,7 @@ function RenderCell(props: RenderCellProps) {
             return (
                 <Space direction="vertical">
                     {value.map((ele) => (
-                        <Button type="dashed" icon={} onClick={() => getDownload(ele)}>
+                        <Button type="dashed" /* icon={} */ onClick={() => getDownload(ele)}>
                             {ele.filename}
                         </Button>
                     ))}
@@ -84,7 +84,7 @@ function RenderCell(props: RenderCellProps) {
             )
         }
         return (
-            <Button type="dashed" icon={} onClick={() => getDownload(value)}>
+            <Button type="dashed" /* icon={}  */onClick={() => getDownload(value)}>
                 {value.filename}
             </Button>
         )

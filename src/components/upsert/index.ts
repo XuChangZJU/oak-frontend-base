@@ -47,6 +47,7 @@ export default OakComponent({
             return ele;
         });
         return {
+            name: 'ddd',
             renderData: renderData1,
         };
     },

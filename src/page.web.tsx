@@ -693,10 +693,6 @@ export function createComponent<
         getRender: () => React.ComponentType<any>;
     };
 
-    if (option.observers) {
-        console.error('observers即将废弃（已经没有效果），请使用listeners重写');
-    }
-
     const { fn } = translateListeners(listeners);
     class OakComponentWrapper extends OakComponentBase<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod> {
         features = features;
