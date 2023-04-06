@@ -221,7 +221,7 @@ export default function Render(
             }
             setTabelColumns(tableColumns)
         }
-    }, [data, zhCNKeys])
+    }, [data, zhCNKeys, schema])
     return (
         <Table
             size={sizeForWidth[width]}
