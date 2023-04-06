@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     Space,
     Button,
@@ -75,6 +75,7 @@ export default function Render(
         keyof EntityDict,
         false,
         {
+            i18n: any;
             items: { action: string; label: string, path: string; onClick: () => void }[];
             schema: StorageSchema<ED>;
             entity: string;
@@ -83,11 +84,12 @@ export default function Render(
             onAction: (action?: string, cascadeAction?: CascadeActionProps) => void;
         },
         {
+            makeItems: () => void;
         }
     >
 ) {
     const { methods, data } = props;
-    const { t } = methods;
+    const { t, makeItems } = methods;
     const {
         schema,
         actions,
@@ -95,7 +97,12 @@ export default function Render(
         entity,
         cascadeActions,
         items,
+        i18n,
     } = data;
+    const zhCNKeys: number = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
+    useEffect(() => {
+        makeItems();
+    }, [zhCNKeys])
     return (
         <div className={Style.panelContainer}>
             <Space align='center' style={{ width: '100%' }}>

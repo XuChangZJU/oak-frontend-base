@@ -3,6 +3,8 @@ import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 export default function Render(props: WebComponentProps<ED, keyof EntityDict, false, {
+    width: string;
+    i18n: any;
     items: {
         label: string;
         onClick: () => void;
@@ -11,4 +13,6 @@ export default function Render(props: WebComponentProps<ED, keyof EntityDict, fa
         label: string;
         onClick: () => void;
     }[];
-}, {}>): JSX.Element;
+}, {
+    makeItems: (isMobile: boolean) => void;
+}>): JSX.Element;
