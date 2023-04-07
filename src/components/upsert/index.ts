@@ -12,9 +12,9 @@ export default OakComponent({
     },
     properties: {
         helps: {} as Record<string, string>, // Record<string, string>;
-        entity: '' as  keyof ED,
+        entity: '' as keyof ED,
         attributes: [] as OakAbsAttrUpsertDef<ED, keyof ED>[],
-        data: {} as ED[ keyof ED]['Schema'],
+        data: {} as ED[keyof ED]['Schema'],
         layout: 'horizontal' as 'horizontal' | 'vertical',
         mode: 'default' as 'default' | 'card',
     },

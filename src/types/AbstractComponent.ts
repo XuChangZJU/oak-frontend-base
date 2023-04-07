@@ -39,7 +39,7 @@ export type CardDef = {
 
 export interface OakAbsRefAttrPickerDef<
     ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED
+    T extends keyof ED,
 > {
     type: 'ref',
     mode: 'select' | 'list' | 'radio';
@@ -94,7 +94,7 @@ export interface OakAbsNativeAttrUpsertDef<
 
 export type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> =
     | OakAbsGeoAttrUpsertDef
-    | OakAbsRefAttrPickerDef<ED, T>
+    | OakAbsRefAttrPickerDef<ED, keyof ED>
     | keyof ED[T]['OpSchema']
     | OakAbsNativeAttrUpsertDef<ED, T, keyof ED[T]['OpSchema']>;
 
