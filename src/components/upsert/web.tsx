@@ -24,8 +24,8 @@ import Map from '../map/map';
 import dayjs from 'dayjs';
 import { AttrUpsertRender, OakAbsRefAttrPickerRender, OakAbsNativeAttrUpsertRender } from '../../types/AbstractComponent';
 
-function makeAttrInput(
-    attrRender: AttrUpsertRender<ED>,
+function makeAttrInput<T extends keyof ED>(
+    attrRender: AttrUpsertRender<ED, T>,
     onValueChange: (value: any, extra?: Record<string, any>) => void,
     t: (word: string) => string,
     label: string) {
@@ -192,7 +192,7 @@ function makeAttrInput(
                     multiple={false}
                     entityId={value}
                     pickerRender={attrRender as OakAbsRefAttrPickerRender<ED, keyof ED>}
-                    onChange={(value: string) => { onValueChange(value) }}
+                    onChange={(value) => { onValueChange(value[0]) }}
                 />
             );
         }
@@ -282,13 +282,13 @@ function makeAttrInput(
     }
 }
 
-export default function render(props: WebComponentProps<
+export default function render<T extends keyof ED>(props: WebComponentProps<
     ED,
-    keyof EntityDict,
+    T,
     false,
     {
-        entity: keyof ED;
-        renderData: AttrUpsertRender<ED>[];
+        entity: T;
+        renderData: AttrUpsertRender<ED, T>[];
         helps?: Record<string, string>;
         layout?: 'horizontal' | 'vertical';
         mode?: 'default' | 'card';
@@ -316,11 +316,11 @@ export default function render(props: WebComponentProps<
                                     label2 = t(`${refEntity}:name`);
                                 }
                                 else {
-                                    label2 = t(`${entity}:attr.${attr}`);
+                                    label2 = t(`${entity}:attr.${attr as string}`);
                                 }
                             }
                             else {
-                                label2 = t(`${entity}:attr.${attr}`);                                
+                                label2 = t(`${entity}:attr.${attr as string}`);
                             }
                         }
                         return (
@@ -331,11 +331,11 @@ export default function render(props: WebComponentProps<
                                         required: !!required,
                                     },
                                 ]}
-                                help={helps && helps[ele.attr]}
+                                help={helps && helps[attr as string]}
                             >
                                 <>
                                     {
-                                        makeAttrInput(ele, (value, extra) => {
+                                        makeAttrInput<T>(ele, (value, extra) => {
                                             const { attr } = ele;
                                             update({
                                                 [attr]: value,

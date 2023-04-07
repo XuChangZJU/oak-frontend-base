@@ -1,32 +1,29 @@
-import assert from 'assert';
-import { ED, OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
+import { AttrUpsertRender, ED, OakAbsAttrUpsertDef, OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 import {
     DataUpsertTransformer,
-    OakAbsRefAttrPickerDef,
 } from '../../types/AbstractComponent';
+import { ReactComponentProps } from '../../types/Page';
 import { analyzeDataUpsertTransformer } from '../../utils/usefulFn';
-import { __assign } from 'tslib';
 
 export default OakComponent({
     isList: false,
     entity() {
-        return this.props.entity as any;
+        return this.props.entity as keyof ED;
     },
     properties: {
-        helps: Object, // Record<string, string>;
-        entity: String,
-        attributes: Array,
-        data: Object,
-        children: Object,
-        layout: String, // horizontal | vertical
-        mode: String, // 'default' | 'card'
+        helps: {} as Record<string, string>, // Record<string, string>;
+        entity: '' as  keyof ED,
+        attributes: [] as OakAbsAttrUpsertDef<ED, keyof ED>[],
+        data: {} as ED[ keyof ED]['Schema'],
+        layout: 'horizontal' as 'horizontal' | 'vertical',
+        mode: 'default' as 'default' | 'card',
     },
     formData() {
         const { data, entity } = this.props;
         const { transformer } = this.state;
         const renderData = transformer(data!);
         const renderData1 = renderData?.map((ele) => {
-            const { label, attr, type, required } = ele;
+            const { label, attr, type } = ele;
 
             let label2 = label;
             if (!label2) {
@@ -37,22 +34,21 @@ export default OakComponent({
                         // 反指
                         label2 = this.t(`${refEntity}:name`);
                     } else {
-                        label2 = this.t(`${entity}:attr.${attr}`);
+                        label2 = this.t(`${entity as string}:attr.${attr as string}`);
                     }
                 } else {
-                    label2 = this.t(`${entity}:attr.${attr}`);
+                    label2 = this.t(`${entity as string}:attr.${attr as string}`);
                 }
             }
             Object.assign(ele, { label: label2 });
             return ele;
         });
         return {
-            name: 'ddd',
             renderData: renderData1,
         };
     },
     data: {
-        transformer: (() => []) as DataUpsertTransformer<ED>,
+        transformer: (() => []) as DataUpsertTransformer<ED, keyof ED>,
     },
     listeners: {
         data() {
@@ -64,7 +60,7 @@ export default OakComponent({
             const { attributes, entity } = this.props;
             const schema = this.features.cache.getSchema();
 
-            const transformer = analyzeDataUpsertTransformer<ED>(
+            const transformer = analyzeDataUpsertTransformer(
                 schema,
                 entity!,
                 attributes!
@@ -74,4 +70,11 @@ export default OakComponent({
             });
         },
     },
-});
+}) as <ED2 extends ED, T2 extends keyof ED2>(props: ReactComponentProps<ED2, T2, false, {
+    helps: Record<string, string>;
+    entity: T2;
+    attributes: OakAbsAttrUpsertDef<ED2, T2>[];
+    data: ED2[T2]['Schema'];
+    layout: 'horizontal' | 'vertical';
+    mode: 'default' | 'card';
+}>) => React.ReactElement;

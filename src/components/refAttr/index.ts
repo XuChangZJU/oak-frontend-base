@@ -9,11 +9,11 @@ export default OakComponent({
         return this.props.pickerDef!.entity as keyof ED;
     }, */
     properties: {
-        multiple: Boolean,
-        entityId: String,
-        entityIds: Array,
-        pickerRender: Object,      // OakAbsRefAttrPickerRender
-        onChange: Function,
+        multiple: false,
+        entityId: '',
+        entityIds: [] as string[],
+        pickerRender: {} as OakAbsRefAttrPickerRender<ED, keyof ED>,      // OakAbsRefAttrPickerRender
+        onChange: (() => undefined) as (value: string[]) => void,
     },
     formData() {
         const { multiple, entityIds, entityId, pickerRender } = this.props;

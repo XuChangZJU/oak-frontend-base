@@ -13,6 +13,7 @@ import {
     ComponentFullThisType,
     ActionDef,
     RowWithActions,
+    ComponentProps,
 } from './types/Page';
 import { cloneDeep, unset } from 'oak-domain/lib/utils/lodash';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
@@ -29,7 +30,7 @@ export async function onPathSet<
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
         option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>) {
     const { props, state } = this;
-    const { oakPath, oakProjection, oakIsPicker, oakFilters, oakSorters, oakId } = props;
+    const { oakPath, oakProjection, oakIsPicker, oakFilters, oakSorters, oakId } = props as ComponentProps<ED, T, true, {}>;
     const { entity, path, projection, isList, filters, sorters, pagination } = option;
     const { features } = this;
 
@@ -41,7 +42,8 @@ export async function onPathSet<
             // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
             const oakFilters2 = typeof oakFilters === 'string' ? JSON.parse(oakFilters) : oakFilters;
             filters2.push(...oakFilters2);
-        } else if (filters) {
+        } 
+        if (filters) {
             for (const ele of filters) {
                 const { filter, '#name': name } = ele;
                 filters2.push({

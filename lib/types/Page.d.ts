@@ -1,5 +1,4 @@
 /// <reference types="wechat-miniprogram" />
-/// <reference types="wechat-miniprogram" />
 import { Aspect, EntityDict, CheckerType, AggregationResult } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -12,32 +11,11 @@ import { MessageProps } from './Message';
 import { AsyncContext } from "oak-domain/lib/store/AsyncRowStore";
 import { SyncContext } from "oak-domain/lib/store/SyncRowStore";
 import React from "react";
-export declare type PropertyOption = Record<string, WechatMiniprogram.Component.AllProperty | FunctionConstructor>;
 export declare type DataOption = WechatMiniprogram.Component.DataOption;
 export declare type MethodOption = WechatMiniprogram.Component.MethodOption;
 /**
  * 微信的原声明中少写了FunctionConstructor，只能抄一遍
  */
-declare type PropertyType = FunctionConstructor | StringConstructor | NumberConstructor | BooleanConstructor | ArrayConstructor | ObjectConstructor | null;
-declare type ValueType<T extends PropertyType> = T extends null ? any : T extends StringConstructor ? string : T extends NumberConstructor ? number : T extends BooleanConstructor ? boolean : T extends ArrayConstructor ? any[] : T extends ObjectConstructor ? AnyObject : T extends FunctionConstructor ? Function : never;
-declare type FullProperty<T extends PropertyType> = {
-    /** 属性类型 */
-    type: T;
-    /** 属性初始值 */
-    value?: ValueType<T> | undefined;
-    /** 属性值被更改时的响应函数 */
-    observer?: string | ((newVal: ValueType<T>, oldVal: ValueType<T>, changedPath: Array<string | number>) => void) | undefined;
-    /** 属性的类型（可以指定多个） */
-    optionalTypes?: ShortProperty[] | undefined;
-};
-declare type AllFullProperty = FullProperty<StringConstructor> | FullProperty<NumberConstructor> | FullProperty<BooleanConstructor> | FullProperty<ArrayConstructor> | FullProperty<ObjectConstructor> | FullProperty<null>;
-declare type ShortProperty = FunctionConstructor | StringConstructor | NumberConstructor | BooleanConstructor | ArrayConstructor | ObjectConstructor | null;
-declare type AllProperty = AllFullProperty | ShortProperty;
-declare type PropertyToData<T extends AllProperty> = T extends ShortProperty ? ValueType<T> : FullPropertyToData<Exclude<T, ShortProperty>>;
-declare type FullPropertyToData<T extends AllFullProperty> = ValueType<T['type']>;
-declare type PropertyOptionToData<P extends PropertyOption> = {
-    [name in keyof P]?: PropertyToData<P[name]>;
-};
 export declare type ActionDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     action: ED[T]['Action'];
     filter?: ED[T]['Selection']['filter'];
@@ -52,7 +30,7 @@ export declare type RowWithActions<ED extends EntityDict & BaseEntityDict, T ext
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     };
 };
-interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends DataOption, TProperty extends PropertyOption, TMethod extends Record<string, Function>, EMethod extends Record<string, Function> = {}> {
+interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends DataOption, TProperty extends DataOption, TMethod extends Record<string, Function>, EMethod extends Record<string, Function> = {}> {
     entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => T);
     path?: string;
     isList: IsList;
@@ -75,7 +53,7 @@ interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyo
     formData?: (options: {
         data: IsList extends true ? RowWithActions<ED, T>[] : RowWithActions<ED, T> | undefined;
         features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-        props: Partial<PropertyOptionToData<TProperty>>;
+        props: TProperty;
         legalActions: ActionDef<ED, T>[];
     }) => FormedData;
     ns?: T | T[];
@@ -88,17 +66,17 @@ export declare type MiniprogramStyleMethods = {
     clearAnimation(selector: string, options?: WechatMiniprogram.Component.ClearAnimationOptions, callback?: () => void): void;
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 };
-export declare type ComponentProps<IsList extends boolean, TProperty extends PropertyOption> = IsList extends true ? PropertyOptionToData<OakListComponentProperties & OakComponentProperties & TProperty> : PropertyOptionToData<OakComponentProperties & TProperty>;
-export declare type ReactComponentProps<IsList extends boolean, TProperty extends PropertyOption> = ComponentProps<IsList, TProperty> & {
+export declare type ComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, TProperty extends DataOption> = IsList extends true ? OakListComponentProperties<ED, T> & OakComponentProperties<ED, T> & Partial<TProperty> : OakComponentProperties<ED, T> & Partial<TProperty>;
+export declare type ReactComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, TProperty extends DataOption> = ComponentProps<ED, T, IsList, TProperty> & {
     className?: string;
     style?: Record<string, any>;
 };
 export declare type ComponentData<ED extends EntityDict & BaseEntityDict, T extends keyof ED, FormedData extends DataOption, TData extends DataOption> = TData & FormedData & OakComponentData<ED, T>;
-export declare type ComponentPublicThisType<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any> = {}, TProperty extends PropertyOption = {}, TMethod extends MethodOption = {}, EMethod extends Record<string, Function> = {}> = {
+export declare type ComponentPublicThisType<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any> = {}, TProperty extends DataOption = {}, TMethod extends MethodOption = {}, EMethod extends Record<string, Function> = {}> = {
     subscribed: Array<() => void>;
     features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     state: ComponentData<ED, T, FormedData, TData>;
-    props: Readonly<ComponentProps<IsList, TProperty>>;
+    props: Readonly<ComponentProps<ED, T, IsList, TProperty>>;
     setState: (data: Partial<ComponentData<ED, T, FormedData, TData>>, callback?: () => void) => void;
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 } & TMethod & EMethod & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
@@ -106,11 +84,11 @@ export declare type ComponentFullThisType<ED extends EntityDict & BaseEntityDict
     subscribed: Array<() => void>;
     features: BasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt>>;
     state: OakComponentData<ED, T>;
-    props: ComponentProps<true, {}>;
+    props: ComponentProps<ED, T, IsList, {}>;
     setState: (data: Partial<OakComponentData<ED, T>>, callback?: () => void) => void;
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 } & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
-export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any>, TProperty extends PropertyOption, TMethod extends Record<string, Function>, EMethod extends Record<string, Function> = {}> = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod> & Partial<{
+export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any>, TProperty extends DataOption, TMethod extends Record<string, Function>, EMethod extends Record<string, Function> = {}> = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod> & Partial<{
     lifetimes: {
         created?(): void;
         attached?(): void;
@@ -128,23 +106,25 @@ export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T
         options?: Partial<WechatMiniprogram.Component.ComponentOptions> | undefined;
     };
 }> & ThisType<ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>>;
-export declare type OakComponentProperties = {
-    oakPath: StringConstructor;
-    oakId: StringConstructor;
-    oakProjection: ObjectConstructor;
-    oakFrom: StringConstructor;
-    oakParentEntity: StringConstructor;
-    oakDisablePulldownRefresh: BooleanConstructor;
-    oakAutoUnmount: BooleanConstructor;
-    oakActions: ArrayConstructor;
-    oakCascadeActions: ObjectConstructor;
-};
-export declare type OakListComponentProperties = {
-    oakFilters: ObjectConstructor;
-    oakSorters: ObjectConstructor;
-    oakIsPicker: BooleanConstructor;
-    oakPagination: ObjectConstructor;
-};
+export declare type OakComponentProperties<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<{
+    oakPath: string;
+    oakId: string;
+    oakProjection: ED[T]['Selection']['data'];
+    oakFrom: string;
+    oakParentEntity: string;
+    oakDisablePulldownRefresh: boolean;
+    oakAutoUnmount: boolean;
+    oakActions: ED[T]['Action'][];
+    oakCascadeActions: {
+        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+    };
+}>;
+export declare type OakListComponentProperties<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<{
+    oakFilters: NamedFilterItem<ED, T>[];
+    oakSorters: NamedSorterItem<ED, T>[];
+    oakIsPicker: boolean;
+    oakPagination: Pagination;
+}>;
 export declare type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakId?: string;
     oakEntity?: T;
@@ -256,7 +236,7 @@ export declare type OakListComoponetData<ED extends EntityDict & BaseEntityDict,
     oakSorters?: NonNullable<ED[T]['Selection']['sorter']>[];
     oakPagination?: Pagination;
 };
-export declare type MakeOakComponent<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>> = <T extends keyof ED, FormedData extends DataOption, IsList extends boolean, TData extends DataOption, TProperty extends PropertyOption, TMethod extends MethodOption>(options: OakComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => (props: ReactComponentProps<IsList, TProperty>) => React.ReactElement;
+export declare type MakeOakComponent<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>> = <T extends keyof ED, FormedData extends DataOption, IsList extends boolean, TData extends DataOption, TProperty extends DataOption, TMethod extends MethodOption>(options: OakComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => (props: ReactComponentProps<ED, T, IsList, TProperty>) => React.ReactElement;
 export declare type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh' | 'aggregate' | 'checkOperation';
 export declare type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedFilter' | 'removeNamedFilter' | 'removeNamedFilterByName' | 'setNamedSorters' | 'addNamedSorter' | 'removeNamedSorter' | 'removeNamedSorterByName' | 'setPageSize' | 'setCurrentPage' | 'addItem' | 'removeItem' | 'updateItem' | 'resetItem' | 'recoverItem';
 export declare type WebComponentSingleMethodNames = 'update' | 'remove' | 'create';

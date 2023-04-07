@@ -7,7 +7,6 @@ import { BasicFeatures } from './features';
 import { Feature } from './types/Feature';
 import {
     DataOption,
-    PropertyOption,
     MethodOption,
     ComponentProps,
     OakCommonComponentMethods,
@@ -30,17 +29,30 @@ import { cloneDeep } from 'oak-domain/lib/utils/lodash';
 
 
 const OakProperties = {
+    oakId: '',
+    oakPath: '',
+    oakFilters: [],
+    oakSorters: [],
+    oakIsPicker: false,
+    oakParentEntity: '',
+    oakFrom: '',
+    oakActions: [],
+    oakAutoUnmount: false,
+    oakDisablePulldownRefresh: false,
+};
+
+const OakPropertyTypes = {
     oakId: String,
     oakPath: String,
-    oakFilters: String,
-    oakSorters: String,
+    oakFilters: Array,
+    oakSorters: Array,
     oakIsPicker: Boolean,
     oakParentEntity: String,
     oakFrom: String,
-    oakActions: String,
+    oakActions: Array,
     oakAutoUnmount: Boolean,
     oakDisablePulldownRefresh: Boolean,
-};
+}
 
 type EDD = EntityDict & BaseEntityDict;
 type Cxt = AsyncContext<EntityDict & BaseEntityDict>;
@@ -165,22 +177,21 @@ const oakBehavior = Behavior<
             const assignProps = (
                 data: Record<string, any>,
                 property: string,
-                type: String | Boolean | Number | Object
+                type: 'string' | 'boolean' | 'number' | 'object'
             ) => {
                 if (data[property]) {
                     let value = data[property];
-                    if (typeof data[property] === 'string' && type !== String) {
+                    if (typeof data[property] === 'string' && type !== 'string') {
                         switch (type) {
-                            case Boolean: {
+                            case 'boolean': {
                                 value = new Boolean(data[property]);
                                 break;
                             }
-                            case Number: {
+                            case 'number': {
                                 value = new Number(data[property]);
                                 break;
                             }
-                            case Object:
-                            case Array: {
+                            case 'object':{
                                 value = JSON.parse(data[property]);
                                 break;
                             }
@@ -196,20 +207,10 @@ const oakBehavior = Behavior<
             };
             if (properties) {
                 for (const key in properties) {
-                    const type2 =
-                        typeof properties[key] === 'object'
-                            ? (
-                                  properties[
-                                      key
-                                  ]! as WechatMiniprogram.Component.FullProperty<WechatMiniprogram.Component.ShortProperty>
-                              ).type
-                            : (properties[
-                                  key
-                              ] as WechatMiniprogram.Component.ShortProperty);
                     if (query[key]) {
-                        assignProps(query, key, type2!);
+                        assignProps(query, key, typeof properties[key] as 'string');
                     } else if (this.data) {
-                        assignProps(this.data, key, type2!);
+                        assignProps(this.data, key, typeof properties[key] as 'string');
                     }
                 }
             }
@@ -218,13 +219,13 @@ const oakBehavior = Behavior<
                     assignProps(
                         query,
                         key,
-                        OakProperties[key as keyof typeof OakProperties]!
+                        typeof OakProperties[key as keyof typeof OakProperties] as 'string'
                     );
                 } else if (this.data) {
                     assignProps(
                         this.data,
                         key,
-                        OakProperties[key as keyof typeof OakProperties]!
+                        typeof OakProperties[key as keyof typeof OakProperties] as 'string'
                     );
                 }
             }
@@ -703,6 +704,80 @@ function translateListeners(listeners?: Record<string, (prev: Record<string, any
     }
 }
 
+function translatePropertiesToPropertyDefinitions(properties?: DataOption) {
+    const definitions = {} as WechatMiniprogram.Component.PropertyOption;
+    if (properties) {
+        Object.keys(properties).forEach(
+            (prop) => {
+                switch (typeof properties[prop]) {
+                    case 'string': {
+                        if (properties[prop]) {
+                            definitions[prop] = {
+                                type: String,
+                                value: properties[prop],
+                            };
+                        }
+                        else {
+                            definitions[prop] = String;
+                        }
+                        break;
+                    }
+                    case 'boolean': {
+                        definitions[prop] = {
+                            type: Boolean,
+                            value: properties[prop],
+                        };
+                        break;
+                    }
+                    case 'number': {
+                        definitions[prop] = {
+                            type: Number,
+                            value: properties[prop],
+                        };
+                        break;                    
+                    }
+                    case 'object': {
+                        if (properties[prop] instanceof Array) {
+                            if (properties[prop].length > 0) {
+                                definitions[prop] = {
+                                    type: Array,
+                                    value: properties[prop],
+                                };
+                            }
+                            else {
+                                definitions[prop] = Array;
+                            }
+                        }
+                        else {
+                            if (Object.keys(properties[prop]).length > 0) {
+                                definitions[prop] = {
+                                    type: Object,
+                                    value: properties[prop],
+                                };
+                            }
+                            else {
+                                definitions[prop] = Object;
+                            }
+                        }
+                        break;
+                    }
+                    case 'function': {
+                        // 小程序也支持传函数 https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html
+                        Object.assign(definitions, {
+                            [prop]: Function,
+                        });
+                        break;
+                    }
+                    default: {
+                        assert(false, 'properties只支持传string/number/object/array/boolean/function之一');
+                    }
+                }
+            }
+        );
+    }
+    return definitions;
+}
+
 export function createComponent<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
@@ -712,8 +787,8 @@ export function createComponent<
     FD extends Record<string, Feature>,
     FormedData extends Record<string, any>,
     IsList extends boolean,
-    TData extends Record<string, any> = {},
-    TProperty extends PropertyOption = {},
+    TData extends DataOption = {},
+    TProperty extends DataOption = {},
     TMethod extends Record<string, Function> = {}
 >(
     option: OakComponentOption<
@@ -798,8 +873,8 @@ export function createComponent<
         },
         properties: Object.assign(
             {},
-            properties,
-            OakProperties
+            translatePropertiesToPropertyDefinitions(properties),
+            OakPropertyTypes
         ) as WechatMiniprogram.Component.PropertyOption,
         methods: {
             async onPullDownRefresh() {

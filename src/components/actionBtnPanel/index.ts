@@ -1,19 +1,13 @@
+import { ED } from "../../types/AbstractComponent";
+import { Item } from './type';
+
 export default OakComponent({
     isList: false,
     properties: {
-        entity: String,
-        items: {
-            type: Array,
-            value: [],
-        },
-        mode: {
-            type: String,
-            value: 'cell',
-        },
-        column: {
-            type: Number,
-            value: 3,
-        },
+        entity: '' as keyof ED,
+        items: [] as Item[],
+        mode: 'cell' as 'cell' | 'table-cell',
+        column: 3,
     },
     data: {
         commonAction: [

@@ -26,8 +26,8 @@ import Location, { Poi } from '../map/location';
 import Map from '../map/map';
 
 type ED = EntityDict & BaseEntityDict;
-function makeAttrInput(
-    attrRender: AttrUpsertRender<ED>,
+function makeAttrInput<T extends keyof ED>(
+    attrRender: AttrUpsertRender<ED, T>,
     onValueChange: (value: any, extra?: Record<string, any>) => void,
     t: (keyword: string) => string,
     label: string
@@ -216,8 +216,8 @@ function makeAttrInput(
                     pickerRender={
                         attrRender as OakAbsRefAttrPickerRender<ED, keyof ED>
                     }
-                    onChange={(value: string) => {
-                        onValueChange(value);
+                    onChange={(value) => {
+                        onValueChange(value[0]);
                     }}
                 />
             );
@@ -314,14 +314,14 @@ function makeAttrInput(
     }
 }
 
-export default function render(
+export default function render<T extends keyof ED>(
     props: WebComponentProps<
         ED,
-        keyof EntityDict,
+        T,
         false,
         {
             entity: keyof ED;
-            renderData: AttrUpsertRender<ED>[];
+            renderData: AttrUpsertRender<ED, T>[];
             helps?: Record<string, string>;
             layout?: 'horizontal' | 'vertical';
             children: any; // 暂时没用
@@ -366,8 +366,8 @@ export default function render(
                                 required: !!required,
                             },
                         ]}
-                        help={helps && helps[attr]}
-                        name={required ? attr : ''}
+                        help={helps && helps[attr as string]}
+                        name={required ? attr as string : ''}
                     >
                         <>
                             {makeAttrInput(

@@ -34,18 +34,22 @@ export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, 
     mode: 'select' | 'list' | 'radio';
     attr: string;
     entity: T;
-    projection: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
+    projection: ED[T]['Selection']['data'];
     title: (row: Partial<ED[T]['Schema']>) => string;
     titleLabel: string;
-    filter?: ED[T]['Selection']['filter'] | (() => ED[T]['Selection']['filter']);
-    sorter?: ED[T]['Selection']['sorter'] | (() => ED[T]['Selection']['sorter']);
+    filter?: ED[T]['Selection']['filter'];
+    sorter?: ED[T]['Selection']['sorter'];
+    getDynamicSelectors?: () => Promise<{
+        filter?: ED[T]['Selection']['filter'];
+        sorter?: ED[T]['Selection']['sorter'];
+        projection?: ED[T]['Selection']['data'];
+    }>;
     count?: number;
     label?: string;
     placeholder?: string;
 }
 export interface OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> extends OakAbsRefAttrPickerDef<ED, T> {
     required?: boolean;
-    value: string;
 }
 export interface OakAbsGeoAttrUpsertDef {
     type: 'geo';
@@ -67,7 +71,7 @@ export interface OakAbsNativeAttrUpsertDef<ED extends EntityDict & BaseEntityDic
     defaultValue?: any;
     required?: boolean;
 }
-export declare type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict> = OakAbsGeoAttrUpsertDef | OakAbsRefAttrPickerDef<ED, keyof ED> | string | OakAbsNativeAttrUpsertDef<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>;
+export declare type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = OakAbsGeoAttrUpsertDef | OakAbsRefAttrPickerDef<ED, T> | keyof ED[T]['OpSchema'] | OakAbsNativeAttrUpsertDef<ED, T, keyof ED[T]['OpSchema']>;
 import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
 export declare type AttrRender = {
     label: string;
@@ -87,7 +91,7 @@ export interface OakAbsNativeAttrUpsertRender<ED extends EntityDict & BaseEntity
     extra?: any;
     params: DataTypeParams;
 }
-export declare type AttrUpsertRender<ED extends EntityDict & BaseEntityDict> = OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']> | OakAbsRefAttrPickerRender<ED, keyof ED>;
+export declare type AttrUpsertRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = OakAbsNativeAttrUpsertRender<ED, T, keyof ED[T]['OpSchema']> | OakAbsRefAttrPickerRender<ED, T>;
 export declare type ColumnDefProps = {
     width: number;
     title: string;
@@ -98,7 +102,7 @@ export declare type ColumnDefProps = {
     fixed?: 'right' | 'left';
 };
 export declare type DataTransformer = (data: object) => AttrRender[];
-export declare type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict> = (data: object) => AttrUpsertRender<ED>[];
+export declare type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = (data: object) => AttrUpsertRender<ED, T>[];
 export declare type DataConverter = (data: any[]) => Record<string, any>;
 export declare type ED = BaseEntityDict & EntityDict;
 export declare type CascadeActionProps = {

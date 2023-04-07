@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import {
     Button,
     Modal,
-    ButtonProps,
     Typography,
 } from 'antd';
 import { WebComponentProps } from '../../types/Page';
@@ -10,31 +9,8 @@ import { EntityDict } from 'oak-domain/lib/base-app-domain';
 import OakIcon from '../icon';
 import classNames from 'classnames';
 import Style from './web.module.less';
+import { IMode, Item } from './type';
 const { confirm } = Modal;
-
-type Item = {
-    icon?: string;
-    iconRender?: React.ReactNode;
-    iconProps?: {
-        style?: React.CSSProperties;
-        rootStyle?: React.CSSProperties;
-        bgColor?: string;
-    };
-    label?: string;
-    action?: string;
-    alerted?: boolean;
-    alertTitle?: string;
-    alertContent?: string;
-    confirmText?: string;
-    cancelText?: string;
-    render?: React.ReactNode;
-    onClick?: (item: Item) => void | Promise<void>;
-    buttonProps?: Omit<ButtonProps, 'onClick'>;
-    filter?: () => boolean;
-    show?: boolean;
-};
-
-type IMode = 'card' | 'text';
 
 
 function ItemComponent(

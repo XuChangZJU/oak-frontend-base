@@ -11,23 +11,8 @@ import {
 import { WebComponentProps } from '../../types/Page';
 import { EntityDict } from 'oak-domain/lib/base-app-domain';
 import Style from './web.module.less';
+import { Item } from './type';
 const { confirm } = Modal;
-
-type Item = {
-    icon?: string | React.ReactNode;
-    label?: string;
-    action?: string;
-    type?: 'a' | 'button';
-    alerted?: boolean;
-    alertTitle?: string;
-    alertContent?: string;
-    confirmText?: string;
-    cancelText?: string;
-    render?: React.ReactNode;
-    onClick?: (item: Item) => void | Promise<void>;
-    buttonProps?: Omit<ButtonProps, 'onClick'>;
-    show?: boolean;
-};
 
 function ItemComponent(
     props: Item & {

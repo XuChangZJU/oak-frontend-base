@@ -45,11 +45,16 @@ export interface OakAbsRefAttrPickerDef<
     mode: 'select' | 'list' | 'radio';
     attr: string;
     entity: T;
-    projection: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
+    projection: ED[T]['Selection']['data'];
     title: (row: Partial<ED[T]['Schema']>) => string;
     titleLabel: string;
-    filter?: ED[T]['Selection']['filter'] | (() => ED[T]['Selection']['filter']);
-    sorter?: ED[T]['Selection']['sorter'] | (() => ED[T]['Selection']['sorter']);
+    filter?: ED[T]['Selection']['filter'];
+    sorter?: ED[T]['Selection']['sorter'];
+    getDynamicSelectors?: () => Promise<{
+        filter?: ED[T]['Selection']['filter'];
+        sorter?: ED[T]['Selection']['sorter'];
+        projection?: ED[T]['Selection']['data'];
+    }>;         // 这里主要是为了动态构造filter，当需要先选A再将A作为B的filter条件时经常出现
     count?: number;
     label?: string;
     placeholder?: string;
@@ -60,7 +65,6 @@ export interface OakAbsRefAttrPickerRender<
     T extends keyof ED
 > extends OakAbsRefAttrPickerDef<ED, T> {
     required?: boolean;
-    value: string;
 };
 
 export interface OakAbsGeoAttrUpsertDef {
@@ -88,11 +92,11 @@ export interface OakAbsNativeAttrUpsertDef<
     required?: boolean;
 };
 
-export type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict> =
+export type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> =
     | OakAbsGeoAttrUpsertDef
-    | OakAbsRefAttrPickerDef<ED, keyof ED>
-    | string
-    | OakAbsNativeAttrUpsertDef<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>;
+    | OakAbsRefAttrPickerDef<ED, T>
+    | keyof ED[T]['OpSchema']
+    | OakAbsNativeAttrUpsertDef<ED, T, keyof ED[T]['OpSchema']>;
 
 import {
     DataType,
@@ -119,9 +123,9 @@ export interface OakAbsNativeAttrUpsertRender<
     params: DataTypeParams;
 };
 
-export type AttrUpsertRender<ED extends EntityDict & BaseEntityDict> =
-    | OakAbsNativeAttrUpsertRender<ED, keyof ED, keyof ED[keyof ED]['OpSchema']>
-    | OakAbsRefAttrPickerRender<ED, keyof ED>;
+export type AttrUpsertRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> =
+    | OakAbsNativeAttrUpsertRender<ED, T, keyof ED[T]['OpSchema']>
+    | OakAbsRefAttrPickerRender<ED, T>;
 
 export type ColumnDefProps = {
     width: number;
@@ -135,9 +139,9 @@ export type ColumnDefProps = {
 
 export type DataTransformer = (data: object) => AttrRender[];
 
-export type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict> = (
+export type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = (
     data: object
-) => AttrUpsertRender<ED>[];
+) => AttrUpsertRender<ED, T>[];
 
 export type DataConverter = (data: any[]) => Record<string, any>;
 

@@ -1,5 +1,5 @@
 import { ED } from '../../types/AbstractComponent';
-import { assert } from 'oak-domain/lib/utils/assert';
+import { RowWithActions } from '../..';
 
 export default OakComponent({
     entity() {
@@ -19,11 +19,10 @@ export default OakComponent({
     },
     isList: true,
     properties: {
-        entity: String,
-        multiple: Boolean,
-        onSelect: Function,
-        title: Function,
-        titleLabel: String,
+        entity: '' as keyof ED,
+        multiple: false,
+        onSelect: (() => undefined) as (value: [{ id: string }]) => void,
+        title: (() => '') as (row: RowWithActions<ED, keyof ED>) => string,
+        titleLabel: '',
     },
-    methods: {},
 });

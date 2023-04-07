@@ -9,17 +9,13 @@ import { ActionDef } from '../../types/Page';
 export default OakComponent({
     isList: false,
     properties: {
-        entity: String,
-        extraActions: {
-            type: Array,
-            value: [],
+        entity: '' as keyof ED,
+        extraActions: [] as ED[keyof ED]['Action'][],
+        actions: [] as ActionDef<ED, keyof ED>[],
+        cascadeActions: {} as {
+            [K in keyof ED[keyof ED]['Schema']]?: ActionDef<ED, keyof ED>[];
         },
-        actions: {
-            type: Array,
-            value: [],
-        },
-        cascadeActions: Object,
-        onAction: Function,
+        onAction: (() => undefined) as Function,
     },
     data: {
         showMore: false,
@@ -98,7 +94,7 @@ export default OakComponent({
             }
             this.triggerEvent('onAction', { action, cascadeAction: undefined })
         },
-        getLabel(actionItem: ActionDef<ED, keyof EntityDict>, entity: String) {
+        getLabel(actionItem: ActionDef<ED, keyof ED>, entity: keyof ED) {
             if(typeof actionItem !== 'string') {
                 return actionItem.label!
             }
@@ -111,7 +107,7 @@ export default OakComponent({
                 }
             }
         },
-        getLabel2(schema: StorageSchema<ED>, path: string, actionItem: ActionDef<ED, keyof EntityDict>, entity: string) {
+        getLabel2(schema: StorageSchema<ED>, path: string, actionItem: ActionDef<ED, keyof ED>, entity: keyof ED) {
             if(typeof actionItem !== 'string') {
                 return actionItem.label!;
             }

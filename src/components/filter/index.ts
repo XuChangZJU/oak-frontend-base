@@ -2,6 +2,7 @@ import { ED } from '../../types/AbstractComponent';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { getAttributes } from './utils';
+import { ColumnProps } from '../../types/Filter';
 
 export default OakComponent({
     entity() {
@@ -13,8 +14,8 @@ export default OakComponent({
         open: false,
     },
     properties: {
-        entity: String,
-        column: Object,
+        entity: '' as keyof ED,
+        column: {} as ColumnProps<ED, keyof ED>,
     },
     methods: {
         getNamedFilter(name: string) {

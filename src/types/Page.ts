@@ -11,7 +11,7 @@ import { AsyncContext } from "oak-domain/lib/store/AsyncRowStore";
 import { SyncContext } from "oak-domain/lib/store/SyncRowStore";
 import React from "react";
 
-export type PropertyOption = Record<string, WechatMiniprogram.Component.AllProperty | FunctionConstructor>;
+// export type PropertyOption = Record<string, WechatMiniprogram.Component.AllProperty | FunctionConstructor>;
 
 export type DataOption = WechatMiniprogram.Component.DataOption;
 
@@ -20,68 +20,68 @@ export type MethodOption = WechatMiniprogram.Component.MethodOption;
 /**
  * 微信的原声明中少写了FunctionConstructor，只能抄一遍
  */
-type PropertyType =
-    | FunctionConstructor
-    | StringConstructor
-    | NumberConstructor
-    | BooleanConstructor
-    | ArrayConstructor
-    | ObjectConstructor
-    | null
-type ValueType<T extends PropertyType> = T extends null
-    ? any
-    : T extends StringConstructor
-    ? string
-    : T extends NumberConstructor
-    ? number
-    : T extends BooleanConstructor
-    ? boolean
-    : T extends ArrayConstructor
-    ? any[]
-    : T extends ObjectConstructor
-    ? AnyObject
-    : T extends FunctionConstructor
-    ? Function
-    : never
-type FullProperty<T extends PropertyType> = {
-    /** 属性类型 */
-    type: T
-    /** 属性初始值 */
-    value?: ValueType<T> | undefined
-    /** 属性值被更改时的响应函数 */
-    observer?:
-    | string
-    | ((
-        newVal: ValueType<T>,
-        oldVal: ValueType<T>,
-        changedPath: Array<string | number>
-    ) => void) | undefined
-    /** 属性的类型（可以指定多个） */
-    optionalTypes?: ShortProperty[] | undefined
-}
-type AllFullProperty =
-    | FullProperty<StringConstructor>
-    | FullProperty<NumberConstructor>
-    | FullProperty<BooleanConstructor>
-    | FullProperty<ArrayConstructor>
-    | FullProperty<ObjectConstructor>
-    | FullProperty<null>
-type ShortProperty =
-    | FunctionConstructor
-    | StringConstructor
-    | NumberConstructor
-    | BooleanConstructor
-    | ArrayConstructor
-    | ObjectConstructor
-    | null
-type AllProperty = AllFullProperty | ShortProperty
-type PropertyToData<T extends AllProperty> = T extends ShortProperty
-    ? ValueType<T>
-    : FullPropertyToData<Exclude<T, ShortProperty>>
-type FullPropertyToData<T extends AllFullProperty> = ValueType<T['type']>
-type PropertyOptionToData<P extends PropertyOption> = {
-    [name in keyof P]?: PropertyToData<P[name]>
-};
+// type PropertyType =
+//     | FunctionConstructor
+//     | StringConstructor
+//     | NumberConstructor
+//     | BooleanConstructor
+//     | ArrayConstructor
+//     | ObjectConstructor
+//     | null
+// type ValueType<T extends PropertyType> = T extends null
+//     ? any
+//     : T extends StringConstructor
+//     ? string
+//     : T extends NumberConstructor
+//     ? number
+//     : T extends BooleanConstructor
+//     ? boolean
+//     : T extends ArrayConstructor
+//     ? any[]
+//     : T extends ObjectConstructor
+//     ? AnyObject
+//     : T extends FunctionConstructor
+//     ? Function
+//     : never
+// type FullProperty<T extends PropertyType> = {
+//     /** 属性类型 */
+//     type: T
+//     /** 属性初始值 */
+//     value?: ValueType<T> | undefined
+//     /** 属性值被更改时的响应函数 */
+//     observer?:
+//     | string
+//     | ((
+//         newVal: ValueType<T>,
+//         oldVal: ValueType<T>,
+//         changedPath: Array<string | number>
+//     ) => void) | undefined
+//     /** 属性的类型（可以指定多个） */
+//     optionalTypes?: ShortProperty[] | undefined
+// }
+// type AllFullProperty =
+//     | FullProperty<StringConstructor>
+//     | FullProperty<NumberConstructor>
+//     | FullProperty<BooleanConstructor>
+//     | FullProperty<ArrayConstructor>
+//     | FullProperty<ObjectConstructor>
+//     | FullProperty<null>
+// type ShortProperty =
+//     | FunctionConstructor
+//     | StringConstructor
+//     | NumberConstructor
+//     | BooleanConstructor
+//     | ArrayConstructor
+//     | ObjectConstructor
+//     | null
+// type AllProperty = AllFullProperty | ShortProperty
+// type PropertyToData<T extends AllProperty> = T extends ShortProperty
+//     ? ValueType<T>
+//     : FullPropertyToData<Exclude<T, ShortProperty>>
+// type FullPropertyToData<T extends AllFullProperty> = ValueType<T['type']>
+// type PropertyOptionToData<P extends PropertyOption> = {
+//     [name in keyof P]?: PropertyToData<P[name]>
+// };
 
 export type ActionDef<
     ED extends EntityDict & BaseEntityDict,
@@ -113,7 +113,7 @@ interface ComponentOption<
     FormedData extends Record<string, any>,
     IsList extends boolean,
     TData extends DataOption,
-    TProperty extends PropertyOption,
+    TProperty extends DataOption,
     TMethod extends Record<string, Function>,
     EMethod extends Record<string, Function> = {},
     > {
@@ -139,7 +139,7 @@ interface ComponentOption<
     formData?: (options: {
         data: IsList extends true ? RowWithActions<ED, T>[] : RowWithActions<ED, T> | undefined;
         features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
-        props: Partial<PropertyOptionToData<TProperty>>;
+        props: TProperty;
         legalActions: ActionDef<ED, T>[];
     }) => FormedData;
     ns?: T | T[];
@@ -167,15 +167,21 @@ export type MiniprogramStyleMethods = {
     ) => void;
 }
 
-export type ComponentProps<IsList extends boolean, TProperty extends PropertyOption> = IsList extends true ?
-    PropertyOptionToData<OakListComponentProperties & OakComponentProperties & TProperty> :
-    PropertyOptionToData<OakComponentProperties & TProperty>;
+export type ComponentProps<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
+    IsList extends boolean, TProperty extends DataOption> = IsList extends true ?
+    OakListComponentProperties<ED, T> & OakComponentProperties<ED, T> & Partial<TProperty> :
+    OakComponentProperties<ED, T> & Partial<TProperty>;
 
 // 为react声明当组件所用的，增加了className等常用项
-export type ReactComponentProps<IsList extends boolean, TProperty extends PropertyOption> = ComponentProps<IsList, TProperty> & {
-    className?: string;
-    style?: Record<string, any>;
-};
+export type ReactComponentProps<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
+    IsList extends boolean, TProperty extends DataOption> = ComponentProps<ED, T, IsList, TProperty> & {
+        className?: string;
+        style?: Record<string, any>;
+    };
 
 export type ComponentData<
     ED extends EntityDict & BaseEntityDict,
@@ -194,14 +200,14 @@ export type ComponentPublicThisType<
     FormedData extends Record<string, any>,
     IsList extends boolean,
     TData extends Record<string, any> = {},
-    TProperty extends PropertyOption = {},
+    TProperty extends DataOption = {},
     TMethod extends MethodOption = {},
     EMethod extends Record<string, Function> = {},
     > = {
         subscribed: Array<() => void>;
         features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
         state: ComponentData<ED, T, FormedData, TData>;
-        props: Readonly<ComponentProps<IsList, TProperty>>;
+        props: Readonly<ComponentProps<ED, T, IsList, TProperty>>;
         setState: (
             data: Partial<ComponentData<ED, T, FormedData, TData>>,
             callback?: () => void,
@@ -223,7 +229,7 @@ export type ComponentFullThisType<
         subscribed: Array<() => void>;
         features: BasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt>>;
         state: OakComponentData<ED, T>;
-        props: ComponentProps<true, {}>;
+        props: ComponentProps<ED, T, IsList, {}>;
         setState: (
             data: Partial<OakComponentData<ED, T>>,
             callback?: () => void,
@@ -245,7 +251,7 @@ export type OakComponentOption<
     FormedData extends Record<string, any>,
     IsList extends boolean,
     TData extends Record<string, any>,
-    TProperty extends PropertyOption,
+    TProperty extends DataOption,
     TMethod extends Record<string, Function>,
     EMethod extends Record<string, Function> = {},
     > = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod> &
@@ -272,25 +278,30 @@ export type OakComponentOption<
     }> & ThisType<ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>>;
 
 
+export type OakComponentProperties<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED> = Partial<{
+        oakPath: string;
+        oakId: string;
+        oakProjection: ED[T]['Selection']['data'];
+        oakFrom: string;
+        oakParentEntity: string;
+        oakDisablePulldownRefresh: boolean;
+        oakAutoUnmount: boolean;
+        oakActions: ED[T]['Action'][];
+        oakCascadeActions: {
+            [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
+        };
+    }>;
 
-export type OakComponentProperties = {
-    oakPath: StringConstructor;
-    oakId: StringConstructor;
-    oakProjection: ObjectConstructor;
-    oakFrom: StringConstructor;
-    oakParentEntity: StringConstructor;
-    oakDisablePulldownRefresh: BooleanConstructor;
-    oakAutoUnmount: BooleanConstructor;
-    oakActions: ArrayConstructor;
-    oakCascadeActions: ObjectConstructor;
-};
-
-export type OakListComponentProperties = {
-    oakFilters: ObjectConstructor;
-    oakSorters: ObjectConstructor;
-    oakIsPicker: BooleanConstructor;
-    oakPagination: ObjectConstructor;
-}
+export type OakListComponentProperties<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED> = Partial<{
+        oakFilters: NamedFilterItem<ED, T>[];
+        oakSorters: NamedSorterItem<ED, T>[];
+        oakIsPicker: boolean;
+        oakPagination: Pagination;
+    }>;
 
 export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakId?: string;
@@ -461,7 +472,7 @@ export type MakeOakComponent<
         FormedData extends DataOption,
         IsList extends boolean,
         TData extends DataOption,
-        TProperty extends PropertyOption,
+        TProperty extends DataOption,
         TMethod extends MethodOption
         >(
         options: OakComponentOption<
@@ -477,7 +488,7 @@ export type MakeOakComponent<
             TProperty,
             TMethod
         >
-    ) => (props: ReactComponentProps<IsList, TProperty>) => React.ReactElement;
+    ) => (props: ReactComponentProps<ED, T, IsList, TProperty>) => React.ReactElement;
 
 // 暴露给组件的方法
 export type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh' | 'aggregate' | 'checkOperation';

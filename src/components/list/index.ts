@@ -1,21 +1,23 @@
-import { CardDef } from '../../types/AbstractComponent';
+import { CardDef, ED, OakAbsAttrDef } from '../../types/AbstractComponent';
 import { analyzeAttrMobileForCard } from '../../utils/usefulFn';
 import assert from 'assert';
+import { TableProps } from 'antd';
+import { Pagination } from '../../types/Pagination';
 
 export default OakComponent({
     isList: false,
     properties: {
-        entity: String,
-        extraActions: Array,
-        onAction: Function,
-        disabledOp: Boolean,
-        attributes: Array,
-        attributesMb: Object,
-        data: Array,
-        loading: Boolean,
-        tablePagination: Object,
-        rowSelection: Object,
-        scroll: Object,
+        entity: '' as keyof ED,
+        extraActions: [] as string[],
+        onAction: (() => undefined) as Function,
+        disabledOp: false,
+        attributes: [] as OakAbsAttrDef[],
+        attributesMb: {} as CardDef,
+        data: [] as ED[keyof ED]['Schema'][],
+        loading: false,
+        tablePagination: {} as Pagination,
+        rowSelection: {} as TableProps<any[]>['rowSelection'],
+        scroll: {} as TableProps<any[]>['scroll'],
     },
     formData({ props }) {
         const { converter } = this.state;
@@ -45,7 +47,7 @@ export default OakComponent({
             assert(!!data, 'data不能为空');
             assert(!!entity, 'list属性entity不能为空');
             if (attributesMb) {
-                const converter = analyzeAttrMobileForCard(schema, entity!, (k, params) => this.t(k, params), attributesMb as CardDef, colorDict);
+                const converter = analyzeAttrMobileForCard(schema, entity, (k, params) => this.t(k, params), attributesMb as CardDef, colorDict);
                 this.setState({
                     converter,
                 })

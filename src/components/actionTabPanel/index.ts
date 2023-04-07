@@ -1,3 +1,5 @@
+import { ED } from "../../types/AbstractComponent";
+import { IMode, Item } from "./type";
 
 export default OakComponent({
     isList: false,
@@ -16,23 +18,11 @@ export default OakComponent({
         ],
     },
     properties: {
-        entity: String,
-        items: {
-            type: Array,
-            value: [],
-        },
-        rows: {
-            type: Number,
-            value: 2,
-        },
-        column: {
-            type: Number,
-            value: 5,
-        },
-        mode: {
-            type: String,
-            value: 'text',
-        },
+        entity: '' as keyof ED,
+        items: [] as Item [],
+        rows: 2,
+        column: 5,
+        mode: 'text' as IMode,
     },
     lifetimes: {
         ready: function () {

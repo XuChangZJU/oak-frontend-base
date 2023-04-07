@@ -2,7 +2,7 @@ import {
     DataType,
     DataTypeParams,
 } from 'oak-domain/lib/types/schema/DataTypes';
-import { DataTransformer } from '../../types/AbstractComponent';
+import { DataTransformer, ED, OakAbsAttrDef } from '../../types/AbstractComponent';
 import { makeDataTransformer } from '../../utils/usefulFn';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
@@ -35,13 +35,10 @@ const DEFAULT_COLUMN_MAP: ColumnMapType = {
 export default OakComponent({
     isList: false,
     properties: {
-        entity: String,
-        attributes: Array,
-        data: Object,
-        column: {
-            type: Object,
-            value: DEFAULT_COLUMN_MAP,
-        },
+        entity: '' as keyof ED,
+        attributes: [] as OakAbsAttrDef[],
+        data: {} as ED[keyof ED]['Schema'],
+        column: DEFAULT_COLUMN_MAP,
     },
     formData() {
         const { data } = this.props;

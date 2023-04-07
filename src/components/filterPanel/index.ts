@@ -1,4 +1,5 @@
 import { ED } from '../../types/AbstractComponent';
+import { ColumnProps } from '../../types/Filter';
 
 export default OakComponent({
     entity() {
@@ -10,8 +11,8 @@ export default OakComponent({
         open: false,
     },
     properties: {
-        entity: String,
-        columns: Array,
+        entity: '' as keyof ED,
+        columns: [] as ColumnProps<ED, keyof ED>[],
     },
     methods: {
         getNamedFilters() {

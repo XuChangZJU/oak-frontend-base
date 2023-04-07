@@ -209,7 +209,7 @@ function getLabelI18<ED extends EntityDict & BaseEntityDict>(
 
 export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(
     dataSchema: StorageSchema<ED>,
-    entity: string,
+    entity: keyof ED,
     attrDefs: OakAbsAttrDef[],
     // t: (k: string, params?: object) => string,
     colorDict?: ColorDict<ED>
@@ -253,19 +253,20 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(
 }
 
 export function analyzeDataUpsertTransformer<
-    ED extends EntityDict & BaseEntityDict
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED
 >(
     dataSchema: StorageSchema<ED>,
-    entity: string,
-    attrUpsertDefs: OakAbsAttrUpsertDef<ED>[]
+    entity: T,
+    attrUpsertDefs: OakAbsAttrUpsertDef<ED, T>[]
 ) {
     let geoDef: OakAbsGeoAttrUpsertDef | undefined = undefined;
     const makeNativeFixedPart = (
         attr: string,
         def?: OakAbsNativeAttrUpsertDef<
             ED,
-            keyof ED,
-            keyof ED[keyof ED]['OpSchema']
+            T,
+            keyof ED[T]['OpSchema']
         >
     ) => {
         const attrDef = dataSchema[entity].attributes[attr]; // upsert应该不会涉及createAt这些内置属性
@@ -281,8 +282,8 @@ export function analyzeDataUpsertTransformer<
             attr,
             type: type as OakAbsNativeAttrUpsertRender<
                 ED,
-                keyof ED,
-                keyof ED[keyof ED]['OpSchema']
+                T,
+                keyof ED[T]['OpSchema']
             >['type'],
             required,
             defaultValue: def?.hasOwnProperty('defaultValue')
@@ -290,7 +291,7 @@ export function analyzeDataUpsertTransformer<
                 : defaultValue,
             enumeration: enumeration?.map((ele) => ({
                 value: ele,
-                label: `${entity}:v.${attr}.${ele}`,
+                label: `${entity as string}:v.${attr}.${ele}`,
             })),
             min: typeof def?.min === 'number' ? def.min : params?.min,
             max: typeof def?.max === 'number' ? def.max : params?.max,
@@ -307,7 +308,7 @@ export function analyzeDataUpsertTransformer<
                 const rel = judgeRelation(dataSchema, entity, ele);
                 assert(rel === 1);
                 return makeNativeFixedPart(ele);
-            } else if (ele.type === 'geo') {
+            } else if (typeof ele === 'object' && ele.type === 'geo') {
                 assert(!geoDef, '只能定义一个geo渲染对象');
                 geoDef = ele as OakAbsGeoAttrUpsertDef;
             } else {
@@ -321,8 +322,8 @@ export function analyzeDataUpsertTransformer<
                         attr,
                         ele as OakAbsNativeAttrUpsertDef<
                             ED,
-                            keyof ED,
-                            keyof ED[keyof ED]['OpSchema']
+                            T,
+                            keyof ED[T]['OpSchema']
                         >
                     );
                     return Object.assign(fixedPart, {
@@ -365,7 +366,7 @@ export function analyzeDataUpsertTransformer<
             return {
                 value,
                 ...ele,
-            } as AttrUpsertRender<ED>;
+            } as AttrUpsertRender<ED, T>;
         });
 }
 
@@ -373,7 +374,7 @@ export function analyzeAttrMobileForCard<
     ED extends EntityDict & BaseEntityDict
 >(
     dataSchema: StorageSchema<ED>,
-    entity: string,
+    entity: keyof ED,
     t: (k: string, params?: object) => string,
     mobileAttrDef: CardDef,
     colorDict: ColorDict<ED>

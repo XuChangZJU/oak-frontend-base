@@ -18,6 +18,7 @@ import {
 import { OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import Picker from '../picker';
+import { combineFilters } from 'oak-domain/lib/store/filter';
 
 
 type ED = EntityDict & BaseEntityDict;
@@ -40,6 +41,9 @@ export default function render(props: WebComponentProps<
     const { t } = props.methods;
     const { mode } = pickerRender;
     const [visibile, setVisible] = useState(false);
+    const [dynamicFilter, setDynamicFilter] = useState<ED[keyof ED]['Selection']['filter']>(undefined);
+    const [dynamicSorter, setDynamicSorter] = useState<ED[keyof ED]['Selection']['sorter']>(undefined);
+    const [dynamicProjection, setDynamicProjection] = useState<ED[keyof ED]['Selection']['data'] | undefined>(undefined);
 
     if (!data && mode !== 'list') {
         return <div> loading... </div>
@@ -91,16 +95,32 @@ export default function render(props: WebComponentProps<
                 );
             }
             case 'list': {
-                const { entity, projection, title, titleLabel, filter, sorter, required } = pickerRender;
-                const p = typeof projection === 'function' ? projection() : projection;
-                const f = typeof filter === 'function' ? filter() : filter;
-                const s = typeof sorter === 'function' ? sorter() : sorter;
+                const { entity, projection, title, titleLabel, filter, sorter, required, getDynamicSelectors } = pickerRender;
                 return (
                     <Space>
                         <Input
                             value={renderValue}
                             allowClear={!required}
-                            onClick={() => setVisible(true)}
+                            onClick={async () => {
+                                if (getDynamicSelectors) {
+                                    // todo 这段代码没测过
+                                    const {
+                                        projection: dynamicProjection2,
+                                        filter: dynamicFilter2,
+                                        sorter: dynamicSorter2,
+                                    } = await getDynamicSelectors();
+                                    if (dynamicFilter2 || filter) {
+                                        setDynamicFilter(combineFilters([dynamicFilter2, filter]));
+                                    }
+                                    if (dynamicSorter2 || sorter) {
+                                        setDynamicSorter(dynamicSorter2 || sorter);
+                                    }
+                                    if (dynamicProjection2) {
+                                        setDynamicProjection(dynamicProjection2);
+                                    }
+                                }
+                                setVisible(true);
+                            }}
                             onChange={({ currentTarget }) => {
                                 if (!currentTarget.value) {
                                     onChange(undefined);
@@ -111,18 +131,28 @@ export default function render(props: WebComponentProps<
                             title={`选择${t(`${pickerRender.entity}:name`)}`}
                             open={visibile}
                             closable={true}
-                            onCancel={() => setVisible(false)}
+                            onCancel={() => {
+                                setDynamicFilter(undefined);
+                                setDynamicProjection(undefined);
+                                setDynamicSorter(undefined);
+                                setVisible(false);
+                            }}
                             destroyOnClose={true}
                             footer={null}
                         >
                             <Picker
+                                multiple={false}
                                 oakPath={`$refAttr-picker-${entity}`}
                                 entity={entity as string}
                                 title={title}
                                 titleLabel={titleLabel}
-                                oakProjection={p}
-                                oakFilters={f ? [f] : undefined}
-                                oakSorters={s}
+                                oakFilters={dynamicFilter ? [{
+                                    filter: dynamicFilter,
+                                }]: undefined}
+                                oakSorters={dynamicSorter ? dynamicSorter.map(ele => ({
+                                    sorter: ele,
+                                })): undefined}
+                                oakProjection={dynamicProjection || projection}
                                 onSelect={([{ id }]: [{ id: string}]) => {
                                     onChange(id);
                                     setVisible(false);

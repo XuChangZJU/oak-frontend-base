@@ -10,7 +10,7 @@ import {
 } from 'antd';
 import { WebComponentProps } from '../../types/Page';
 import { ToYuan, ToCent } from 'oak-domain/lib/utils/money';
-import { ED, OakAbsRefAttrPickerDef } from '../../types/AbstractComponent';
+import { ED, OakAbsRefAttrPickerDef, OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 import { initinctiveAttributes } from 'oak-domain/lib/types/Entity';
 import dayjs, { Dayjs } from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
@@ -475,9 +475,9 @@ export default function Render<ED2 extends ED>(
                         multiple={true}
                         entityIds={[_value]}
                         pickerRender={Object.assign({}, column.refProps, {
-                            value: [_value],
-                        })}
-                        onChange={(ids: string[]) => { console.log(ids, '这里等测试到了再写(Xc)') }}
+                            label: 'todotodo',
+                        }) as OakAbsRefAttrPickerRender<ED, keyof ED>}
+                        onChange={(ids) => { console.log(ids, '这里等测试到了再写(Xc)') }}
                     />
                 );
             }
@@ -487,9 +487,9 @@ export default function Render<ED2 extends ED>(
                         multiple={false}
                         entityId={_value}
                         pickerRender={Object.assign({}, column.refProps, {
-                            value: _value,
-                        })}
-                        onChange={(id: string) => { console.log(id, '这里等测试到了再写(Xc)') }}
+                            label: 'todotodo',
+                        }) as OakAbsRefAttrPickerRender<ED, keyof ED>}
+                        onChange={(ids) => { console.log(ids, '这里等测试到了再写(Xc)') }}
                     />
                 );
             }

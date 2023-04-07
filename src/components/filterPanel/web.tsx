@@ -122,7 +122,7 @@ export default function Render<ED2 extends ED>(
 
         const item = (
             <Col span={gridColumn * colSpan2}>
-                <Filter column={column} entity={entity} oakPath={oakFullpath} />
+                <Filter column={column as ColumnProps<ED, keyof ED>} entity={entity} oakPath={oakFullpath} />
             </Col>
         );
 

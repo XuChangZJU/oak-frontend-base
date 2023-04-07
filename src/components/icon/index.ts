@@ -5,14 +5,8 @@ export default OakComponent({
         externalClasses: ['oak-class'],
     },
     properties: {
-        name: {
-            type: String,
-            value: '',
-        },
-        size: Number,
-        color: {
-            type: String,
-            value: '',
-        },
+        name: '',
+        size: 12 as number,
+        color: 'primary' as 'primary' | 'success' | 'error' | 'waring' | 'info' | string,
     },
 });

@@ -11,7 +11,6 @@ import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
 import { Feature } from './types/Feature';
 import {
     DataOption,
-    PropertyOption,
     MethodOption,
     ComponentData,
     ComponentProps,
@@ -42,10 +41,10 @@ abstract class OakComponentBase<
     FormedData extends Record<string, any>,
     IsList extends boolean,
     TData extends DataOption,
-    TProperty extends PropertyOption,
+    TProperty extends DataOption,
     TMethod extends MethodOption
 > extends React.PureComponent<
-    ComponentProps<IsList, TProperty>,
+    ComponentProps<ED, T, IsList, TProperty>,
     ComponentData<ED, T, FormedData, TData>
 > {
     abstract features: FD &
@@ -657,7 +656,7 @@ export function createComponent<
     FormedData extends Record<string, any>,
     IsList extends boolean,
     TData extends Record<string, any> = {},
-    TProperty extends PropertyOption = {},
+    TProperty extends DataOption = {},
     TMethod extends Record<string, Function> = {}
 >(
     option: OakComponentOption<
@@ -702,7 +701,7 @@ export function createComponent<
         methodProps: Record<string, Function>;
         defaultProperties: Record<string, any>;
 
-        constructor(props: ComponentProps<IsList, TProperty>) {
+        constructor(props: ComponentProps<ED, T, IsList, TProperty>) {
             super(props);
             const methodProps: Record<WebComponentCommonMethodNames, Function> =
             {
@@ -858,10 +857,7 @@ export function createComponent<
             const { properties } = option;
             if (properties) {
                 for (const property in properties) {
-                    if (typeof properties[property] === 'object') {
-                        const { value } = properties[property] as WechatMiniprogram.Component.FullProperty<any>;
-                        this.defaultProperties[property] = value;
-                    }
+                    this.defaultProperties[property] = properties[property];
                 }
             }
 
@@ -963,7 +959,7 @@ export function createComponent<
             }
             if (this.props.oakId !== prevProps.oakId) {
                 assert(this.props.oakId);       // 好像不可能把已有的id设空的界面需求吧
-                this.setId(this.props.oakId);
+                this.setId(this.props.oakId!);
             }
             // todo 这里似乎还可能对oakProjection这些东西加以更新，等遇到再添加 by Xc
 
