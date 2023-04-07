@@ -2,8 +2,14 @@ import {
     DataType,
     DataTypeParams,
 } from 'oak-domain/lib/types/schema/DataTypes';
-import { DataTransformer, ED, OakAbsAttrDef } from '../../types/AbstractComponent';
+import {
+    DataTransformer,
+    ED,
+    OakAbsAttrDef,
+    OakAbsAttrUpsertDef,
+} from '../../types/AbstractComponent';
 import { makeDataTransformer } from '../../utils/usefulFn';
+import { ReactComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
@@ -99,4 +105,15 @@ export default OakComponent({
             });
         },
     },
-});
+}) as <ED2 extends ED, T2 extends keyof ED2>(
+    props: ReactComponentProps<
+        ED2,
+        T2,
+        false,
+        {
+            entity: T2;
+            attributes: OakAbsAttrDef[];
+            data: ED2[T2]['Schema'];
+        }
+    >
+) => React.ReactElement;

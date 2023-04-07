@@ -1,0 +1,16 @@
+{
+    "component": true,
+    "usingComponents": {
+        "l-button": "@oak-frontend-base/miniprogram_npm/lin-ui/button/index",
+        "l-list": "@oak-frontend-base/miniprogram_npm/lin-ui/list/index",
+        "l-input": "@oak-frontend-base/miniprogram_npm/lin-ui/input/index",
+        "l-icon": "@oak-frontend-base/miniprogram_npm/lin-ui/icon/index",
+        "l-textarea": "@oak-frontend-base/miniprogram_npm/lin-ui/textarea/index",
+        "l-form": "@oak-frontend-base/miniprogram_npm/lin-ui/form/index",
+        "l-form-item": "@oak-frontend-base/miniprogram_npm/lin-ui/form-item/index",
+        "l-radio-group": "@oak-frontend-base/miniprogram_npm/lin-ui/radio-group/index",
+        "l-radio": "@oak-frontend-base/miniprogram_npm/lin-ui/radio/index",
+        "l-counter": "@oak-frontend-base/miniprogram_npm/lin-ui/counter/index",
+        "l-notice-bar": "@oak-frontend-base/miniprogram_npm/lin-ui/notice-bar/index"
+    }
+}
