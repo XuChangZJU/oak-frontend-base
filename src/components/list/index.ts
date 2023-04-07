@@ -52,6 +52,9 @@ export default OakComponent({
                     converter,
                 })
             }
+            this.setState({
+                schema,
+            })
         }
     },
     methods: {

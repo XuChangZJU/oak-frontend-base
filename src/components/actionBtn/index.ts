@@ -19,60 +19,77 @@ export default OakComponent({
     },
     data: {
         showMore: false,
+        schema: {} as StorageSchema<EntityDict & BaseEntityDict>,
+        items: [] as { action: string; label: string; path: string; onClick: () => void }[],
+        moreItems: [] as { action: string; label: string; path: string; onClick: () => void }[],
     },
     lifetimes: {
         // 在Tabel组件render之后 才走进这个组件，应该不会存在没有数据的问题
         async ready() {
-            const { actions, extraActions, onAction, entity, cascadeActions } = this.props;
             const schema = this.features.cache.getSchema();
-            let column = 2;
-            if (process.env.OAK_PLATFORM === 'web') {
-                column = 6;
-            }
-            if (extraActions?.length || actions?.length) {
-                const actions2 = actions || [];
-                if (extraActions) {
-                    // 用户传的action默认排在前面
-                    actions2.unshift(...extraActions);
-                }
-             
-                // 每一项里的action 和 path 用在小程序这边, onClick用于web
-                const items = actions2.map((ele) => ({
-                    action: typeof ele !== 'string' ? ele.action : ele,
-                    path: '',
-                    label: this.getLabel(ele, entity!),
-                    onClick: () =>
-                        onAction &&
-                        onAction(
-                            typeof ele !== 'string' ? ele.action : ele,
-                            undefined
-                        ),
-                }));
-                cascadeActions && Object.keys(cascadeActions).map((key, index: number) => {
-                    const cascadeActionArr = cascadeActions[key];
-                    if (cascadeActionArr && cascadeActionArr.length) {
-                        cascadeActionArr.forEach((ele: ActionDef<ED, string | number>) => {
-                            items.push({
-                                action: typeof ele !== 'string' ? ele.action : ele,
-                                path: key,
-                                label: this.getLabel2(schema, key, ele, entity!),
-                                onClick: () => onAction && onAction(undefined, { path: key, action: typeof ele !== 'string' ? ele.action : ele }),
-                            })
-                        })
-                    }
-                })
-                const moreItems = items.splice(column);
-                this.setState({
-                    items,
-                    moreItems
-                })
+            // 小程序这里还要跑一下
+            if (process.env.OAK_PLATFORM === 'wechatMp') {
+                this.makeItems()
             }
             this.setState({
                 schema,
             })
         }
     },
+    listeners: {
+    },
     methods: {
+        makeItems(isMobile?: boolean) {
+            const { schema } = this.state;
+            const { actions, extraActions, onAction, entity, cascadeActions } = this.props;
+            let column = 2;
+            if (schema) {
+                if (process.env.OAK_PLATFORM === 'web') {
+                    column = 6;
+                }
+                if (process.env.OAK_PLATFORM === 'web' && isMobile) {
+                    column = 2;
+                }
+                if (extraActions?.length || actions?.length) {
+                    const actions2 = actions && [...actions] || [];
+                    if (extraActions) {
+                        // 用户传的action默认排在前面
+                        actions2.unshift(...extraActions);
+                    }
+    
+                    // 每一项里的action 和 path 用在小程序这边, onClick用于web
+                    const items = actions2.map((ele) => ({
+                        action: typeof ele !== 'string' ? ele.action : ele,
+                        path: '',
+                        label: this.getLabel(ele, entity!),
+                        onClick: () =>
+                            onAction &&
+                            onAction(
+                                typeof ele !== 'string' ? ele.action : ele,
+                                undefined
+                            ),
+                    }));
+                    cascadeActions && Object.keys(cascadeActions).map((key, index: number) => {
+                        const cascadeActionArr = cascadeActions[key];
+                        if (cascadeActionArr && cascadeActionArr.length) {
+                            cascadeActionArr.forEach((ele: ActionDef<ED, string | number>) => {
+                                items.push({
+                                    action: typeof ele !== 'string' ? ele.action : ele,
+                                    path: key,
+                                    label: this.getLabel2(schema, key, ele, entity!),
+                                    onClick: () => onAction && onAction(undefined, { path: key, action: typeof ele !== 'string' ? ele.action : ele }),
+                                })
+                            })
+                        }
+                    })
+                    const moreItems = items.splice(column);
+                    this.setState({
+                        items,
+                        moreItems
+                    })
+                }
+            }
+        },
         handleShow() {
             const { showMore } = this.state;
             this.setState({

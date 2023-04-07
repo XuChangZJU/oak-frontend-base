@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
     Space,
     Button,
@@ -22,20 +22,29 @@ export default function Render(
         keyof EntityDict,
         false,
         {
+            width: string;
+            i18n: any;
             items: { label: string; onClick: () => void }[];
             moreItems: { label: string; onClick: () => void }[];
         },
         {
+            makeItems: (isMobile: boolean) => void;
         }
     >
 ) {
     const { methods, data } = props;
-    const { t } = methods;
+    const { t, makeItems } = methods;
     const {
+        width,
         items,
         moreItems,
+        i18n,
     } = data;
-    
+    const isMobile = width.includes('xs');
+    const zhCNKeys: number = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
+    useEffect(() => {
+        makeItems(isMobile);
+    }, [zhCNKeys])
     return (
         <div className={Style.container}>
             {items && items.map((ele, index:number) => (
@@ -50,7 +59,9 @@ export default function Render(
                     )}
                 </>
             ))}
-            <Divider type="vertical" />
+            {moreItems && moreItems.length > 0 && (
+                <Divider type="vertical" />
+            )}
             {moreItems && moreItems.length > 0 && (
                 <Popover
                     placement='topRight'

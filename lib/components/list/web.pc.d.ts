@@ -23,4 +23,5 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
     onAction?: onActionFnDef;
     rowSelection?: TableProps<any[]>['rowSelection'];
     scroll?: TableProps<any[]>['scroll'];
+    i18n: any;
 }, {}>): JSX.Element;

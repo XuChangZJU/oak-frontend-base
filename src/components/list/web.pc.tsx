@@ -132,7 +132,8 @@ export default function Render(
             tablePagination?: PaginationProps;
             onAction?: onActionFnDef;
             rowSelection?: TableProps<any[]>['rowSelection']
-            scroll?: TableProps<any[]>['scroll']
+            scroll?: TableProps<any[]>['scroll'],
+            i18n: any;
         },
         {
         }
@@ -159,63 +160,68 @@ export default function Render(
         width,
         scroll,
         attributes,
+        i18n,
     } = oakData;
+    // 为了i18更新时能够重新渲染
+    const zhCNKeys = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
     useEffect(() => {
-        const tableColumns: ColumnsType<any> = attributes && attributes.map((ele) => {
-            const path = getPath(ele);
-            const {
-                attrType,
-                attr,
-                attribute,
-                entity: entityI8n,
-            } = resolvePath<ED>(schema, entity, path);
-            const title = getLabel(ele, entityI8n, attr, t);
-            const width = getWidth(ele, attrType, 'table');
-            const type = getType(ele, attrType);
-            const column: ColumnType<any> = {
-                key: path,
-                title,
-                align: 'center',
-                render: (v: string, row: any) => {
-                    const value = getValue(ele, row, path, entityI8n, attr, attrType, t);
-                    let color = 'black';
-                    if (type === 'tag' && !!value) {
-                        assert(!!colorDict?.[entityI8n]?.[attr]?.[value], `${entity}实体iState颜色定义缺失`)
-                        color = colorDict![entityI8n]![attr]![value] as string;
+        if (schema) {
+            const tableColumns: ColumnsType<any> = attributes && attributes.map((ele) => {
+                const path = getPath(ele);
+                const {
+                    attrType,
+                    attr,
+                    attribute,
+                    entity: entityI8n,
+                } = resolvePath<ED>(schema, entity, path);
+                const title = getLabel(ele, entityI8n, attr, t);
+                const width = getWidth(ele, attrType, 'table');
+                const type = getType(ele, attrType);
+                const column: ColumnType<any> = {
+                    key: path,
+                    title,
+                    align: 'center',
+                    render: (v: string, row: any) => {
+                        const value = getValue(ele, row, path, entityI8n, attr, attrType, t);
+                        let color = 'black';
+                        if (type === 'tag' && !!value) {
+                            assert(!!colorDict?.[entityI8n]?.[attr]?.[value], `${entity}实体iState颜色定义缺失`)
+                            color = colorDict![entityI8n]![attr]![value] as string;
+                        }
+                        return (<RenderCell color={color} value={value} type={type!} />)
                     }
-                    return (<RenderCell color={color} value={value} type={type!} />)
                 }
-            }
-            if (width) {
-                Object.assign(column, { width });
-            }
-            return column;
-        })
-        if (!disabledOp && tableColumns) {
-                tableColumns.push({
-                fixed: 'right',
-                align: 'center',
-                title: '操作',
-                key: 'operation',
-                width: opSizeForWidth[width] || 300,
-                render: (value: any, row: any) => {
-                    const id = row?.id;
-                    const oakActions = row?.['#oakLegalActions'] as string[];
-                    assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
-                    return (
-                        <ActionBtn
-                            entity={entity}
-                            extraActions={extraActions}
-                            actions={row?.['#oakLegalActions']}
-                            cascadeActions={row?.['#oakLegalCascadeActions']}
-                            onAction={(action: string, cascadeAction: CascadeActionProps) => onAction && onAction(row, action, cascadeAction)}
-                        />
-                    )
+                if (width) {
+                    Object.assign(column, { width });
                 }
+                return column;
             })
+            if (!disabledOp && tableColumns) {
+                    tableColumns.push({
+                    fixed: 'right',
+                    align: 'center',
+                    title: '操作',
+                    key: 'operation',
+                    width: opSizeForWidth[width] || 300,
+                    render: (value: any, row: any) => {
+                        const id = row?.id;
+                        const oakActions = row?.['#oakLegalActions'] as string[];
+                        assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
+                        return (
+                            <ActionBtn
+                                entity={entity}
+                                extraActions={extraActions}
+                                actions={row?.['#oakLegalActions']}
+                                cascadeActions={row?.['#oakLegalCascadeActions']}
+                                onAction={(action: string, cascadeAction: CascadeActionProps) => onAction && onAction(row, action, cascadeAction)}
+                            />
+                        )
+                    }
+                })
+            }
+            setTabelColumns(tableColumns)
         }
-        setTabelColumns(tableColumns)
-    }, [data])
+    }, [data, zhCNKeys, schema])
     return (
         <Table
             size={sizeForWidth[width]}

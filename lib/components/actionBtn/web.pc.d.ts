@@ -9,6 +9,7 @@ declare type CascadeActionDef = {
     [K in keyof EntityDict[keyof EntityDict]['Schema']]?: ActionDef<EntityDict & BaseEntityDict, keyof EntityDict>[];
 };
 export default function Render(props: WebComponentProps<ED, keyof EntityDict, false, {
+    i18n: any;
     items: {
         action: string;
         label: string;
@@ -20,5 +21,7 @@ export default function Render(props: WebComponentProps<ED, keyof EntityDict, fa
     actions: ActionDef<ED, keyof EntityDict>[];
     cascadeActions: CascadeActionDef;
     onAction: (action?: string, cascadeAction?: CascadeActionProps) => void;
-}, {}>): JSX.Element;
+}, {
+    makeItems: () => void;
+}>): JSX.Element;
 export {};
