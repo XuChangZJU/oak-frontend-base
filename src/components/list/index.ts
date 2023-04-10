@@ -2,6 +2,7 @@ import { CardDef, ED, OakAbsAttrDef } from '../../types/AbstractComponent';
 import { analyzeAttrMobileForCard } from '../../utils/usefulFn';
 import assert from 'assert';
 import { TableProps, PaginationProps } from 'antd';
+import { RowWithActions } from '../../types/Page';
 
 export default OakComponent({
     isList: false,
@@ -12,7 +13,7 @@ export default OakComponent({
         disabledOp: false,
         attributes: [] as OakAbsAttrDef[],
         attributesMb: {} as CardDef,
-        data: [] as ED[keyof ED]['Schema'][],
+        data: [] as RowWithActions<ED, keyof ED>[],
         loading: false,
         tablePagination: {} as PaginationProps,
         rowSelection: {} as TableProps<any[]>['rowSelection'],
