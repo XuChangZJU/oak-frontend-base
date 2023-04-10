@@ -111,9 +111,10 @@ export default OakComponent({
         T2,
         false,
         {
+            column: ColumnMapType;
             entity: T2;
             attributes: OakAbsAttrDef[];
-            data: ED2[T2]['Schema'];
+            data: Partial<ED2[T2]['Schema']>;
         }
     >
 ) => React.ReactElement;
