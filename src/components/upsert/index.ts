@@ -70,10 +70,10 @@ export default OakComponent({
             });
         },
     },
-}) as <ED2 extends ED, T2 extends keyof ED2>(props: ReactComponentProps<ED2, T2, false, {
+}) as <ED2 extends ED, T2 extends keyof ED2, T3 extends keyof ED = keyof ED>(props: ReactComponentProps<ED2, T2, false, {
     helps: Record<string, string>;
     entity: T2;
-    attributes: OakAbsAttrUpsertDef<ED2, T2>[];
+    attributes: OakAbsAttrUpsertDef<ED2, T2, T3>[];
     data: ED2[T2]['Schema'];
     layout: 'horizontal' | 'vertical';
     mode: 'default' | 'card';

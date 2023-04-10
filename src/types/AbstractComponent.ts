@@ -82,7 +82,7 @@ export interface OakAbsNativeAttrUpsertDef<
     T extends keyof ED,
     A extends keyof ED[T]['OpSchema']> {
     attr: A,
-    type: ED[T]['OpSchema'][A],
+    type: Omit<DataType, 'ref' | 'geo'>,
     label?: string;
     placeholder?: string;
     max?: number;
@@ -92,9 +92,9 @@ export interface OakAbsNativeAttrUpsertDef<
     required?: boolean;
 };
 
-export type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> =
+export type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED, T2 extends keyof ED = keyof ED> =
     | OakAbsGeoAttrUpsertDef
-    | OakAbsRefAttrPickerDef<ED, keyof ED>
+    | OakAbsRefAttrPickerDef<ED, T2>
     | keyof ED[T]['OpSchema']
     | OakAbsNativeAttrUpsertDef<ED, T, keyof ED[T]['OpSchema']>;
 
