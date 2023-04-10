@@ -1,0 +1,33 @@
+<view class="container">
+    <view wx:if="{{!data && mode !== 'list'}}">
+        <l-loading show="{{true}}" size="large"></l-loading>
+    </view>
+    <view wx:else>
+        <view wx:if="{{mode === 'select'}}">
+            <picker mode="{{multiple ? 'multiSelector':'selector'}}" />
+        </view>
+        <view wx:if="{{mode === 'radio'}}">
+            <view wx:if="{{multiple}}">
+                <l-radio-group wx:for="{{data}}" wx:key="index" wx:for-item="enumItem" current="{{entityId}}" bind:linchange="setValueMp">
+                            <l-radio key="{{enumItem.value}}">{{enumItem.label}}</l-radio>
+                </l-radio-group>
+            </view>
+            <view wx:else>
+                <l-checkbox-group bind:linchange="onChangeTap" >
+                    <l-checkbox
+                        wx:for-items="{{data}}"
+                        wx:key="{{item.id}}"
+                        key="{{item.id}}"
+                        checked="{{item.isChecked}}"
+                        disabled="{{item.disabled}}"
+                    >
+                        {{item.title}}
+                    </l-checkbox>
+                </l-checkbox-group>
+            </view>
+        </view>
+        <view wx:if="{{mode === 'list'}}">
+
+        </view>
+    </view>
+</view>

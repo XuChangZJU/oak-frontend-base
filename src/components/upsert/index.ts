@@ -1,7 +1,10 @@
-import { AttrUpsertRender, ED, OakAbsAttrUpsertDef, OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 import {
-    DataUpsertTransformer,
+    AttrUpsertRender,
+    ED,
+    OakAbsAttrUpsertDef,
+    OakAbsRefAttrPickerRender,
 } from '../../types/AbstractComponent';
+import { DataUpsertTransformer } from '../../types/AbstractComponent';
 import { ReactComponentProps } from '../../types/Page';
 import { analyzeDataUpsertTransformer } from '../../utils/usefulFn';
 
@@ -34,10 +37,14 @@ export default OakComponent({
                         // 反指
                         label2 = this.t(`${refEntity}:name`);
                     } else {
-                        label2 = this.t(`${entity as string}:attr.${attr as string}`);
+                        label2 = this.t(
+                            `${entity as string}:attr.${attr as string}`
+                        );
                     }
                 } else {
-                    label2 = this.t(`${entity as string}:attr.${attr as string}`);
+                    label2 = this.t(
+                        `${entity as string}:attr.${attr as string}`
+                    );
                 }
             }
             Object.assign(ele, { label: label2 });
@@ -70,11 +77,58 @@ export default OakComponent({
             });
         },
     },
-}) as <ED2 extends ED, T2 extends keyof ED2, T3 extends keyof ED = keyof ED>(props: ReactComponentProps<ED2, T2, false, {
-    helps: Record<string, string>;
-    entity: T2;
-    attributes: OakAbsAttrUpsertDef<ED2, T2, T3>[];
-    data: ED2[T2]['Schema'];
-    layout: 'horizontal' | 'vertical';
-    mode: 'default' | 'card';
-}>) => React.ReactElement;
+    methods: {
+        setValueMp(input: WechatMiniprogram.Input) {
+            const {
+                detail,
+                target: { dataset },
+            } = input;
+            const { attr } = dataset!;
+            const { value } = detail;
+            this.update({ [attr]: value });
+        },
+        setValueMp1(input: WechatMiniprogram.Input) {
+            const {
+                detail,
+                target: { dataset },
+            } = input;
+            const { attr } = dataset!;
+            const { value } = detail;
+            const valueShowed = parseFloat(Number(value).toFixed(1)) * 10;
+            this.update({ [attr]: valueShowed });
+        },
+        setValueMp2(input: WechatMiniprogram.Input) {
+            const {
+                detail,
+                target: { dataset },
+            } = input;
+            const { attr } = dataset!;
+            const { value } = detail;
+            const valueShowed = parseFloat(Number(value).toFixed(2)) * 100;
+            this.update({ [attr]: valueShowed });
+        },
+        setEnumValueMp(input: WechatMiniprogram.Input) {
+            const {
+                detail,
+                target: { dataset },
+            } = input;
+            const { attr } = dataset!;
+            const { value } = detail;
+            this.update({ [attr]: value });
+        },
+    },
+}) as <ED2 extends ED, T2 extends keyof ED2, T3 extends keyof ED = keyof ED>(
+    props: ReactComponentProps<
+        ED2,
+        T2,
+        false,
+        {
+            helps: Record<string, string>;
+            entity: T2;
+            attributes: OakAbsAttrUpsertDef<ED2, T2, T3>[];
+            data: ED2[T2]['Schema'];
+            layout: 'horizontal' | 'vertical';
+            mode: 'default' | 'card';
+        }
+    >
+) => React.ReactElement;

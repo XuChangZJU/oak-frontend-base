@@ -29,10 +29,7 @@ export declare type CardDef = {
     state?: string | React.ReactNode;
     rows: OakAbsAttrDef[];
 };
-export interface OakAbsRefAttrPickerDef<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED
-> {
+export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     type: 'ref';
     mode: 'select' | 'list' | 'radio';
     attr: string;
@@ -50,11 +47,9 @@ export interface OakAbsRefAttrPickerDef<
     count?: number;
     label?: string;
     placeholder?: string;
+    allowNull?: boolean;
 }
-export interface OakAbsRefAttrPickerRender<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED
-> extends OakAbsRefAttrPickerDef<ED, T> {
+export interface OakAbsRefAttrPickerRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> extends OakAbsRefAttrPickerDef<ED, T> {
     required?: boolean;
 }
 export interface OakAbsGeoAttrUpsertDef {
@@ -65,12 +60,9 @@ export interface OakAbsGeoAttrUpsertDef {
         poiName?: string;
         coordinate?: string;
     };
+    allowNull?: boolean;
 }
-export interface OakAbsNativeAttrUpsertDef<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED,
-    A extends keyof ED[T]['OpSchema']
-> {
+export interface OakAbsNativeAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED, A extends keyof ED[T]['OpSchema']> {
     attr: A;
     type: Omit<DataType, 'ref' | 'geo'>;
     label?: string;
@@ -80,20 +72,10 @@ export interface OakAbsNativeAttrUpsertDef<
     maxLength?: number;
     defaultValue?: any;
     required?: boolean;
+    allowNull?: boolean;
 }
-export declare type OakAbsAttrUpsertDef<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED,
-    T2 extends keyof ED = keyof ED
-> =
-    | OakAbsGeoAttrUpsertDef
-    | OakAbsRefAttrPickerDef<ED, T2>
-    | keyof ED[T]['OpSchema']
-    | OakAbsNativeAttrUpsertDef<ED, T, keyof ED[T]['OpSchema']>;
-import {
-    DataType,
-    DataTypeParams,
-} from 'oak-domain/lib/types/schema/DataTypes';
+export declare type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED, T2 extends keyof ED = keyof ED> = OakAbsGeoAttrUpsertDef | OakAbsRefAttrPickerDef<ED, T2> | keyof ED[T]['OpSchema'] | OakAbsNativeAttrUpsertDef<ED, T, keyof ED[T]['OpSchema']>;
+import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
 export declare type AttrRender = {
     label: string;
     value: any;
@@ -102,11 +84,7 @@ export declare type AttrRender = {
     width?: RenderWidth;
     attr: string;
 };
-export interface OakAbsNativeAttrUpsertRender<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED,
-    A extends keyof ED[T]['OpSchema']
-> extends Omit<OakAbsNativeAttrUpsertDef<ED, T, A>, 'type'> {
+export interface OakAbsNativeAttrUpsertRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED, A extends keyof ED[T]['OpSchema']> extends Omit<OakAbsNativeAttrUpsertDef<ED, T, A>, 'type'> {
     value: any;
     type: Omit<DataType, 'ref'> | 'coordinate' | 'poiName';
     enumeration?: Array<{
@@ -116,12 +94,7 @@ export interface OakAbsNativeAttrUpsertRender<
     extra?: any;
     params: DataTypeParams;
 }
-export declare type AttrUpsertRender<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED
-> =
-    | OakAbsNativeAttrUpsertRender<ED, T, keyof ED[T]['OpSchema']>
-    | OakAbsRefAttrPickerRender<ED, T>;
+export declare type AttrUpsertRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = OakAbsNativeAttrUpsertRender<ED, T, keyof ED[T]['OpSchema']> | OakAbsRefAttrPickerRender<ED, T>;
 export declare type ColumnDefProps = {
     width: number;
     title: string;
@@ -132,18 +105,11 @@ export declare type ColumnDefProps = {
     fixed?: 'right' | 'left';
 };
 export declare type DataTransformer = (data: object) => AttrRender[];
-export declare type DataUpsertTransformer<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED
-> = (data: object) => AttrUpsertRender<ED, T>[];
+export declare type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = (data: object) => AttrUpsertRender<ED, T>[];
 export declare type DataConverter = (data: any[]) => Record<string, any>;
 export declare type ED = BaseEntityDict & EntityDict;
 export declare type CascadeActionProps = {
     path: string;
     action: string;
 };
-export declare type onActionFnDef = (
-    row: any,
-    action: string,
-    cascadeAction?: CascadeActionProps
-) => void;
+export declare type onActionFnDef = (row: any, action: string, cascadeAction?: CascadeActionProps) => void;

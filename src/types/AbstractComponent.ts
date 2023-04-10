@@ -32,16 +32,16 @@ export type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
 
 export type CardDef = {
     // string:path ReactNode自主渲染
-    title: string | React.ReactNode,
-    state?: string | React.ReactNode,
+    title: string | React.ReactNode;
+    state?: string | React.ReactNode;
     rows: OakAbsAttrDef[];
-}
+};
 
 export interface OakAbsRefAttrPickerDef<
     ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED,
+    T extends keyof ED
 > {
-    type: 'ref',
+    type: 'ref';
     mode: 'select' | 'list' | 'radio';
     attr: string;
     entity: T;
@@ -54,10 +54,11 @@ export interface OakAbsRefAttrPickerDef<
         filter?: ED[T]['Selection']['filter'];
         sorter?: ED[T]['Selection']['sorter'];
         projection?: ED[T]['Selection']['data'];
-    }>;         // 这里主要是为了动态构造filter，当需要先选A再将A作为B的filter条件时经常出现
+    }>; // 这里主要是为了动态构造filter，当需要先选A再将A作为B的filter条件时经常出现
     count?: number;
     label?: string;
     placeholder?: string;
+    allowNull?: boolean;
 }
 
 export interface OakAbsRefAttrPickerRender<
@@ -65,7 +66,7 @@ export interface OakAbsRefAttrPickerRender<
     T extends keyof ED
 > extends OakAbsRefAttrPickerDef<ED, T> {
     required?: boolean;
-};
+}
 
 export interface OakAbsGeoAttrUpsertDef {
     type: 'geo';
@@ -75,14 +76,16 @@ export interface OakAbsGeoAttrUpsertDef {
         poiName?: string;
         coordinate?: string;
     };
-};
+    allowNull?: boolean;
+}
 
 export interface OakAbsNativeAttrUpsertDef<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    A extends keyof ED[T]['OpSchema']> {
-    attr: A,
-    type: Omit<DataType, 'ref' | 'geo'>,
+    A extends keyof ED[T]['OpSchema']
+> {
+    attr: A;
+    type: Omit<DataType, 'ref' | 'geo'>;
     label?: string;
     placeholder?: string;
     max?: number;
@@ -90,9 +93,14 @@ export interface OakAbsNativeAttrUpsertDef<
     maxLength?: number;
     defaultValue?: any;
     required?: boolean;
-};
+    allowNull?: boolean;
+}
 
-export type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED, T2 extends keyof ED = keyof ED> =
+export type OakAbsAttrUpsertDef<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
+    T2 extends keyof ED = keyof ED
+> =
     | OakAbsGeoAttrUpsertDef
     | OakAbsRefAttrPickerDef<ED, T2>
     | keyof ED[T]['OpSchema']
@@ -121,9 +129,12 @@ export interface OakAbsNativeAttrUpsertRender<
     enumeration?: Array<{ label: string; value: string }>;
     extra?: any;
     params: DataTypeParams;
-};
+}
 
-export type AttrUpsertRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED> =
+export type AttrUpsertRender<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED
+> =
     | OakAbsNativeAttrUpsertRender<ED, T, keyof ED[T]['OpSchema']>
     | OakAbsRefAttrPickerRender<ED, T>;
 
@@ -139,16 +150,21 @@ export type ColumnDefProps = {
 
 export type DataTransformer = (data: object) => AttrRender[];
 
-export type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = (
-    data: object
-) => AttrUpsertRender<ED, T>[];
+export type DataUpsertTransformer<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED
+> = (data: object) => AttrUpsertRender<ED, T>[];
 
 export type DataConverter = (data: any[]) => Record<string, any>;
 
 export type ED = BaseEntityDict & EntityDict;
 
 export type CascadeActionProps = {
-    path: string,
+    path: string;
+    action: string;
+};
+export type onActionFnDef = (
+    row: any,
     action: string,
-}
-export type onActionFnDef = (row: any, action: string, cascadeAction?: CascadeActionProps) => void
+    cascadeAction?: CascadeActionProps
+) => void;
