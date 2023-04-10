@@ -24,7 +24,7 @@ export type OakAbsDerivedAttrDef = {
     path: string;
     label: string;
     value?: string;
-    width: RenderWidth;
+    width?: RenderWidth;
     type?: 'img' | 'file' | 'avatar';
 };
 
