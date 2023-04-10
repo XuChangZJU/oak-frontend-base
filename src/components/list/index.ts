@@ -15,7 +15,7 @@ export default OakComponent({
         attributesMb: {} as CardDef,
         data: [] as RowWithActions<ED, keyof ED>[],
         loading: false,
-        tablePagination: {} as PaginationProps,
+        tablePagination: {} as TableProps<RowWithActions<ED, keyof ED>[]>['pagination'],
         rowSelection: {} as TableProps<any[]>['rowSelection'],
         scroll: {} as TableProps<any[]>['scroll'],
     },

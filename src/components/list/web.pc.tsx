@@ -129,7 +129,7 @@ export default function Render(
             disabledOp: boolean;
             colorDict: ColorDict<EntityDict & BaseEntityDict>;
             handleClick?: (id: string, action: string) => void;
-            tablePagination?: PaginationProps;
+            tablePagination?: TableProps<any[]>['pagination'];
             onAction?: onActionFnDef;
             rowSelection?: TableProps<any[]>['rowSelection']
             scroll?: TableProps<any[]>['scroll'],
