@@ -62,7 +62,7 @@ export interface OakAbsGeoAttrUpsertDef {
 }
 export interface OakAbsNativeAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED, A extends keyof ED[T]['OpSchema']> {
     attr: A;
-    type: ED[T]['OpSchema'][A];
+    type: Omit<DataType, 'ref' | 'geo'>;
     label?: string;
     placeholder?: string;
     max?: number;
@@ -71,7 +71,7 @@ export interface OakAbsNativeAttrUpsertDef<ED extends EntityDict & BaseEntityDic
     defaultValue?: any;
     required?: boolean;
 }
-export declare type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = OakAbsGeoAttrUpsertDef | OakAbsRefAttrPickerDef<ED, keyof ED> | keyof ED[T]['OpSchema'] | OakAbsNativeAttrUpsertDef<ED, T, keyof ED[T]['OpSchema']>;
+export declare type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED, T2 extends keyof ED = keyof ED> = OakAbsGeoAttrUpsertDef | OakAbsRefAttrPickerDef<ED, T2> | keyof ED[T]['OpSchema'] | OakAbsNativeAttrUpsertDef<ED, T, keyof ED[T]['OpSchema']>;
 import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
 export declare type AttrRender = {
     label: string;
