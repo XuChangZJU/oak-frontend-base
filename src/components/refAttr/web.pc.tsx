@@ -34,7 +34,7 @@ export default function render(props: WebComponentProps<
         renderValue: string;
         data?: { id: string, title: string }[];
         pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
-        onChange: (value: any) => void;
+        onChange: (value: string[]) => void;
     }
 >) {
     const { pickerRender, renderValue, data, multiple, onChange, entityId, entityIds } = props.data;
@@ -54,7 +54,7 @@ export default function render(props: WebComponentProps<
                 return (
                     <Select
                         value={entityId}
-                        onChange={onChange}
+                        onChange={(value) => onChange([value])}
                         options={data!.map(
                             ele => ({
                                 value: ele.id,
@@ -76,7 +76,7 @@ export default function render(props: WebComponentProps<
                                 })
                             )}
                             value={entityIds}
-                            onChange={onChange}
+                            onChange={(value) => onChange(value as string[])}
                         />
                     );
                 }
@@ -123,7 +123,7 @@ export default function render(props: WebComponentProps<
                             }}
                             onChange={({ currentTarget }) => {
                                 if (!currentTarget.value) {
-                                    onChange(undefined);
+                                    onChange([]);
                                 }
                             }}                            
                         />
@@ -153,8 +153,8 @@ export default function render(props: WebComponentProps<
                                     sorter: ele,
                                 })): undefined}
                                 oakProjection={dynamicProjection || projection}
-                                onSelect={([{ id }]: [{ id: string}]) => {
-                                    onChange(id);
+                                onSelect={(data: { id: string }[]) => {
+                                    onChange(data.map(ele => ele.id));
                                     setVisible(false);
                                 }}
                             />
