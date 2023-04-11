@@ -1,5 +1,5 @@
 import { ED } from "../../types/AbstractComponent";
-import { Item } from './type';
+import { Item } from './types';
 
 export default OakComponent({
     isList: false,

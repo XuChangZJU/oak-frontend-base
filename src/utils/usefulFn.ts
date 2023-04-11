@@ -1,7 +1,6 @@
 import assert from 'assert';
 import { EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import useFeatures from '../hooks/useFeatures';
 import { StorageSchema, Attribute } from 'oak-domain/lib/types';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
 import {

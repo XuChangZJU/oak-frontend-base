@@ -11,7 +11,7 @@ import {
 import { WebComponentProps } from '../../types/Page';
 import { EntityDict } from 'oak-domain/lib/base-app-domain';
 import Style from './web.module.less';
-import { Item } from './type';
+import { Item } from './types';
 const { confirm } = Modal;
 
 function ItemComponent(

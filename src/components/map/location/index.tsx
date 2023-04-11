@@ -11,11 +11,14 @@ import {
     Spin,
 } from 'antd';
 import { SearchOutlined, CheckCircleFilled } from '@ant-design/icons';
+import { EntityDict, Aspect, AspectWrapper } from 'oak-domain/lib/types';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { CommonAspectDict } from 'oak-common-aspect';
+
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import Map from '../map';
 import Styles from './web.module.less';
-
-// todo
-import useFeatures from '../../../hooks/useFeatures';
+import { Geo } from '../../../features/geo';
 
 type LocationProps = {
     poiName?: string;
@@ -45,7 +48,8 @@ export default function Location(props: LocationProps) {
     const [pois, setPois] = useState<Poi[]>();
     const [currentPoi, setCurrentPoi] = useState<Poi>();
     const searchRef = useRef<any>();
-    const featureGeo = useFeatures().geo;
+    // 这里不能用useFeatures，因为无法引用lib里面的provider，引用src注入是不行的
+    const featureGeo: Geo<EntityDict & BaseEntityDict, AsyncContext<EntityDict & BaseEntityDict>, CommonAspectDict<EntityDict & BaseEntityDict, AsyncContext<EntityDict & BaseEntityDict>>>  = (global as any).features.geo;
 
     useEffect(() => {
         if (searchValue?.length > 1) {
