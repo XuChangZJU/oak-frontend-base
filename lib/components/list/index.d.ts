@@ -13,7 +13,7 @@ declare const _default: (props: import("../../types/Page").ReactComponentProps<i
     tablePagination: false | import("antd").TablePaginationConfig | undefined;
     rowSelection: {
         type: 'checkbox' | 'radio';
-        selectedRowKeys?: string[];
+        selectedRowKeys?: string[] | undefined;
         onChange: (selectedRowKeys: string[], row: RowWithActions<ED, keyof ED>[], info?: {
             type: 'single' | 'multiple' | 'none';
         }) => void;

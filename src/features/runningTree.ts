@@ -704,7 +704,7 @@ class ListNode<
             sorter,
         }, undefined, context);
         return result.filter(
-            ele => ele.$$createAt$$ === 1 || this.ids!.includes(ele.id!)
+            ele => ele.$$createAt$$ === 1 || this.ids?.includes(ele.id!)
         );        
     }
 
