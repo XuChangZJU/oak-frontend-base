@@ -3,10 +3,9 @@ import { Input, Button, Space, Form, Badge, Row, Col } from 'antd';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
-import Filter from '../filter';
+import Filter from '../filter2';
 import { ColSpanType, ColumnProps } from '../../types/Filter';
 import { getFilterName } from '../filter/utils';
-
 import Style from './web.module.less';
 
 
@@ -25,8 +24,8 @@ type ColumnMapType = {
 const DEFAULT_COLUMN_MAP: ColumnMapType = {
     xxl: 4,
     xl: 4,
-    lg: 4,
-    md: 3,
+    lg: 3,
+    md: 2,
     sm: 2,
     xs: 1,
 };
@@ -88,6 +87,7 @@ export default function Render<ED2 extends ED>(
     } = props.data;
     const { t, refresh, getNamedFilters, removeNamedFilterByName } = props.methods;
     const [open, setOpen] = useState(false);
+    const [form] = Form.useForm();
 
     if (!columns || columns.length === 0) {
         return null;
@@ -182,11 +182,17 @@ export default function Render<ED2 extends ED>(
             items.push(firstItem);
         }
     }
-
+    type LayoutType = Parameters<typeof Form>[0]['layout'];
+    let formLayout: LayoutType = 'horizontal';
+    if (['xs', 'sm'].includes(width)) {
+        formLayout = 'vertical';
+    }
+    const formItemLayout = formLayout === 'horizontal' ? { labelCol: { style: {width: 120} }, wrapperCol: { style: {maxWidth: 'calc(100% - 120px)'} } } : null;
+    const buttonItemLayout = formLayout === 'horizontal' ? { wrapperCol: { span: 18, offset: 6 } } : null;
     items.push(
         <Col span={_gridColumn}>
-            <Form.Item>
-                <Space size={16} className={Style.actionBox}>
+            <Form.Item {...buttonItemLayout}>
+                <Space className={Style.actionBox}>
                     <Badge count={count}>
                         <Button
                             type="default"
@@ -194,7 +200,7 @@ export default function Render<ED2 extends ED>(
                                 filterNames.forEach((ele) =>
                                     removeNamedFilterByName(ele)
                                 );
-
+                                form.resetFields();
                                 refresh();
                             }}
                         >
@@ -231,9 +237,8 @@ export default function Render<ED2 extends ED>(
             </Form.Item>
         </Col>
     );
-
     return (
-        <Form>
+        <Form form={form} {...formItemLayout} layout={formLayout}>
             <Row gutter={[16, 16]}>{items}</Row>
         </Form>
     );

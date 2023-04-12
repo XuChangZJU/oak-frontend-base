@@ -1,0 +1,25 @@
+<view class="ticket-container">
+    <view class="ticket-container-top">
+        <block wx:for="{{columnsMp}}">
+            <oak-filter column="{{item}}" oakPath="{{oakFullpath}}" entity="{{entity}}" />
+        </block>
+    </view>
+    <view class="ticket-container-bottom">
+        <l-collapse disable="{{columns && columns.length <= 3}}">
+            <l-collapse-item l-body-class="l-body-class" l-title-class="l-title-class" customTitle="{{true}}">
+                <!--自定义标题-->
+                <view class="title" slot="title">
+                    <view class="ticket-detail-container">展开
+                        <l-icon name="down" size="16" color="#999"/>
+                    </view>
+                    <l-button l-class height="50" size="mini" shape="semicircle" plain="{{true}}">立即使用</l-button>
+                </view>
+                <view class="space-vertical">
+                    <block wx:for="{{moreColumnsMp}}">
+                        <oak-filter column="{{item}}" oakPath="{{oakFullpath}}" entity="{{entity}}" />
+                    </block>
+                </view>
+            </l-collapse-item>
+        </l-collapse>
+    </view>
+</view>

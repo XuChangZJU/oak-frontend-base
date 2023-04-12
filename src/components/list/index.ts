@@ -16,8 +16,12 @@ export default OakComponent({
         data: [] as RowWithActions<ED, keyof ED>[],
         loading: false,
         tablePagination: {} as TableProps<RowWithActions<ED, keyof ED>[]>['pagination'],
-        rowSelection: {} as TableProps<any[]>['rowSelection'],
-        scroll: {} as TableProps<any[]>['scroll'],
+        rowSelection: {} as {
+            type: 'checkbox' | 'radio',
+            selectedRowKeys?: string[],
+            onChange: (selectedRowKeys: string[], row: RowWithActions<ED, keyof ED>[], info?: { type: 'single' | 'multiple' | 'none' }) => void,
+        },
+        scroll: {} as TableProps<ED[keyof ED]['Schema'][]>['scroll'],
     },
     formData({ props }) {
         const { converter } = this.state;
