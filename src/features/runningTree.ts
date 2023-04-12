@@ -885,7 +885,23 @@ class ListNode<
         for (const id in this.children) {
             const childOperation = this.children[id].composeOperations();
             if (childOperation) {
-                operations.push(...childOperation);
+                // 现在因为后台有not null检查，不能先create再update，所以还是得合并成一个
+                assert(childOperation.length === 1);
+                const { operation } = childOperation[0];
+                const { action, data, filter } = operation;
+                assert(!['create', 'remove'].includes(action), '在list结点上对子结点进行增删请使用父结点的addItem/removeItem，不要使用子结点的create/remove');
+                assert(filter!.id === id);
+                const sameNodeOperation = operations.find(
+                    ele => ele.operation.action === 'create' && (ele.operation.data as ED[T]['CreateSingle']['data']).id === id || ele.operation.filter?.id === id
+                );
+                if (sameNodeOperation) {
+                    if (sameNodeOperation.operation.action !== 'remove') {
+                        Object.assign(sameNodeOperation.operation.data, data);
+                    }
+                }
+                else {
+                    operations.push(...childOperation);
+                }
             }
         }
 
@@ -1295,10 +1311,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         operation: ED[keyof ED]['Operation'];
     }> | undefined {
         if (this.dirty) {
-            const operations = [] as Array<{
-                entity: keyof ED;
-                operation: ED[keyof ED]['Operation'];
-            }>;
             const operation: ED[T]['Operation'] = this.operation ? cloneDeep(this.operation.operation) : {
                 id: generateNewId(),
                 action: 'update',
@@ -1340,11 +1352,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     }
                 }
             }
-            operations.push({
+            return [{
                 entity: this.entity,
-                operation: operation!,
-            });
-            return operations;
+                operation,
+            }];
         }
     }
 

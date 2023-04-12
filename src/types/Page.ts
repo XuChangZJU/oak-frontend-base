@@ -452,7 +452,7 @@ export type OakComponentData<
         oakDisablePulldownRefresh: boolean;
     };
 
-export type OakListComoponetData<
+type OakListComoponetData<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED
     > = {

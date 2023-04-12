@@ -231,7 +231,7 @@ export declare type OakComponentData<ED extends EntityDict & BaseEntityDict, T e
     oakLegalActions?: ED[T]['Action'][];
     oakDisablePulldownRefresh: boolean;
 };
-export declare type OakListComoponetData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
+declare type OakListComoponetData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakFilters?: NonNullable<ED[T]['Selection']['filter']>[];
     oakSorters?: NonNullable<ED[T]['Selection']['sorter']>[];
     oakPagination?: Pagination;
