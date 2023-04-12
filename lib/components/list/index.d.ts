@@ -11,7 +11,13 @@ declare const _default: (props: import("../../types/Page").ReactComponentProps<i
     data: RowWithActions<ED, string | number>[];
     loading: boolean;
     tablePagination: false | import("antd").TablePaginationConfig | undefined;
-    rowSelection: import("antd/es/table/interface").TableRowSelection<any[]> | undefined;
+    rowSelection: {
+        type: 'checkbox' | 'radio';
+        selectedRowKeys?: string[];
+        onChange: (selectedRowKeys: string[], row: RowWithActions<ED, keyof ED>[], info?: {
+            type: 'single' | 'multiple' | 'none';
+        }) => void;
+    };
     scroll: ({
         x?: string | number | true | undefined;
         y?: string | number | undefined;

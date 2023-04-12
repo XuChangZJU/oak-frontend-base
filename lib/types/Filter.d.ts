@@ -2,14 +2,17 @@ import { Dayjs } from 'dayjs';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { OakAbsRefAttrPickerDef } from './AbstractComponent';
+export declare type ViewType = 'Input' | 'Select' | 'DatePicker' | 'DatePicker.RangePicker' | 'RefAttr';
 export declare type Ops = '$gt' | '$lt' | '$gte' | '$lte' | '$eq' | '$ne' | '$startsWith' | '$endsWith' | '$includes' | '$in' | '$nin' | '$between' | '$text' | '$search';
 export declare type ColSpanType = 1 | 2 | 3 | 4;
-export declare type ValueType = string | boolean | number | Array<Dayjs> | Dayjs;
+export declare type ValueType = string | boolean | number | Array<Dayjs> | Dayjs | null;
 export declare type ColumnProps<ED extends BaseEntityDict & EntityDict, T extends keyof ED> = {
-    attr: keyof ED[T]['OpSchema'];
+    attr: string;
     label?: string;
     placeholder?: string;
     op?: Ops;
+    onChange?: (value: any) => void;
+    autoAddFilters?: boolean;
     selectProps?: {
         options?: Array<{
             label: string;
