@@ -377,8 +377,8 @@ class ListNode<
         }
     >;
 
-    private filters: NamedFilterItem<ED, T>[];
-    private sorters: NamedSorterItem<ED, T>[];
+    private filters: (NamedFilterItem<ED, T> & { applied?: true })[];
+    private sorters: (NamedSorterItem<ED, T> & { applied?: true })[];
     private pagination: Pagination;
     private ids: string[] | undefined;
 
@@ -394,6 +394,18 @@ class ListNode<
         }
 
         assert(false);
+    }
+
+    setFiltersAndSortedApplied() {
+        this.filters.forEach(
+            ele => ele.applied = true
+        );
+        this.sorters.forEach(
+            ele => ele.applied = true
+        );
+        for (const k in this.children) {
+            this.children[k].setFiltersAndSortedApplied();
+        }
     }
 
     /* setLoading(loading: boolean) {
@@ -681,38 +693,19 @@ class ListNode<
 
     getFreshValue(context: FrontCxt): Array<Partial<ED[T]['Schema']>> {
         /**
-         * 如果当前结点有父结点，根据filter去取数据（一对多的cascade取数据，父结点上可能有本结点相关的create动作）
-         * 如果当前结点没有父结点，根据ids和自己所属的create去取数据
+         * 满足当前结点的数据应当是所有满足当前filter条件且ids在当前ids中的数据
+         * 但如果是当前事务create的行则例外（当前页面上正在create的数据）
          */
-        const { data, sorter, filter } = this.constructSelection(true, context);
-        const parent = this.getParent();
-        let filter2: ED[T]['Selection']['filter'];
-        if (!(parent instanceof SingleNode)) {
-            const { ids, updates } = this;
-            let ids2 = ids ? [...ids] : [];
-            for (const u in updates) {
-                if (updates[u].operation.action === 'create') {
-                    ids2.push(updates[u].operation.data.id);
-                }
-            }
-            filter2 = ids2.length > 0 ? {
-                id: {
-                    $in: ids2,
-                },
-            } : undefined;
-        }
-        else {
-            filter2 = filter;
-        }
-        if (filter2) {
-            const result = this.cache.get(this.entity, {
-                data,
-                filter: filter2,
-                sorter,
-            }, undefined, context);
-            return result;
-        }
-        return [];
+        const { data, sorter, filter } = this.constructSelection(true, context, true);
+
+        const result = this.cache.get(this.entity, {
+            data,
+            filter,
+            sorter,
+        }, undefined, context);
+        return result.filter(
+            ele => ele.$$createAt$$ === 1 || this.ids!.includes(ele.id!)
+        );        
     }
 
     addItem(
@@ -909,9 +902,11 @@ class ListNode<
         return projection;
     }
 
-    private constructFilters(context?: FrontCxt, withParent?: boolean) {
+    private constructFilters(context?: FrontCxt, withParent?: boolean, ignoreUnapplied?: true) {
         const { filters: ownFilters } = this;
-        const filters = ownFilters.map((ele) => {
+        const filters = ownFilters.filter(
+            ele => !ignoreUnapplied || ele.applied
+        ).map((ele) => {
             const { filter } = ele;
             if (typeof filter === 'function') {
                 return (filter as Function)();
@@ -934,12 +929,13 @@ class ListNode<
         return filters;
     }
 
-    constructSelection(withParent?: true, context?: FrontCxt) {
+    constructSelection(withParent?: true, context?: FrontCxt, ignoreUnapplied?: true) {
         const { sorters } = this;
         const data = this.getProjection(context);
         assert(data, '取数据时找不到projection信息');
-        const sorterArr = sorters
-            .map((ele) => {
+        const sorterArr = sorters.filter(
+            ele => !ignoreUnapplied || ele.applied
+        ).map((ele) => {
                 const { sorter } = ele;
                 if (typeof sorter === 'function') {
                     return (sorter as Function)();
@@ -948,7 +944,7 @@ class ListNode<
             })
             .filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
 
-        const filters = this.constructFilters(context, withParent);
+        const filters = this.constructFilters(context, withParent, ignoreUnapplied);
 
         const filters2 = filters?.filter((ele) => !!ele);
         const filter = filters2 ? combineFilters<ED, T>(filters2) : undefined;
@@ -992,6 +988,7 @@ class ListNode<
                         this.pagination.currentPage = currentPage3 + 1;
                         this.pagination.more = ids.length === pageSize;
                         this.setLoading(false);
+                        this.setFiltersAndSortedApplied();
                         if (append) {
                             this.loadingMore = false;
                         }
@@ -1104,6 +1101,12 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             }
         }
         assert(false);
+    }
+
+    setFiltersAndSortedApplied() {
+        for (const k in this.children) {
+            this.children[k].setFiltersAndSortedApplied();
+        }
     }
 
     /*  setLoading(loading: boolean) {
@@ -1410,6 +1413,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     filter,
                 }, undefined, undefined, () => {                   
                     // 刷新后所有的更新都应当被丢弃（子层上可能会自动建立了this.create动作） 这里可能会有问题 by Xc 20230329
+                    this.setFiltersAndSortedApplied();
                     this.setLoading(false);
                     this.clean();
                 });
@@ -1586,6 +1590,13 @@ class VirtualNode<
         this.dirty = true;
         this.publish();
     }
+
+    setFiltersAndSortedApplied() {
+        for (const k in this.children) {
+            this.children[k].setFiltersAndSortedApplied();
+        }
+    }
+
     addChild(
         path: string, child: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>) {
         // 规范virtualNode子结点的命名路径和类型，entity的singleNode必须被命名为entity或entity:number，ListNode必须被命名为entitys或entitys:number

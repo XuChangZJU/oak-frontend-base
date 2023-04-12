@@ -330,6 +330,7 @@ export default function render<T extends keyof ED>(
 ) {
     const { renderData = [], helps, entity } = props.data;
     const { update, t } = props.methods;
+    // console.log(renderData);
     return (
         <Form
             labelCol={{ span: 4 }}

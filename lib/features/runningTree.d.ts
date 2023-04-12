@@ -61,6 +61,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     private ids;
     private syncHandler;
     getChildPath(child: SingleNode<ED, T, Cxt, FrontCxt, AD>): string;
+    setFiltersAndSortedApplied(): void;
     checkIfClean(): void;
     onCacheSync(records: OpRecord<ED>[]): void;
     destroy(): void;
@@ -73,14 +74,22 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     getChildren(): Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     addChild(path: string, node: SingleNode<ED, T, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
-    getNamedFilters(): NamedFilterItem<ED, T>[];
-    getNamedFilterByName(name: string): NamedFilterItem<ED, T> | undefined;
+    getNamedFilters(): (NamedFilterItem<ED, T> & {
+        applied?: true | undefined;
+    })[];
+    getNamedFilterByName(name: string): (NamedFilterItem<ED, T> & {
+        applied?: true | undefined;
+    }) | undefined;
     setNamedFilters(filters: NamedFilterItem<ED, T>[], refresh?: boolean): void;
     addNamedFilter(filter: NamedFilterItem<ED, T>, refresh?: boolean): void;
     removeNamedFilter(filter: NamedFilterItem<ED, T>, refresh?: boolean): void;
     removeNamedFilterByName(name: string, refresh?: boolean): void;
-    getNamedSorters(): NamedSorterItem<ED, T>[];
-    getNamedSorterByName(name: string): NamedSorterItem<ED, T> | undefined;
+    getNamedSorters(): (NamedSorterItem<ED, T> & {
+        applied?: true | undefined;
+    })[];
+    getNamedSorterByName(name: string): (NamedSorterItem<ED, T> & {
+        applied?: true | undefined;
+    }) | undefined;
     setNamedSorters(sorters: NamedSorterItem<ED, T>[], refresh?: boolean): void;
     addNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
@@ -108,7 +117,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     }> | undefined;
     getProjection(context?: FrontCxt): ED[T]["Selection"]["data"] | undefined;
     private constructFilters;
-    constructSelection(withParent?: true, context?: FrontCxt): {
+    constructSelection(withParent?: true, context?: FrontCxt, ignoreUnapplied?: true): {
         data: ED[T]["Selection"]["data"];
         filter: ED[T]["Selection"]["filter"] | undefined;
         sorter: ED[T]["Selection"]["sorter"];
@@ -128,6 +137,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     });
     protected getChildPath(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): string;
+    setFiltersAndSortedApplied(): void;
     checkIfClean(): void;
     destroy(): void;
     getChild(path: string): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
@@ -168,6 +178,7 @@ declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends As
     constructor(path?: string, parent?: VirtualNode<ED, Cxt, FrontCxt, AD>);
     getActiveModies(child: any): undefined;
     setDirty(): void;
+    setFiltersAndSortedApplied(): void;
     addChild(path: string, child: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>): void;
     getChild(path: string): VirtualNode<ED, Cxt, FrontCxt, AD> | SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     getParent(): undefined;
@@ -234,14 +245,22 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     getId(path: string): string | undefined;
     setPageSize<T extends keyof ED>(path: string, pageSize: number): void;
     setCurrentPage<T extends keyof ED>(path: string, currentPage: number): void;
-    getNamedFilters<T extends keyof ED>(path: string): NamedFilterItem<ED, keyof ED>[];
-    getNamedFilterByName<T extends keyof ED>(path: string, name: string): NamedFilterItem<ED, keyof ED> | undefined;
+    getNamedFilters<T extends keyof ED>(path: string): (NamedFilterItem<ED, keyof ED> & {
+        applied?: true | undefined;
+    })[];
+    getNamedFilterByName<T extends keyof ED>(path: string, name: string): (NamedFilterItem<ED, keyof ED> & {
+        applied?: true | undefined;
+    }) | undefined;
     setNamedFilters<T extends keyof ED>(path: string, filters: NamedFilterItem<ED, T>[], refresh?: boolean): void;
     addNamedFilter<T extends keyof ED>(path: string, filter: NamedFilterItem<ED, T>, refresh?: boolean): void;
     removeNamedFilter<T extends keyof ED>(path: string, filter: NamedFilterItem<ED, T>, refresh?: boolean): void;
     removeNamedFilterByName<T extends keyof ED>(path: string, name: string, refresh?: boolean): void;
-    getNamedSorters<T extends keyof ED>(path: string): NamedSorterItem<ED, keyof ED>[];
-    getNamedSorterByName<T extends keyof ED>(path: string, name: string): NamedSorterItem<ED, keyof ED> | undefined;
+    getNamedSorters<T extends keyof ED>(path: string): (NamedSorterItem<ED, keyof ED> & {
+        applied?: true | undefined;
+    })[];
+    getNamedSorterByName<T extends keyof ED>(path: string, name: string): (NamedSorterItem<ED, keyof ED> & {
+        applied?: true | undefined;
+    }) | undefined;
     setNamedSorters<T extends keyof ED>(path: string, sorters: NamedSorterItem<ED, T>[], refresh?: boolean): void;
     addNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
