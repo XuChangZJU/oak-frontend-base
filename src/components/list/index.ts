@@ -54,10 +54,12 @@ export default OakComponent({
                 const converter = analyzeAttrMobileForCard(schema, entity, (k, params) => this.t(k, params), attributesMb as CardDef, colorDict);
                 this.setState({
                     converter,
+                    colorDict,
                 })
             }
             this.setState({
                 schema,
+                colorDict,
             })
         }
     },
