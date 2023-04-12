@@ -185,8 +185,8 @@ export default function Render(
                         const value = getValue(ele, row, path, entityI8n, attr, attrType, t);
                         let color = 'black';
                         if (type === 'tag' && !!value) {
-                            assert(!!colorDict?.[entityI8n]?.[attr]?.[value], `${entity}实体iState颜色定义缺失`)
-                            color = colorDict![entityI8n]![attr]![value] as string;
+                            assert(!colorDict?.[entityI8n]?.[attr]?.[value], `${entity}实体iState颜色定义缺失`)
+                            color = colorDict && colorDict![entityI8n]![attr]![value] as string;
                         }
                         return (<RenderCell color={color} value={value} type={type!} />)
                     }
