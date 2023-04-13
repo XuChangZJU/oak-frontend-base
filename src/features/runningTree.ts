@@ -691,7 +691,7 @@ class ListNode<
         }
     }
 
-    getFreshValue(context: FrontCxt): Array<Partial<ED[T]['Schema']>> {
+    getFreshValue(context: FrontCxt, allowMiss?: boolean): Array<Partial<ED[T]['Schema']>> {
         /**
          * 满足当前结点的数据应当是所有满足当前filter条件且ids在当前ids中的数据
          * 但如果是当前事务create的行则例外（当前页面上正在create的数据）
@@ -702,7 +702,7 @@ class ListNode<
             data,
             filter,
             sorter,
-        }, context);
+        }, context, allowMiss);
         return result.filter(
             ele => ele.$$createAt$$ === 1 || this.ids?.includes(ele.id!)
         );
@@ -1188,7 +1188,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         unset(this.children, path);
     }
 
-    getFreshValue(context?: FrontCxt): Partial<ED[T]['Schema']> | undefined {
+    getFreshValue(context?: FrontCxt, allowMiss?: boolean): Partial<ED[T]['Schema']> | undefined {
         const projection = this.getProjection(context, false);
         const { id } = this;
         if (projection) {
@@ -1197,7 +1197,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 filter: {
                     id,
                 },
-            }, context);
+            }, context, allowMiss);
             return result[0];
         }
     }
@@ -1772,6 +1772,7 @@ export class RunningTree<
         | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>
         | VirtualNode<ED, Cxt, FrontCxt, AD>
     >;
+    private refreshing = false;
 
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
@@ -1930,7 +1931,6 @@ export class RunningTree<
         const node = this.findNode(path);
         const paths = path.split('.');
         const root = this.root[paths[0]];
-        // todo 判定modi
         const includeModi = path.includes(':next');
         if (node) {
             const context = this.cache.begin();
@@ -1945,7 +1945,7 @@ export class RunningTree<
             if (opers) {
                 this.cache.redoOperation(opers, context);
             }
-            const value = node.getFreshValue(context);
+            const value = node.getFreshValue(context, this.refreshing);
             context.rollback();
             return value;
         }
@@ -2056,17 +2056,21 @@ export class RunningTree<
 
     async refresh(path: string) {
         const node = this.findNode(path);
+        this.refreshing = true;
         if (node instanceof ListNode) {
             await node.refresh(1, true);
         } else if (node) {
             await node.refresh();
         }
+        this.refreshing = false;
     }
 
     async loadMore(path: string) {
         const node = this.findNode(path);
+        this.refreshing = true;
         assert(node instanceof ListNode);
         await node.loadMore();
+        this.refreshing = false;
     }
 
     getPagination(path: string) {
@@ -2258,6 +2262,7 @@ export class RunningTree<
             );
             assert(entities.length === 1);
 
+            this.refreshing = true;
             const result = await this.cache.operate(
                 entities[0],
                 operations
@@ -2270,6 +2275,7 @@ export class RunningTree<
                     node.setExecuting(false);
                 }
             );
+            this.refreshing = false;
 
             await node.doAfterTrigger();
 

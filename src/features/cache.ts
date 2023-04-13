@@ -235,7 +235,11 @@ export class Cache<
         return;
     }
 
-    private getInner<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], context: SyncContext<ED>, includedDeleted?: boolean): Partial<ED[T]['Schema']>[] {
+    private getInner<T extends keyof ED>(
+        entity: T,
+        selection: ED[T]['Selection'],
+        context: SyncContext<ED>,
+        allowMiss?: boolean): Partial<ED[T]['Schema']>[] {
         try {
             const result = this.cacheStore!.select(
                 entity,
@@ -243,13 +247,13 @@ export class Cache<
                 context,
                 {
                     dontCollect: true,
-                    includedDeleted: includedDeleted || undefined,
+                    includedDeleted: true,
                 }
             );
             return result;
         } catch (err) {
             if (err instanceof OakRowUnexistedException) {
-                if (!this.refreshing) {
+                if (!this.refreshing && !allowMiss) {
                     const missedRows = err.getRows();
                     this.exec('fetchRows', missedRows, async (result, opRecords) => {
                         // missedRows理论上一定要取到，不能为空集。否则就是程序员有遗漏
@@ -273,10 +277,11 @@ export class Cache<
         entity: T,
         selection: ED[T]['Selection'],
         context?: FrontCxt,
+        allowMiss?: boolean
     ) {
         const context2 = context ||  this.contextBuilder!();
 
-        return this.getInner(entity, selection, context2);
+        return this.getInner(entity, selection, context2, allowMiss);
     }
 
     judgeRelation(entity: keyof ED, attr: string) {
