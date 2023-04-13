@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useWidth } from './../responsive';
 
 import URL from 'url';
-import { assert } from 'console';
+import assert from 'assert';
 
 type Location = { state: Record<string, any>; search: string };
 
