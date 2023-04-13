@@ -109,21 +109,17 @@ export declare type OakComponentOption<ED extends EntityDict & BaseEntityDict, T
 export declare type OakComponentProperties<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<{
     oakPath: string;
     oakId: string;
-    oakProjection: ED[T]['Selection']['data'];
     oakFrom: string;
     oakParentEntity: string;
     oakDisablePulldownRefresh: boolean;
     oakAutoUnmount: boolean;
-    oakActions: ED[T]['Action'][];
-    oakCascadeActions: {
-        [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
-    };
+    oakActions: string;
+    oakCascadeActions: string;
 }>;
 export declare type OakListComponentProperties<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<{
     oakFilters: NamedFilterItem<ED, T>[];
     oakSorters: NamedSorterItem<ED, T>[];
-    oakIsPicker: boolean;
-    oakPagination: Pagination;
+    oakProjection: ED[T]['Selection']['data'];
 }>;
 export declare type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakId?: string;
@@ -133,7 +129,6 @@ export declare type OakNavigateToParameters<ED extends EntityDict & BaseEntityDi
     oakProjection?: ED[T]['Selection']['data'];
     oakSorters?: Array<NamedSorterItem<ED, T>>;
     oakFilters?: Array<NamedFilterItem<ED, T>>;
-    oakIsPicker?: boolean;
     [k: string]: any;
 };
 export declare type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
@@ -189,9 +184,10 @@ export declare type OakListComponentMethods<ED extends EntityDict & BaseEntityDi
     getFilters: (path?: string) => ED[T]['Selection']['filter'][] | undefined;
     getFilterByName: (name: string, path?: string) => ED[T]['Selection']['filter'] | undefined;
     addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) => void;
+    setNamedFilters: (filters: NamedFilterItem<ED, T>[], refresh?: boolean, path?: string) => void;
     removeNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) => void;
     removeNamedFilterByName: (name: string, refresh?: boolean, path?: string) => void;
-    setNamedSorters: (sorters: NamedSorterItem<ED, T>[], path?: string) => void;
+    setNamedSorters: (sorters: NamedSorterItem<ED, T>[], refresh?: boolean, path?: string) => void;
     getSorters: (path?: string) => ED[T]['Selection']['sorter'] | undefined;
     getSorterByName: (name: string, path?: string) => NonNullable<ED[T]['Selection']['sorter']>[number] | undefined;
     addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
@@ -232,8 +228,6 @@ export declare type OakComponentData<ED extends EntityDict & BaseEntityDict, T e
     oakDisablePulldownRefresh: boolean;
 };
 declare type OakListComoponetData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
-    oakFilters?: NonNullable<ED[T]['Selection']['filter']>[];
-    oakSorters?: NonNullable<ED[T]['Selection']['sorter']>[];
     oakPagination?: Pagination;
 };
 export declare type MakeOakComponent<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>> = <T extends keyof ED, FormedData extends DataOption, IsList extends boolean, TData extends DataOption, TProperty extends DataOption, TMethod extends MethodOption>(options: OakComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod>) => (props: ReactComponentProps<ED, T, IsList, TProperty>) => React.ReactElement;

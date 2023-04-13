@@ -10,6 +10,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     private aspectWrapper;
     private syncEventsCallbacks;
     private contextBuilder?;
+    private refreshing;
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>);
     getSchema(): import("oak-domain/lib/types").StorageSchema<ED>;
     getCurrentUserId(allowUnloggedIn?: boolean): string | undefined;
@@ -22,7 +23,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         count: number | undefined;
     }>;
     aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]['Aggregation'], option?: OP): Promise<import("oak-domain/lib/types").AggregationResult<ED[keyof ED]["Schema"]>>;
-    operate<T extends keyof ED, OP extends OperateOption>(entity: T, operation: ED[T]['Operation'], option?: OP, callback?: (result: Awaited<ReturnType<AD['operate']>>) => void): Promise<{
+    operate<T extends keyof ED, OP extends OperateOption>(entity: T, operation: ED[T]['Operation'] | ED[T]['Operation'][], option?: OP, callback?: (result: Awaited<ReturnType<AD['operate']>>) => void): Promise<{
         result: Awaited<ReturnType<AD["operate"]>>;
         message: string | null | undefined;
     }>;
@@ -39,22 +40,12 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         entity: T;
     })[]): true | Error;
     checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]): boolean;
-    /**
-     * 尝试在cache中重做一些动作，然后选择重做后的数据（为了实现modi）
-     * @param entity
-     * @param selection
-     * @param opers
-     */
-    tryRedoOperationsThenSelect<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], opers: Array<{
-        entity: keyof ED;
-        operation: ED[keyof ED]['Operation'];
-    }>, allowMiss?: boolean): Partial<ED[T]["Schema"]>[];
     redoOperation(opers: Array<{
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
     }>, context: FrontCxt): void;
     private getInner;
-    get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], allowMiss?: boolean, context?: FrontCxt): Partial<ED[T]["Schema"]>[];
+    get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], context?: FrontCxt): Partial<ED[T]["Schema"]>[];
     judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | 2 | string[];
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;

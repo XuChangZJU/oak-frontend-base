@@ -30,7 +30,7 @@ export async function onPathSet<
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
         option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>) {
     const { props, state } = this;
-    const { oakPath, oakProjection, oakIsPicker, oakFilters, oakSorters, oakId } = props as ComponentProps<ED, T, true, {}>;
+    const { oakPath, oakProjection, oakFilters, oakSorters, oakId } = props as ComponentProps<ED, T, true, {}>;
     const { entity, path, projection, isList, filters, sorters, pagination } = option;
     const { features } = this;
 
@@ -91,7 +91,6 @@ export async function onPathSet<
             path: oakPath2,
             entity: entity2,
             isList,
-            isPicker: oakIsPicker,
             projection: proj,
             pagination: pagination,
             filters: filters2,
@@ -164,7 +163,7 @@ function checkActionsAndCascadeEntities<
         option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>
     ) {
     const checkTypes = ['relation', 'row', 'logical', 'logicalRelation'] as CheckerType[];
-    const actions = this.props.oakActions || (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
+    const actions = this.props.oakActions ? JSON.parse(this.props.oakActions) as ED[T]['Action'][] : (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
     const legalActions = [] as ActionDef<ED, T>[];
     if (actions) {
         // todo 这里actions整体进行测试的性能应该要高于一个个去测试
@@ -238,7 +237,7 @@ function checkActionsAndCascadeEntities<
     }
     const cascadeActionDict: {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
-    } = this.props.oakCascadeActions as any || ((option.cascadeActions && option.cascadeActions.call(this)));
+    } = this.props.oakCascadeActions ? JSON.parse(this.props.oakCascadeActions) : ((option.cascadeActions && option.cascadeActions.call(this)));
 
     if (cascadeActionDict) {
         const addToRow = (r: Partial<ED[keyof ED]['Schema']>, e: keyof ED[T]['Schema'], a: ActionDef<ED, keyof ED>) => {
@@ -392,12 +391,13 @@ export function reRender<
             });
 
             if (option.isList) {
-                const oakFilters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getFilters();
-                const oakSorters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getSorters();
+                // 因为oakFilters和props里的oakFilters同名，这里只能先注掉，好像还没有组件用过
+                // const oakFilters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getFilters();
+                // const oakSorters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getSorters();
                 const oakPagination = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getPagination();
                 Object.assign(data, {
-                    oakFilters,
-                    oakSorters,
+                    // oakFilters,
+                    // oakSorters,
                     oakPagination,
                 });
             }

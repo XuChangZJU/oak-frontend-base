@@ -430,6 +430,13 @@ abstract class OakComponentBase<
         this.features.runningTree.setNamedFilters(path2, filters);
     }
 
+    setNamedFilters(filters: NamedFilterItem<ED, T>[], refresh?: boolean, path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        this.features.runningTree.setNamedFilters(path2, filters, refresh);
+    }
+
     getFilters(path?: string) {
         if (this.state.oakFullpath) {
             const path2 = path
@@ -498,11 +505,11 @@ abstract class OakComponentBase<
         this.features.runningTree.removeNamedFilterByName(path2, name, refresh);
     }
 
-    setNamedSorters(namedSorters: NamedSorterItem<ED, T>[], path?: string) {
+    setNamedSorters(namedSorters: NamedSorterItem<ED, T>[], refresh?: boolean, path?: string) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.setNamedSorters(path2, namedSorters);
+        this.features.runningTree.setNamedSorters(path2, namedSorters, refresh);
     }
 
     getSorters(path?: string) {
@@ -775,6 +782,9 @@ export function createComponent<
                 setFilters: (filters: NamedFilterItem<ED, T>[], path?: string) => {
                     return this.setFilters(filters, path);
                 },
+                setNamedFilters: (filters: NamedFilterItem<ED, T>[], refresh?: boolean, path?: string) => {
+                    return this.setNamedFilters(filters, refresh, path);
+                },
                 addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) => {
                     return this.addNamedFilter(filter, refresh, path);
                 },
@@ -784,8 +794,8 @@ export function createComponent<
                 removeNamedFilterByName: (name: string, refresh?: boolean, path?: string) => {
                     return this.removeNamedFilterByName(name, refresh, path);
                 },
-                setNamedSorters: (sorters: NamedSorterItem<ED, T>[], path?: string) => {
-                    return this.setNamedSorters(sorters, path);
+                setNamedSorters: (sorters: NamedSorterItem<ED, T>[], refresh?: boolean, path?: string) => {
+                    return this.setNamedSorters(sorters, refresh, path);
                 },
                 addNamedSorter: (sorter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => {
                     return this.addNamedSorter(sorter, refresh, path);
@@ -921,7 +931,6 @@ export function createComponent<
                 lifetimes?.show && lifetimes.show.call(this);
             }
             else {
-                // 这个if看不太懂，先注掉，不确定有无问题。by Xc 20230322
                 if (!option.entity) {
                     lifetimes?.ready && lifetimes.ready.call(this);
                     lifetimes?.show && lifetimes.show.call(this);
@@ -961,7 +970,30 @@ export function createComponent<
                 assert(this.props.oakId);       // 好像不可能把已有的id设空的界面需求吧
                 this.setId(this.props.oakId!);
             }
-            // todo 这里似乎还可能对oakProjection这些东西加以更新，等遇到再添加 by Xc
+
+            /*  这几个东西暂不支持变化，必须在初始化时确定
+            // 如果上层将oakFilters和oakSorters作为props传入，这里会将当前的filters和sorters清空，所以使用这两个props时最好是静态不变的
+            if (this.props.oakFilters !== prevProps.oakFilters) {
+                if (this.props.oakFilters) {
+                    const namedFilters = JSON.parse(this.props.oakFilters!);
+                    this.setNamedFilters(namedFilters, true);
+                }
+                else {
+                    this.setNamedFilters([], true);
+                }
+            }
+            if (this.props.oakSorters !== prevProps.oakSorters) {
+                if (this.props.oakSorters) {
+                    const namedSorters = JSON.parse(this.props.oakSorters!);
+                    this.setNamedSorters(namedSorters, true);
+                }
+                else {
+                    this.setNamedSorters([], true);
+                }
+            }
+            if (this.props.oakProjection !== prevProps.oakProjection) {
+                assert(false, 'oakProjection参数暂不允许变动');
+            } */
 
             fn && fn.call(this, prevProps, prevState);
         }

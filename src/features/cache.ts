@@ -21,6 +21,7 @@ export class Cache<
         (opRecords: OpRecord<ED>[]) => void
     >;
     private contextBuilder?: () => FrontCxt;
+    private refreshing = false;
 
     constructor(
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
@@ -93,12 +94,14 @@ export class Cache<
         getCount?: true,
         callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
     ) {
+        this.refreshing = true;
         const { result: { ids, count } } = await this.exec('select', {
             entity,
             selection,
             option,
             getCount,
         }, callback);
+        this.refreshing = false;
 
         const selection2 = Object.assign({}, selection, {
             filter: {
@@ -130,15 +133,18 @@ export class Cache<
 
     async operate<T extends keyof ED, OP extends OperateOption>(
         entity: T,
-        operation: ED[T]['Operation'],
+        operation: ED[T]['Operation'] | ED[T]['Operation'][],
         option?: OP,
         callback?: (result: Awaited<ReturnType<AD['operate']>>) => void,
     ) {
-        return await this.exec('operate', {
+        this.refreshing = true;
+        const result = await this.exec('operate', {
             entity,
             operation,
             option,
         }, callback);
+        this.refreshing = false;
+        return result;
     }
 
     async count<T extends keyof ED, OP extends SelectOption>(
@@ -211,49 +217,6 @@ export class Cache<
         }
     }
 
-    /**
-     * 尝试在cache中重做一些动作，然后选择重做后的数据（为了实现modi）
-     * @param entity
-     * @param selection
-     * @param opers
-     */
-    tryRedoOperationsThenSelect<T extends keyof ED>(
-        entity: T,
-        selection: ED[T]['Selection'],
-        opers: Array<{
-            entity: keyof ED;
-            operation: ED[keyof ED]['Operation'];
-        }>,
-        allowMiss?: boolean
-    ) {
-        const context = this.contextBuilder!();
-        context.begin();
-        try {
-            for (const oper of opers) {
-                this.cacheStore!.operate(
-                    oper.entity,
-                    cloneDeep(oper.operation),
-                    context,
-                    {
-                        dontCollect: true,
-                        dontCreateOper: true,
-                        blockTrigger: true,
-                        dontCreateModi: true,
-                    }
-                );
-            }
-
-            // 这个场景下要把可能刚刚delete的行返回
-            const result = this.getInner(entity, selection, context, allowMiss, true);
-            context.rollback();
-            return result;
-        }
-        catch (err) {
-            context.rollback();
-            throw err;
-        }
-    }
-
     redoOperation(opers: Array<{
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
@@ -272,7 +235,7 @@ export class Cache<
         return;
     }
 
-    private getInner<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], context: SyncContext<ED>, allowMiss?: boolean, includedDeleted?: boolean): Partial<ED[T]['Schema']>[] {
+    private getInner<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], context: SyncContext<ED>, includedDeleted?: boolean): Partial<ED[T]['Schema']>[] {
         try {
             const result = this.cacheStore!.select(
                 entity,
@@ -286,7 +249,7 @@ export class Cache<
             return result;
         } catch (err) {
             if (err instanceof OakRowUnexistedException) {
-                if (!allowMiss) {
+                if (!this.refreshing) {
                     const missedRows = err.getRows();
                     this.exec('fetchRows', missedRows, async (result, opRecords) => {
                         // missedRows理论上一定要取到，不能为空集。否则就是程序员有遗漏
@@ -309,12 +272,11 @@ export class Cache<
     get<T extends keyof ED>(
         entity: T,
         selection: ED[T]['Selection'],
-        allowMiss?: boolean,
         context?: FrontCxt,
     ) {
         const context2 = context ||  this.contextBuilder!();
 
-        return this.getInner(entity, selection, context2, allowMiss);
+        return this.getInner(entity, selection, context2);
     }
 
     judgeRelation(entity: keyof ED, attr: string) {

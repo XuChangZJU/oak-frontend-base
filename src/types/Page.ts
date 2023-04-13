@@ -283,15 +283,13 @@ export type OakComponentProperties<
     T extends keyof ED> = Partial<{
         oakPath: string;
         oakId: string;
-        oakProjection: ED[T]['Selection']['data'];
+        // oakProjection: ED[T]['Selection']['data'];
         oakFrom: string;
         oakParentEntity: string;
         oakDisablePulldownRefresh: boolean;
         oakAutoUnmount: boolean;
-        oakActions: ED[T]['Action'][];
-        oakCascadeActions: {
-            [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
-        };
+        oakActions: string;
+        oakCascadeActions: string;
     }>;
 
 export type OakListComponentProperties<
@@ -299,8 +297,8 @@ export type OakListComponentProperties<
     T extends keyof ED> = Partial<{
         oakFilters: NamedFilterItem<ED, T>[];
         oakSorters: NamedSorterItem<ED, T>[];
-        oakIsPicker: boolean;
-        oakPagination: Pagination;
+        oakProjection: ED[T]['Selection']['data'];
+        // oakPagination: Pagination;
     }>;
 
 export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
@@ -311,7 +309,6 @@ export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T ex
     oakProjection?: ED[T]['Selection']['data'],
     oakSorters?: Array<NamedSorterItem<ED, T>>,
     oakFilters?: Array<NamedFilterItem<ED, T>>;
-    oakIsPicker?: boolean;
     [k: string]: any;
 };
 
@@ -402,9 +399,10 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     getFilters: (path?: string) => ED[T]['Selection']['filter'][] | undefined;
     getFilterByName: (name: string, path?: string) => ED[T]['Selection']['filter'] | undefined;
     addNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) => void;
+    setNamedFilters: (filters: NamedFilterItem<ED, T>[], refresh?: boolean, path?: string) => void;
     removeNamedFilter: (filter: NamedFilterItem<ED, T>, refresh?: boolean, path?: string) => void;
     removeNamedFilterByName: (name: string, refresh?: boolean, path?: string) => void;
-    setNamedSorters: (sorters: NamedSorterItem<ED, T>[], path?: string) => void;
+    setNamedSorters: (sorters: NamedSorterItem<ED, T>[], refresh?: boolean, path?: string) => void;
     getSorters: (path?: string) => ED[T]['Selection']['sorter'] | undefined;
     getSorterByName: (name: string, path?: string) => NonNullable<ED[T]['Selection']['sorter']>[number] | undefined;
     addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
@@ -456,8 +454,8 @@ type OakListComoponetData<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED
     > = {
-        oakFilters?: NonNullable<ED[T]['Selection']['filter']>[];
-        oakSorters?: NonNullable<ED[T]['Selection']['sorter']>[];
+        // oakFilters?: NonNullable<ED[T]['Selection']['filter']>[];
+        // oakSorters?: NonNullable<ED[T]['Selection']['sorter']>[];
         oakPagination?: Pagination;
     }
 

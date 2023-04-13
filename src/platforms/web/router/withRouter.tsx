@@ -5,17 +5,18 @@ import { useTranslation } from 'react-i18next';
 import { useWidth } from './../responsive';
 
 import URL from 'url';
+import { assert } from 'console';
 
 type Location = { state: Record<string, any>; search: string };
 
-function getParams(location: Location, properties?: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty>) {
+function getParams(location: Location, properties?: Record<string, any>) {
     const { search, state } = location;
     const query = getQuery(search, properties);
 
     return Object.assign({}, query, state);
 }
 
-function getQuery(url: string, properties?: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty>) {
+function getQuery(url: string, properties?: Record<string, any>) {
     let query: Record<string, any> = {};
     if (!url) {
         return query;
@@ -25,31 +26,30 @@ function getQuery(url: string, properties?: Record<string, FunctionConstructor |
         query = parseUrl.query;
     }
     const query2 = {};
-    
+
     for (const k in query) {
         if (properties && properties[k]) {
-            const type = typeof properties[k] === 'function' ? properties[k] : (properties[k] as any).type;
-            switch (type) {
-                case Number: {
+            switch (typeof properties[k]) {
+                case 'number': {
                     Object.assign(query2, {
                         [k]: Number(query[k]),
                     });
                     break;
                 }
-                case Boolean: {
+                case 'boolean': {
                     Object.assign(query2, {
                         [k]: Boolean(query[k]),
                     });
                     break;
                 }
-                case Array:
-                case Object: {
+                case 'object': {
                     Object.assign(query2, {
                         [k]: JSON.parse(query[k]),
                     });
                     break;
                 }
                 default: {
+                    assert(typeof properties[k] === 'string', '传参只能是number/boolean/object/string四种类型');
                     Object.assign(query2, {
                         [k]: query[k],
                     })
@@ -58,20 +58,20 @@ function getQuery(url: string, properties?: Record<string, FunctionConstructor |
         }
         else {
             switch (k) {
-                case 'oakIsPicker':
                 case 'oakDisablePulldownRefresh': {
                     Object.assign(query2, {
                         [k]: Boolean(query[k]),
                     });
                     break;
                 }
-                case 'oakFilters':
-                case 'oakSorters': {
+                case 'oakProjection':
+                case 'oakSorters':
+                case 'oakFilters': {
                     Object.assign(query2, {
                         [k]: JSON.parse(query[k]),
                     });
                     break;
-
+                    break;
                 }
                 default: {
                     Object.assign(query2, {
@@ -84,7 +84,7 @@ function getQuery(url: string, properties?: Record<string, FunctionConstructor |
     return query2;
 }
 
-const withRouter = (Component: React.ComponentType<any>, { path, properties }: {path?: string, properties?: Record<string, FunctionConstructor | WechatMiniprogram.Component.AllProperty> }) => {
+const withRouter = (Component: React.ComponentType<any>, { path, properties }: { path?: string, properties?: Record<string, any> }) => {
     const ComponentWithRouterProp = (props: any) => {
         const location = useLocation();
         const routerParams = useParams(); // 取路由 xx/:abbr 通过这个函数取到

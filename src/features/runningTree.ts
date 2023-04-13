@@ -363,7 +363,7 @@ class ListNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Node<ED, T, Cxt, FrontCxt, AD> {
+    > extends Node<ED, T, Cxt, FrontCxt, AD> {
     private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     private updates: Record<
         string,
@@ -702,10 +702,10 @@ class ListNode<
             data,
             filter,
             sorter,
-        }, undefined, context);
+        }, context);
         return result.filter(
             ele => ele.$$createAt$$ === 1 || this.ids?.includes(ele.id!)
-        );        
+        );
     }
 
     addItem(
@@ -952,12 +952,12 @@ class ListNode<
         const sorterArr = sorters.filter(
             ele => !ignoreUnapplied || ele.applied
         ).map((ele) => {
-                const { sorter } = ele;
-                if (typeof sorter === 'function') {
-                    return (sorter as Function)();
-                }
-                return sorter;
-            })
+            const { sorter } = ele;
+            if (typeof sorter === 'function') {
+                return (sorter as Function)();
+            }
+            return sorter;
+        })
             .filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
 
         const filters = this.constructFilters(context, withParent, ignoreUnapplied);
@@ -1197,7 +1197,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 filter: {
                     id,
                 },
-            }, undefined, context);
+            }, context);
             return result[0];
         }
     }
@@ -1422,19 +1422,19 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 const { data: [value] } = await this.cache.refresh(this.entity, {
                     data: projection,
                     filter,
-                }, undefined, undefined, () => {                   
+                }, undefined, undefined, () => {
                     // 刷新后所有的更新都应当被丢弃（子层上可能会自动建立了this.create动作） 这里可能会有问题 by Xc 20230329
                     this.setFiltersAndSortedApplied();
                     this.setLoading(false);
                     this.clean();
                 });
-                 // 对于modi对象，在此缓存modiIds
-                 if (this.schema[this.entity].toModi && value) {
+                // 对于modi对象，在此缓存modiIds
+                if (this.schema[this.entity].toModi && value) {
                     const { modi$entity } = value;
                     this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id);
                     this.publish();
                 }
-                
+
             }
             catch (err) {
                 this.setLoading(false);
@@ -1581,7 +1581,7 @@ class VirtualNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Feature {
+    > extends Feature {
     private dirty: boolean;
     private executing: boolean;
     private children: Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
@@ -1729,7 +1729,6 @@ export type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends 
     path: string;
     entity?: T;
     isList?: boolean;
-    isPicker?: boolean;
     projection?: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
     pagination?: Pagination;
     filters?: NamedFilterItem<ED, T>[];
@@ -1763,7 +1762,7 @@ export class RunningTree<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Feature {
+    > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
     private authDict: AuthDefDict<ED>;
@@ -2259,14 +2258,12 @@ export class RunningTree<
             );
             assert(entities.length === 1);
 
-            const result = await this.cache.exec(
-                'operate',
-                {
-                    entity: entities[0],
-                    operation: operations
-                        .filter((ele) => !!ele)
-                        .map((ele) => ele.operation),
-                },
+            const result = await this.cache.operate(
+                entities[0],
+                operations
+                    .filter((ele) => !!ele)
+                    .map((ele) => ele.operation),
+                undefined,
                 () => {
                     // 清空缓存
                     node.clean();

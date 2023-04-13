@@ -202,7 +202,6 @@ export declare type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T 
     path: string;
     entity?: T;
     isList?: boolean;
-    isPicker?: boolean;
     projection?: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
     pagination?: Pagination;
     filters?: NamedFilterItem<ED, T>[];

@@ -33,10 +33,10 @@ const OakProperties = {
     oakPath: '',
     oakFilters: [],
     oakSorters: [],
-    oakIsPicker: false,
+    oakProjection: {},
     oakParentEntity: '',
     oakFrom: '',
-    oakActions: [],
+    oakActions: '',
     oakAutoUnmount: false,
     oakDisablePulldownRefresh: false,
 };
@@ -44,12 +44,13 @@ const OakProperties = {
 const OakPropertyTypes = {
     oakId: String,
     oakPath: String,
-    oakFilters: Array,
-    oakSorters: Array,
-    oakIsPicker: Boolean,
+    // 这几个不能写成Array或Object，小程序会初始化成空对象和空数组
+    oakFilters: null,
+    oakSorters: null,
+    oakProjection: null,
     oakParentEntity: String,
     oakFrom: String,
-    oakActions: Array,
+    oakActions: String,
     oakAutoUnmount: Boolean,
     oakDisablePulldownRefresh: Boolean,
 }
@@ -80,7 +81,7 @@ const oakBehavior = Behavior<
             oakPath?: string;
             oakFilters?: string;
             oakSorters?: string;
-            oakIsPicker?: boolean;
+            oakProjection?: string;
             oakParentEntity?: string;
             oakFrom?: string;
             oakActions?: string;
@@ -179,7 +180,7 @@ const oakBehavior = Behavior<
                 property: string,
                 type: 'string' | 'boolean' | 'number' | 'object'
             ) => {
-                if (data[property]) {
+                if (data.hasOwnProperty(property)) {
                     let value = data[property];
                     if (typeof data[property] === 'string' && type !== 'string') {
                         switch (type) {
@@ -205,12 +206,14 @@ const oakBehavior = Behavior<
                     });
                 }
             };
+            /**
+             * query是跳页面时从queryString里传值
+             * this.data是properties中有定义的时候在会自动赋值，这里没必要再处理一遍
+             */
             if (properties) {
                 for (const key in properties) {
                     if (query[key]) {
                         assignProps(query, key, typeof properties[key] as 'string');
-                    } else if (this.data) {
-                        assignProps(this.data, key, typeof properties[key] as 'string');
                     }
                 }
             }
@@ -218,12 +221,6 @@ const oakBehavior = Behavior<
                 if (query[key]) {
                     assignProps(
                         query,
-                        key,
-                        typeof OakProperties[key as keyof typeof OakProperties] as 'string'
-                    );
-                } else if (this.data) {
-                    assignProps(
-                        this.data,
                         key,
                         typeof OakProperties[key as keyof typeof OakProperties] as 'string'
                     );
@@ -354,6 +351,13 @@ const oakBehavior = Behavior<
             return this.features.runningTree.getId(this.state.oakFullpath);
         },
 
+        setNamedFilters(filters, refresh, path) {
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            this.features.runningTree.setNamedFilters(path2, filters, refresh);
+        },
+
         setFilters(filters, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
@@ -429,11 +433,11 @@ const oakBehavior = Behavior<
             );
         },
 
-        setNamedSorters(namedSorters, path) {
+        setNamedSorters(namedSorters, refresh, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            this.features.runningTree.setNamedSorters(path2, namedSorters);
+            this.features.runningTree.setNamedSorters(path2, namedSorters, refresh);
         },
 
         getSorters(path) {
@@ -644,6 +648,33 @@ const oakBehavior = Behavior<
                 }
             }
         },
+        /* oakFilters(data) {
+            if (data !== this.props.oakFilters) {
+                // 如果oakFilters被置空或重置，会完全重置当前结点上所有的nameFilter并重取数据。这个逻辑可能有问题，对oakFilters要慎用
+                if (!data) {
+                    this.setNamedFilters([], true);
+                }
+                else {
+                    const namedFilters = JSON.parse(data);
+                    this.setNamedFilters(namedFilters, true);
+                }
+            }
+        },
+        oakSorters(data) {
+            if (data !== this.props.oakSorters) {
+                // 如果oakSorters被置空或重置，会完全重置当前结点上所有的nameSorter并重取数据。这个逻辑可能有问题，对oakSorter要慎用
+                if (!data) {
+                    this.setNamedSorters([], true);
+                }
+                else {
+                    const namedSorters = JSON.parse(data);
+                    this.setNamedSorters(namedSorters, true);
+                }
+            }
+        },
+        oakProjection(data) {
+            assert(data === this.props.oakProjection, 'oakProjection暂不支持变化');
+        } */
     },
     pageLifetimes: {
         show() {
@@ -831,7 +862,7 @@ export function createComponent<
                 oakPath: string;
                 oakFilters: string;
                 oakSorters: string;
-                oakIsPicker: boolean;
+                oakProjection?: string;
                 oakParentEntity: string;
                 oakFrom: string;
                 oakActions: string;
