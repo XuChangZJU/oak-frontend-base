@@ -679,7 +679,7 @@ const oakBehavior = Behavior<
     pageLifetimes: {
         show() {
             const { show } = this.oakOption.lifetimes || {};
-            this.reRender();
+            // this.reRender();
             show && show.call(this);
         },
         hide() {
@@ -932,15 +932,6 @@ export function createComponent<
             ...restMethods,
         },
         observers,
-        pageLifetimes: {
-            show() {
-                // this.reRender();
-                show && show.call(this);
-            },
-            hide() {
-                hide && hide.call(this);
-            },
-        },
         lifetimes: {
             created() {
                 this.oakOption = option;
