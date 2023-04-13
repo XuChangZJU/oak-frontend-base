@@ -792,15 +792,14 @@ function translatePropertiesToPropertyDefinitions(properties?: DataOption) {
                         }
                         break;
                     }
-                    case 'function': {
+                    case 'function':
+                    default: {
                         // 小程序也支持传函数 https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html
+                        // 其它什么类型都写null，小程序能识别出来
                         Object.assign(definitions, {
-                            [prop]: Function,
+                            [prop]: null,
                         });
                         break;
-                    }
-                    default: {
-                        assert(false, 'properties只支持传string/number/object/array/boolean/function之一');
                     }
                 }
             }
