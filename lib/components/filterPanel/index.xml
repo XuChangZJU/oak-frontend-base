@@ -1,7 +1,9 @@
 <view class="ticket-container">
     <view class="ticket-container-top">
         <block wx:for="{{columnsMp}}">
-            <oak-filter column="{{item}}" oakPath="{{oakFullpath}}" entity="{{entity}}" />
+            <view class="filter-item">
+                <oak-filter column="{{item}}" oakPath="{{oakFullpath}}" entity="{{entity}}" />
+            </view>
         </block>
     </view>
     <view class="ticket-container-bottom">
@@ -12,7 +14,7 @@
                     <view class="ticket-detail-container">展开
                         <l-icon name="down" size="16" color="#999"/>
                     </view>
-                    <l-button l-class height="50" size="mini" shape="semicircle" plain="{{true}}">立即使用</l-button>
+                    <l-button l-class height="50" size="mini" shape="semicircle" plain="{{true}}">搜索</l-button>
                 </view>
                 <view class="space-vertical">
                     <block wx:for="{{moreColumnsMp}}">

@@ -1,12 +1,14 @@
 {
     "component": true,
     "usingComponents": {
-        "l-popup": "@oak-frontend-base/miniprogram_npm/lin-ui/popup/index",
-        "l-icon": "@oak-frontend-base/miniprogram_npm/lin-ui/icon/index",
-        "l-input": "@oak-frontend-base/miniprogram_npm/lin-ui/input/index",
-        "l-checkbox": "@oak-frontend-base/miniprogram_npm/lin-ui/checkbox/index",
-        "l-checkbox-group": "@oak-frontend-base/miniprogram_npm/lin-ui/checkbox-group/index",
-        "l-calendar": "@oak-frontend-base/miniprogram_npm/lin-ui/calendar/index",
-        "l-form-item": "@oak-frontend-base/miniprogram_npm/lin-ui/form-item/index"
+        "l-button": "../../miniprogram_npm/lin-ui/button/index",
+        "l-search-bar": "../../miniprogram_npm/lin-ui/search-bar/index",
+        "l-popup": "../../miniprogram_npm/lin-ui/popup/index",
+        "l-icon": "../../miniprogram_npm/lin-ui/icon/index",
+        "l-input": "../../miniprogram_npm/lin-ui/input/index",
+        "l-checkbox": "../../miniprogram_npm/lin-ui/checkbox/index",
+        "l-checkbox-group": "../../miniprogram_npm/lin-ui/checkbox-group/index",
+        "l-calendar": "../../miniprogram_npm/lin-ui/calendar/index",
+        "l-form-item": "../../miniprogram_npm/lin-ui/form-item/index"
     }
 }

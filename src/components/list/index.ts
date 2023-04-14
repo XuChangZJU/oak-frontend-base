@@ -1,8 +1,8 @@
-import { CardDef, ED, OakAbsAttrDef } from '../../types/AbstractComponent';
+import { CardDef, ED, OakAbsAttrDef, onActionFnDef } from '../../types/AbstractComponent';
 import { analyzeAttrMobileForCard } from '../../utils/usefulFn';
 import assert from 'assert';
 import { TableProps, PaginationProps } from 'antd';
-import { RowWithActions } from '../../types/Page';
+import { RowWithActions, ReactComponentProps } from '../../types/Page';
 
 export default OakComponent({
     isList: false,
@@ -75,4 +75,27 @@ export default OakComponent({
             })
         },
     }
-});
+}) as <ED2 extends ED, T2 extends keyof ED2, T3 extends keyof ED = keyof ED>(
+    props: ReactComponentProps<
+        ED2,
+        T2,
+        false,
+        {
+            entity: T2;
+            extraActions: string[];
+            onAction: onActionFnDef;
+            disabledOp: boolean;
+            attributes: OakAbsAttrDef[];
+            attributesMb: CardDef;
+            data: RowWithActions<ED2, T2> [];
+            loading: boolean;
+            tablePagination: TableProps<RowWithActions<ED2, T2>[]> ['pagination'],
+            rowSelection: {
+                type: 'checkbox' | 'radio',
+                selectedRowKeys ?: string[],
+                onChange: (selectedRowKeys: string[], row: RowWithActions<ED2, T2>[], info?: { type: 'single' | 'multiple' | 'none' }) => void,
+            };
+            scroll: TableProps<ED2[T2]['Schema'][] > ['scroll'];
+        }
+    >
+) => React.ReactElement;

@@ -1,20 +1,20 @@
-/// <reference types="react" />
-import { CardDef, ED, OakAbsAttrDef } from '../../types/AbstractComponent';
-import { RowWithActions } from '../../types/Page';
-declare const _default: (props: import("../../types/Page").ReactComponentProps<import("oak-domain/lib/types").EntityDict & import("oak-domain/lib/base-app-domain").EntityDict, string | number, false, {
-    entity: string | number;
+import { CardDef, ED, OakAbsAttrDef, onActionFnDef } from '../../types/AbstractComponent';
+import { TableProps } from 'antd';
+import { RowWithActions, ReactComponentProps } from '../../types/Page';
+declare const _default: <ED2 extends ED, T2 extends keyof ED2, T3 extends string | number = string | number>(props: ReactComponentProps<ED2, T2, false, {
+    entity: T2;
     extraActions: string[];
-    onAction: Function;
+    onAction: onActionFnDef;
     disabledOp: boolean;
     attributes: OakAbsAttrDef[];
     attributesMb: CardDef;
-    data: RowWithActions<ED, string | number>[];
+    data: RowWithActions<ED2, T2>[];
     loading: boolean;
     tablePagination: false | import("antd").TablePaginationConfig | undefined;
     rowSelection: {
         type: 'checkbox' | 'radio';
         selectedRowKeys?: string[] | undefined;
-        onChange: (selectedRowKeys: string[], row: RowWithActions<ED, keyof ED>[], info?: {
+        onChange: (selectedRowKeys: string[], row: RowWithActions<ED2, T2>[], info?: {
             type: 'single' | 'multiple' | 'none';
         }) => void;
     };
@@ -24,5 +24,5 @@ declare const _default: (props: import("../../types/Page").ReactComponentProps<i
     } & {
         scrollToFirstRowOnChange?: boolean | undefined;
     }) | undefined;
-}>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
+}>) => React.ReactElement;
 export default _default;

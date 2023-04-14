@@ -1,4 +1,4 @@
-<block wx:if="{{type === 'Input'}}">
+<block wx:if="{{viewType === 'Input'}}">
     <view class="card">
         <view class="label">
             {{labelMp}}
@@ -6,7 +6,7 @@
         <l-input confirm-type="next" bind:lininput="setValueMp" hide-label show-row="{{true}}" />
     </view>
 </block>
-<block wx:if="{{type === 'Select'}}">
+<block wx:if="{{viewType === 'Select'}}">
     <view class="card">
         <view class="label">
             {{labelMp}}
@@ -34,7 +34,7 @@
         </l-popup>
     </view>
 </block>
-<block wx:if="{{type === 'DatePicker'}}">
+<block wx:if="{{viewType === 'DatePicker'}}">
     <view class="card">
         <view class="form-item-view">
             <view class="label">
@@ -58,7 +58,7 @@
         <l-calendar show="{{show}}" bind:linconfirm="setTimeStrMp" />
     </view>
 </block>
-<block wx:if="{{type === 'DatePicker.RangePicker'}}">
+<block wx:if="{{viewType === 'DatePicker.RangePicker'}}">
     <view class="card">
         <view class="form-item-view">
             <block wx:if="{{column.label}}">

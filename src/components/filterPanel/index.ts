@@ -29,8 +29,8 @@ export default OakComponent({
             assert(!(count > 1), '仅支持一项进行全文检索');
             // 小程序最多可显示三个过滤器，剩下的放在折叠面板
             if (process.env.OAK_PLATFORM === 'wechatMp') {
-                const columnsMp = columns?.splice(0, 3);
-                const moreColumnsMp = columns?.splice(3);
+                const columnsMp = columns?.slice(0, 3);
+                const moreColumnsMp = columns?.slice(3);
                 this.setState({
                     columnsMp,
                     moreColumnsMp,

@@ -140,6 +140,9 @@ export default OakComponent({
         }
     },
     methods: {
+        searchConfirmMp() {
+            this.refresh();
+        },
         onChangeTapMp(event: WechatMiniprogram.TouchEvent) {
             const { key, checked } = event.detail;
             const { optionsMp, modeMp } = this.state;
