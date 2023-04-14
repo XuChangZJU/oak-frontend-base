@@ -695,17 +695,28 @@ class ListNode<
         /**
          * 满足当前结点的数据应当是所有满足当前filter条件且ids在当前ids中的数据
          * 但如果是当前事务create的行则例外（当前页面上正在create的数据）
+         * 
+         * bug: 这里可能会造成不满足ids约束的行上发起fetch missed rows的操作，如果后台阻止了这样的row的返回值（加上了额外的条件filter）
+         * 返回空行，会造成无限发请求的严重bug
+         * 先修正为先取id，再取一次数据
          */
         const { data, sorter, filter } = this.constructSelection(true, context, true);
 
         const result = this.cache.get(this.entity, {
-            data,
+            data: { id: 1 },
             filter,
             sorter,
         }, context, this.isLoading());
-        return result.filter(
+        const finalIds = result.filter(
             ele => ele.$$createAt$$ === 1 || this.ids?.includes(ele.id!)
-        );
+        ).map(ele => ele.id);
+        return this.cache.get(this.entity, {
+            data,
+            filter: {
+                id: { $in: finalIds },
+            },
+            sorter,
+        }, context, this.isLoading());
     }
 
     addItem(
