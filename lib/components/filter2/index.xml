@@ -1,97 +1,69 @@
 <block wx:if="{{viewType === 'Input'}}">
-    <view class="card">
-        <view class="label">
-            {{labelMp}}
-        </view>
-        <l-input confirm-type="next" bind:lininput="setValueMp" hide-label show-row="{{true}}" />
-    </view>
+    <l-search-bar
+        l-class="search-bar"
+        l-placeholder-class="l-placeholder-class"
+        l-input-class="l-input-class"
+        placeholder="{{labelMp}}"
+        bind:linchange="setValueMp"
+        bind:linconfirm="searchConfirmMp"
+        bind:linclear="setValueMp"
+        show-cancel="{{false}}"
+    />
 </block>
 <block wx:if="{{viewType === 'Select'}}">
-    <view class="card">
-        <view class="label">
-            {{labelMp}}
+    <view class="filter-bar">
+        <view class="filter-bg">
+            <l-icon name="research" />
+            <view class="selectedText">
+                {{selectedLabel || column.placeholder || labelMp}}
+            </view>
         </view>
-        <view class="selectedText">
-            当前选择: {{selectedLabel}}
-        </view>
-        <l-popup show="{{showPicker}}" content-align="bottom">
-            <scroll-view scroll-y="true" style="height: 500rpx;">
-                <view class="draw-container">
-                    <l-checkbox-group bind:linchange="onChangeTapMp">
-                        <l-checkbox
-                            l-class="l-checkbox"
-                            wx:for="{{optionsMp}}"
-                            wx:key="{{item.value}}"
-                            key="{{item.value}}"
-                            placement="right"
-                            checked="{{item.checked}}"
-                        >
-                            {{item.label}}
-                        </l-checkbox>
-                    </l-checkbox-group>
-                </view>
-            </scroll-view>
-        </l-popup>
     </view>
+    <l-popup show="{{showPicker}}" content-align="bottom">
+        <scroll-view scroll-y="true" style="height: 500rpx;">
+            <view class="draw-container">
+                <l-checkbox-group bind:linchange="onChangeTapMp">
+                    <l-checkbox
+                        l-class="l-checkbox"
+                        wx:for="{{optionsMp}}"
+                        wx:key="{{item.value}}"
+                        key="{{item.value}}"
+                        placement="right"
+                        checked="{{item.checked}}"
+                    >
+                        {{item.label}}
+                    </l-checkbox>
+                </l-checkbox-group>
+            </view>
+        </scroll-view>
+    </l-popup>
 </block>
 <block wx:if="{{viewType === 'DatePicker'}}">
-    <view class="card">
-        <view class="form-item-view">
-            <view class="label">
-                {{labelMp}}
-            </view>
-            <view class="input-content" bind:tap="openTimeMp">
-                当前选择: 
-                <block wx:if="{{timeStartStr}}">
-                    <view>
-                        {{timeStartStr}}
-                    </view>
-                </block>
-                <block wx:else>
-                    <view>
-                        请选择
-                    </view>
-                    <l-icon name="right" color="#777777" size="24" style="margin-left: 20rpx" />
-                </block>
+    <view class="filter-bar">
+        <view class="filter-bg">
+            <l-icon name="time" />
+            <view class="selectedText">
+                {{timeStartStr || column.placeholder || labelMp}}
             </view>
         </view>
-        <l-calendar show="{{show}}" bind:linconfirm="setTimeStrMp" />
     </view>
+    <l-calendar show="{{show}}" bind:linconfirm="setTimeStrMp" />
 </block>
 <block wx:if="{{viewType === 'DatePicker.RangePicker'}}">
-    <view class="card">
-        <view class="form-item-view">
-            <block wx:if="{{column.label}}">
-                <view class="form-label">
-                    {{column.label}}
-                </view>
-            </block>
-            <block wx:else>
-                <block wx:if="isCommonI18n">
-                    <view class="form-label">
-                        {{t('common:' + attrI18n)}}
-                    </view>
+    <view class="filter-bar">
+        <view class="filter-bg">
+            <l-icon name="time" />
+            <view class="selectedText">
+                <block wx:if="{{timeStartStr}}">
+                    {{timeStartStr}} - {{timeEndStr || '请选择'}}
                 </block>
                 <block wx:else>
-                    {{t(entityI18n + ':attr.' + attrI18n)}}
-                </block>
-            </block>
-            <view class="input-content" bind:tap="openTimeMp">
-                <block wx:if="{{timeStartStr && timeEndStr}}">
-                    <view>
-                        {{timeStartStr - timeEndStr}}
-                    </view>
-                </block>
-                <block wx:else>
-                    <view>
-                        请选择
-                    </view>
-                    <l-icon name="right" color="#777777" size="24" style="margin-left: 20rpx" />
+                    请选择
                 </block>
             </view>
         </view>
-        <l-calendar show="{{show}}" type="range" bind:linconfirm="setTimeStrMp" />
     </view>
+    <l-calendar show="{{show}}" type="range" bind:linconfirm="setTimeStrMp" />
 </block>
 
 
