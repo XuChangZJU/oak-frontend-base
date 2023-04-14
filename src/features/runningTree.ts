@@ -268,8 +268,8 @@ abstract class Node<
         return !!this.dirty;
     }
 
-    isLoading() {
-        return this.loading;
+    isLoading(): boolean {
+        return this.loading || (!!this.parent && this.parent.isLoading());
     }
 
     protected setLoading(loading: boolean) {
@@ -691,7 +691,7 @@ class ListNode<
         }
     }
 
-    getFreshValue(context: FrontCxt, allowMiss?: boolean): Array<Partial<ED[T]['Schema']>> {
+    getFreshValue(context: FrontCxt): Array<Partial<ED[T]['Schema']>> {
         /**
          * 满足当前结点的数据应当是所有满足当前filter条件且ids在当前ids中的数据
          * 但如果是当前事务create的行则例外（当前页面上正在create的数据）
@@ -702,7 +702,7 @@ class ListNode<
             data,
             filter,
             sorter,
-        }, context, allowMiss);
+        }, context, this.isLoading());
         return result.filter(
             ele => ele.$$createAt$$ === 1 || this.ids?.includes(ele.id!)
         );
@@ -1043,13 +1043,15 @@ class ListNode<
     }
 
     clean() {
-        this.dirty = undefined;
-        this.updates = {};
-
-        for (const k in this.children) {
-            this.children[k].clean();
+        if (this.dirty) {
+            this.dirty = undefined;
+            this.updates = {};
+    
+            for (const k in this.children) {
+                this.children[k].clean();
+            }
+            this.publish();
         }
-        this.publish();
     }
 
     getChildOperation(child: SingleNode<ED, T, Cxt, FrontCxt, AD>) {
@@ -1188,7 +1190,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         unset(this.children, path);
     }
 
-    getFreshValue(context?: FrontCxt, allowMiss?: boolean): Partial<ED[T]['Schema']> | undefined {
+    getFreshValue(context?: FrontCxt): Partial<ED[T]['Schema']> | undefined {
         const projection = this.getProjection(context, false);
         const { id } = this;
         if (projection) {
@@ -1197,7 +1199,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 filter: {
                     id,
                 },
-            }, context, allowMiss);
+            }, context, this.isLoading());
             return result[0];
         }
     }
@@ -1444,13 +1446,15 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     clean() {
-        this.dirty = undefined;
-        this.operation = undefined;
-
-        for (const child in this.children) {
-            this.children[child]!.clean();
+        if (this.dirty) {
+            this.dirty = undefined;
+            this.operation = undefined;
+    
+            for (const child in this.children) {
+                this.children[child]!.clean();
+            }
+            this.publish();
         }
-        this.publish();
     }
 
     getFilter(): ED[T]['Selection']['filter'] | undefined {
@@ -1584,6 +1588,7 @@ class VirtualNode<
     > extends Feature {
     private dirty: boolean;
     private executing: boolean;
+    private loading = false;
     private children: Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
     constructor(path?: string, parent?: VirtualNode<ED, Cxt, FrontCxt, AD>) {
         super();
@@ -1641,12 +1646,20 @@ class VirtualNode<
         return this.dirty;
     }
     async refresh() {
-        await Promise.all(
-            Object.keys(this.children).map(
-                ele => this.children[ele].refresh()
-            )
-        );
-        this.publish();
+        this.loading = true;
+        try {
+            await Promise.all(
+                Object.keys(this.children).map(
+                    ele => this.children[ele].refresh()
+                )
+            );
+            this.loading = false;
+            this.publish();
+        }
+        catch (err) {
+            this.loading = false;
+            throw err;
+        }
     }
     composeOperations(): Array<{ entity: keyof ED, operation: ED[keyof ED]['Operation'] }> | undefined {
         /**
@@ -1691,12 +1704,7 @@ class VirtualNode<
     }
 
     isLoading() {
-        for (const ele in this.children) {
-            if (this.children[ele].isLoading()) {
-                return true;
-            }
-        }
-        return false;
+        return this.loading;
     }
 
     async doBeforeTrigger() {
@@ -1772,7 +1780,6 @@ export class RunningTree<
         | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>
         | VirtualNode<ED, Cxt, FrontCxt, AD>
     >;
-    private refreshing = false;
 
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
@@ -1945,7 +1952,7 @@ export class RunningTree<
             if (opers) {
                 this.cache.redoOperation(opers, context);
             }
-            const value = node.getFreshValue(context, this.refreshing);
+            const value = node.getFreshValue(context);
             context.rollback();
             return value;
         }
@@ -2056,21 +2063,17 @@ export class RunningTree<
 
     async refresh(path: string) {
         const node = this.findNode(path);
-        this.refreshing = true;
         if (node instanceof ListNode) {
             await node.refresh(1, true);
         } else if (node) {
             await node.refresh();
         }
-        this.refreshing = false;
     }
 
     async loadMore(path: string) {
         const node = this.findNode(path);
-        this.refreshing = true;
         assert(node instanceof ListNode);
         await node.loadMore();
-        this.refreshing = false;
     }
 
     getPagination(path: string) {
@@ -2262,7 +2265,6 @@ export class RunningTree<
             );
             assert(entities.length === 1);
 
-            this.refreshing = true;
             const result = await this.cache.operate(
                 entities[0],
                 operations
@@ -2275,7 +2277,6 @@ export class RunningTree<
                     node.setExecuting(false);
                 }
             );
-            this.refreshing = false;
 
             await node.doAfterTrigger();
 

@@ -94,7 +94,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     addNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(name: string, refresh: boolean): void;
-    getFreshValue(context: FrontCxt, allowMiss?: boolean): Array<Partial<ED[T]['Schema']>>;
+    getFreshValue(context: FrontCxt): Array<Partial<ED[T]['Schema']>>;
     addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     removeItem(id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     recoverItem(id: string): void;
@@ -149,7 +149,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     };
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
-    getFreshValue(context?: FrontCxt, allowMiss?: boolean): Partial<ED[T]['Schema']> | undefined;
+    getFreshValue(context?: FrontCxt): Partial<ED[T]['Schema']> | undefined;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
@@ -174,6 +174,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
 declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private dirty;
     private executing;
+    private loading;
     private children;
     constructor(path?: string, parent?: VirtualNode<ED, Cxt, FrontCxt, AD>);
     getActiveModies(child: any): undefined;
@@ -219,7 +220,6 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     private schema;
     private authDict;
     private root;
-    private refreshing;
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, schema: StorageSchema<ED>, authDict: AuthDefDict<ED>);
     createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     private findNode;

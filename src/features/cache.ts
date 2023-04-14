@@ -66,6 +66,7 @@ export class Cache<
     ) {
         try {
             const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
+            this.refreshing = false;
             callback && callback(result, opRecords);
             if (opRecords) {
                 this.sync(opRecords);
@@ -101,7 +102,6 @@ export class Cache<
             option,
             getCount,
         }, callback);
-        this.refreshing = false;
 
         const selection2 = Object.assign({}, selection, {
             filter: {
@@ -143,7 +143,6 @@ export class Cache<
             operation,
             option,
         }, callback);
-        this.refreshing = false;
         return result;
     }
 
@@ -255,6 +254,7 @@ export class Cache<
             if (err instanceof OakRowUnexistedException) {
                 if (!this.refreshing && !allowMiss) {
                     const missedRows = err.getRows();
+                    this.refreshing = true;
                     this.exec('fetchRows', missedRows, async (result, opRecords) => {
                         // missedRows理论上一定要取到，不能为空集。否则就是程序员有遗漏
                         for (const record of opRecords!) {
