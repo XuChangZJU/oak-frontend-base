@@ -708,8 +708,8 @@ class ListNode<
             sorter,
         }, context, this.isLoading());
         const finalIds = result.filter(
-            ele => ele.$$createAt$$ === 1 || this.ids?.includes(ele.id!)
-        ).map(ele => ele.id);
+            ele => ele.$$createAt$$ === 1
+        ).map(ele => ele.id).concat(this.ids);
         return this.cache.get(this.entity, {
             data,
             filter: {
