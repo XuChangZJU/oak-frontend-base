@@ -1,27 +1,30 @@
 <view class="ticket-container">
     <view class="ticket-container-top">
-        <block wx:for="{{columnsMp}}">
-            <view class="filter-item">
+        <block wx:for="{{columnsMp}}" wx:key="index">
+            <view class="filter-item {{index !== columnsMp.length - 1 ? 'filter-item-mb' : ''}}">
                 <oak-filter column="{{item}}" oakPath="{{oakFullpath}}" entity="{{entity}}" />
             </view>
         </block>
+        <view class="space-vertical" style="height: {{isExpandContent ? 72*moreColumnsMp.length + 20*(moreColumnsMp.length - 1)  : 0}}rpx">
+            <block wx:for="{{moreColumnsMp}}">
+                <view class="filter-item {{index !== columnsMp.length - 1 ? 'filter-item-mb' : ''}}">
+                    <oak-filter column="{{item}}" oakPath="{{oakFullpath}}" entity="{{entity}}" />
+                </view>
+            </block>
+        </view>
     </view>
     <view class="ticket-container-bottom">
-        <l-collapse disable="{{columns && columns.length <= 3}}">
-            <l-collapse-item l-body-class="l-body-class" l-title-class="l-title-class" customTitle="{{true}}">
-                <!--自定义标题-->
-                <view class="title" slot="title">
-                    <view class="ticket-detail-container">展开
-                        <l-icon name="down" size="16" color="#999"/>
-                    </view>
-                    <l-button l-class height="50" size="mini" shape="semicircle" plain="{{true}}">搜索</l-button>
+        <view class="title">
+            <block wx:if="{{moreColumnsMp && moreColumnsMp.length}}">
+                <view class="ticket-detail-container" bindtap="toggleExpand">
+                    {{isExpandContent ? '收起' : '展开'}}
+                    <l-icon name="down" size="16" color="#999" style="{{isExpandContent ? 'transform:rotate(-180deg);' : ''}}"/>
                 </view>
-                <view class="space-vertical">
-                    <block wx:for="{{moreColumnsMp}}">
-                        <oak-filter column="{{item}}" oakPath="{{oakFullpath}}" entity="{{entity}}" />
-                    </block>
-                </view>
-            </l-collapse-item>
-        </l-collapse>
+            </block>
+            <view class="btn-view">
+                <l-button l-class bind:lintap="resetFiltersMp" height="50" size="mini" shape="semicircle" plain="{{true}}" type="error" style="margin-right: 10rpx">重置</l-button>
+                <l-button l-class bind:lintap="confirmSearchMp" height="50" size="mini" shape="semicircle" plain="{{true}}">搜索</l-button>
+            </view>
+        </view>
     </view>
 </view>

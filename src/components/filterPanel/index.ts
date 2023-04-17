@@ -1,6 +1,7 @@
 import { ED } from '../../types/AbstractComponent';
 import { ColumnProps } from '../../types/Filter';
 import assert from 'assert';
+import { getFilterName } from '../filter2/utils';
 
 export default OakComponent({
     entity() {
@@ -9,6 +10,7 @@ export default OakComponent({
     },
     isList: true,
     data: {
+        isExpandContent: false,
         open: false,
         columnsMp: [] as ColumnProps<ED, keyof ED>[],
         moreColumnsMp: [] as ColumnProps<ED, keyof ED>[],
@@ -48,5 +50,23 @@ export default OakComponent({
             }
             return [];
         },
+        toggleExpand() {
+            this.setState({
+                isExpandContent: !this.state.isExpandContent,
+            })
+        },
+        resetFiltersMp() {
+            const { columns } = this.props;
+            const filterNames = columns?.map((ele) => getFilterName(ele));
+            if (filterNames && filterNames.length) {
+                filterNames.forEach((ele) =>
+                    this.removeNamedFilterByName(ele)
+                );
+                this.refresh();
+            }
+        },
+        confirmSearchMp() {
+            this.refresh();
+        }
     },
 });
