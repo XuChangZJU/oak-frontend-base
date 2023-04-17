@@ -699,15 +699,20 @@ class ListNode<
          * bug: 这里可能会造成不满足ids约束的行上发起fetch missed rows的操作，如果后台阻止了这样的row的返回值（加上了额外的条件filter）
          * 返回空行，会造成无限发请求的严重bug
          * 先修正为先取id，再取一次数据
+         * 
+         * 修改memeory-tree，当属性缺失不再报missedRow，改回直接用filter去取数据的逻辑
          */
         const { data, sorter, filter } = this.constructSelection(true, context, true);
 
         const result = this.cache.get(this.entity, {
-            data: { id: 1 },
+            data,
             filter,
             sorter,
         }, context, this.isLoading());
-        const finalIds = result.filter(
+        return result.filter(
+            ele => ele.$$createAt$$ === 1 || (this.ids?.includes(ele.id!))
+        );
+        /* const finalIds = result.filter(
             ele => ele.$$createAt$$ === 1
         ).map(ele => ele.id).concat(this.ids);
         return this.cache.get(this.entity, {
@@ -716,7 +721,7 @@ class ListNode<
                 id: { $in: finalIds },
             },
             sorter,
-        }, context, this.isLoading());
+        }, context, this.isLoading()); */
     }
 
     addItem(
