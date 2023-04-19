@@ -22,7 +22,7 @@ export type Ops =
 
 export type ColSpanType = 1 | 2 | 3 | 4;
 
-export type ValueType = string | boolean | number | Array<Dayjs> | Dayjs | null;
+export type ValueType = string | boolean | number | Array<Dayjs> | Dayjs | null | React.Key[];
 
 export type ColumnProps<ED extends BaseEntityDict & EntityDict, T extends keyof ED> = {
     attr: string;

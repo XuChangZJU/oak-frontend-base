@@ -92,7 +92,7 @@ export default OakComponent({
             tablePagination: TableProps<RowWithActions<ED2, T2>[]> ['pagination'],
             rowSelection: {
                 type: 'checkbox' | 'radio',
-                selectedRowKeys ?: string[],
+                selectedRowKeys?: string[],
                 onChange: (selectedRowKeys: string[], row: RowWithActions<ED2, T2>[], info?: { type: 'single' | 'multiple' | 'none' }) => void,
             };
             scroll: TableProps<ED2[T2]['Schema'][] > ['scroll'];

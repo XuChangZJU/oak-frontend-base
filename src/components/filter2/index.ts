@@ -142,6 +142,9 @@ export default OakComponent({
     methods: {
         searchConfirmMp() {
             this.refresh();
+            this.setState({
+                show: false,
+            })
         },
         onChangeTapMp(event: WechatMiniprogram.TouchEvent) {
             const { key, checked } = event.detail;
@@ -171,7 +174,8 @@ export default OakComponent({
             this.setState({
                 selectedLabel: labels.join(' ')
             })
-            this.setFilterAndResetFilter(viewType, optionsMp);
+            this.setFilterAndResetFilter(viewType, values);
+            this.searchConfirmMp();
         },
         onCancelSelectMp() {
             const { optionsMp } = this.state;
@@ -190,9 +194,29 @@ export default OakComponent({
                 selectedIndexMp,
             })
         },
-        openTimeMp() {
+        openPopupMp() {
             this.setState({
                 show: true,
+            })
+        },
+        closePopupMp() {
+            const { name } = this.state;
+            this.removeNamedFilterByName(name);
+            this.setState({
+                show: false,
+            })
+        },
+        closePopupMp2() {
+            const { name, optionsMp } = this.state;
+            const optionsMp2 = optionsMp.map((ele) => ({
+                label: ele.label,
+                value: ele.value,
+                checked: false,
+            }))
+            this.removeNamedFilterByName(name);
+            this.setState({
+                show: false,
+                optionsMp: optionsMp2,
             })
         },
         setValueMp(input: WechatMiniprogram.Input) {
@@ -249,6 +273,9 @@ export default OakComponent({
             // 这里只有全文字段和时间戳字段需要特殊处理。
             if (viewType === 'Input' && op === '$text') {
                 return set({}, '$text.$search', value);
+            }
+            if (viewType === 'Select' && !op) {
+                return set({}, getOp(column!), (value as React.Key[])[0]);
             }
             if (viewType === 'DatePicker') {
                 const startTime = dayjs(value as Dayjs)
