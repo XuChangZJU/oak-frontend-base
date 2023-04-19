@@ -1,12 +1,12 @@
 <view class="ticket-container">
     <view class="ticket-container-top">
-        <block wx:for="{{columnsMp}}" wx:key="index">
+        <block wx:for="{{columnsMp}}" wx:key="attr">
             <view class="filter-item {{index !== columnsMp.length - 1 ? 'filter-item-mb' : ''}}">
                 <oak-filter column="{{item}}" oakPath="{{oakFullpath}}" entity="{{entity}}" />
             </view>
         </block>
         <view class="space-vertical" style="height: {{isExpandContent ? 72*moreColumnsMp.length + 20*(moreColumnsMp.length - 1)  : 0}}rpx">
-            <block wx:for="{{moreColumnsMp}}">
+            <block wx:for="{{moreColumnsMp}}" wx:key="attr">
                 <view class="filter-item {{index !== columnsMp.length - 1 ? 'filter-item-mb' : ''}}">
                     <oak-filter column="{{item}}" oakPath="{{oakFullpath}}" entity="{{entity}}" />
                 </view>

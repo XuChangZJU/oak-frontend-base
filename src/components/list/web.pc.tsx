@@ -11,7 +11,7 @@ import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, CascadeActionProps } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef } from '../../types/AbstractComponent';
 import { Action, CascadeActionItem } from 'oak-domain/lib/types';
 import { Schema } from 'oak-domain/lib/base-app-domain/UserEntityGrant/Schema';
 import { getPath, getWidth, getValue, getLabel, resolvePath, getType } from '../../utils/usefulFn';
@@ -174,6 +174,11 @@ export default function Render(
                     attribute,
                     entity: entityI8n,
                 } = resolvePath<ED>(schema, entity, path);
+                if (entityI8n === 'notExist') {
+                    assert(!!(ele as OakAbsDerivedAttrDef).width, `非schema属性${attr}需要自定义width`);
+                    assert(!!(ele as OakAbsDerivedAttrDef).type, `非schema属性${attr}需要自定义type`);
+                    assert(!!(ele as OakAbsDerivedAttrDef).label, `非schema属性${attr}需要自定义label`);
+                }
                 const title = getLabel(ele, entityI8n, attr, t);
                 const width = getWidth(ele, attrType, 'table');
                 const type = getType(ele, attrType);

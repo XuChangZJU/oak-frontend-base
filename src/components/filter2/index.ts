@@ -80,12 +80,14 @@ export default OakComponent({
         viewType: '' as ViewType | undefined,
         entityI18n: '' as keyof ED,
         attrI18n: '',
-        attribute: {} as Attribute,
+        attribute: {} as Attribute | undefined,
         options: [] as { value: string | boolean }[],
         inputType: '' as React.InputHTMLAttributes<'input'>['type'],
         timeStartStr: '', // 小程序选择时间显示
         timeEndStr: '',
         selectedLabel: '',
+        minDateMp: new Date(1980, 1, 1).getTime(),
+        defaultDateMp: new Date().getTime(),
     },
     properties: {
         entity: '' as keyof ED,
@@ -229,9 +231,9 @@ export default OakComponent({
             const { value } = detail;
             this.setFilterAndResetFilter(viewType, value);
         },
-        setTimeStrMp(event: WechatMiniprogram.TouchEvent) {
+        setTimeStrMp(event: { detail: any; }) {
             const { viewType } = this.state;
-            const { value } = event.detail;
+            const value = event.detail;
             if (value instanceof Array) {
                 const timeStartStr = dayjs(value[0]).format('YYYY-MM-DD');
                 const timeEndStr = dayjs(value[1]).format('YYYY-MM-DD');

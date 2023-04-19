@@ -78,21 +78,32 @@ export function resolvePath<ED extends EntityDict & BaseEntityDict>(
             idx++;
             continue;
         }
-        const relation = judgeRelation(dataSchema, _entity, attr);
-        if (relation === 1) {
-            const attributes = getAttributes(dataSchema[_entity].attributes);
-            attribute = attributes[attr];
-            attrType = attribute.type;
-            if (attrType === 'ref') {
-                attr = attribute.ref as string;
+        try {
+            const relation = judgeRelation(dataSchema, _entity, attr);
+            if (relation === 1) {
+                const attributes = getAttributes(dataSchema[_entity].attributes);
+                attribute = attributes[attr];
+                attrType = attribute.type;
+                if (attrType === 'ref') {
+                    attr = attribute.ref as string;
+                }
+            } else if (relation === 2) {
+                // entity entityId
+                _entity = attr as keyof ED;
+            } else if (typeof relation === 'string') {
+                _entity = relation as keyof ED;
             }
-        } else if (relation === 2) {
-            // entity entityId
-            _entity = attr as keyof ED;
-        } else if (typeof relation === 'string') {
-            _entity = relation as keyof ED;
+            idx++;
         }
-        idx++;
+        catch (err) {
+            console.log(`存在非schema属性${path}`);
+            return {
+                entity: 'notExist',
+                attr: path,
+                attrType: '',
+                attribute: undefined,
+            }
+        }
     }
 
     return {

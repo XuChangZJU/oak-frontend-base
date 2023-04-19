@@ -25,7 +25,7 @@ export type OakAbsDerivedAttrDef = {
     label: string;
     value?: string;
     width?: RenderWidth;
-    type?: 'img' | 'file' | 'avatar';
+    type?: 'img' | 'file' | 'avatar' | 'text';
 };
 
 export type OakAbsAttrDef = string | OakAbsDerivedAttrDef;

@@ -58,7 +58,9 @@
         <view class="filter-bg">
             <l-icon name="time" l-class="l-icon" color="#bdbdbd" size="28" />
             <block wx:if="{{timeStartStr}}">
-                {{timeStartStr}}
+                <view class="selectedText">
+                    {{timeStartStr}}
+                </view>
             </block>
             <block wx:else>
                 <view class="l-placeholder-class">

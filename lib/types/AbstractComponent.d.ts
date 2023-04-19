@@ -21,7 +21,7 @@ export declare type OakAbsDerivedAttrDef = {
     label: string;
     value?: string;
     width?: RenderWidth;
-    type?: 'img' | 'file' | 'avatar';
+    type?: 'img' | 'file' | 'avatar' | 'text';
 };
 export declare type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
 export declare type CardDef = {

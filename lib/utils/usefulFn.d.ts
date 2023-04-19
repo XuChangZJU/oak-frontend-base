@@ -7,6 +7,11 @@ import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 export declare function getAttributes(attributes: Record<string, Attribute>): Record<string, Attribute>;
 export declare function resolvePath<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, path: string): {
+    entity: string;
+    attr: string;
+    attrType: string;
+    attribute: undefined;
+} | {
     entity: keyof ED;
     attr: string;
     attrType: DataType | "ref";
