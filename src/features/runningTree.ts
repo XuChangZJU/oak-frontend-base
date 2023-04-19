@@ -706,7 +706,13 @@ class ListNode<
 
         const result = this.cache.get(this.entity, {
             data,
-            filter,
+            filter: {
+                $or: [filter, {
+                    id: {
+                        $in: this.ids || [],
+                    }
+                }]
+            },
             sorter,
         }, context, this.isLoading());
         return result.filter(
