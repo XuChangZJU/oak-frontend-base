@@ -9,7 +9,8 @@ export const isPc = window && !navigator.userAgent.match(/(Android|webOS|iPhone|
 
 //是否在微信内置浏览器
 export const isWeiXin = window && /MicroMessenger/i.test(navigator.userAgent);
-
+//是否在微信开发者工具
+export const isWeiXinDevTools = window && /wechatdevtools/i.test(navigator.userAgent);
 //是否在微信小程序内
 //@ts-ignore
 export const isWeiXinMp = window && window.__wxjs_environment === 'miniprogram' || /miniProgram/i.test(navigator.userAgent);
