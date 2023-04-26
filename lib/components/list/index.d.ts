@@ -17,7 +17,7 @@ declare const _default: <ED2 extends ED, T2 extends keyof ED2, T3 extends string
         onChange: (selectedRowKeys: string[], row: RowWithActions<ED2, T2>[], info?: {
             type: 'single' | 'multiple' | 'none';
         }) => void;
-    };
+    } | undefined;
     scroll?: ({
         x?: string | number | true | undefined;
         y?: string | number | undefined;

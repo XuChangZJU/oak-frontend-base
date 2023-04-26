@@ -99,13 +99,14 @@ export default function Render<ED2 extends ED>(
                     : t(`${entityI18n as string}:v.${attrI18n}.${ele.value}`),
                 value: ele.value,
             }))
+            const isMultiple = ['$in', '$nin'].includes(op || '');
             V = (
                 <Select
-                    mode={['$in', '$nin'].includes(op || '') ? 'multiple' : undefined}
+                    mode={isMultiple ? 'multiple' : undefined}
                     allowClear
                     placeholder={placeholder || t('placeholder.select')}
                     onChange={(value) => {
-                        setFilterAndResetFilter(viewType, value);
+                        setFilterAndResetFilter(viewType, isMultiple ? value : [value]);
                     }}
                     options={options2}
                     onClear={() => {
