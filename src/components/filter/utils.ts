@@ -31,7 +31,7 @@ export function getAttributes(attributes: Record<string, any>) {
             type: 'datetime',
         },
         $$seq$$: {
-            type: 'datetime',
+            type: 'integer',
         },
     });
 }
