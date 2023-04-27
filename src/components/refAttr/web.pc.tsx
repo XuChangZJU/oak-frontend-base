@@ -28,7 +28,6 @@ export default function render(props: WebComponentProps<
     keyof EntityDict,
     false,
     {
-        entityId: string;
         entityIds: string[];
         multiple: boolean;
         renderValue: string;
@@ -37,7 +36,7 @@ export default function render(props: WebComponentProps<
         onChange: (value: string[]) => void;
     }
 >) {
-    const { pickerRender, renderValue, data, multiple, onChange, entityId, entityIds } = props.data;
+    const { pickerRender, renderValue, data, multiple, onChange, entityIds } = props.data;
     const { t } = props.methods;
     const { mode } = pickerRender;
     const [visibile, setVisible] = useState(false);
@@ -51,6 +50,7 @@ export default function render(props: WebComponentProps<
     else {
         switch (mode) {
             case 'select': {
+                const entityId = entityIds && entityIds[0];
                 return (
                     <Select
                         value={entityId}
@@ -66,6 +66,7 @@ export default function render(props: WebComponentProps<
                 );
             }
             case 'radio': {
+                const entityId = entityIds && entityIds[0];
                 if (multiple) {
                     return (
                         <Checkbox.Group

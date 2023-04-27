@@ -149,7 +149,7 @@ export default function Render<ED2 extends ED>(
         case 'RefAttr': {
             const ops: Ops[] = ['$in', '$nin', '$eq', '$ne'];
             const filter = getNamedFilter(name);
-            const value = get(filter, getOp2(column, '$search'), '')
+            const value = get(filter, getOp(column), '')
             V = (
                 <RefAttr
                     multiple={['$in', '$nin'].includes(op || '')}
@@ -157,7 +157,7 @@ export default function Render<ED2 extends ED>(
                     pickerRender={Object.assign({}, column.refProps, {
                         label: 'todotodo',
                     }) as OakAbsRefAttrPickerRender<ED, keyof ED>}
-                    onChange={(ids) => { console.log(ids, '这里等测试到了再写(Xc)') }}
+                    onChange={(ids) => { setFilterAndResetFilter(viewType, ids); }}
                 />
             );
             break;

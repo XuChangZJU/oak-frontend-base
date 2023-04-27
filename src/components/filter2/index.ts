@@ -276,7 +276,7 @@ export default OakComponent({
             if (viewType === 'Input' && op === '$text') {
                 return set({}, '$text.$search', value);
             }
-            if (viewType === 'Select' && !op) {
+            if ((viewType === 'Select' || viewType === 'RefAttr') && !op) {
                 return set({}, getOp(column!), (value as React.Key[])[0]);
             }
             if (viewType === 'DatePicker') {

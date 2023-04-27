@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Table } from 'antd';
-import { WebComponentProps } from '../../types/Page';
+import { WebComponentProps, RowWithActions } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
+import AbstractList from '../list';
 
 import Style from './web.module.less';
 
@@ -11,10 +12,10 @@ export default function Render(
         keyof ED,
         false,
         {
-            entity: string;
-            rows: ED[keyof ED]['Schema'][];
+            entity: keyof ED;
+            rows: RowWithActions<ED, keyof ED>[];
             projection: Record<string, any>;
-            onSelect: (rows: ED[keyof ED]['Schema'][]) => void;
+            onSelect: (rows: RowWithActions<ED, keyof ED>[]) => void;
             multiple: boolean;
             titleLabel: string;
         },
@@ -27,6 +28,7 @@ export default function Render(
         onSelect,
         titleLabel,
         multiple = false,
+        entity,
     } = props.data;
     const { t } = props.methods;
 
@@ -35,34 +37,24 @@ export default function Render(
         title: titleLabel,
     }]
 
-    return (
-        <>
-            <Table
+    if (rows && rows.length) {
+        return (
+            <AbstractList
+                entity={entity}
+                data={rows}
                 loading={oakLoading}
-                dataSource={rows}
-                rowKey="id"
+                attributes={[titleLabel]}
+                disabledOp={true}
                 rowSelection={{
                     type: multiple ? 'checkbox' : 'radio',
-                    // onSelect: (record) => {
-                    //     onSelect(record);
-                    // },
-                    onChange: (
-                        selectedRowKeys,
-                        selectedRows,
-                        info
-                    ) => {
+                    onChange: (selectRowKeys, selectedRows, info) => {
                         onSelect(selectedRows);
-                    },
+                    }
                 }}
-                onRow={!multiple ? (record) => {
-                    return {
-                        onClick: (event) => {
-                            onSelect([record]);
-                        }, // 点击行
-                    };
-                } : undefined}
-                columns={columns}
             />
-        </>
-    );
+        )
+    }
+    return (
+        <div>无数据</div>
+    )
 }

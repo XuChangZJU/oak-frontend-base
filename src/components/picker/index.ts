@@ -9,12 +9,7 @@ export default OakComponent({
     formData({ data = [] }) {
         const { title } = this.props;
         return {
-            rows: data.map(
-                ele => ({
-                    id: ele.id,
-                    title: title!(ele)
-                })
-            ),
+            rows: data
         };
     },
     isList: true,

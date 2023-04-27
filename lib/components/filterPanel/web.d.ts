@@ -12,7 +12,7 @@ declare type ColumnMapType = {
     xs: ColSpanType;
 };
 export default function Render<ED2 extends ED>(props: WebComponentProps<ED, keyof ED, false, {
-    entity: string;
+    entity: keyof ED;
     columns: Array<ColumnProps<ED2, keyof ED2>>;
     onSearch: () => void;
     column?: ColSpanType | ColumnMapType;

@@ -36,7 +36,7 @@ export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, 
     entity: T;
     projection: ED[T]['Selection']['data'];
     title: (row: Partial<ED[T]['Schema']>) => string;
-    titleLabel: string;
+    titleLabel?: string;
     filter?: ED[T]['Selection']['filter'];
     sorter?: ED[T]['Selection']['sorter'];
     getDynamicSelectors?: () => Promise<{

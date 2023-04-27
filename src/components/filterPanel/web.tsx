@@ -5,7 +5,7 @@ import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 import Filter from '../filter2';
 import { ColSpanType, ColumnProps } from '../../types/Filter';
-import { getFilterName } from '../filter/utils';
+import { getFilterName } from '../filter2/utils';
 import Style from './web.module.less';
 
 
@@ -66,7 +66,7 @@ export default function Render<ED2 extends ED>(
         keyof ED,
         false,
         {
-            entity: string;
+            entity: keyof ED;
             columns: Array<ColumnProps<ED2, keyof ED2>>;
             onSearch: () => void;
             column?: ColSpanType | ColumnMapType;

@@ -16,32 +16,19 @@ export default OakComponent({
         onChange: (() => undefined) as (value: string[]) => void,
     },
     formData() {
-        const { multiple, entityIds, entityId, pickerRender } = this.props;
+        const { multiple, entityIds, pickerRender } = this.props;
         const { entity, projection, title } = pickerRender as OakAbsRefAttrPickerRender<ED, keyof ED>;
-        if (multiple) {
-            const rows = entityIds && this.features.cache.get(entity, {
-                data: typeof projection === 'function' ? projection() : projection,
-                filter: {
-                    id: {
-                        $in: entityIds,
-                    },
-                },
-            });
-            const renderValue = rows && rows.map(
-                (row) => title(row)
-            ).join(',');
-            return {
-                renderValue,
-            };
-        }
-        const row = entityId! && this.features.cache.get(entity, {
+        const rows = entityIds && this.features.cache.get(entity, {
             data: typeof projection === 'function' ? projection() : projection,
             filter: {
-                id: entityId,
+                id: {
+                    $in: entityIds,
+                },
             },
-        })[0];
-        const renderValue = row && title(row);
-
+        });
+        const renderValue = rows && rows.map(
+            (row) => title(row)
+        ).join(',');
         return {
             renderValue,
         };
