@@ -5,9 +5,10 @@ import {
     StorageSchema,
     Connector,
     AuthDefDict,
+    CascadeRemoveDefDict,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 
 
@@ -44,20 +45,18 @@ export function initialize<
     connector: Connector<ED, Cxt, FrontCxt>,
     checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     actionDict?: ActionDictOfEntityDict<ED>,
-    authDict?: AuthDefDict<ED>,
-    relationDict?: {
-        [K in keyof ED]?: {
-            [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
-        }
-    },
+    actionCascadePathGraph?: AuthCascadePath<ED>[],
+    relationCascadePathGraph?: AuthCascadePath<ED>[],
+    cascadeRemoveDict?: CascadeRemoveDefDict<ED>,
     colorDict?: ColorDict<ED>,
 ) {
-    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema, authDict));
+    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(
+        storageSchema, cascadeRemoveDict || {}));
 
-    const cacheStore = new CacheStore(
+    const cacheStore = new CacheStore<ED, FrontCxt>(
         storageSchema,
     );
-    
+
     const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
         exec: async (name, params) => {
             const context = frontendContextBuilder()(cacheStore);
@@ -70,7 +69,15 @@ export function initialize<
         },
     };
 
-    const features = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder()(cacheStore), cacheStore, relationDict || {}, authDict || {}, colorDict || {});
+    const features = initBasicFeatures(
+        wrapper,
+        storageSchema, 
+        () => frontendContextBuilder()(cacheStore), 
+        cacheStore, 
+        actionCascadePathGraph || [],
+        relationCascadePathGraph || [],
+        colorDict || {}
+    );
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
     if (actionDict) {
@@ -80,6 +87,7 @@ export function initialize<
         );
         adCheckers.forEach((checker) => cacheStore.registerChecker(checker));
     }
+    cacheStore.registerGeneralChecker('relation', (entity, operation, context) => features.relationAuth.checkRelation(entity, operation, context));
 
     return {
         features,

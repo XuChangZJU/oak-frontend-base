@@ -4,7 +4,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 declare type ED = EntityDict & BaseEntityDict;
-export default function render(props: WebComponentProps<ED, keyof EntityDict, false, {
+export default function render(props: WebComponentProps<ED, keyof ED, false, {
     entityId: string;
     entityIds: string[];
     multiple: boolean;

@@ -16,6 +16,7 @@ import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
 import { firstLetterUpperCase } from 'oak-domain/lib/utils/string';
+import { RelationAuth } from './relationAuth';
 
 type Operation<ED extends EntityDict & BaseEntityDict, T extends keyof ED, OmitId extends boolean = false> = {
     oper: OmitId extends true ? Omit<ED[T]['Operation'], 'id'> : ED[T]['Operation'];
@@ -160,7 +161,6 @@ abstract class Node<
     protected entity: T;
     // protected fullPath: string;
     protected schema: StorageSchema<ED>;
-    private authDict: AuthDefDict<ED>;
     protected projection?: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);      // 只在Page层有
     protected parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     protected dirty?: boolean;
@@ -173,9 +173,9 @@ abstract class Node<
     private cascadeActions?: () => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     };
+    private relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>; 
 
-
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>,
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
         parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
         path?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]),
@@ -185,8 +185,8 @@ abstract class Node<
         super();
         this.entity = entity;
         this.schema = schema;
-        this.authDict = authDict;
         this.cache = cache;
+        this.relationAuth = relationAuth;
         this.projection = projection;
         this.parent = parent;
         this.dirty = undefined;
@@ -297,7 +297,18 @@ abstract class Node<
         const projection = typeof this.projection === 'function' ? (this.projection as Function)() : (this.projection && cloneDeep(this.projection));
         // 根据actions和cascadeActions的定义，将对应的projection构建出来
         const userId = context ? context.getCurrentUserId(true) : this.cache.getCurrentUserId(true);
-        if (userId && projection) {
+
+        const actions = typeof this.actions === 'function' ? this.actions() : this.actions;
+        if (userId && projection && actions?.length) {
+            const actions2 = actions.map(
+                a => typeof a === 'object' ? a.action : a
+            );
+            const projection2 = this.relationAuth.getRelationalProjection(this.entity, userId, actions2);
+            merge(projection, projection2);
+        }
+        return projection;
+        // 老的数据结构下的getProjection代码，留一段时间作参照 by Xc 20230426
+        /* if (userId && projection) {
             if (this.actions) {
                 const actions = typeof this.actions === 'function' ? this.actions() : this.actions;
                 for (const a of actions) {
@@ -326,9 +337,7 @@ abstract class Node<
                     }
                 }
             }
-        }
-
-        return projection;
+        } */
     }
 
     setProjection(projection: ED[T]['Selection']['data']) {
@@ -508,7 +517,7 @@ class ListNode<
         entity: T,
         schema: StorageSchema<ED>,
         cache: Cache<ED, Cxt, FrontCxt, AD>,
-        authDict: AuthDefDict<ED>,
+        relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
         projection?:
             | ED[T]['Selection']['data']
             | (() => Promise<ED[T]['Selection']['data']>),
@@ -524,7 +533,7 @@ class ListNode<
             [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
         }
     ) {
-        super(entity, schema, cache, authDict, projection, parent, path, actions, cascadeActions);
+        super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
         this.filters = filters || [];
         this.sorters = sorters || [];
@@ -819,7 +828,7 @@ class ListNode<
         if (this.updates[id]) {
             const { operation } = this.updates[id];
             const { data: dataOrigin } = operation;
-            merge(dataOrigin, data);
+            Object.assign(dataOrigin, data);
             if (action && operation.action !== action) {
                 assert(operation.action === 'update');
                 operation.action = action;
@@ -1112,7 +1121,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         operation: ED[T]['CreateSingle'] | ED[T]['Update'] | ED[T]['Remove'];
     };
 
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>,
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, 
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
         parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
         path?: string,
@@ -1121,7 +1130,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         cascadeActions?: () => {
             [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
         }) {
-        super(entity, schema, cache, authDict, projection, parent, path, actions, cascadeActions);
+        super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
 
         if (!id) {
@@ -1795,25 +1804,25 @@ export class RunningTree<
     > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
-    private authDict: AuthDefDict<ED>;
     private root: Record<
         string,
         | SingleNode<ED, keyof ED, Cxt, FrontCxt, AD>
         | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>
         | VirtualNode<ED, Cxt, FrontCxt, AD>
     >;
+    private relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>;      // todo 用这个来帮助selection加上要取的权限相关的数据
 
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
         schema: StorageSchema<ED>,
-        authDict: AuthDefDict<ED>
+        relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
     ) {
         super();
         // this.aspectWrapper = aspectWrapper;
         this.cache = cache;
         this.schema = schema;
+        this.relationAuth = relationAuth;
         this.root = {};
-        this.authDict = authDict;
     }
 
     createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>) {
@@ -1885,7 +1894,7 @@ export class RunningTree<
                     entity,
                     this.schema!,
                     this.cache,
-                    this.authDict,
+                    this.relationAuth,
                     projection,
                     parentNode,
                     path,
@@ -1900,7 +1909,7 @@ export class RunningTree<
                     entity,
                     this.schema!,
                     this.cache,
-                    this.authDict,
+                    this.relationAuth,
                     projection,
                     parentNode as VirtualNode<ED, Cxt, FrontCxt, AD>, // 过编译
                     path,

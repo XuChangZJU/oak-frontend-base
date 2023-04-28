@@ -36,10 +36,10 @@ export type ColumnProps<ED extends BaseEntityDict & EntityDict, T extends keyof 
             label: string;
             value: string;
         }>;
-        transformInOption: (
+        transformInOption?: (
             option: string | number | Record<string, any>
         ) => void;
-        transformOutOption: (
+        transformOutOption?: (
             option: string | number | Record<string, any>
         ) => void;
     };

@@ -1,6 +1,6 @@
-import { Aspect, Checker, Trigger, StorageSchema, Watcher, Routine, Timer, AuthDefDict } from 'oak-domain/lib/types';
+import { Aspect, Checker, Trigger, StorageSchema, Watcher, Routine, Timer, CascadeRemoveDefDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { Exportation, Importation } from 'oak-domain/lib/types/Port';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { BasicFeatures } from './features';
@@ -25,10 +25,6 @@ import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
  */
 export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(storageSchema: StorageSchema<ED>, frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt, backendContextBuilder: (contextStr?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>, aspectDict: AD, triggers?: Array<Trigger<ED, keyof ED, Cxt>>, checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>, watchers?: Array<Watcher<ED, keyof ED, Cxt>>, timers?: Array<Timer<ED, Cxt>>, startRoutines?: Array<Routine<ED, Cxt>>, initialData?: {
     [T in keyof ED]?: Array<ED[T]['OpSchema']>;
-}, actionDict?: ActionDictOfEntityDict<ED>, authDict?: AuthDefDict<ED>, relationDict?: {
-    [K in keyof ED]?: {
-        [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
-    };
-}, colorDict?: ColorDict<ED>, importations?: Importation<ED, keyof ED, any>[], exportations?: Exportation<ED, keyof ED, any>[]): {
+}, actionDict?: ActionDictOfEntityDict<ED>, actionCascadePathGraph?: AuthCascadePath<ED>[], relationCascadePathGraph?: AuthCascadePath<ED>[], cascadeRemoveDict?: CascadeRemoveDefDict<ED>, colorDict?: ColorDict<ED>, importations?: Importation<ED, keyof ED, any>[], exportations?: Exportation<ED, keyof ED, any>[]): {
     features: BasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
 };

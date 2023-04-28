@@ -8,6 +8,7 @@ import { translateCheckerInSyncContext } from 'oak-domain/lib/store/checker';
 import { checkFilterRepel } from 'oak-domain/lib/store/filter';
 
 export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt extends SyncContext<ED>> {
+    static All_Checker_Types: CheckerType[] = ['data', 'logical', 'logicalRelation', 'relation', 'row'];
     private checkerMap: {
         [K in keyof ED]?: {
             [A: string]: Array<{
@@ -19,6 +20,10 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
             }>;
         };
     } = {};
+    private generalCheckerMap: {
+        [K in CheckerType]?: Array<<T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: Cxt) => void>
+    } = {};
+
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
         let { entity, action, priority, type, conditionalFilter } = checker;
         const { fn, when } = translateCheckerInSyncContext(checker);
@@ -77,6 +82,15 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
         }
     }
 
+    registerGeneralChecker(type: CheckerType, fn: <T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: Cxt) => void) {
+        if (this.generalCheckerMap[type]) {
+            this.generalCheckerMap[type]?.push(fn);
+        }
+        else {
+            this.generalCheckerMap[type] = [fn];
+        }
+    }
+
     check<T extends keyof ED>(entity: T, operation: Omit<ED[T]['Operation'], 'id'>, context: Cxt, when?: 'before' | 'after', checkerTypes?: CheckerType[]) {
         const { action } = operation;
         const checkers = this.checkerMap[entity] && this.checkerMap[entity]![action];
@@ -96,5 +110,16 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                 checker.fn(operation, context, {} as any);
             }
         }
+
+        const types = checkerTypes || CheckerExecutor.All_Checker_Types;
+        types.forEach(
+            (type) => {
+                if (this.generalCheckerMap[type]) {
+                    this.generalCheckerMap[type]?.forEach(
+                        (fn) => fn(entity, operation, context)
+                    );
+                }
+            }
+        )
     }
 }

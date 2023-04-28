@@ -25,7 +25,7 @@ type ED = EntityDict & BaseEntityDict;
 
 export default function render(props: WebComponentProps<
     ED,
-    keyof EntityDict,
+    keyof ED,
     false,
     {
         entityId: string;

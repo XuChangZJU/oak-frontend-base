@@ -212,12 +212,12 @@ export default function Render(
                     render: (value: any, row: any) => {
                         const id = row?.id;
                         const oakActions = row?.['#oakLegalActions'] as string[];
-                        assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
+                        // assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
                         return (
                             <ActionBtn
                                 entity={entity}
                                 extraActions={extraActions}
-                                actions={row?.['#oakLegalActions']}
+                                actions={oakActions || []}
                                 cascadeActions={row?.['#oakLegalCascadeActions']}
                                 onAction={(action: string, cascadeAction: CascadeActionProps) => onAction && onAction(row, action, cascadeAction)}
                             />

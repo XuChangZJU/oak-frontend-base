@@ -15,6 +15,7 @@ export declare class CacheStore<ED extends EntityDict & BaseEntityDict, Cxt exte
     check<T extends keyof ED>(entity: T, operation: Omit<ED[T]['Operation'], 'id'>, context: Cxt, checkerTypes?: CheckerType[]): void;
     select<T extends keyof ED, OP extends SelectOption, Cxt extends SyncContext<ED>>(entity: T, selection: ED[T]['Selection'], context: Cxt, option: OP): Partial<ED[T]["Schema"]>[];
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>): void;
+    registerGeneralChecker(type: CheckerType, fn: <T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: Cxt) => void): void;
     /**
      * 这个函数是在debug下用来获取debugStore的数据，release下不能使用
      * @returns

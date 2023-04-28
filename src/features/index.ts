@@ -1,4 +1,4 @@
-import { Aspect, AspectWrapper, AuthDefDict, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, AspectWrapper, AuthCascadePath, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 
@@ -15,7 +15,7 @@ import { Message } from './message';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { Navigator } from './navigator';
 import { Port } from './port';
-import { Relation } from './relation';
+import { RelationAuth } from './relationAuth';
 import { Style } from './style';
 import { Geo } from './geo';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
@@ -26,16 +26,13 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         storageSchema: StorageSchema<ED>,
         contextBuilder: () => FrontCxt,
         store: CacheStore<ED, FrontCxt>,
-        relationDict: {
-            [K in keyof ED]?: {
-                [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
-            }
-        },
-        authDict: AuthDefDict<ED>,
+        actionCascadePathGraph: AuthCascadePath<ED>[],
+        relationCascadePathGraph: AuthCascadePath<ED>[],
         colorDict: ColorDict<ED>) {
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store);
     const location = new Location();
-    const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, authDict);
+    const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, cache, actionCascadePathGraph, relationCascadePathGraph);
+    const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, relationAuth);
     const locales = new Locales(aspectWrapper);
     const geo = new Geo(aspectWrapper);
     const eventBus = new EventBus();
@@ -44,11 +41,11 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
     const message = new Message();
     const navigator = new Navigator();
     const port = new Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper);
-    const relation = new Relation<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, relationDict);
     const style = new Style<ED>(colorDict);
     return {
         cache,
         location,
+        relationAuth,
         runningTree,
         locales,
         eventBus,
@@ -57,7 +54,6 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         message,
         navigator,
         port,
-        relation,
         style,
         geo,
     } as BasicFeatures<ED, Cxt, FrontCxt, AD>;
@@ -79,7 +75,7 @@ export type BasicFeatures<
     message: Message;
     navigator: Navigator;
     port: Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
-    relation: Relation<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
+    relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     style: Style<ED>;
     geo: Geo<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
 };

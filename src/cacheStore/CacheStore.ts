@@ -105,6 +105,10 @@ export class CacheStore<
         this.checkerExecutor.registerChecker(checker);
     }
 
+    registerGeneralChecker(type: CheckerType, fn: <T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: Cxt) => void) {
+        this.checkerExecutor.registerGeneralChecker(type, fn);
+    }
+
     /**
      * 这个函数是在debug下用来获取debugStore的数据，release下不能使用
      * @returns
