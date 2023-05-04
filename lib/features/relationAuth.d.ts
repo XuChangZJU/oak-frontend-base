@@ -12,13 +12,18 @@ export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt ex
     private actionCascadePathMap;
     private relationCascadePathGraph;
     private baseRelationAuth;
+    static IgnoredActions: string[];
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[]);
     private judgeRelation;
     getHasRelationEntities(): string[];
+    getAllEntities(): string[];
     getCascadeActionEntitiesByRoot(entity: keyof ED): {
         path: AuthCascadePath<ED>;
         actions: string[];
     }[];
+    getActions(entity: keyof ED): string[];
+    getCascadeActionEntities(entity: keyof ED): AuthCascadePath<ED>[];
+    getCascadeRelationEntitiesByRoot(entity: keyof ED): AuthCascadePath<ED>[];
     checkRelation<T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: FrontCxt): void;
     /**
      * 对目标对象的free和direct访问权限，每次需要的时候去后台取到缓存中

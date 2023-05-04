@@ -1,4 +1,6 @@
-import { Table, Checkbox, Button, Row, Col } from 'antd';
+import { Table, Checkbox, Button, Row, Radio, Col } from 'antd';
+import { Typography } from 'antd';
+const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -12,32 +14,64 @@ export default function render(
         'actionAuth',
         true,
         {
+            entity: string;
+            actions: string[];
+            action: string;
             cascadeEntityActions: Array<{
                 path: AuthCascadePath<ED>;
-                actions: string[];
-                actionAuth?: ED['actionAuth']['OpSchema'];
+                relations: ED['relation']['Schema'][];
+                actionAuths?: ED['actionAuth']['OpSchema'][];
             }>;
         },
         {
-            onChange: (actions: string[], path: AuthCascadePath<ED>, actionAuth?: ED['actionAuth']['OpSchema']) => void;
+            onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) => void;
             confirm: () => void;
+            onActionSelected: (action: string) => void;
         }
     >
 ) {
-    const { cascadeEntityActions, oakDirty } = props.data;
-    const { onChange, t, clean, confirm } = props.methods;
+    const { cascadeEntityActions, oakDirty, entity, action, actions } = props.data;
+    const { onChange, t, clean, confirm, onActionSelected } = props.methods;
 
     return (
         <>
+            <Row justify="center" style={{ margin: 20, padding: 10 }}>
+                <Col span={8}>
+                    <Row style={{ width: '100%' }} justify="center" align="middle">
+                        <Title level={4}>目标对象：</Title>
+                        <Text code>{entity}</Text>
+                    </Row>
+                </Col>
+                <Col span={12}>
+                    <Row style={{ width: '100%' }} justify="center" align="middle" wrap>
+                        {
+                            actions?.map(
+                                (a) => (
+                                    <Radio
+                                        checked={a === action}
+                                        onChange={({ target }) => {
+                                            if (target.checked) {
+                                                onActionSelected(a);
+                                            }
+                                        }}
+                                    >
+                                        {a}
+                                    </Radio>
+                                )
+                            )
+                        }
+                    </Row>
+                </Col>
+            </Row>
             <Table
                 columns={[
                     {
                         key: '1',
-                        title: '对象',
+                        title: '源对象',
                         width: 100,
                         render: (value, record) => {
                             const { path } = record;
-                            return path[0];
+                            return path[2];
                         },
                     },
                     {
@@ -51,22 +85,42 @@ export default function render(
                     },
                     {
                         fixed: 'right',
-                        title: '操作',
+                        title: '相关角色',
                         key: 'operation',
                         width: 300,
                         render: (value, record) => {
-                            const { actions, actionAuth, path } = record;
+                            const { relations, actionAuths, path } = record;
                             return (
-                                <Checkbox.Group
-                                    style={{
-                                        width: '100%',
-                                        display: 'flex',
-                                        flexWrap: 'wrap',
-                                    }}
-                                    options={actions}
-                                    value={actionAuth?.deActions}
-                                    onChange={(value) => onChange(value as string[], path, actionAuth)}
-                                />
+                                <div style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                }}>
+                                    {
+                                        relations?.map(
+                                            (r) => (
+                                                <Checkbox
+                                                    disabled={!action}
+                                                    checked={!!action && !!actionAuths?.find(
+                                                        ele => !ele.$$deleteAt$$
+                                                            && ele.relationId === r.id &&
+                                                            ele.deActions.includes(action)
+                                                    )}
+                                                    onChange={({ target }) => {
+                                                        const { checked } = target;
+                                                        const actionAuth = actionAuths?.find(
+                                                            ele => ele.relationId === r.id
+                                                        );
+
+                                                        onChange(checked, r.id, path[1], actionAuth)
+                                                    }}
+                                                >
+                                                    {r.name}
+                                                </Checkbox>
+                                            )
+                                        )
+                                    }
+                                </div>
                             )
                         }
                     }

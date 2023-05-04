@@ -70,7 +70,7 @@ export default OakComponent({
         entity: '' as keyof ED,
         entityId: '',
         onActionClicked: (id: string, entity: string) => undefined,
-        onRelationClicked: (id: string, entity: string) => undefined,
+        onRelationClicked: (id: string, entity: string, entityId: string) => undefined,
     },
     features: ['relationAuth'],
 });

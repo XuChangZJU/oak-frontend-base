@@ -22,6 +22,7 @@ export class RelationAuth<
     private actionCascadePathMap: Record<string, AuthCascadePath<ED>[]>;
     private relationCascadePathGraph: AuthCascadePath<ED>[];
     private baseRelationAuth: BaseRelationAuth<ED>;
+    static IgnoredActions = ['download', 'aggregate', 'count', 'stat'];
 
     constructor(
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
@@ -61,20 +62,44 @@ export class RelationAuth<
         return entities;
     }
 
+    getAllEntities() {
+        return Object.keys(this.cache.getSchema());
+    }
+
     getCascadeActionEntitiesByRoot(entity: keyof ED) {
         const paths = this.actionCascadePathGraph.filter(
             ele => ele[2] === entity
         );
-        const ignoredActions = ['download', 'aggregate', 'count', 'stat'];
 
         return paths.map(
             (ele) => ({
                 path: ele,
                 actions: this.cache.getSchema()[ele[0]].actions.filter(
-                    ele => !ignoredActions.includes(ele)
+                    ele => !RelationAuth.IgnoredActions.includes(ele)
                 ),
             })
         );
+    }
+
+    getActions(entity: keyof ED) {
+        return this.cache.getSchema()[entity].actions.filter(
+            ele => !RelationAuth.IgnoredActions.includes(ele)
+        );
+    }
+
+    getCascadeActionEntities(entity: keyof ED) {
+        const paths = this.actionCascadePathGraph.filter(
+            ele => ele[0] === entity
+        );
+
+        return paths;
+    }
+
+    getCascadeRelationEntitiesByRoot(entity: keyof ED) {
+        const relations = this.relationCascadePathGraph.filter(
+            ele => ele[2] === entity
+        );
+        return relations;
     }
 
     checkRelation<T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: FrontCxt) {

@@ -2291,27 +2291,34 @@ export class RunningTree<
             const operations = node.composeOperations()!;
 
             // 这里理论上virtualNode下面也可以有多个不同的entity的组件，但实际中不应当出现这样的设计
-            const entities = uniq(
-                operations.filter((ele) => !!ele).map((ele) => ele.entity)
-            );
-            assert(entities.length === 1);
-
-            const result = await this.cache.operate(
-                entities[0],
-                operations
-                    .filter((ele) => !!ele)
-                    .map((ele) => ele.operation),
-                undefined,
-                () => {
-                    // 清空缓存
-                    node.clean();
-                    node.setExecuting(false);
-                }
-            );
-
+            if (operations.length > 0) {
+                const entities = uniq(
+                    operations.filter((ele) => !!ele).map((ele) => ele.entity)
+                );
+                assert(entities.length === 1);
+    
+                const result = await this.cache.operate(
+                    entities[0],
+                    operations
+                        .filter((ele) => !!ele)
+                        .map((ele) => ele.operation),
+                    undefined,
+                    () => {
+                        // 清空缓存
+                        node.clean();
+                        node.setExecuting(false);
+                    }
+                );
+    
+                await node.doAfterTrigger();
+    
+                return result;
+            }
+            node.clean();
+            node.setExecuting(false);
             await node.doAfterTrigger();
 
-            return result;
+            return { message: 'No Operation' };            
         } catch (err) {
             node.setExecuting(false);
             throw err;
