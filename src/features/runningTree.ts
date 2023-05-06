@@ -1056,9 +1056,7 @@ class ListNode<
                         } else {
                             this.ids = ids;
                         }
-                        if (aggr) {
-                            this.aggr = aggr;
-                        }
+                        this.aggr = aggr;
                     }
                 );
             } catch (err) {
@@ -1473,9 +1471,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     filter,
                 }, undefined, undefined, ({ aggr }) => {
                     // 刷新后所有的更新都应当被丢弃（子层上可能会自动建立了this.create动作） 这里可能会有问题 by Xc 20230329
-                    if (aggr) {
-                        this.aggr = aggr[0];
-                    }
+                    this.aggr = aggr && aggr[0];
                     this.setFiltersAndSortedApplied();
                     this.setLoading(false);
                     this.clean();
