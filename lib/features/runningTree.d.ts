@@ -59,6 +59,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     private sorters;
     private pagination;
     private ids;
+    private aggr?;
     private syncHandler;
     getChildPath(child: SingleNode<ED, T, Cxt, FrontCxt, AD>): string;
     setFiltersAndSortedApplied(): void;
@@ -131,6 +132,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
 }
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?;
+    private aggr?;
     private children;
     private operation?;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, id?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {

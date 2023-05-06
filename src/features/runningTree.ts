@@ -381,6 +381,7 @@ class ListNode<
     private sorters: (NamedSorterItem<ED, T> & { applied?: true })[];
     private pagination: Pagination;
     private ids: string[] | undefined;
+    private aggr?: (Partial<ED[T]['Schema']> | undefined)[];
 
     private syncHandler: (records: OpRecord<ED>[]) => void;
 
@@ -715,9 +716,26 @@ class ListNode<
             },
             sorter,
         }, context, this.isLoading());
-        return result.filter(
+
+        const r2 = result.filter(
             ele => ele.$$createAt$$ === 1 || (this.ids?.includes(ele.id!))
         );
+        if (this.aggr) {
+            // 如果有聚合查询的结果，这里按理不应该有aggregate和create同时出现，但也以防万一
+            this.aggr.forEach(
+                (ele, idx) => {
+                    const id = this.ids![idx];
+                    assert(id);
+                    const row = r2.find(
+                        ele => ele.id === id
+                    );
+                    assert(id);
+                    merge(row, ele);
+                }
+            );
+        }
+
+        return r2;
         /* const finalIds = result.filter(
             ele => ele.$$createAt$$ === 1
         ).map(ele => ele.id).concat(this.ids);
@@ -1022,7 +1040,7 @@ class ListNode<
                     },
                     undefined,
                     getCount,
-                    ({ ids, count }) => {
+                    ({ ids, count, aggr }) => {
                         this.pagination.currentPage = currentPage3 + 1;
                         this.pagination.more = ids.length === pageSize;
                         this.setLoading(false);
@@ -1037,6 +1055,9 @@ class ListNode<
                             this.ids = (this.ids || []).concat(ids);
                         } else {
                             this.ids = ids;
+                        }
+                        if (aggr) {
+                            this.aggr = aggr;
                         }
                     }
                 );
@@ -1103,6 +1124,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?: string;
+    private aggr?: Partial<ED[T]['Schema']>;
     private children: {
         [K: string]: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     };
@@ -1222,6 +1244,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     id,
                 },
             }, context, this.isLoading());
+            if (this.aggr) {
+                merge(result[0], this.aggr);
+            }
             return result[0];
         }
     }
@@ -1446,8 +1471,11 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 const { data: [value] } = await this.cache.refresh(this.entity, {
                     data: projection,
                     filter,
-                }, undefined, undefined, () => {
+                }, undefined, undefined, ({ aggr }) => {
                     // 刷新后所有的更新都应当被丢弃（子层上可能会自动建立了this.create动作） 这里可能会有问题 by Xc 20230329
+                    if (aggr) {
+                        this.aggr = aggr[0];
+                    }
                     this.setFiltersAndSortedApplied();
                     this.setLoading(false);
                     this.clean();

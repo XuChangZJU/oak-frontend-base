@@ -2,7 +2,7 @@ import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, Check
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
-import { cloneDeep, pull } from 'oak-domain/lib/utils/lodash';
+import { merge, pull } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { OakRowUnexistedException, OakRowInconsistencyException, OakException } from 'oak-domain/lib/types/Exception';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
@@ -96,7 +96,7 @@ export class Cache<
         callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
     ) {
         this.refreshing = true;
-        const { result: { ids, count } } = await this.exec('select', {
+        const { result: { ids, count, aggr } } = await this.exec('select', {
             entity,
             selection,
             option,
@@ -111,6 +111,9 @@ export class Cache<
             }
         });
         const data = this.get(entity, selection2);
+        if (aggr) {
+            merge(data, aggr);
+        }
         return {
             data: data as Partial<ED[T]['Schema']>[],
             count,
