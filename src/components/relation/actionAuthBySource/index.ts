@@ -48,7 +48,7 @@ export default OakComponent({
             },
         });
         const { name } = relation || {};
-        const cascadeEntities = this.features.relationAuth.getCascadeActionEntitiesByRoot(entity!);
+        const cascadeEntities = this.features.relationAuth.getCascadeActionEntitiesBySource(entity!);
         const cascadeEntityActions = cascadeEntities.map(
             (ele) => {
                 const { path } = ele;

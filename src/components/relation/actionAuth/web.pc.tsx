@@ -14,55 +14,24 @@ export default function render(
         'actionAuth',
         true,
         {
-            entity: string;
-            actions: string[];
-            action: string;
             cascadeEntityActions: Array<{
                 path: AuthCascadePath<ED>;
                 relations: ED['relation']['Schema'][];
                 actionAuths?: ED['actionAuth']['OpSchema'][];
             }>;
+            action: string;
         },
         {
             onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) => void;
             confirm: () => void;
-            onActionSelected: (action: string) => void;
         }
     >
 ) {
-    const { cascadeEntityActions, oakDirty, entity, action, actions } = props.data;
-    const { onChange, t, clean, confirm, onActionSelected } = props.methods;
+    const { cascadeEntityActions, oakDirty, action } = props.data;
+    const { onChange, t, clean, confirm } = props.methods;
 
     return (
         <>
-            <Row justify="center" style={{ margin: 20, padding: 10 }}>
-                <Col span={8}>
-                    <Row style={{ width: '100%' }} justify="center" align="middle">
-                        <Title level={4}>目标对象：</Title>
-                        <Text code>{entity}</Text>
-                    </Row>
-                </Col>
-                <Col span={12}>
-                    <Row style={{ width: '100%' }} justify="center" align="middle" wrap>
-                        {
-                            actions?.map(
-                                (a) => (
-                                    <Radio
-                                        checked={a === action}
-                                        onChange={({ target }) => {
-                                            if (target.checked) {
-                                                onActionSelected(a);
-                                            }
-                                        }}
-                                    >
-                                        {a}
-                                    </Radio>
-                                )
-                            )
-                        }
-                    </Row>
-                </Col>
-            </Row>
             <Table
                 columns={[
                     {

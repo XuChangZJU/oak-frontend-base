@@ -19,12 +19,12 @@ export default OakComponent({
     isList: true,
     properties: {
         entity: '' as keyof ED,
+        action: '',
     },
     filters: [
         {
             filter() {
-                const { entity } = this.props;
-                const { action } = this.state;
+                const { entity, action } = this.props;
                 assert(entity);
                 if (!action) {
                     return {
@@ -46,13 +46,9 @@ export default OakComponent({
         pageSize: 1000,
         currentPage: 0,
     },
-    data: {
-        action: '',
-    },
     formData({ data }) {
         const { entity } = this.props;
-        const actions = this.features.relationAuth.getActions(entity!);
-        const cascadeEntities = this.features.relationAuth.getCascadeActionEntities(entity!);
+        const cascadeEntities = this.features.relationAuth.getCascadeActionAuths(entity!, true);
         const cascadeEntityActions = cascadeEntities.map(
             (ele) => {
                 const [de, p, se] = ele;
@@ -83,14 +79,13 @@ export default OakComponent({
             }
         );
         return {
-            actions,
             cascadeEntityActions,
         };
     },
     lifetimes: {
         ready() {
             const { entity } = this.props;
-            const cascadeEntities = this.features.relationAuth.getCascadeActionEntities(entity!);
+            const cascadeEntities = this.features.relationAuth.getCascadeActionAuths(entity!, true);
             const destEntities = uniq(cascadeEntities.map(ele => ele[2])) as string[];
             this.features.cache.refresh('relation', {
                 data: {
@@ -113,7 +108,7 @@ export default OakComponent({
     },
     methods: {
         onChange(checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) {
-            const { action } = this.state;
+            const { action } = this.props;
             assert(action);
             if (actionAuth) {
                 const { deActions } = actionAuth;
@@ -141,13 +136,5 @@ export default OakComponent({
         confirm() {
             this.execute();
         },
-        onActionSelected(action: string) {
-            this.setState({
-                action,
-            });
-            // 不用refresh，所有destEntity等同于entity的行都已经被取出来了
-            // this.refresh();
-            this.reRender();
-        }
     }
 })

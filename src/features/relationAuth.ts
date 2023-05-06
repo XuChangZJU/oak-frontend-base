@@ -66,9 +66,15 @@ export class RelationAuth<
         return Object.keys(this.cache.getSchema());
     }
 
-    getCascadeActionEntitiesByRoot(entity: keyof ED) {
+    getActions(entity: keyof ED) {
+        return this.cache.getSchema()[entity].actions.filter(
+            ele => !RelationAuth.IgnoredActions.includes(ele)
+        );
+    }
+
+    getCascadeActionEntitiesBySource(entity: keyof ED) {
         const paths = this.actionCascadePathGraph.filter(
-            ele => ele[2] === entity
+            ele => ele[2] === entity && ele[3]
         );
 
         return paths.map(
@@ -81,25 +87,26 @@ export class RelationAuth<
         );
     }
 
-    getActions(entity: keyof ED) {
-        return this.cache.getSchema()[entity].actions.filter(
-            ele => !RelationAuth.IgnoredActions.includes(ele)
-        );
-    }
-
-    getCascadeActionEntities(entity: keyof ED) {
+    getCascadeActionAuths(entity: keyof ED, ir: boolean) {
         const paths = this.actionCascadePathGraph.filter(
-            ele => ele[0] === entity
+            ele => ele[0] === entity && ir === ele[3]
         );
 
         return paths;
     }
 
-    getCascadeRelationEntitiesByRoot(entity: keyof ED) {
-        const relations = this.relationCascadePathGraph.filter(
-            ele => ele[2] === entity
+    getCascadeRelationAuthsBySource(entity: keyof ED) {
+        const relationAuths = this.relationCascadePathGraph.filter(
+            ele => ele[2] === entity && ele[3]
         );
-        return relations;
+        return relationAuths;
+    }
+
+    getCascadeRelationAuths(entity: keyof ED, ir: boolean) {
+        const relationAuths = this.relationCascadePathGraph.filter(
+            ele => ele[0] === entity && ir === ele[3]
+        );
+        return relationAuths;
     }
 
     checkRelation<T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: FrontCxt) {

@@ -58,7 +58,7 @@ export default OakComponent({
             },
         });
         const { name } = relation || {};
-        const cascadeEntities = this.features.relationAuth.getCascadeRelationEntitiesByRoot(entity!);
+        const cascadeEntities = this.features.relationAuth.getCascadeRelationAuthsBySource(entity!);
         const cascadeEntityRelations = cascadeEntities.map(
             (ele) => {
                 const [de, p, se] = ele;
@@ -106,7 +106,7 @@ export default OakComponent({
     lifetimes: {
         ready() {
             const { entity } = this.props;
-            const cascadeRelationEntities = this.features.relationAuth.getCascadeRelationEntitiesByRoot(entity!);
+            const cascadeRelationEntities = this.features.relationAuth.getCascadeRelationAuthsBySource(entity!);
             const cascadeEntities = uniq(cascadeRelationEntities.map(ele => ele[0])) as string[];
             if (cascadeEntities.length > 0) {
                 this.features.cache.refresh('relation', {
