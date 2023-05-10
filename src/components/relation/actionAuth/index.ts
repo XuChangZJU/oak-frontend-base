@@ -1,6 +1,6 @@
 import assert from "assert";
 import { AuthCascadePath } from "oak-domain/lib/types";
-import { uniq, pull } from 'oak-domain/lib/utils/lodash';
+import { uniq, pull, union } from 'oak-domain/lib/utils/lodash';
 import { ED } from "../../../types/AbstractComponent";
 
 export default OakComponent({
@@ -19,14 +19,14 @@ export default OakComponent({
     isList: true,
     properties: {
         entity: '' as keyof ED,
-        action: '',
+        actions: [] as string[],
     },
     filters: [
         {
             filter() {
-                const { entity, action } = this.props;
+                const { entity, actions } = this.props;
                 assert(entity);
-                if (!action) {
+                if (!actions || actions.length === 0) {
                     return {
                         destEntity: entity as string,
                     };
@@ -35,7 +35,7 @@ export default OakComponent({
                     return {
                         destEntity: entity as string,
                         deActions: {
-                            $contains: action,
+                            $overlaps: actions,
                         },
                     };
                 }
@@ -108,19 +108,24 @@ export default OakComponent({
     },
     methods: {
         onChange(checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) {
-            const { action } = this.props;
-            assert(action);
+            const { actions } = this.props;
+            assert(actions && actions.length > 0);
             if (actionAuth) {
                 const { deActions } = actionAuth;
                 if (checked) {
-                    deActions!.push(action);
+                    const deActions2 = union(deActions, actions);
+                    this.updateItem({
+                        deActions: deActions2,
+                    }, actionAuth.id);
                 }
                 else {
-                    pull(deActions!, action);
+                    actions.forEach(
+                        action => pull(deActions, action)
+                    );
+                    this.updateItem({
+                        deActions,
+                    }, actionAuth.id);
                 }
-                this.updateItem({
-                    deActions,
-                }, actionAuth.id);
             }
             else {
                 // 新增actionAuth
@@ -129,7 +134,7 @@ export default OakComponent({
                     path,
                     relationId,
                     destEntity: this.props.entity as string,
-                    deActions: [action],
+                    deActions: actions,
                 });
             }            
         },

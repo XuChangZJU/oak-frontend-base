@@ -4,7 +4,7 @@ const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import assert from 'assert';
+import { difference, intersection } from 'oak-domain/lib/utils/lodash';
 
 type ED = EntityDict & BaseEntityDict;
 
@@ -19,7 +19,7 @@ export default function render(
                 relations: ED['relation']['Schema'][];
                 actionAuths?: ED['actionAuth']['OpSchema'][];
             }>;
-            action: string;
+            actions: string[];
         },
         {
             onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) => void;
@@ -27,7 +27,7 @@ export default function render(
         }
     >
 ) {
-    const { cascadeEntityActions, oakDirty, action } = props.data;
+    const { cascadeEntityActions, oakDirty, actions } = props.data;
     const { onChange, t, clean, confirm } = props.methods;
 
     return (
@@ -67,26 +67,36 @@ export default function render(
                                 }}>
                                     {
                                         relations?.map(
-                                            (r) => (
-                                                <Checkbox
-                                                    disabled={!action}
-                                                    checked={!!action && !!actionAuths?.find(
-                                                        ele => !ele.$$deleteAt$$
-                                                            && ele.relationId === r.id &&
-                                                            ele.deActions.includes(action)
-                                                    )}
-                                                    onChange={({ target }) => {
-                                                        const { checked } = target;
-                                                        const actionAuth = actionAuths?.find(
-                                                            ele => ele.relationId === r.id
-                                                        );
-
-                                                        onChange(checked, r.id, path[1], actionAuth)
-                                                    }}
-                                                >
-                                                    {r.name}
-                                                </Checkbox>
-                                            )
+                                            (r) => {
+                                                let checked = false, indeterminate = false;
+                                                if (actionAuths && actions.length > 0) {
+                                                    for (const aa of actionAuths) {
+                                                        if (!aa.$$deleteAt$$ && aa.relationId === r.id) {
+                                                            const { deActions } = aa;
+                                                            checked = difference(actions, deActions).length === 0;
+                                                            indeterminate = !checked && intersection(actions, deActions).length > 0;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                return (
+                                                    <Checkbox                                                    
+                                                        disabled={actions.length === 0}
+                                                        checked={checked}
+                                                        indeterminate={indeterminate}
+                                                        onChange={({ target }) => {
+                                                            const { checked } = target;
+                                                            const actionAuth = actionAuths?.find(
+                                                                ele => ele.relationId === r.id
+                                                            );
+    
+                                                            onChange(checked, r.id, path[1], actionAuth)
+                                                        }}
+                                                    >
+                                                        {r.name}
+                                                    </Checkbox>
+                                                )
+                                            }
                                         )
                                     }
                                 </div>

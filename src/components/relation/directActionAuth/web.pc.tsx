@@ -2,6 +2,7 @@ import { Table, Checkbox, Button, Row, Radio, Col } from 'antd';
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { difference, intersection } from 'oak-domain/lib/utils/lodash';
 
 type ED = EntityDict & BaseEntityDict;
 
@@ -13,7 +14,7 @@ export default function render(
         {
             paths: AuthCascadePath<ED>[];
             directActionAuths?: ED['directActionAuth']['OpSchema'][];
-            action: string;
+            actions: string[];
         },
         {
             onChange: (checked: boolean, path: AuthCascadePath<ED>, directActionAuth?: ED['directActionAuth']['OpSchema']) => void;
@@ -21,7 +22,7 @@ export default function render(
         }
     >
 ) {
-    const { paths, directActionAuths, action, oakDirty } = props.data;
+    const { paths, directActionAuths, actions, oakDirty } = props.data;
     const { onChange, confirm, t, clean } = props.methods;
 
     return (
@@ -51,13 +52,22 @@ export default function render(
                         key: 'operation',
                         width: 300,
                         render: (value, record) => {
-                            const hasDaa = !!directActionAuths?.find(
-                                (daa) => !daa.$$deleteAt$$ && daa.path === record[1] && daa.deActions.includes(action)
-                            );
+                            let checked = false, indeterminate = false;
+                            if (directActionAuths && actions.length > 0) {
+                                for (const daa of directActionAuths) {
+                                    if (!daa.$$deleteAt$$ && daa.path === record[1]) {
+                                        const { deActions } = daa;
+                                        checked = difference(actions, deActions).length === 0;
+                                        indeterminate = !checked && intersection(actions, deActions).length > 0;
+                                        break;
+                                    }
+                                }
+                            }
                             return (
                                 <Checkbox
-                                    disabled={!action}
-                                    checked={hasDaa}
+                                    disabled={actions.length === 0}
+                                    checked={checked}
+                                    indeterminate={indeterminate}
                                     onChange={({ target }) => {
                                         const { checked } = target;
                                         const daa = directActionAuths?.find(

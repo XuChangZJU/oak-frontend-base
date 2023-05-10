@@ -1,6 +1,6 @@
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { Row, Radio, Col, Tabs } from 'antd';
+import { Row, Radio, Col, Tabs, Checkbox } from 'antd';
 import { Typography } from 'antd';
 const { Title, Text } = Typography;
 import ActionAuth from '../actionAuth';
@@ -17,18 +17,18 @@ type ED = EntityDict & BaseEntityDict;
 export default function render(props: WebComponentProps<ED, keyof ED, false, {
     entity: keyof ED;
     actions: string[];
-    action: string;
+    checkedActions: string[];
     relations: ED['relation']['OpSchema'][];
-    relationId: string;
+    relationIds: string[];
     hasDirectActionAuth: boolean;
     hasDirectRelationAuth: boolean;
     deduceRelationAttr?: string;
 }, {
-    onActionSelected: (action: string) => void;
-    onRelationSelected: (relationId: string) => void;
+    onActionsSelected: (actions: string[]) => void;
+    onRelationsSelected: (relationIds: string[]) => void;
 }>) {
-    const { oakFullpath, entity, actions, action, hasDirectActionAuth, hasDirectRelationAuth, relationId, relations, deduceRelationAttr } = props.data;
-    const { onActionSelected, onRelationSelected, t } = props.methods;
+    const { oakFullpath, entity, actions, checkedActions, hasDirectActionAuth, hasDirectRelationAuth, relationIds, relations, deduceRelationAttr } = props.data;
+    const { onActionsSelected, onRelationsSelected, t } = props.methods;
     const [ tab, setTab ] = useState('freeActionAuth');
 
     const items = deduceRelationAttr ? [
@@ -68,7 +68,7 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                 <ActionAuth
                     entity={entity}
                     oakPath={oakFullpath && `${oakFullpath}.actionAuths`}
-                    action={action}
+                    actions={checkedActions}
                 />
             )
         }
@@ -83,7 +83,7 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                     <DirectActionAuth
                         entity={entity}
                         oakPath={oakFullpath && `${oakFullpath}.directActionAuths`}
-                        action={action}
+                        actions={checkedActions}
                     />
                 )
             }
@@ -99,7 +99,7 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                     <RelationAuth
                         entity={entity}
                         oakPath={oakFullpath && `${oakFullpath}.relationAuths`}
-                        relationId={relationId}
+                        relationIds={relationIds}
                     />
                 )
             }
@@ -115,56 +115,34 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                     <DirectRelationAuth
                         entity={entity}
                         oakPath={oakFullpath && `${oakFullpath}.directRelationAuths`}
-                        relationId={relationId}
+                        relationIds={relationIds}
                     />
                 )
             }
         );
     }
 
-    const ActionSelector = (
+    const ActionSelector = actions && (
         <Row style={{ width: '100%' }} justify="center" align="middle">
             <Text strong>{t('action')}:</Text>
             <Row style={{ flex: 1, marginLeft: 10 }} justify="start" align="middle" wrap>
-                {
-                    actions?.map(
-                        (a) => (
-                            <Radio
-                                checked={a === action}
-                                onChange={({ target }) => {
-                                    if (target.checked) {
-                                        onActionSelected(a);
-                                    }
-                                }}
-                            >
-                                {a}
-                            </Radio>
-                        )
-                    )
-                }
+                <Checkbox.Group 
+                    options={actions}
+                    value={checkedActions}
+                    onChange={(value) => onActionsSelected(value as string[])}
+                />                
             </Row>
         </Row>
     );
-    const RelationSelector = (
+    const RelationSelector = relations && (
         <Row style={{ width: '100%' }} justify="center" align="middle">
             <Text strong>{t('relation')}:</Text>
             <Row style={{ flex: 1, marginLeft: 10 }} justify="start" align="middle" wrap>
-                {
-                    relations?.map(
-                        (r) => (
-                            <Radio
-                                checked={r.id === relationId}
-                                onChange={({ target }) => {
-                                    if (target.checked) {
-                                        onRelationSelected(r.id);
-                                    }
-                                }}
-                            >
-                                {r.name}
-                            </Radio>
-                        )
-                    )
-                }
+                <Checkbox.Group
+                    options={relations.map(ele => ({ label: ele.name!, value: ele.id!}))}
+                    value={relationIds}
+                    onChange={(value) => onRelationsSelected(value as string[])}
+                />
             </Row>
         </Row>
     );

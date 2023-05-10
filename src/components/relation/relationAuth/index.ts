@@ -1,6 +1,6 @@
 import assert from "assert";
 import { AuthCascadePath } from "oak-domain/lib/types";
-import { uniq, pull } from 'oak-domain/lib/utils/lodash';
+import { uniq, pull, difference } from 'oak-domain/lib/utils/lodash';
 import { ED } from "../../../types/AbstractComponent";
 
 export default OakComponent({
@@ -14,15 +14,17 @@ export default OakComponent({
     isList: true,
     properties: {
         entity: '' as keyof ED,
-        relationId: '',
+        relationIds: [] as string[],
     },
     filters: [
         {
             filter() {
-                const { entity, relationId } = this.props;
-                if (relationId) {
+                const { entity, relationIds } = this.props;
+                if (relationIds && relationIds.length > 0) {
                     return {
-                        destRelationId: relationId,
+                        destRelationId: {
+                            $in: relationIds,
+                        },
                     };
                 }
                 else {
@@ -98,23 +100,47 @@ export default OakComponent({
         },
     },
     methods: {
-        onChange(checked: boolean, sourceRelationId: string, path: string, relationAuth?: ED['relationAuth']['OpSchema']) {
+        onChange(checked: boolean, sourceRelationId: string, path: string, relationAuths?: ED['relationAuth']['OpSchema'][]) {
+            const { relationIds } = this.props;
+            assert(relationIds);
             if (checked) {
-                if (relationAuth) {
-                    assert(relationAuth.$$deleteAt$$);
-                    this.recoverItem(relationAuth.id);
+                if (relationAuths) {
+                    // 这些relationAuths可能是已经带有relationIds的，也有可能是被删除掉的，比较复杂
+                    const includedRelationIds = [] as string[];
+                    for (const auth of relationAuths) {
+                        if (auth.$$deleteAt$$) {
+                            this.recoverItem(auth.id);
+                        }
+                        includedRelationIds.push(auth.destRelationId);
+                    }
+                    const restRelationIds = difference(relationIds, includedRelationIds);
+                    restRelationIds.forEach(
+                        (relationId) => this.addItem({
+                            sourceRelationId,
+                            path,
+                            destRelationId: relationId,
+                        })
+                    );
                 }
                 else {
-                    this.addItem({
-                        sourceRelationId,
-                        path,
-                        destRelationId: this.props.relationId!,
-                    });
+                    relationIds.forEach(
+                        relationId => this.addItem({
+                            sourceRelationId,
+                            path,
+                            destRelationId: relationId,
+                        })
+                    );
                 }
             }
             else {
-                assert(relationAuth);
-                this.removeItem(relationAuth.id);
+                assert(relationAuths);
+                relationAuths.forEach(
+                    relationAuth => {
+                        if (!relationAuth.$$deleteAt$$) {
+                            this.removeItem(relationAuth.id);
+                        }
+                    }
+                );
             }
             
         },

@@ -1,5 +1,5 @@
 import assert from "assert";
-import { pull } from 'oak-domain/lib/utils/lodash';
+import { pull, union } from 'oak-domain/lib/utils/lodash';
 import { AuthCascadePath, CascadeActionAuth } from "oak-domain/lib/types";
 import { ED } from "../../../types/AbstractComponent";
 
@@ -15,13 +15,13 @@ export default OakComponent({
     },
     properties: {
         entity: '' as keyof ED,
-        action: '',
+        actions: [] as string[],
     },
     filters: [
         {
             filter() {
-                const { entity, action } = this.props;
-                if (!action) {
+                const { entity, actions } = this.props;
+                if (!actions || actions.length === 0) {
                     return {
                         destEntity: entity as string,
                     };
@@ -29,7 +29,7 @@ export default OakComponent({
                 return {
                     destEntity: entity as string,
                     deActions: {
-                        $contains: action,
+                        $overlaps: actions,
                     },
                 };
             }
@@ -45,14 +45,14 @@ export default OakComponent({
     },
     methods: {
         onChange(checked: boolean, path: AuthCascadePath<ED>, directActionAuth?: ED['directActionAuth']['OpSchema']) {
-            const { action } = this.props;
-            assert(action);
+            const { actions } = this.props;
+            assert(actions!.length > 0);
             if (checked) {
                 if (directActionAuth) {
                     const { deActions } = directActionAuth;
-                    deActions.push(action);
+                    const deActions2 = union(deActions, actions);
                     this.updateItem({
-                        deActions,
+                        deActions: deActions2,
                     }, directActionAuth.id);
                 }
                 else {
@@ -60,14 +60,16 @@ export default OakComponent({
                         destEntity: path[0] as string,
                         sourceEntity: path[2] as string,
                         path: path[1],
-                        deActions: [action],
+                        deActions: actions,
                     });
                 }
             }
             else {
                 assert(directActionAuth);
                 const { deActions } = directActionAuth;
-                pull(deActions, action);
+                actions?.forEach(
+                    action => pull(deActions, action)
+                );
                 this.updateItem({
                     deActions,
                 }, directActionAuth.id);

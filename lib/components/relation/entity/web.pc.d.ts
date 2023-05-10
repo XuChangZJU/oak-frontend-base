@@ -6,14 +6,14 @@ declare type ED = EntityDict & BaseEntityDict;
 export default function render(props: WebComponentProps<ED, keyof ED, false, {
     entity: keyof ED;
     actions: string[];
-    action: string;
+    checkedActions: string[];
     relations: ED['relation']['OpSchema'][];
-    relationId: string;
+    relationIds: string[];
     hasDirectActionAuth: boolean;
     hasDirectRelationAuth: boolean;
-    deducedRelationAttr?: string;
+    deduceRelationAttr?: string;
 }, {
-    onActionSelected: (action: string) => void;
-    onRelationSelected: (relationId: string) => void;
+    onActionsSelected: (actions: string[]) => void;
+    onRelationsSelected: (relationIds: string[]) => void;
 }>): JSX.Element;
 export {};

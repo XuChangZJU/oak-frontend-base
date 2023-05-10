@@ -10,8 +10,8 @@ export default OakComponent({
         entity: '' as keyof ED,
     },
     data: {
-        action: '',
-        relationId: '',
+        checkedActions: [] as string[],
+        relationIds: [] as string[],
     },
     formData() {
         const { entity } = this.props;
@@ -68,11 +68,11 @@ export default OakComponent({
         }
     },
     methods: {
-        onActionSelected(action: string) {
-            this.setState({ action });
+        onActionsSelected(checkedActions: string[]) {
+            this.setState({ checkedActions });
         },
-        onRelationSelected(relationId: string) {
-            this.setState({ relationId });
+        onRelationsSelected(relationIds: string[]) {
+            this.setState({ relationIds });
         }
     }
 });

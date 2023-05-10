@@ -2,6 +2,7 @@ import { Table, Checkbox, Button, Row, Radio, Col } from 'antd';
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { intersection, difference } from 'oak-domain/lib/utils/lodash';
 
 type ED = EntityDict & BaseEntityDict;
 
@@ -13,15 +14,15 @@ export default function render(
         {
             paths: AuthCascadePath<ED>[];
             directRelationAuths?: ED['directRelationAuth']['OpSchema'][];
-            relationId: string;
+            relationIds: string[];
         },
         {
-            onChange: (checked: boolean, path: AuthCascadePath<ED>, directRelationAuth?: ED['directRelationAuth']['OpSchema']) => void;
+            onChange: (checked: boolean, path: AuthCascadePath<ED>, directRelationAuths?: ED['directRelationAuth']['OpSchema'][]) => void;
             confirm: () => void;
         }
     >
 ) {
-    const { paths, directRelationAuths, relationId, oakDirty } = props.data;
+    const { paths, directRelationAuths, relationIds, oakDirty } = props.data;
     const { onChange, confirm, t, clean } = props.methods;
 
     return (
@@ -50,20 +51,30 @@ export default function render(
                         key: 'operation',
                         width: 300,
                         render: (value, record) => {
-                            const hasDra = !!directRelationAuths?.find(
-                                (daa) => !daa.$$deleteAt$$ && daa.path === record[1] && daa.destRelationId === relationId
-                            );
+                            const disabled = relationIds.length === 0;
+                            let checked = false, indeterminate = false;
+                            if (!disabled && directRelationAuths) {
+                                const includedRelationIds = [] as string[];
+                                for (const dra of directRelationAuths) {
+                                    if (!dra.$$deleteAt$$ && dra.path === record[1]) {
+                                        includedRelationIds.push(dra.destRelationId);
+                                    }
+                                }
+                                checked = difference(relationIds, includedRelationIds).length === 0;
+                                indeterminate = !checked && intersection(relationIds, includedRelationIds).length > 0;
+                            }
                             return (
                                 <Checkbox
-                                    disabled={!relationId}
-                                    checked={hasDra}
+                                    disabled={disabled}
+                                    checked={checked}
+                                    indeterminate={indeterminate}
                                     onChange={({ target }) => {
                                         const { checked } = target;
-                                        const dra = directRelationAuths?.find(
+                                        const dras = directRelationAuths?.filter(
                                             (daa) => daa.path === record[1]
                                         );
 
-                                        onChange(checked, record, dra);
+                                        onChange(checked, record, dras);
                                     }}
                                 >
                                     {t('allowed')}

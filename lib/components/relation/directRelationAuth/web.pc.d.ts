@@ -6,9 +6,9 @@ declare type ED = EntityDict & BaseEntityDict;
 export default function render(props: WebComponentProps<ED, 'directRelationAuth', true, {
     paths: AuthCascadePath<ED>[];
     directRelationAuths?: ED['directRelationAuth']['OpSchema'][];
-    relationId: string;
+    relationIds: string[];
 }, {
-    onChange: (checked: boolean, path: AuthCascadePath<ED>, directRelationAuth?: ED['directRelationAuth']['OpSchema']) => void;
+    onChange: (checked: boolean, path: AuthCascadePath<ED>, directRelationAuths?: ED['directRelationAuth']['OpSchema'][]) => void;
     confirm: () => void;
 }>): JSX.Element;
 export {};

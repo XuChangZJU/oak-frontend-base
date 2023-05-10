@@ -4,7 +4,8 @@ const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import assert from 'assert';
+import { intersection, difference } from 'oak-domain/lib/utils/lodash';
+
 
 type ED = EntityDict & BaseEntityDict;
 
@@ -14,18 +15,18 @@ export default function render(
         'relationAuth',
         true,
         {
-            relationId: string;
+            relationIds: string[];
             relationAuths: ED['relationAuth']['OpSchema'][];
             auths: AuthCascadePath<ED>[];
             sourceRelations: ED['relation']['OpSchema'][];
         },
         {
-            onChange: (checked: boolean, relationId: string, path: string, relationAuth?: ED['relationAuth']['OpSchema']) => void;
+            onChange: (checked: boolean, relationId: string, path: string, relationAuths?: ED['relationAuth']['OpSchema'][]) => void;
             confirm: () => void;
         }
     >
 ) {
-    const { relationId, relationAuths, oakDirty, auths, sourceRelations } = props.data;
+    const { relationIds, relationAuths, oakDirty, auths, sourceRelations } = props.data;
     const { onChange, t, clean, confirm } = props.methods;
 
     return (
@@ -52,7 +53,7 @@ export default function render(
                         render: (value, record) => {
                             const sourceEntity = record[2];
                             const relations = sourceRelations.filter(
-                                ele => ele.entity === sourceEntity && ele.id !== relationId
+                                ele => ele.entity === sourceEntity && !relationIds.includes(ele.id)
                             );
                             return (
                                 <div style={{
@@ -62,29 +63,38 @@ export default function render(
                                 }}>
                                     {
                                         relations?.map(
-                                            (r) => (
-                                                <Checkbox
-                                                    disabled={!relationId}
-                                                    checked={!!relationId && !!relationAuths?.find(
-                                                        ele => !ele.$$deleteAt$$
-                                                            && ele.sourceRelationId === r.id &&
-                                                            ele.destRelationId === relationId &&
-                                                            ele.path === record[1]
-                                                            
-                                                    )}
-                                                    onChange={({ target }) => {
-                                                        const { checked } = target;
-                                                        const relationAuth = relationAuths?.find(
-                                                            ele => ele.sourceRelationId === r.id &&
-                                                            ele.destRelationId === relationId
-                                                        );
-
-                                                        onChange(checked, r.id, record[1], relationAuth)
-                                                    }}
-                                                >
-                                                    {r.name}
-                                                </Checkbox>
-                                            )
+                                            (r) => {
+                                                const disabled = relationIds.length === 0;
+                                                let checked = false, indeterminate = false;
+                                                if (!disabled && relationAuths) {
+                                                    const includedRelationIds = [] as string[];
+                                                    for(const auth of relationAuths) {
+                                                        if (!auth.$$deleteAt$$ && auth.sourceRelationId === r.id && auth.path === record[1]) {
+                                                            includedRelationIds.push(auth.destRelationId);
+                                                        }
+                                                    }
+                                                    checked = difference(relationIds, includedRelationIds).length === 0;
+                                                    indeterminate = !checked && intersection(relationIds, includedRelationIds).length > 0;
+                                                }
+                                                return (
+                                                    <Checkbox
+                                                        disabled={disabled}
+                                                        checked={checked}
+                                                        indeterminate={indeterminate}
+                                                        onChange={({ target }) => {
+                                                            const { checked } = target;
+                                                            const refRelationAuths = relationAuths?.filter(
+                                                                ele => ele.sourceRelationId === r.id && ele.path === record[1]
+                                                                && relationIds!.includes(ele.destRelationId)
+                                                            );
+    
+                                                            onChange(checked, r.id, record[1], refRelationAuths)
+                                                        }}
+                                                    >
+                                                        {r.name}
+                                                    </Checkbox>
+                                                );
+                                            }
                                         )
                                     }
                                 </div>

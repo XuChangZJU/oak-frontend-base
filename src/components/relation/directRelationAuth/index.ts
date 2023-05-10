@@ -1,6 +1,6 @@
 // attention! 这个组件没有测试过，因为jichuang项目没有存在directRelationAuth的entity. by Xc 2023.05.06
 import assert from "assert";
-import { pull } from 'oak-domain/lib/utils/lodash';
+import { difference } from 'oak-domain/lib/utils/lodash';
 import { AuthCascadePath, CascadeActionAuth } from "oak-domain/lib/types";
 import { ED } from "../../../types/AbstractComponent";
 
@@ -14,15 +14,17 @@ export default OakComponent({
     },
     properties: {
         entity: '' as keyof ED,
-        relationId: '',
+        relationIds: [] as string[],
     },
     filters: [
         {
             filter() {
-                const { entity, relationId } = this.props;
-                if (relationId) {
+                const { entity, relationIds } = this.props;
+                if (relationIds && relationIds.length > 0) {
                     return {
-                        destRelationId: relationId,
+                        destRelationId: {
+                            $in: relationIds,
+                        },
                     };
                 }
                 else {
@@ -48,22 +50,42 @@ export default OakComponent({
         };
     },
     methods: {
-        onChange(checked: boolean, path: AuthCascadePath<ED>, directRelationAuth?: ED['directRelationAuth']['OpSchema']) {
+        onChange(checked: boolean, path: AuthCascadePath<ED>, directRelationAuths?: ED['directRelationAuth']['OpSchema'][]) {
+            const { relationIds } = this.props;
+            assert(relationIds);
             if (checked) {
-                if (directRelationAuth) {
-                    assert(directRelationAuth.$$deleteAt$$);
-                    this.recoverItem(directRelationAuth.id);
+                if (directRelationAuths) {
+                    const includedRelationIds = [] as string[];
+                    directRelationAuths.forEach(
+                        (dra) => {
+                            if (dra.$$deleteAt$$) {
+                                this.recoverItem(dra.id);
+                            }
+                            includedRelationIds.push(dra.destRelationId);
+                        }
+                    )
+                    const restRelationIds = difference(relationIds, includedRelationIds);
+                    restRelationIds.forEach(
+                        (relationId) => this.addItem({
+                            path: path[1],
+                            destRelationId: relationId,
+                        })
+                    );
                 }
                 else {
-                    this.addItem({
-                        path: path[1],
-                        destRelationId: this.props.relationId,
-                    });
+                    relationIds.forEach(
+                        (relationId) => this.addItem({
+                            path: path[1],
+                            destRelationId: relationId,
+                        })
+                    );;
                 }
             }
             else {
-                assert(directRelationAuth && !directRelationAuth.$$deleteAt$$);
-                this.removeItem(directRelationAuth.id);
+                assert(directRelationAuths && directRelationAuths.length > 0);
+                directRelationAuths.forEach(
+                    (dra) => this.removeItem(dra.id)
+                );
             }
         },
         confirm() {

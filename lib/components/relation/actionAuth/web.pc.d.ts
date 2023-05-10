@@ -9,7 +9,7 @@ export default function render(props: WebComponentProps<ED, 'actionAuth', true, 
         relations: ED['relation']['Schema'][];
         actionAuths?: ED['actionAuth']['OpSchema'][];
     }>;
-    action: string;
+    actions: string[];
 }, {
     onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) => void;
     confirm: () => void;
