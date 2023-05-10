@@ -1,4 +1,4 @@
-import { EntityDict, AspectWrapper, Aspect, AuthCascadePath } from 'oak-domain/lib/types';
+import { EntityDict, AspectWrapper, Aspect, AuthCascadePath, AuthDeduceRelationMap } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -12,12 +12,15 @@ export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt ex
     private actionCascadePathMap;
     private relationCascadePathGraph;
     private baseRelationAuth;
+    private authDeduceRelationMap;
     static IgnoredActions: string[];
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[]);
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>);
     private judgeRelation;
     getHasRelationEntities(): string[];
+    getDeduceRelationAttribute(entity: keyof ED): string | undefined;
     getAllEntities(): string[];
     getActions(entity: keyof ED): string[];
+    hasRelation(entity: keyof ED): boolean;
     getCascadeActionEntitiesBySource(entity: keyof ED): {
         path: AuthCascadePath<ED>;
         actions: string[];
@@ -26,6 +29,8 @@ export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt ex
     getCascadeRelationAuthsBySource(entity: keyof ED): AuthCascadePath<ED>[];
     getCascadeRelationAuths(entity: keyof ED, ir: boolean): AuthCascadePath<ED>[];
     checkRelation<T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: FrontCxt): void;
+    private freeActionAuthDict;
+    private directActionAuthDict;
     /**
      * 对目标对象的free和direct访问权限，每次需要的时候去后台取到缓存中
      * @param entity

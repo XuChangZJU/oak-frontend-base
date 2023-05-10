@@ -1,4 +1,4 @@
-import { AggregationResult, AuthCascadePath, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
+import { AggregationResult, AuthCascadePath, AuthDeduceRelationMap, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
 import { TreeStore, TreeStoreOperateOption, TreeStoreSelectOption } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
@@ -23,11 +23,12 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         storageSchema: StorageSchema<ED>,
         contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>,
         actionCascadeGraph: AuthCascadePath<ED>[],
-        relationCascadeGraph: AuthCascadePath<ED>[]
+        relationCascadeGraph: AuthCascadePath<ED>[],
+        authDeduceRelationMap: AuthDeduceRelationMap<ED>,
     ) {
         super(storageSchema);
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
-        this.relationAuth = new RelationAuth(actionCascadeGraph, relationCascadeGraph, storageSchema);
+        this.relationAuth = new RelationAuth(storageSchema, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap);
         this.initRelationAuthTriggers(contextBuilder);
     }
 

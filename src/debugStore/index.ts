@@ -2,7 +2,7 @@ import { scheduleJob } from 'node-schedule';
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 import { DebugStore } from './DebugStore';
 import {
-    Checker, Trigger, StorageSchema, EntityDict, ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, Routine, Timer, AuthCascadePath} from "oak-domain/lib/types";
+    Checker, Trigger, StorageSchema, EntityDict, ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, Routine, Timer, AuthCascadePath, AuthDeduceRelationMap} from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { assert } from 'oak-domain/lib/utils/assert';
@@ -247,15 +247,16 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
     triggers: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers: Array<Checker<ED, keyof ED, Cxt>>,
     watchers: Array<Watcher<ED, keyof ED, Cxt>>,
-    timers?: Array<Timer<ED, Cxt>>,
-    startRoutines?: Array<Routine<ED, Cxt>>,
-    initialData?: {
+    timers: Array<Timer<ED, Cxt>>,
+    startRoutines: Array<Routine<ED, Cxt>>,
+    initialData: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
-    actionDict?: ActionDictOfEntityDict<ED>,
-    actionCascadePathGraph?: AuthCascadePath<ED>[],
-    relationCascadePathGraph?: AuthCascadePath<ED>[]) {
-    const store = new DebugStore<ED, Cxt>(storageSchema, contextBuilder, actionCascadePathGraph || [], relationCascadePathGraph || []);
+    actionDict: ActionDictOfEntityDict<ED>,
+    actionCascadePathGraph: AuthCascadePath<ED>[],
+    relationCascadePathGraph: AuthCascadePath<ED>[],
+    authDeduceRelationMap: AuthDeduceRelationMap<ED>) {
+    const store = new DebugStore<ED, Cxt>(storageSchema, contextBuilder, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap);
 
     triggers.forEach(
         ele => store.registerTrigger(ele)

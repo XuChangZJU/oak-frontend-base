@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, AuthCascadePath } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, AuthCascadePath, AuthDeduceRelationMap } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -22,17 +22,19 @@ export class RelationAuth<
     private actionCascadePathMap: Record<string, AuthCascadePath<ED>[]>;
     private relationCascadePathGraph: AuthCascadePath<ED>[];
     private baseRelationAuth: BaseRelationAuth<ED>;
+    private authDeduceRelationMap: AuthDeduceRelationMap<ED>;
     static IgnoredActions = ['download', 'aggregate', 'count', 'stat'];
 
     constructor(
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         cache: Cache<ED, Cxt, FrontCxt, AD>,
         actionCascadePathGraph: AuthCascadePath<ED>[],
-        relationCascadePathGraph: AuthCascadePath<ED>[]
+        relationCascadePathGraph: AuthCascadePath<ED>[],
+        authDeduceRelationMap: AuthDeduceRelationMap<ED>
     ) {
         super();
         this.aspectWrapper = aspectWrapper,
-        this.cache = cache;
+            this.cache = cache;
         this.actionCascadePathGraph = actionCascadePathGraph;
         this.relationCascadePathGraph = relationCascadePathGraph;
         this.actionCascadePathMap = {};
@@ -47,7 +49,8 @@ export class RelationAuth<
                 }
             }
         );
-        this.baseRelationAuth = new BaseRelationAuth(actionCascadePathGraph, relationCascadePathGraph, cache.getSchema());
+        this.authDeduceRelationMap = authDeduceRelationMap;
+        this.baseRelationAuth = new BaseRelationAuth(cache.getSchema(), actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap);
     }
 
     private judgeRelation(entity: keyof ED, attr: string) {
@@ -62,6 +65,10 @@ export class RelationAuth<
         return entities;
     }
 
+    getDeduceRelationAttribute(entity: keyof ED) {
+        return this.authDeduceRelationMap[entity] as string | undefined;
+    }
+
     getAllEntities() {
         return Object.keys(this.cache.getSchema());
     }
@@ -70,6 +77,11 @@ export class RelationAuth<
         return this.cache.getSchema()[entity].actions.filter(
             ele => !RelationAuth.IgnoredActions.includes(ele)
         );
+    }
+
+    hasRelation(entity: keyof ED) {
+        const schema = this.cache.getSchema();
+        return !!schema[entity].relation;
     }
 
     getCascadeActionEntitiesBySource(entity: keyof ED) {
@@ -113,20 +125,20 @@ export class RelationAuth<
         this.baseRelationAuth.checkRelationSync(entity, operation, context);
     }
 
+
+    private freeActionAuthDict: {
+        [T in keyof ED]?: true;
+    } = {};
+    private directActionAuthDict: {
+        [T in keyof ED]?: true;
+    } = {};
     /**
      * 对目标对象的free和direct访问权限，每次需要的时候去后台取到缓存中
      * @param entity 
      */
     private tryGetFreeAndDirectActionAuthInfo<T extends keyof ED>(entity: T) {
-        const freeActionAuths = this.cache.get('freeActionAuth', {
-            data: {
-                id: 1,
-            },
-            filter: {
-                destEntity: entity as string,
-            },
-        });
-        if (freeActionAuths.length === 0) {
+        if (!this.freeActionAuthDict[entity]) {
+            this.freeActionAuthDict[entity] = true;      // 先假设后台不会更新这些数据
             this.cache.refresh('freeActionAuth', {
                 data: {
                     id: 1,
@@ -139,15 +151,8 @@ export class RelationAuth<
             });
         }
 
-        const directActionAuths = this.cache.get('directActionAuth', {
-            data: {
-                id: 1,
-            },
-            filter: {
-                destEntity: entity as string,
-            },
-        });
-        if (directActionAuths.length === 0) {
+        if (!this.directActionAuthDict[entity]) {
+            this.directActionAuthDict[entity] = true;
             this.cache.refresh('directActionAuth', {
                 data: {
                     id: 1,
@@ -196,13 +201,15 @@ export class RelationAuth<
                             }
                         }
                     }
-                }
+                },
+                entity: 1,
+                entityId: 1,
             },
             filter: {
                 userId,
             },
         };
-        
+
         this.tryGetFreeAndDirectActionAuthInfo(entity);
 
         if (paths) {
@@ -216,13 +223,14 @@ export class RelationAuth<
                             userRelation$entity: irurProjection
                         });
                     }
-                    else if (ir){
-                        set(projection, `p.userRelation$entity`, irurProjection);
+                    else if (ir) {
+                        set(projection, p ? `${p}.userRelation$entity`: 'userRelation$entity', irurProjection);
                     }
                     else {
                         // 这里最好不要产生user: { id: 1 }的格式，在倒数第二层进行处理
                         const entity = r;
                         const attr = ps.pop();
+                        assert(attr);
                         const rel = this.judgeRelation(entity, attr!);
                         if (rel === 2) {
                             set(projection, `${ps.join('.')}.entity`, 1);

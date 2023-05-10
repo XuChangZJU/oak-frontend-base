@@ -1,4 +1,4 @@
-import { Aspect, AspectWrapper, AuthCascadePath, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, AspectWrapper, AuthCascadePath, AuthDeduceRelationMap, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 
@@ -28,10 +28,11 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         store: CacheStore<ED, FrontCxt>,
         actionCascadePathGraph: AuthCascadePath<ED>[],
         relationCascadePathGraph: AuthCascadePath<ED>[],
+        authDeduceRelationMap: AuthDeduceRelationMap<ED>,
         colorDict: ColorDict<ED>) {
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store);
     const location = new Location();
-    const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, cache, actionCascadePathGraph, relationCascadePathGraph);
+    const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, cache, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap);
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, relationAuth);
     const locales = new Locales(aspectWrapper);
     const geo = new Geo(aspectWrapper);

@@ -217,19 +217,37 @@ function checkActionsAndCascadeEntities<
             }
             else {
                 assert(!option.isList);
-                assert(!(action === 'create' || typeof action === 'object' && action.action === 'create'), 'create的action只应该定义在list页面上');
-                const { id } = rows;
-                const a2 = typeof action === 'object' ? action.action : action;
-                const data = typeof action === 'object' ? action.data : undefined;
-                if (this.checkOperation(this.state.oakEntity, a2, data as any, { id }, checkTypes)) {
-                    legalActions.push(action);
-                    if (rows['#oakLegalActions']) {
-                        rows['#oakLegalActions'].push(action);
+                if (action === 'create' || typeof action === 'object' && action.action === 'create') {
+                    // 如果是create，根据updateData来判定。create动作应该是自动创建行的并将$$createAt$$置为1
+                    if (rows.$$createAt$$ === 1) {
+                        const [{ operation }] = this.features.runningTree.getOperations(this.state.oakFullpath!)!;
+
+                        if (this.checkOperation(this.state.oakEntity, 'create', operation.data as ED[T]['Update']['data'], undefined, checkTypes)) {
+                            if (rows['#oakLegalActions']) {
+                                rows['#oakLegalActions'].push(action);
+                            }
+                            else {
+                                Object.assign(rows, {
+                                    '#oakLegalActions': [action],
+                                });
+                            }
+                        }
                     }
-                    else {
-                        Object.assign(rows, {
-                            '#oakLegalActions': [action],
-                        });
+                }
+                else {
+                    const { id } = rows;
+                    const a2 = typeof action === 'object' ? action.action : action;
+                    const data = typeof action === 'object' ? action.data : undefined;
+                    if (this.checkOperation(this.state.oakEntity, a2, data as any, { id }, checkTypes)) {
+                        legalActions.push(action);
+                        if (rows['#oakLegalActions']) {
+                            rows['#oakLegalActions'].push(action);
+                        }
+                        else {
+                            Object.assign(rows, {
+                                '#oakLegalActions': [action],
+                            });
+                        }
                     }
                 }
             }
@@ -512,9 +530,7 @@ export async function execute<
         oakFocused: undefined,
     }); */
 
-    const fullpath = path
-        ? `${this.state.oakFullpath}.${path}`
-        : this.state.oakFullpath;
+    const fullpath = path ? path : this.state.oakFullpath;
     const { message } = await this.features.runningTree.execute(fullpath, action);
     if (messageProps !== false) {
         const messageData: MessageProps = {

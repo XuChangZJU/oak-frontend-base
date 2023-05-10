@@ -4,22 +4,18 @@ import {
     Checker,
     StorageSchema,
     Connector,
-    AuthDefDict,
-    CascadeRemoveDefDict,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
-import { ColorDict } from 'oak-domain/lib/types/Style';
-
+import { EntityDict } from 'oak-domain/lib/types/Entity';
 
 import { initialize as initBasicFeatures } from './features';
-import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
 import { createDynamicCheckers } from 'oak-domain/lib/checkers';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { InitializeOptions } from './types/Initialize';
 
 /**
  * @param storageSchema
@@ -43,13 +39,10 @@ export function initialize<
     storageSchema: StorageSchema<ED>,
     frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
     connector: Connector<ED, Cxt, FrontCxt>,
-    checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
-    actionDict?: ActionDictOfEntityDict<ED>,
-    actionCascadePathGraph?: AuthCascadePath<ED>[],
-    relationCascadePathGraph?: AuthCascadePath<ED>[],
-    cascadeRemoveDict?: CascadeRemoveDefDict<ED>,
-    colorDict?: ColorDict<ED>,
+    checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
+    option: InitializeOptions<ED>
 ) {
+    const { cascadeRemoveDict, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, actionDict, colorDict } = option;
     const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(
         storageSchema, cascadeRemoveDict || {}));
 
@@ -74,9 +67,10 @@ export function initialize<
         storageSchema, 
         () => frontendContextBuilder()(cacheStore), 
         cacheStore, 
-        actionCascadePathGraph || [],
-        relationCascadePathGraph || [],
-        colorDict || {}
+        actionCascadePathGraph,
+        relationCascadePathGraph,
+        authDeduceRelationMap,
+        colorDict
     );
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));

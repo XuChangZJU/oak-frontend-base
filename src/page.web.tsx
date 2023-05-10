@@ -43,10 +43,10 @@ abstract class OakComponentBase<
     TData extends DataOption,
     TProperty extends DataOption,
     TMethod extends MethodOption
-> extends React.PureComponent<
+    > extends React.PureComponent<
     ComponentProps<ED, T, IsList, TProperty>,
     ComponentData<ED, T, FormedData, TData>
-> {
+    > {
     abstract features: FD &
         BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     abstract oakOption: OakComponentOption<
@@ -359,8 +359,12 @@ abstract class OakComponentBase<
         return (this.props.t as Function)(key, params);
     }
 
-    execute(action?: ED[T]['Action'], messageProps?: boolean | MessageProps) {
-        return execute.call(this as any, action, undefined, messageProps);
+    execute(action?: ED[T]['Action'], messageProps?: boolean | MessageProps, path?: string) {
+        return execute.call(this as any, action, path, messageProps);
+    }
+
+    isDirty(path?: string) {
+        return this.features.runningTree.isDirty(path || this.state.oakFullpath);
     }
 
     getFreshValue(path?: string) {
@@ -717,10 +721,12 @@ export function createComponent<
                 t: (key: string, params?: object) => this.t(key, params),
                 execute: (
                     action?: ED[T]['Action'],
-                    messageProps?: boolean | MessageProps
+                    messageProps?: boolean | MessageProps,
+                    path?: string
                 ) => {
-                    return this.execute(action, messageProps);
+                    return this.execute(action, messageProps, path);
                 },
+                isDirty: (path?: string) => this.isDirty(path),
                 aggregate: (aggregation: ED[T]['Aggregation']) => {
                     return this.features.cache.aggregate(this.state.oakEntity, aggregation);
                 },
@@ -925,16 +931,20 @@ export function createComponent<
             }
             lifetimes?.attached && lifetimes.attached.call(this);
             const { oakPath } = this.props;
-            if (oakPath || this.iAmThePage() && path) {
-                await this.onPathSet();
-                lifetimes?.ready && lifetimes.ready.call(this);
-                lifetimes?.show && lifetimes.show.call(this);
-            }
-            else {
-                if (!option.entity) {
+            if (option.entity) {
+                if (oakPath || this.iAmThePage() && path) {
+                    await this.onPathSet();
                     lifetimes?.ready && lifetimes.ready.call(this);
                     lifetimes?.show && lifetimes.show.call(this);
                 }
+            }
+            else {
+                // 无entity的结点此时直接调ready生命周期
+                if (oakPath || this.iAmThePage() && path) {
+                    await this.onPathSet();
+                }
+                lifetimes?.ready && lifetimes.ready.call(this);
+                lifetimes?.show && lifetimes.show.call(this);
                 this.reRender();
             }
             if (option.features) {
@@ -959,12 +969,13 @@ export function createComponent<
 
         async componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
             if (prevProps.oakPath !== this.props.oakPath) {
+                // oakPath如果是用变量初始化，在这里再执行onPathSet，如果有entity的结点在此执行ready
                 assert(this.props.oakPath);
-                features.runningTree.subscribeNode
-                this.subscribed
                 await this.onPathSet();
-                lifetimes?.ready && lifetimes.ready.call(this);
-                // lifetimes?.show && lifetimes.show.call(this);
+                if (option.entity) {
+                    lifetimes?.ready && lifetimes.ready.call(this);
+                    lifetimes?.show && lifetimes.show.call(this);
+                }
             }
             if (this.props.oakId !== prevProps.oakId) {
                 assert(this.props.oakId);       // 好像不可能把已有的id设空的界面需求吧

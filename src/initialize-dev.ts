@@ -7,27 +7,24 @@ import {
     Watcher,
     Routine,
     Timer,
-    CascadeRemoveDefDict,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
-import { Exportation, Importation } from 'oak-domain/lib/types/Port';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { createDynamicCheckers } from 'oak-domain/lib/checkers/index';
 import { createDynamicTriggers } from 'oak-domain/lib/triggers/index';
 
-import { ColorDict } from 'oak-domain/lib/types/Style';
 import { createDebugStore, clearMaterializedData } from './debugStore';
 
-import { BasicFeatures, initialize as initBasicFeatures } from './features';
+import { initialize as initBasicFeatures } from './features';
 import { intersection } from 'oak-domain/lib/utils/lodash';
 import commonAspectDict from 'oak-common-aspect';
-import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
 import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { CommonAspectDict, registerPorts } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { DebugStore } from './debugStore/DebugStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+import { InitializeOptions } from './types/Initialize';
 
 /**
  * @param storageSchema
@@ -52,22 +49,18 @@ export function initialize<
         frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
         backendContextBuilder: (contextStr?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>,
         aspectDict: AD,
-        triggers?: Array<Trigger<ED, keyof ED, Cxt>>,
-        checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
-        watchers?: Array<Watcher<ED, keyof ED, Cxt>>,
-        timers?: Array<Timer<ED, Cxt>>,
-        startRoutines?: Array<Routine<ED, Cxt>>,
-        initialData?: {
+        triggers: Array<Trigger<ED, keyof ED, Cxt>>,
+        checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
+        watchers: Array<Watcher<ED, keyof ED, Cxt>>,
+        timers: Array<Timer<ED, Cxt>>,
+        startRoutines: Array<Routine<ED, Cxt>>,
+        initialData: {
             [T in keyof ED]?: Array<ED[T]['OpSchema']>;
         },
-        actionDict?: ActionDictOfEntityDict<ED>,
-        actionCascadePathGraph?: AuthCascadePath<ED>[],
-        relationCascadePathGraph?: AuthCascadePath<ED>[],
-        cascadeRemoveDict?: CascadeRemoveDefDict<ED>,
-        colorDict?: ColorDict<ED>,
-        importations?: Importation<ED, keyof ED, any>[],
-        exportations?: Exportation<ED, keyof ED, any>[]
+        option: InitializeOptions<ED>
     ) {
+    const { cascadeRemoveDict, actionCascadePathGraph, actionDict, 
+        relationCascadePathGraph, authDeduceRelationMap, colorDict, importations, exportations } = option;
     let intersected = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
     if (intersected.length > 0) {
         throw new Error(
@@ -75,19 +68,22 @@ export function initialize<
         );
     }
     const aspectDict2 = Object.assign({}, aspectDict, commonAspectDict);
-    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(
+    const checkers2 = (checkers).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(
         storageSchema, cascadeRemoveDict || {}));
-    const triggers2 = createDynamicTriggers<ED, Cxt>(storageSchema).concat(triggers || []);
+    const triggers2 = createDynamicTriggers<ED, Cxt>(storageSchema).concat(triggers);
     const debugStore = createDebugStore(
         storageSchema,
         backendContextBuilder,
         triggers2,
         checkers2,
-        watchers || [],
+        watchers,
         timers,
         startRoutines,
         initialData,
-        actionDict
+        actionDict,
+        actionCascadePathGraph,
+        relationCascadePathGraph,
+        authDeduceRelationMap
     );
 
     const cacheStore = new CacheStore<ED, FrontCxt>(
@@ -123,9 +119,10 @@ export function initialize<
         storageSchema,
         () => frontendContextBuilder()(cacheStore),
         cacheStore,
-        actionCascadePathGraph || [],
-        relationCascadePathGraph || [],
-        colorDict || {});
+        actionCascadePathGraph,
+        relationCascadePathGraph,
+        authDeduceRelationMap,
+        colorDict);
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
     if (actionDict) {

@@ -361,11 +361,13 @@ export type OakCommonComponentMethods<
         ) => Promise<void>;
         // setProps: (props: Record<string, any>, usingState?: true) => void;
         clean: (path?: string) => void;
+        isDirty: (path?: string) => boolean;
 
         t(key: string, params?: object): string;
         execute: (
             action?: ED[T]['Action'],
-            messageProps?: boolean | MessageProps
+            messageProps?: boolean | MessageProps,
+            path?: string,
         ) => Promise<void>;
         checkOperation: (
             entity: T,
@@ -489,7 +491,7 @@ export type MakeOakComponent<
     ) => (props: ReactComponentProps<ED, T, IsList, TProperty>) => React.ReactElement;
 
 // 暴露给组件的方法
-export type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh' | 'aggregate' | 'checkOperation';
+export type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh' | 'aggregate' | 'checkOperation' | 'isDirty';
 
 // 暴露给list组件的方法
 export type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedFilter' | 'removeNamedFilter' | 'removeNamedFilterByName' | 'setNamedSorters'

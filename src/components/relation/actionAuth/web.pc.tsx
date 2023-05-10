@@ -95,9 +95,7 @@ export default function render(
                     }
                 ]}
                 dataSource={cascadeEntityActions}
-                pagination={{
-                    position: ['none', 'none'] as any,
-                }}
+                pagination={false}
             />
             <Row justify="end" style={{ marginTop: 20, padding: 5 }}>
                 <Button

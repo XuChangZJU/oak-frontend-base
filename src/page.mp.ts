@@ -304,8 +304,12 @@ const oakBehavior = Behavior<
             return this.features.runningTree.clean(path2);
         },
 
-        execute(action, messageProps?: boolean | MessageProps) {
-            return execute.call(this as any, action, undefined, messageProps);
+        isDirty(path) {
+            return this.features.runningTree.isDirty(path || this.state.oakFullpath);
+        },
+
+        execute(action, messageProps, path) {
+            return execute.call(this as any, action, path, messageProps);
         },
 
         getFreshValue(path?: string) {

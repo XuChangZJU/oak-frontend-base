@@ -1,4 +1,4 @@
-import { AggregationResult, AuthCascadePath, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
+import { AggregationResult, AuthCascadePath, AuthDeduceRelationMap, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
 import { TreeStore, TreeStoreOperateOption, TreeStoreSelectOption } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -12,7 +12,7 @@ interface DebugStoreSelectOption extends TreeStoreSelectOption {
 export declare class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>> extends TreeStore<ED> implements AsyncRowStore<ED, Cxt> {
     private executor;
     private relationAuth;
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>, actionCascadeGraph: AuthCascadePath<ED>[], relationCascadeGraph: AuthCascadePath<ED>[]);
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>, actionCascadeGraph: AuthCascadePath<ED>[], relationCascadeGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>);
     /**
      * relationAuth中需要缓存一些维表的数据
      */
