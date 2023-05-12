@@ -43,30 +43,9 @@ function ItemComponent(
     </a>;
 }
 
-function getLabel(actionItem: ActionDef<ED, keyof EntityDict>, entity: string, t: (key: string) => string) {
-    if (typeof actionItem !=='string') {
-        return actionItem.label!
-    }
-    else {
-        if (['update', 'create', 'detail', 'remove'].includes(actionItem)) {
-            return t(`common:action.${actionItem}`)
-        }
-        else {
-            return t(`${entity}:action.${actionItem}`)
-        }
-    }
-}
 
 type CascadeActionDef = {
     [K in keyof EntityDict[keyof EntityDict]['Schema']]?: ActionDef<EntityDict & BaseEntityDict, keyof EntityDict>[];
-}
-function getLabel2(schema: StorageSchema<EntityDict & BaseEntityDict>, path: string, actionItem: ActionDef<EntityDict & BaseEntityDict, keyof EntityDict>, entity: string, t: (key: string) => string) {
-    if (typeof actionItem !== 'string') {
-        return actionItem.label!;
-    }
-    const { entity: entityI18n } = resolvePath(schema, entity, path);
-    const label = t(`${entityI18n}:action.${actionItem}`)
-    return label;
 }
 
 export default function Render(
