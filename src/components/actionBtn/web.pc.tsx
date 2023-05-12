@@ -48,7 +48,7 @@ function getLabel(actionItem: ActionDef<ED, keyof EntityDict>, entity: string, t
         return actionItem.label!
     }
     else {
-        if (['update', 'create', 'detail'].includes(actionItem)) {
+        if (['update', 'create', 'detail', 'remove'].includes(actionItem)) {
             return t(`common:action.${actionItem}`)
         }
         else {
