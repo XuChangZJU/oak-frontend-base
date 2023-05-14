@@ -1,6 +1,6 @@
 
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { ED } from '../../types/AbstractComponent';
+import { ED, OakExtraActionProps } from '../../types/AbstractComponent';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { resolvePath } from '../../utils/usefulFn';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
@@ -10,7 +10,7 @@ export default OakComponent({
     isList: false,
     properties: {
         entity: '' as keyof ED,
-        extraActions: [] as ED[keyof ED]['Action'][],
+        extraActions: [] as OakExtraActionProps[],
         actions: [] as ActionDef<ED, keyof ED>[],
         cascadeActions: {} as {
             [K in keyof ED[keyof ED]['Schema']]?: ActionDef<ED, keyof ED>[];
@@ -54,7 +54,8 @@ export default OakComponent({
                     const actions2 = actions && [...actions] || [];
                     if (extraActions) {
                         // 用户传的action默认排在前面
-                        actions2.unshift(...extraActions);
+                        const extraActions2 = extraActions.filter((ele) => ele.show) || [];
+                        actions2.unshift(...extraActions2);
                     }
     
                     // 每一项里的action 和 path 用在小程序这边, onClick用于web
@@ -82,6 +83,7 @@ export default OakComponent({
                             })
                         }
                     })
+                    // 根据column显示几个，裁剪出在更多里显示的item
                     const moreItems = items.splice(column);
                     this.setState({
                         items,

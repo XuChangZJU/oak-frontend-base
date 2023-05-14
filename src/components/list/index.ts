@@ -1,4 +1,4 @@
-import { CardDef, ED, OakAbsAttrDef, onActionFnDef } from '../../types/AbstractComponent';
+import { CardDef, ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
 import { analyzeAttrMobileForCard } from '../../utils/usefulFn';
 import assert from 'assert';
 import { TableProps, PaginationProps } from 'antd';
@@ -8,7 +8,7 @@ export default OakComponent({
     isList: false,
     properties: {
         entity: '' as keyof ED,
-        extraActions: [] as string[],
+        extraActions: [] as OakExtraActionProps[],
         onAction: (() => undefined) as Function,
         disabledOp: false,
         attributes: [] as OakAbsAttrDef[],

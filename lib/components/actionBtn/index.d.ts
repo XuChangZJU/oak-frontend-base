@@ -1,11 +1,11 @@
 /// <reference types="react" />
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { ED } from '../../types/AbstractComponent';
+import { ED, OakExtraActionProps } from '../../types/AbstractComponent';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { ActionDef } from '../../types/Page';
 declare const _default: (props: import("../../types/Page").ReactComponentProps<EntityDict & BaseEntityDict, string | number, false, {
     entity: string | number;
-    extraActions: string[];
+    extraActions: OakExtraActionProps[];
     actions: ActionDef<ED, string | number>[];
     cascadeActions: {
         [x: string]: ActionDef<ED, string | number>[] | undefined;

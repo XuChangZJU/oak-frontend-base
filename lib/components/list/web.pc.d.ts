@@ -5,11 +5,11 @@ import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
 export default function Render(props: WebComponentProps<EntityDict & BaseEntityDict, keyof EntityDict, false, {
     width: 'xl' | 'lg' | 'md' | 'sm' | 'xs';
     loading: boolean;
-    extraActions: string[];
+    extraActions: OakExtraActionProps[];
     entity: string;
     schema: StorageSchema<EntityDict & BaseEntityDict>;
     attributes: OakAbsAttrDef[];

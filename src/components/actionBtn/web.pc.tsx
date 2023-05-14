@@ -81,7 +81,7 @@ export default function Render(
     const zhCNKeys: number = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
     useEffect(() => {
         makeItems();
-    }, [zhCNKeys])
+    }, [zhCNKeys, actions, cascadeActions])
     return (
         <div className={Style.panelContainer}>
             <Space align='center' style={{ width: '100%' }}>

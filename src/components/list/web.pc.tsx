@@ -11,7 +11,7 @@ import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps } from '../../types/AbstractComponent';
 import { Action, CascadeActionItem } from 'oak-domain/lib/types';
 import { Schema } from 'oak-domain/lib/base-app-domain/UserEntityGrant/Schema';
 import { getPath, getWidth, getValue, getLabel, resolvePath, getType } from '../../utils/usefulFn';
@@ -119,7 +119,7 @@ export default function Render(
         {
             width: 'xl' | 'lg' | 'md' | 'sm' | 'xs';
             loading: boolean;
-            extraActions: string[];
+            extraActions: OakExtraActionProps[];
             entity: string;
             schema: StorageSchema<EntityDict & BaseEntityDict>;
             attributes: OakAbsAttrDef[],

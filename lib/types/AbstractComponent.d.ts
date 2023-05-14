@@ -8,6 +8,11 @@ export declare type OakActionBtnProps = {
     type?: 'a' | 'button';
     ctxType?: string;
 };
+export declare type OakExtraActionProps = {
+    action: string;
+    label: string;
+    show: boolean;
+};
 export declare type OakActionsProps = {
     action: string;
     label?: string;

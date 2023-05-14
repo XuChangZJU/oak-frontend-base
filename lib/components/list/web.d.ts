@@ -2,11 +2,11 @@ import React from 'react';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { RowWithActions, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { onActionFnDef } from '../../types/AbstractComponent';
+import { onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
 declare type ED = EntityDict & BaseEntityDict;
 export default function Render(props: WebComponentProps<EntityDict & BaseEntityDict, keyof EntityDict, false, {
     entity: string;
-    extraActions: string[];
+    extraActions: OakExtraActionProps[];
     mobileData: {
         title: any;
         rows: {

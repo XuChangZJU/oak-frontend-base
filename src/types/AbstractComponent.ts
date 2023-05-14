@@ -10,6 +10,12 @@ export type OakActionBtnProps = {
     ctxType?: string;
 };
 
+export type OakExtraActionProps = {
+    action: string;
+    label: string;
+    show: boolean;
+}
+
 export type OakActionsProps = {
     action: string;
     label?: string;

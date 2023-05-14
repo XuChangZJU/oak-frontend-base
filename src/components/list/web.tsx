@@ -9,7 +9,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import styles from './mobile.module.less';
 import { Checkbox } from 'antd-mobile'
 import classnames from 'classnames';
-import { CascadeActionProps, onActionFnDef } from '../../types/AbstractComponent';
+import { CascadeActionProps, onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
 type ED = EntityDict & BaseEntityDict;
 
 type CascadeActionDef = {
@@ -23,7 +23,7 @@ export default function Render(
         false,
         {
             entity: string;
-            extraActions: string[];
+            extraActions: OakExtraActionProps[];
             mobileData: {
                 title: any;
                 rows: { label: string; value: string }[];
