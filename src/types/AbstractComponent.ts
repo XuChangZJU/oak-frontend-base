@@ -32,6 +32,7 @@ export type OakAbsDerivedAttrDef = {
     value?: string;
     width?: RenderWidth;
     type?: 'img' | 'file' | 'avatar' | 'text';
+    render?: (row: any) => React.ReactNode | undefined;
 };
 
 export type OakAbsAttrDef = string | OakAbsDerivedAttrDef;

@@ -187,6 +187,9 @@ export default function Render(
                     title,
                     align: 'center',
                     render: (v: string, row: any) => {
+                        if (typeof ele !== 'string' && ele.render) {
+                            return ele.render(row);
+                        }
                         const value = getValue(ele, row, path, entityI8n, attr, attrType, t);
                         let color = 'black';
                         if (type === 'tag' && !!value) {
