@@ -1,9 +1,9 @@
-import { CardDef, ED, OakAbsAttrDef, onActionFnDef } from '../../types/AbstractComponent';
+import { CardDef, ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
 import { TableProps } from 'antd';
 import { RowWithActions, ReactComponentProps } from '../../types/Page';
 declare const _default: <ED2 extends ED, T2 extends keyof ED2, T3 extends string | number = string | number>(props: ReactComponentProps<ED2, T2, false, {
     entity: T2;
-    extraActions: string[];
+    extraActions: OakExtraActionProps[];
     onAction: onActionFnDef;
     disabledOp: boolean;
     attributes: OakAbsAttrDef[];

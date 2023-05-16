@@ -94,7 +94,7 @@ export default OakComponent({
         false,
         {
             entity: T2;
-            extraActions: string[];
+            extraActions: OakExtraActionProps[];
             onAction: onActionFnDef;
             disabledOp: boolean;
             attributes: OakAbsAttrDef[];
