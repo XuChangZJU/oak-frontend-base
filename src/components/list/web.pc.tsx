@@ -148,7 +148,6 @@ export default function Render(
         entity,
         schema,
         extraActions,
-        oakEntity,
         data,
         columns,
         colorDict,
@@ -185,7 +184,8 @@ export default function Render(
                 const column: ColumnType<any> = {
                     key: path,
                     title,
-                    align: 'center',
+                    // 不是很清楚这些数字的类型，需要到再添加
+                    align: ['float', 'int', 'bigint', 'decimal', 'price'].includes(type!) ? 'right' : 'left',
                     render: (v: string, row: any) => {
                         if (typeof ele !== 'string' && ele.render) {
                             return ele.render(row);
@@ -208,13 +208,11 @@ export default function Render(
             if (!disabledOp && tableColumns) {
                     tableColumns.push({
                     fixed: 'right',
-                    align: 'center',
+                    align: 'left',
                     title: '操作',
                     key: 'operation',
                     width: opSizeForWidth[width] || 300,
                     render: (value: any, row: any) => {
-                        const id = row?.id;
-                        const oakActions = row?.['#oakLegalActions'] as string[];
                         return (
                             <ActionBtn
                                 entity={entity}

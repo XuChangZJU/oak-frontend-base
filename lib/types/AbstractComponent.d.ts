@@ -26,7 +26,7 @@ export declare type OakAbsDerivedAttrDef = {
     label: string;
     value?: string;
     width?: RenderWidth;
-    type?: 'img' | 'file' | 'avatar' | 'text';
+    type?: ('img' | 'file' | 'avatar' | 'text') | DataType;
     render?: (row: any) => React.ReactNode | undefined;
 };
 export declare type OakAbsAttrDef = string | OakAbsDerivedAttrDef;

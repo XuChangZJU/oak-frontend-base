@@ -85,7 +85,7 @@ export default function Render(
     return (
         <div className={Style.panelContainer}>
             <Space align='center' style={{ width: '100%' }}>
-                <Space align='center'>
+                <Space align='center' size={12}>
                     <>
                         {items?.map((ele, index: number) => {
                             return (
