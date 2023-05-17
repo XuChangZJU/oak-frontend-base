@@ -1056,7 +1056,12 @@ class ListNode<
                         } else {
                             this.ids = ids;
                         }
-                        this.aggr = aggr;
+                        if (append) {
+                            this.aggr = (this.aggr || []).concat(aggr || []);
+                        } else {
+                            this.aggr = aggr;
+                        }
+                       
                     }
                 );
             } catch (err) {
