@@ -20,7 +20,16 @@ export default OakComponent({
         {
             filter() {
                 const { entity, relationIds } = this.props;
-                if (relationIds && relationIds.length > 0) {
+                // 这里不能用relationIds过滤，否则没法处理relationId的反选
+                    return {
+                        destRelation: {
+                            entity: entity as string,
+                            entityId: {
+                                $exists: false,
+                            },
+                        },
+                    };
+                /* if (relationIds && relationIds.length > 0) {
                     return {
                         destRelationId: {
                             $in: relationIds,
@@ -36,7 +45,7 @@ export default OakComponent({
                             },
                         },
                     };
-                }
+                } */
             },
         }
     ],
@@ -45,7 +54,7 @@ export default OakComponent({
         currentPage: 0,
     },
     formData({ data }) {
-        const { entity } = this.props;
+        const { entity, relationIds } = this.props;
         const auths = this.features.relationAuth.getCascadeRelationAuths(entity!, true);
         const sourceEntities = auths.map(
             ele => ele[2]
@@ -72,6 +81,23 @@ export default OakComponent({
             auths,
             sourceRelations,
         };
+    },
+    listeners: {
+        relationIds(prev, next) {
+            const relationAuths = this.features.runningTree.getFreshValue(this.state.oakFullpath);
+            if (relationAuths) {
+                const { relationIds } = next;
+                (relationAuths as ED['relationAuth']['OpSchema'][]).forEach(
+                    (relationAuth) => {
+                        if (relationAuth.$$createAt$$ === 1 && !relationIds.includes(relationAuth.destRelationId)) {
+                            const { id } = relationAuth;
+                            this.removeItem(id);
+                        }
+                    }
+                );
+            }
+            this.reRender();
+        },
     },
     lifetimes: {
         ready() {
@@ -148,4 +174,4 @@ export default OakComponent({
             this.execute();
         },
     }
-})
+});

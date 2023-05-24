@@ -1,13 +1,10 @@
-import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { Row, Radio, Col, Tabs, Checkbox } from 'antd';
+import { Row, Radio, Col, Tabs, Checkbox, Table } from 'antd';
 import { Typography } from 'antd';
 const { Title, Text } = Typography;
 import ActionAuth from '../actionAuth';
-import DirectActionAuth from '../directActionAuth';
-import FreeActionAuth from '../freeActionAuth';
 import RelationAuth from '../relationAuth';
-import DirectRelationAuth from '../directRelationAuth';
 import { WebComponentProps } from '../../../types/Page';
 import { useState } from 'react';
 
@@ -17,6 +14,8 @@ type ED = EntityDict & BaseEntityDict;
 export default function render(props: WebComponentProps<ED, keyof ED, false, {
     entity: keyof ED;
     actions: string[];
+    daas: AuthCascadePath<ED>[];
+    dras: AuthCascadePath<ED>[];
     checkedActions: string[];
     relations: ED['relation']['OpSchema'][];
     relationIds: string[];
@@ -27,9 +26,10 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
     onActionsSelected: (actions: string[]) => void;
     onRelationsSelected: (relationIds: string[]) => void;
 }>) {
-    const { oakFullpath, entity, actions, checkedActions, hasDirectActionAuth, hasDirectRelationAuth, relationIds, relations, deduceRelationAttr } = props.data;
+    const { oakFullpath, entity, actions, checkedActions, hasDirectActionAuth, hasDirectRelationAuth,
+        dras, daas, relationIds, relations, deduceRelationAttr } = props.data;
     const { onActionsSelected, onRelationsSelected, t } = props.methods;
-    const [ tab, setTab ] = useState('freeActionAuth');
+    const [tab, setTab] = useState('actionAuth');
 
     const items = deduceRelationAttr ? [
         {
@@ -52,16 +52,6 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
         },
     ] : [
         {
-            label: 'freeActionAuth',
-            key: 'freeActionAuth',
-            children: (
-                <FreeActionAuth
-                    entity={entity}
-                    oakPath={oakFullpath && `${oakFullpath}.freeActionAuths`}
-                />
-            )
-        },
-        {
             label: 'actionAuth',
             key: 'actionAuth',
             children: (
@@ -80,10 +70,27 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                 label: 'directActionAuth',
                 key: 'directActionAuth',
                 children: (
-                    <DirectActionAuth
-                        entity={entity}
-                        oakPath={oakFullpath && `${oakFullpath}.directActionAuths`}
-                        actions={checkedActions}
+                    <Table
+                        columns={[
+                            {
+                                key: '2',
+                                title: t('sourceEntity'),
+                                width: 100,
+                                render: (value, record) => {
+                                    return record[2];
+                                },
+                            },
+                            {
+                                key: '1',
+                                title: t('path'),
+                                width: 200,
+                                render: (value, record) => {
+                                    return record[1];
+                                },
+                            },
+                        ]}
+                        dataSource={daas}
+                        pagination={false}
                     />
                 )
             }
@@ -112,10 +119,28 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                 label: 'directRelationAuth',
                 key: 'directRelationAuth',
                 children: (
-                    <DirectRelationAuth
-                        entity={entity}
-                        oakPath={oakFullpath && `${oakFullpath}.directRelationAuths`}
-                        relationIds={relationIds}
+                    <Table
+                        columns={[
+                            {
+                                key: '2',
+                                title: t('sourceEntity'),
+                                width: 100,
+                                render: (value, record) => {
+                                    return record[2];
+                                },
+                            },
+                            {
+                                key: '1',
+                                title: t('path'),
+                                width: 200,
+                                render: (value, record) => {
+                                    return record[1];
+                                },
+                            },
+
+                        ]}
+                        dataSource={daas}
+                        pagination={false}
                     />
                 )
             }
@@ -126,11 +151,15 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
         <Row style={{ width: '100%' }} justify="center" align="middle">
             <Text strong>{t('action')}:</Text>
             <Row style={{ flex: 1, marginLeft: 10 }} justify="start" align="middle" wrap>
-                <Checkbox.Group 
+                <Checkbox.Group
                     options={actions}
                     value={checkedActions}
                     onChange={(value) => onActionsSelected(value as string[])}
-                />                
+                    style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                    }}
+                />
             </Row>
         </Row>
     );
@@ -139,9 +168,13 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
             <Text strong>{t('relation')}:</Text>
             <Row style={{ flex: 1, marginLeft: 10 }} justify="start" align="middle" wrap>
                 <Checkbox.Group
-                    options={relations.map(ele => ({ label: ele.name!, value: ele.id!}))}
+                    options={relations.map(ele => ({ label: ele.name!, value: ele.id! }))}
                     value={relationIds}
                     onChange={(value) => onRelationsSelected(value as string[])}
+                    style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                    }}
                 />
             </Row>
         </Row>

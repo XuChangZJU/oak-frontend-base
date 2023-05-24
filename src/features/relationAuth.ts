@@ -30,7 +30,8 @@ export class RelationAuth<
         cache: Cache<ED, Cxt, FrontCxt, AD>,
         actionCascadePathGraph: AuthCascadePath<ED>[],
         relationCascadePathGraph: AuthCascadePath<ED>[],
-        authDeduceRelationMap: AuthDeduceRelationMap<ED>
+        authDeduceRelationMap: AuthDeduceRelationMap<ED>,
+        selectFreeEntities: (keyof ED)[],
     ) {
         super();
         this.aspectWrapper = aspectWrapper,
@@ -50,7 +51,7 @@ export class RelationAuth<
             }
         );
         this.authDeduceRelationMap = authDeduceRelationMap;
-        this.baseRelationAuth = new BaseRelationAuth(cache.getSchema(), actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap);
+        this.baseRelationAuth = new BaseRelationAuth(cache.getSchema(), actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities);
     }
 
     private judgeRelation(entity: keyof ED, attr: string) {
@@ -123,126 +124,5 @@ export class RelationAuth<
 
     checkRelation<T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: FrontCxt) {
         this.baseRelationAuth.checkRelationSync(entity, operation, context);
-    }
-
-
-    private freeActionAuthDict: {
-        [T in keyof ED]?: true;
-    } = {};
-    private directActionAuthDict: {
-        [T in keyof ED]?: true;
-    } = {};
-    /**
-     * 对目标对象的free和direct访问权限，每次需要的时候去后台取到缓存中
-     * @param entity 
-     */
-    private tryGetFreeAndDirectActionAuthInfo<T extends keyof ED>(entity: T) {
-        if (!this.freeActionAuthDict[entity]) {
-            this.freeActionAuthDict[entity] = true;      // 先假设后台不会更新这些数据
-            this.cache.refresh('freeActionAuth', {
-                data: {
-                    id: 1,
-                    deActions: 1,
-                    destEntity: 1,
-                },
-                filter: {
-                    destEntity: entity as string,
-                },
-            });
-        }
-
-        if (!this.directActionAuthDict[entity]) {
-            this.directActionAuthDict[entity] = true;
-            this.cache.refresh('directActionAuth', {
-                data: {
-                    id: 1,
-                    path: 1,
-                    deActions: 1,
-                    destEntity: 1,
-                },
-                filter: {
-                    destEntity: entity as string,
-                },
-            })
-        }
-    }
-
-    /**
-     * 根据对目标对象可能的action，去获取相关可能的relation结构的数据
-     * @param entity 
-     * @param userId 
-     * @param actions 
-     */
-    getRelationalProjection<T extends keyof ED>(entity: T, userId: string, actions: ED[T]['Action'][]) {
-        const paths = this.actionCascadePathMap[entity as string];
-        const irurProjection = {
-            $entity: 'userRelation',
-            data: {
-                id: 1,
-                relationId: 1,
-                relation: {
-                    id: 1,
-                    name: 1,
-                    display: 1,
-                    actionAuth$relation: {
-                        $entity: 'actionAuth',
-                        data: {
-                            id: 1,
-                            path: 1,
-                            destEntity: 1,
-                            deActions: 1,
-                            relationId: 1,
-                        },
-                        filter: {
-                            path: '',
-                            destEntity: entity,
-                            deActions: {
-                                $overlaps: actions,
-                            }
-                        }
-                    }
-                },
-                entity: 1,
-                entityId: 1,
-            },
-            filter: {
-                userId,
-            },
-        };
-
-        this.tryGetFreeAndDirectActionAuthInfo(entity);
-
-        if (paths) {
-            const projection: ED[T]['Selection']['data'] = {};
-            paths.forEach(
-                ([e, p, r, ir]) => {
-                    const ps = p.split('.');
-                    if (ps.length === 0) {
-                        assert(ir);
-                        Object.assign(projection, {
-                            userRelation$entity: irurProjection
-                        });
-                    }
-                    else if (ir) {
-                        set(projection, p ? `${p}.userRelation$entity`: 'userRelation$entity', irurProjection);
-                    }
-                    else {
-                        // 这里最好不要产生user: { id: 1 }的格式，在倒数第二层进行处理
-                        const entity = r;
-                        const attr = ps.pop();
-                        assert(attr);
-                        const rel = this.judgeRelation(entity, attr!);
-                        if (rel === 2) {
-                            set(projection, `${ps.join('.')}.entity`, 1);
-                            set(projection, `${ps.join('.')}.entityId`, 1);
-                        }
-                        else {
-                            set(projection, `${ps.join('.')}.${attr}Id`, 1);
-                        }
-                    }
-                }
-            );
-            return projection;
-        }
     }
 }

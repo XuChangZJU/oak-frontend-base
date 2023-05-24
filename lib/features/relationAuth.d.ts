@@ -14,7 +14,7 @@ export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt ex
     private baseRelationAuth;
     private authDeduceRelationMap;
     static IgnoredActions: string[];
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>);
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities: (keyof ED)[]);
     private judgeRelation;
     getHasRelationEntities(): string[];
     getDeduceRelationAttribute(entity: keyof ED): string | undefined;
@@ -29,18 +29,4 @@ export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt ex
     getCascadeRelationAuthsBySource(entity: keyof ED): AuthCascadePath<ED>[];
     getCascadeRelationAuths(entity: keyof ED, ir: boolean): AuthCascadePath<ED>[];
     checkRelation<T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: FrontCxt): void;
-    private freeActionAuthDict;
-    private directActionAuthDict;
-    /**
-     * 对目标对象的free和direct访问权限，每次需要的时候去后台取到缓存中
-     * @param entity
-     */
-    private tryGetFreeAndDirectActionAuthInfo;
-    /**
-     * 根据对目标对象可能的action，去获取相关可能的relation结构的数据
-     * @param entity
-     * @param userId
-     * @param actions
-     */
-    getRelationalProjection<T extends keyof ED>(entity: T, userId: string, actions: ED[T]['Action'][]): ED[T]["Selection"]["data"] | undefined;
 }

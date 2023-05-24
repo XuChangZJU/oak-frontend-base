@@ -128,13 +128,14 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     setCurrentPage(currentPage: number, append?: boolean): void;
     clean(): void;
     getChildOperation(child: SingleNode<ED, T, Cxt, FrontCxt, AD>): ED[T]["CreateSingle"] | ED[T]["Update"] | ED[T]["Remove"] | undefined;
-    getIntrinsticFilters(): ED[T]["Selection"]["filter"];
+    getIntrinsticFilters(): ED[T]["Selection"]["filter"] | undefined;
 }
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?;
     private children;
+    private filters?;
     private operation?;
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, id?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, id?: string, filters?: NamedFilterItem<ED, T>[], actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     });
     protected getChildPath(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): string;
@@ -163,7 +164,8 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     getProjection(context?: FrontCxt, withDecendants?: boolean): ED[T]["Selection"]["data"] | undefined;
     refresh(): Promise<void>;
     clean(): void;
-    getFilter(): ED[T]['Selection']['filter'] | undefined;
+    private getFilter;
+    getIntrinsticFilters(): ED[T]["Selection"]["filter"] | undefined;
     /**
      * getParentFilter不能假设一定已经有数据，只能根据当前filter的条件去构造
      * @param childNode
@@ -266,7 +268,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     addNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(path: string, name: string, refresh?: boolean): void;
-    getIntrinsticFilters(path: string): ED[keyof ED]["Selection"]["filter"];
+    getIntrinsticFilters(path: string): ED[keyof ED]["Selection"]["filter"] | undefined;
     tryExecute(path: string): boolean | Error;
     getOperations(path: string): {
         entity: keyof ED;

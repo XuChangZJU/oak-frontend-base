@@ -25,50 +25,11 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         actionCascadeGraph: AuthCascadePath<ED>[],
         relationCascadeGraph: AuthCascadePath<ED>[],
         authDeduceRelationMap: AuthDeduceRelationMap<ED>,
+        selectFreeEntities: (keyof ED)[]
     ) {
         super(storageSchema);
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
-        this.relationAuth = new RelationAuth(storageSchema, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap);
-        this.initRelationAuthTriggers(contextBuilder);
-    }
-
-    /**
-     * relationAuth中需要缓存一些维表的数据
-     */
-     private async initRelationAuthTriggers(contextBuilder: (scene?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>) {
-        const context = await contextBuilder()(this);
-        await context.begin();
-        
-        const directActionAuths = await this.select('directActionAuth', {
-            data: {
-                id: 1,
-                sourceEntity: 1,
-                path: 1,
-                deActions: 1,
-                destEntity: 1,
-            },
-        }, context, {
-            dontCollect: true,
-        });
-        this.relationAuth.setDirectionActionAuths(directActionAuths as ED['directActionAuth']['OpSchema'][]);
-
-        const freeActionAuths = await this.select('freeActionAuth', {
-            data: {
-                id: 1,
-                deActions: 1,
-                destEntity: 1,
-            },
-        }, context, {
-            dontCollect: true,
-        });
-        this.relationAuth.setFreeActionAuths(freeActionAuths as ED['freeActionAuth']['OpSchema'][]);
-        
-        await context.commit();
-
-        const triggers = this.relationAuth.getAuthDataTriggers<Cxt>();
-        triggers.forEach(
-            (trigger) => this.registerTrigger(trigger)
-        );
+        this.relationAuth = new RelationAuth(storageSchema, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap, selectFreeEntities);        
     }
 
     aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]["Aggregation"], context: Cxt, option: OP): Promise<AggregationResult<ED[T]["Schema"]>> {
@@ -88,7 +49,6 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         if (!option.blockTrigger) {
             await this.executor.preOperation(entity, operation, context, option);
         }
-        await this.relationAuth.checkRelationAsync(entity, operation, context);
         const result = await super.cascadeUpdateAsync(entity, operation, context, option);
         if (!option.blockTrigger) {
             await this.executor.postOperation(entity, operation, context, option);
@@ -102,7 +62,8 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         context: Cxt,
         option: OP
     ) {
-        assert(context.getCurrentTxnId());
+        assert(context.getCurrentTxnId());        
+        await this.relationAuth.checkRelationAsync(entity, operation, context);
         return super.operateAsync(entity, operation, context, option);
     }
 
@@ -121,7 +82,9 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         if (!option.blockTrigger) {
             await this.executor.preOperation(entity, selection as ED[T]['Operation'], context, option);
         }
-        await this.relationAuth.checkRelationAsync(entity, selection, context);
+        if (!option.dontCollect) {
+            await this.relationAuth.checkRelationAsync(entity, selection, context);
+        }
         const result = await super.selectAsync(entity, selection, context, option);
 
         if (!option.blockTrigger) {

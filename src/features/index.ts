@@ -29,10 +29,12 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         actionCascadePathGraph: AuthCascadePath<ED>[],
         relationCascadePathGraph: AuthCascadePath<ED>[],
         authDeduceRelationMap: AuthDeduceRelationMap<ED>,
+        selectFreeEntities: (keyof ED)[],
         colorDict: ColorDict<ED>) {
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store);
     const location = new Location();
-    const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, cache, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap);
+    const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, cache, 
+        actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities);
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, relationAuth);
     const locales = new Locales(aspectWrapper);
     const geo = new Geo(aspectWrapper);

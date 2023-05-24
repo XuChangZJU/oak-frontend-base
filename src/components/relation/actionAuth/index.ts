@@ -1,5 +1,4 @@
 import assert from "assert";
-import { AuthCascadePath } from "oak-domain/lib/types";
 import { uniq, pull, union } from 'oak-domain/lib/utils/lodash';
 import { ED } from "../../../types/AbstractComponent";
 
@@ -26,7 +25,10 @@ export default OakComponent({
             filter() {
                 const { entity, actions } = this.props;
                 assert(entity);
-                if (!actions || actions.length === 0) {
+                return {
+                    destEntity: entity as string,
+                };
+               /*  if (!actions || actions.length === 0) {
                     return {
                         destEntity: entity as string,
                     };
@@ -38,7 +40,7 @@ export default OakComponent({
                             $overlaps: actions,
                         },
                     };
-                }
+                } */
             }
         }
     ],
@@ -105,6 +107,24 @@ export default OakComponent({
                 },
             });
         }
+    },
+    listeners: {
+        actions(prev, next) {
+            const actionAuths = this.features.runningTree.getFreshValue(this.state.oakFullpath);
+            if (actionAuths) {
+                (actionAuths as ED['actionAuth']['OpSchema'][]).forEach(
+                    (actionAuth) => {
+                        if (actionAuth.$$createAt$$ === 1) {
+                            const { id, deActions } = actionAuth;
+                            this.updateItem({
+                                deActions: next.actions,
+                            }, id);
+                        }
+                    }
+                );
+            }
+            this.reRender();
+        }        
     },
     methods: {
         onChange(checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) {

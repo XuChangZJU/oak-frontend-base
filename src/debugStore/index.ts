@@ -255,8 +255,9 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
     actionDict: ActionDictOfEntityDict<ED>,
     actionCascadePathGraph: AuthCascadePath<ED>[],
     relationCascadePathGraph: AuthCascadePath<ED>[],
-    authDeduceRelationMap: AuthDeduceRelationMap<ED>) {
-    const store = new DebugStore<ED, Cxt>(storageSchema, contextBuilder, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap);
+    authDeduceRelationMap: AuthDeduceRelationMap<ED>,
+    selectFreeEntities: (keyof ED)[]) {
+    const store = new DebugStore<ED, Cxt>(storageSchema, contextBuilder, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities);
 
     triggers.forEach(
         ele => store.registerTrigger(ele)

@@ -42,7 +42,7 @@ export function initialize<
     checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     option: InitializeOptions<ED>
 ) {
-    const { cascadeRemoveDict, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, actionDict, colorDict } = option;
+    const { cascadeRemoveDict, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, actionDict, selectFreeEntities, colorDict } = option;
     const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(
         storageSchema, cascadeRemoveDict || {}));
 
@@ -70,6 +70,7 @@ export function initialize<
         actionCascadePathGraph,
         relationCascadePathGraph,
         authDeduceRelationMap,
+        selectFreeEntities,
         colorDict
     );
 

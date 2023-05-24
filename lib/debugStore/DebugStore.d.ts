@@ -12,11 +12,7 @@ interface DebugStoreSelectOption extends TreeStoreSelectOption {
 export declare class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>> extends TreeStore<ED> implements AsyncRowStore<ED, Cxt> {
     private executor;
     private relationAuth;
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>, actionCascadeGraph: AuthCascadePath<ED>[], relationCascadeGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>);
-    /**
-     * relationAuth中需要缓存一些维表的数据
-     */
-    private initRelationAuthTriggers;
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>, actionCascadeGraph: AuthCascadePath<ED>[], relationCascadeGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities: (keyof ED)[]);
     aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]["Aggregation"], context: Cxt, option: OP): Promise<AggregationResult<ED[T]["Schema"]>>;
     begin(option?: TxnOption): Promise<string>;
     commit(txnId: string): Promise<void>;

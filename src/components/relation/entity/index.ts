@@ -37,6 +37,8 @@ export default OakComponent({
         return {
             relations,
             actions,
+            daas,
+            dras,
             hasDirectActionAuth: daas.length > 0,
             hasDirectRelationAuth: dras.length > 0,
             deduceRelationAttr,

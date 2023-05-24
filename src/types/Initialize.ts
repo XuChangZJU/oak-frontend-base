@@ -3,12 +3,13 @@ import { ActionDictOfEntityDict, CascadeRemoveDefDict, ColorDict, Importation, E
 import { AuthCascadePath, AuthDeduceRelationMap, EntityDict } from 'oak-domain/lib/types/Entity';
 
 export type InitializeOptions<ED extends EntityDict & BaseEntityDict> = {
-    actionDict: ActionDictOfEntityDict<ED>,
-    actionCascadePathGraph: AuthCascadePath<ED>[],
-    relationCascadePathGraph: AuthCascadePath<ED>[],
-    authDeduceRelationMap: AuthDeduceRelationMap<ED>,
-    cascadeRemoveDict?: CascadeRemoveDefDict<ED>,
-    colorDict: ColorDict<ED>,
-    importations?: Importation<ED, keyof ED, any>[],
-    exportations?: Exportation<ED, keyof ED, any>[]
+    actionDict: ActionDictOfEntityDict<ED>;
+    actionCascadePathGraph: AuthCascadePath<ED>[];
+    relationCascadePathGraph: AuthCascadePath<ED>[];
+    authDeduceRelationMap: AuthDeduceRelationMap<ED>;
+    cascadeRemoveDict?: CascadeRemoveDefDict<ED>;
+    colorDict: ColorDict<ED>;
+    importations?: Importation<ED, keyof ED, any>[];
+    exportations?: Exportation<ED, keyof ED, any>[];
+    selectFreeEntities: (keyof ED)[];
 };

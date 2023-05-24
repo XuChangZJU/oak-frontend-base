@@ -59,8 +59,8 @@ export function initialize<
         },
         option: InitializeOptions<ED>
     ) {
-    const { cascadeRemoveDict, actionCascadePathGraph, actionDict, 
-        relationCascadePathGraph, authDeduceRelationMap, colorDict, importations, exportations } = option;
+    const { cascadeRemoveDict, actionCascadePathGraph, actionDict, relationCascadePathGraph, authDeduceRelationMap, 
+        colorDict, importations, exportations, selectFreeEntities } = option;
     let intersected = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
     if (intersected.length > 0) {
         throw new Error(
@@ -83,7 +83,8 @@ export function initialize<
         actionDict,
         actionCascadePathGraph,
         relationCascadePathGraph,
-        authDeduceRelationMap
+        authDeduceRelationMap,
+        selectFreeEntities
     );
 
     const cacheStore = new CacheStore<ED, FrontCxt>(
@@ -122,6 +123,7 @@ export function initialize<
         actionCascadePathGraph,
         relationCascadePathGraph,
         authDeduceRelationMap,
+        selectFreeEntities,
         colorDict);
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));

@@ -235,10 +235,11 @@ function checkActionsAndCascadeEntities<
                     }
                 }
                 else {
-                    const { id } = rows;
                     const a2 = typeof action === 'object' ? action.action : action;
                     const data = typeof action === 'object' ? action.data : undefined;
-                    if (this.checkOperation(this.state.oakEntity, a2, data as any, { id }, checkTypes)) {
+
+                    const filter = this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath!);
+                    if (this.checkOperation(this.state.oakEntity, a2, data as any, filter, checkTypes)) {
                         legalActions.push(action);
                         if (rows['#oakLegalActions']) {
                             rows['#oakLegalActions'].push(action);
