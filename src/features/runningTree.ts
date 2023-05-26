@@ -1609,6 +1609,7 @@ class VirtualNode<
         for (const ele in this.children) {
             this.children[ele].clean();
         }
+        this.publish();
     }
     checkIfClean() {
         for (const k in this.children) {
