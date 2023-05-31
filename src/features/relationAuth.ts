@@ -2,7 +2,7 @@ import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, Check
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
-import { set } from 'oak-domain/lib/utils/lodash';
+import { union, pull, unset } from 'oak-domain/lib/utils/lodash';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { RelationAuth as BaseRelationAuth } from 'oak-domain/lib/store/RelationAuth';
@@ -24,6 +24,14 @@ export class RelationAuth<
     private baseRelationAuth: BaseRelationAuth<ED>;
     private authDeduceRelationMap: AuthDeduceRelationMap<ED>;
     static IgnoredActions = ['download', 'aggregate', 'count', 'stat'];
+    private entityGraph?: {
+        data: Array<{ name: string }>;
+        links: Array<{
+            source: string;
+            target: string;
+            value: number;
+        }>
+    };
 
     constructor(
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
@@ -52,6 +60,7 @@ export class RelationAuth<
         );
         this.authDeduceRelationMap = authDeduceRelationMap;
         this.baseRelationAuth = new BaseRelationAuth(cache.getSchema(), actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities);
+        this.buildEntityGraph();
     }
 
     private judgeRelation(entity: keyof ED, attr: string) {
@@ -68,6 +77,98 @@ export class RelationAuth<
 
     getDeduceRelationAttribute(entity: keyof ED) {
         return this.authDeduceRelationMap[entity] as string | undefined;
+    }
+
+    buildEntityGraph() {
+        const schema = this.cache.getSchema();
+        // 构建出一张图来
+        const data: Array<{ name: string }> = [];
+        const links: Array<{
+            source: string;
+            target: string;
+            value: number;
+        }> = [];
+
+        const nodeOutSet: Record<string, string[]> = {};
+        const nodeInSet: Record<string, string[]> = {};
+
+        const ExcludeEntities = ['modi', 'modiEntity', 'oper', 'operEntity', 'relation', 'relationAuth', 'actionAuth', 'userRelation', 'user'];
+        for (const entity in schema) {
+            if (ExcludeEntities.includes(entity)) {
+                continue;
+            }
+            const { attributes } = schema[entity];
+            for (const attr in attributes) {
+                const { ref } = attributes[attr];
+                if (ref instanceof Array) {
+                    ref.forEach(
+                        (reff) => {
+                            if (reff === entity || ExcludeEntities.includes(reff) || nodeOutSet[entity]?.includes(reff)) {
+                                return;
+                            }
+                            if (nodeInSet[reff]) {
+                                nodeInSet[reff].push(entity);
+                            }
+                            else {
+                                nodeInSet[reff] = [entity];
+                            }
+                            if (nodeOutSet[entity]) {
+                                nodeOutSet[entity].push(reff);
+                            }
+                            else {
+                                nodeOutSet[entity] = [reff];
+                            }
+                        }
+                    );
+                }
+                else if (ref && ref !== entity && !ExcludeEntities.includes(ref) && !nodeOutSet[entity]?.includes(ref)) {
+                    if (nodeInSet[ref]) {
+                        nodeInSet[ref].push(entity);
+                    }
+                    else {
+                        nodeInSet[ref] = [entity];
+                    }
+                    if (nodeOutSet[entity]) {
+                        nodeOutSet[entity].push(ref);
+                    }
+                    else {
+                        nodeOutSet[entity] = [ref];
+                    }                    
+                }
+            }
+        }
+
+        // 把完全独立的对象剥离
+        const entities = union(Object.keys(nodeOutSet), Object.keys(nodeInSet));
+        entities.forEach(
+            (entity) => data.push({ name: entity })
+        );
+
+        // link上的value代表其长度。出入度越多的结点，其关联的边的value越大，以便于上层用引力布局渲染
+        for (const entity in nodeOutSet) {
+            const fromValue = nodeOutSet[entity].length + nodeInSet[entity]?.length || 0;
+            for (const target of nodeOutSet[entity]) {
+                const toValue = nodeOutSet[target]?.length || 0 + nodeInSet[target]?.length || 0;
+                links.push({
+                    source: entity,
+                    target,
+                    value: fromValue + toValue,
+                });
+            }
+        }
+
+        this.entityGraph = {
+            data,
+            links,
+        };
+    }
+
+    getEntityGraph() {
+        const { data, links } = this.entityGraph!;
+        return {
+            data,
+            links,
+        };
     }
 
     getAllEntities() {

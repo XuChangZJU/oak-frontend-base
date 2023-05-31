@@ -14,7 +14,7 @@ export declare function resolvePath<ED extends EntityDict & BaseEntityDict>(data
 } | {
     entity: keyof ED;
     attr: string;
-    attrType: DataType | "ref";
+    attrType: "ref" | DataType;
     attribute: Attribute;
 };
 export declare function getPath(attribute: OakAbsAttrDef): string;

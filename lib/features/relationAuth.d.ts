@@ -14,10 +14,22 @@ export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt ex
     private baseRelationAuth;
     private authDeduceRelationMap;
     static IgnoredActions: string[];
+    private entityGraph?;
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities: (keyof ED)[]);
     private judgeRelation;
     getHasRelationEntities(): string[];
     getDeduceRelationAttribute(entity: keyof ED): string | undefined;
+    buildEntityGraph(): void;
+    getEntityGraph(): {
+        data: {
+            name: string;
+        }[];
+        links: {
+            source: string;
+            target: string;
+            value: number;
+        }[];
+    };
     getAllEntities(): string[];
     getActions(entity: keyof ED): string[];
     hasRelation(entity: keyof ED): boolean;

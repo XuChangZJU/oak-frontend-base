@@ -3,9 +3,10 @@ import { CardDef, ED, OakAbsAttrDef, onActionFnDef } from '../../../types/Abstra
 export default OakComponent({
     isList: true,
     formData() {
-        const entities = this.features.relationAuth.getAllEntities();
+        const { data, links } = this.features.relationAuth.getEntityGraph();
         return {
-            entities,
+            data,
+            links,
         };
     },
     properties: {
