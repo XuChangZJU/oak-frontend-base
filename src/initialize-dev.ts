@@ -59,7 +59,7 @@ export function initialize<
         },
         option: InitializeOptions<ED>
     ) {
-    const { cascadeRemoveDict, actionCascadePathGraph, actionDict, relationCascadePathGraph, authDeduceRelationMap, 
+    const { actionCascadePathGraph, actionDict, relationCascadePathGraph, authDeduceRelationMap, 
         colorDict, importations, exportations, selectFreeEntities } = option;
     let intersected = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
     if (intersected.length > 0) {
@@ -68,8 +68,7 @@ export function initialize<
         );
     }
     const aspectDict2 = Object.assign({}, aspectDict, commonAspectDict);
-    const checkers2 = (checkers).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(
-        storageSchema, cascadeRemoveDict || {}));
+    const checkers2 = (checkers).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema));
     const triggers2 = createDynamicTriggers<ED, Cxt>(storageSchema).concat(triggers);
     const debugStore = createDebugStore(
         storageSchema,
