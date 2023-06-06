@@ -20,34 +20,39 @@ import { WebComponentProps } from '../../types/Page';
 import Picker from '../picker';
 import { combineFilters } from 'oak-domain/lib/store/filter';
 
-
 type ED = EntityDict & BaseEntityDict;
 
-export default function render(props: WebComponentProps<
-    ED,
-    keyof EntityDict,
-    false,
-    {
-        entityIds: string[];
-        multiple: boolean;
-        renderValue: string;
-        data?: { id: string, title: string }[];
-        pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
-        onChange: (value: string[]) => void;
-    }
->) {
-    const { pickerRender, renderValue, data, multiple, onChange, entityIds } = props.data;
+export default function render(
+    props: WebComponentProps<
+        ED,
+        keyof EntityDict,
+        false,
+        {
+            entityIds: string[];
+            multiple: boolean;
+            renderValue: string;
+            data?: { id: string; title: string }[];
+            pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
+            onChange: (value: string[]) => void;
+        }
+    >
+) {
+    const { pickerRender, renderValue, data, multiple, onChange, entityIds } =
+        props.data;
     const { t } = props.methods;
     const { mode } = pickerRender;
     const [visibile, setVisible] = useState(false);
-    const [dynamicFilter, setDynamicFilter] = useState<ED[keyof ED]['Selection']['filter']>(undefined);
-    const [dynamicSorter, setDynamicSorter] = useState<ED[keyof ED]['Selection']['sorter']>(undefined);
-    const [dynamicProjection, setDynamicProjection] = useState<ED[keyof ED]['Selection']['data'] | undefined>(undefined);
+    const [dynamicFilter, setDynamicFilter] =
+        useState<ED[keyof ED]['Selection']['filter']>(undefined);
+    const [dynamicSorter, setDynamicSorter] =
+        useState<ED[keyof ED]['Selection']['sorter']>(undefined);
+    const [dynamicProjection, setDynamicProjection] = useState<
+        ED[keyof ED]['Selection']['data'] | undefined
+    >(undefined);
 
     if (!data && mode !== 'list') {
-        return <div> loading... </div>
-    }
-    else {
+        return <div> loading... </div>;
+    } else {
         switch (mode) {
             case 'select': {
                 const entityId = entityIds && entityIds[0];
@@ -55,12 +60,10 @@ export default function render(props: WebComponentProps<
                     <Select
                         value={entityId}
                         onChange={(value) => onChange([value])}
-                        options={data!.map(
-                            ele => ({
-                                value: ele.id,
-                                label: ele.title,
-                            })
-                        )}
+                        options={data!.map((ele) => ({
+                            value: ele.id,
+                            label: ele.title,
+                        }))}
                         allowClear={!pickerRender.required}
                     ></Select>
                 );
@@ -70,12 +73,10 @@ export default function render(props: WebComponentProps<
                 if (multiple) {
                     return (
                         <Checkbox.Group
-                            options={data!.map(
-                                ele => ({
-                                    value: ele.id,
-                                    label: ele.title,
-                                })
-                            )}
+                            options={data!.map((ele) => ({
+                                value: ele.id,
+                                label: ele.title,
+                            }))}
                             value={entityIds}
                             onChange={(value) => onChange(value as string[])}
                         />
@@ -85,18 +86,24 @@ export default function render(props: WebComponentProps<
                     <Radio.Group
                         onChange={({ target }) => onChange(target.value)}
                         value={entityId}
-                        options={data!.map(
-                            ele => ({
-                                value: ele.id,
-                                label: ele.title,
-                            })
-                        )}
-                    >
-                    </Radio.Group>
+                        options={data!.map((ele) => ({
+                            value: ele.id,
+                            label: ele.title,
+                        }))}
+                    ></Radio.Group>
                 );
             }
             case 'list': {
-                const { entity, projection, title, titleLabel, filter, sorter, required, getDynamicSelectors } = pickerRender;
+                const {
+                    entity,
+                    projection,
+                    title,
+                    titleLabel,
+                    filter,
+                    sorter,
+                    required,
+                    getDynamicSelectors,
+                } = pickerRender;
                 return (
                     <Space>
                         <Input
@@ -111,13 +118,34 @@ export default function render(props: WebComponentProps<
                                         sorter: dynamicSorter2,
                                     } = await getDynamicSelectors();
                                     if (dynamicFilter2 || filter) {
-                                        setDynamicFilter(combineFilters([dynamicFilter2, filter]));
+                                        setDynamicFilter(
+                                            combineFilters([
+                                                dynamicFilter2,
+                                                filter,
+                                            ])
+                                        );
                                     }
                                     if (dynamicSorter2 || sorter) {
-                                        setDynamicSorter(dynamicSorter2 || sorter);
+                                        setDynamicSorter(
+                                            dynamicSorter2 || sorter
+                                        );
                                     }
-                                    if (dynamicProjection2) {
-                                        setDynamicProjection(dynamicProjection2);
+                                    if (dynamicProjection2 || projection) {
+                                        setDynamicProjection(
+                                            dynamicProjection2 || projection
+                                        );
+                                    }
+                                } else {
+                                    if (filter) {
+                                        setDynamicFilter(
+                                            combineFilters([filter])
+                                        );
+                                    }
+                                    if (sorter) {
+                                        setDynamicSorter(sorter);
+                                    }
+                                    if (projection) {
+                                        setDynamicProjection(projection);
                                     }
                                 }
                                 setVisible(true);
@@ -126,7 +154,7 @@ export default function render(props: WebComponentProps<
                                 if (!currentTarget.value) {
                                     onChange([]);
                                 }
-                            }}                            
+                            }}
                         />
                         <Modal
                             title={`选择${t(`${pickerRender.entity}:name`)}`}
@@ -147,15 +175,25 @@ export default function render(props: WebComponentProps<
                                 entity={entity as string}
                                 title={title}
                                 titleLabel={titleLabel}
-                                oakFilters={dynamicFilter ? [{
-                                    filter: dynamicFilter,
-                                }]: undefined}
-                                oakSorters={dynamicSorter ? dynamicSorter.map(ele => ({
-                                    sorter: ele,
-                                })): undefined}
+                                oakFilters={
+                                    dynamicFilter
+                                        ? [
+                                              {
+                                                  filter: dynamicFilter,
+                                              },
+                                          ]
+                                        : undefined
+                                }
+                                oakSorters={
+                                    dynamicSorter
+                                        ? dynamicSorter.map((ele) => ({
+                                              sorter: ele,
+                                          }))
+                                        : undefined
+                                }
                                 oakProjection={dynamicProjection || projection}
                                 onSelect={(data: { id: string }[]) => {
-                                    onChange(data.map(ele => ele.id));
+                                    onChange(data.map((ele) => ele.id));
                                     setVisible(false);
                                 }}
                             />
