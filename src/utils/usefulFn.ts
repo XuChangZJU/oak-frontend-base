@@ -84,11 +84,19 @@ export function resolvePath<ED extends EntityDict & BaseEntityDict>(
                 const attributes = getAttributes(dataSchema[_entity].attributes);
                 attribute = attributes[attr];
                 attrType = attribute.type;
-                if (attrType === 'ref') {
-                    attr = attribute.ref as string;
+                if (attr === 'id') {
+                   attrType = 'ref';
+                }
+                else {
+                    if (attrType === 'ref') {
+                        attr = attribute.ref as string;
+                    }
                 }
             } else if (relation === 2) {
                 // entity entityId
+                if (attr === 'entityId') {
+                    attrType = 'ref';
+                }
                 _entity = attr as keyof ED;
             } else if (typeof relation === 'string') {
                 _entity = relation as keyof ED;
