@@ -31,7 +31,10 @@ export default OakComponent({
             labelMp = this.t(`common:${attrI18n}`)
         }
         else {
-            labelMp = this.t(`${entityI18n as string}:attr.${attrI18n}`)
+            labelMp =
+                entityI18n && attrI18n
+                    ? this.t(`${entityI18n as string}:attr.${attrI18n}`)
+                    : '';
         }
         // enum类型和布尔类型采用select组件，组合渲染所需的options
         let options: { value: string | boolean }[] = []; // web使用

@@ -91,9 +91,9 @@ export default function Render<ED2 extends ED>(
     // 拼接过滤项的label
     let label = _label;
     if (isCommonI18n) {
-        label = t(`common:${attrI18n}`);
+        label = attrI18n ? t(`common:${attrI18n}`) : '';
     } else {
-        label = t(`${entityI18n as string}:attr.${attrI18n}`);
+        label = entityI18n && attrI18n ? t(`${entityI18n as string}:attr.${attrI18n}`) : '';
     }
     let V;
     switch (viewType) {
