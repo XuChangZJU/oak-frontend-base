@@ -31,4 +31,5 @@ export declare type ColumnProps<ED extends BaseEntityDict & EntityDict, T extend
     transformValue?: (column: ColumnProps<ED, T>, filter: ED[T]['Selection']['filter']) => any;
     filterName?: string;
     colSpan?: ColSpanType;
+    render?: React.ReactNode;
 };
