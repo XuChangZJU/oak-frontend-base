@@ -159,6 +159,7 @@ export default function Render<ED2 extends ED>(
             const unitOfTime = 'day';
             V = (
                 <DatePicker
+                    placeholder={placeholder || t('placeholder.select')}
                     style={{ width: '100%' }}
                     format="YYYY-MM-DD"
                     showTime={showTime}
@@ -174,6 +175,7 @@ export default function Render<ED2 extends ED>(
             const { showTime = false } = dateProps || {};
             V = (
                 <DatePicker.RangePicker
+                    placeholder={placeholder || t('placeholder.select')}
                     style={{ width: '100%' }}
                     showTime={showTime}
                     onChange={(dates, dateStrings) => {
@@ -190,10 +192,14 @@ export default function Render<ED2 extends ED>(
             const multiple = ['$in', '$nin'].includes(op || '');
             V = (
                 <RefAttr
+                    placeholder={placeholder || t('placeholder.select')}
                     multiple={multiple}
                     entityIds={value ? (multiple ? value : [value]) : []}
                     pickerRender={
-                        Object.assign({}, column.refProps) as OakAbsRefAttrPickerRender<ED, keyof ED>
+                        Object.assign(
+                            {},
+                            column.refProps
+                        ) as OakAbsRefAttrPickerRender<ED, keyof ED>
                     }
                     onChange={(ids) => {
                         setFilterAndResetFilter(viewType, ids);

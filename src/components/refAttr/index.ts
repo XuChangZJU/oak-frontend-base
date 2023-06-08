@@ -9,6 +9,7 @@ export default OakComponent({
         return this.props.pickerDef!.entity as keyof ED;
     }, */
     properties: {
+        placeholder: undefined as string | undefined,
         multiple: false,
         entityId: '',
         entityIds: [] as string[],
@@ -32,9 +33,9 @@ export default OakComponent({
                     },
                 },
             });
-        const renderValue = rows && rows.map(
+        const renderValue = rows && rows.length ? rows.map(
             (row) => title(row)
-        ).join(',');
+        ).join(',') : '';
         return {
             renderValue,
         };

@@ -34,11 +34,19 @@ export default function render(
             data?: { id: string; title: string }[];
             pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
             onChange: (value: string[]) => void;
+            placeholder: string;
         }
     >
 ) {
-    const { pickerRender, renderValue, data, multiple, onChange, entityIds } =
-        props.data;
+    const {
+        pickerRender,
+        renderValue,
+        data,
+        multiple,
+        onChange,
+        entityIds,
+        placeholder,
+    } = props.data;
     const { t } = props.methods;
     const { mode } = pickerRender;
     const [visibile, setVisible] = useState(false);
@@ -58,16 +66,15 @@ export default function render(
                 const entityId = entityIds && entityIds[0];
                 return (
                     <Select
+                        placeholder={placeholder}
                         mode={multiple ? 'multiple' : undefined}
                         value={multiple ? entityIds : entityId}
                         onChange={(value) => {
                             if (typeof value === 'string') {
-                                onChange([value])
-                            }
-                            else if (!value) {
+                                onChange([value]);
+                            } else if (!value) {
                                 onChange([]);
-                            }
-                            else if (value instanceof Array) {
+                            } else if (value instanceof Array) {
                                 onChange(value);
                             }
                         }}
@@ -118,6 +125,7 @@ export default function render(
                 return (
                     <Space>
                         <Input
+                            placeholder={placeholder}
                             value={renderValue}
                             allowClear={!required}
                             onClick={async () => {
