@@ -96,6 +96,13 @@ export default function Render<ED2 extends ED>(
         label = entityI18n && attrI18n ? t(`${entityI18n as string}:attr.${attrI18n}`) : '';
     }
     let V;
+    if (column.render) {
+        return (
+            <Form.Item label={label} name={name}>
+                <>{column.render}</>
+            </Form.Item>
+        );
+    }
     switch (viewType) {
         case 'Input': {
             V = (

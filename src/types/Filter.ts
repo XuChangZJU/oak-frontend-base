@@ -58,4 +58,5 @@ export type ColumnProps<ED extends BaseEntityDict & EntityDict, T extends keyof 
     ) => any;
     filterName?: string;
     colSpan?: ColSpanType;
+    render?: React.ReactNode;
 };
