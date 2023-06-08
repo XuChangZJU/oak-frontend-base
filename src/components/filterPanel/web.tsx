@@ -85,7 +85,8 @@ export default function Render<ED2 extends ED>(
         entity,
         oakFullpath,
     } = props.data;
-    const { t, refresh, getNamedFilters, removeNamedFilterByName } = props.methods;
+    const { t, refresh, getNamedFilters, removeNamedFilterByName } =
+        props.methods;
     const [open, setOpen] = useState(false);
     const [form] = Form.useForm();
 
@@ -122,7 +123,11 @@ export default function Render<ED2 extends ED>(
 
         const item = (
             <Col span={gridColumn * colSpan2}>
-                <Filter column={column as ColumnProps<ED, keyof ED>} entity={entity} oakPath={oakFullpath} />
+                <Filter
+                    column={column as ColumnProps<ED, keyof ED>}
+                    entity={entity}
+                    oakPath={oakFullpath}
+                />
             </Col>
         );
 
@@ -187,8 +192,17 @@ export default function Render<ED2 extends ED>(
     if (['xs', 'sm'].includes(width)) {
         formLayout = 'vertical';
     }
-    const formItemLayout = formLayout === 'horizontal' ? { labelCol: { style: {width: 120} }, wrapperCol: { style: {maxWidth: 'calc(100% - 120px)'} } } : null;
-    const buttonItemLayout = formLayout === 'horizontal' ? { wrapperCol: { span: 18, offset: 6 } } : null;
+    const formItemLayout =
+        formLayout === 'horizontal'
+            ? {
+                  labelCol: { style: { width: 120 } },
+                  wrapperCol: { style: { maxWidth: 'calc(100% - 120px)' } },
+              }
+            : null;
+    const buttonItemLayout =
+        formLayout === 'horizontal'
+            ? { wrapperCol: { span: 18, offset: 6 } }
+            : null;
     items.push(
         <Col span={_gridColumn}>
             <Form.Item {...buttonItemLayout}>

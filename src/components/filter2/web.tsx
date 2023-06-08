@@ -132,13 +132,10 @@ export default function Render<ED2 extends ED>(
                     onChange={(value) => {
                         setFilterAndResetFilter(
                             viewType,
-                            isMultiple ? value : [value]
+                            value ? (isMultiple ? value : [value]) : []
                         );
                     }}
                     options={options2}
-                    onClear={() => {
-                        removeNamedFilterByName(name);
-                    }}
                 />
             );
             break;

@@ -59,7 +59,6 @@ export default OakComponent({
             }
             else if (mode === 'select') {
                 // select也先取（可以点击再取，但这样初始状态不好渲染）
-                assert(!multiple, '选择为多项时不支持multiple');
                 assert(typeof count === 'number' && count <= 20, 'select类型的外键选择，总数必须小于20');
             }
             else {

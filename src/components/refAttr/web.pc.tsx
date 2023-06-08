@@ -58,8 +58,11 @@ export default function render(
                 const entityId = entityIds && entityIds[0];
                 return (
                     <Select
-                        value={entityId}
-                        onChange={(value) => onChange([value])}
+                        mode={multiple ? 'multiple' : undefined}
+                        value={multiple ? entityIds : entityId}
+                        onChange={(value) =>
+                            onChange(value ? (multiple ? value : [value]) : [])
+                        }
                         options={data!.map((ele) => ({
                             value: ele.id,
                             label: ele.title,
