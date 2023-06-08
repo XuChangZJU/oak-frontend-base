@@ -60,9 +60,17 @@ export default function render(
                     <Select
                         mode={multiple ? 'multiple' : undefined}
                         value={multiple ? entityIds : entityId}
-                        onChange={(value) =>
-                            onChange(value ? (multiple ? value : [value]) : [])
-                        }
+                        onChange={(value) => {
+                            if (typeof value === 'string') {
+                                onChange([value])
+                            }
+                            else if (!value) {
+                                onChange([]);
+                            }
+                            else if (value instanceof Array) {
+                                onChange(value);
+                            }
+                        }}
                         options={data!.map((ele) => ({
                             value: ele.id,
                             label: ele.title,
