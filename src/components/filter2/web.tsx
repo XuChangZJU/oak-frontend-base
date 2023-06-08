@@ -135,16 +135,16 @@ export default function Render<ED2 extends ED>(
                           ),
                 value: ele.value,
             }));
-            const isMultiple = ['$in', '$nin'].includes(op || '');
+            const multiple = ['$in', '$nin'].includes(op || '');
             V = (
                 <Select
-                    mode={isMultiple ? 'multiple' : undefined}
+                    mode={multiple ? 'multiple' : undefined}
                     allowClear
                     placeholder={placeholder || t('placeholder.select')}
                     onChange={(value) => {
                         setFilterAndResetFilter(
                             viewType,
-                            value ? (isMultiple ? value : [value]) : []
+                            value ? (multiple ? value : [value]) : []
                         );
                     }}
                     options={options2}
@@ -181,19 +181,19 @@ export default function Render<ED2 extends ED>(
                     }}
                 />
             );
+            break;
         }
         case 'RefAttr': {
             const ops: Ops[] = ['$in', '$nin', '$eq', '$ne'];
             const filter = getNamedFilter(name);
             const value = get(filter, getOp(column), '');
+            const multiple = ['$in', '$nin'].includes(op || '');
             V = (
                 <RefAttr
-                    multiple={['$in', '$nin'].includes(op || '')}
-                    entityIds={[value]}
+                    multiple={multiple}
+                    entityIds={value ? (multiple ? value : [value]) : []}
                     pickerRender={
-                        Object.assign({}, column.refProps, {
-                            label: 'todotodo',
-                        }) as OakAbsRefAttrPickerRender<ED, keyof ED>
+                        Object.assign({}, column.refProps) as OakAbsRefAttrPickerRender<ED, keyof ED>
                     }
                     onChange={(ids) => {
                         setFilterAndResetFilter(viewType, ids);

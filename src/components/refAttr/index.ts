@@ -18,14 +18,20 @@ export default OakComponent({
     formData() {
         const { multiple, entityIds, pickerRender } = this.props;
         const { entity, projection, title } = pickerRender as OakAbsRefAttrPickerRender<ED, keyof ED>;
-        const rows = entityIds && this.features.cache.get(entity, {
-            data: typeof projection === 'function' ? projection() : projection,
-            filter: {
-                id: {
-                    $in: entityIds,
+        const rows =
+            entityIds &&
+            entityIds.length &&
+            this.features.cache.get(entity, {
+                data:
+                    typeof projection === 'function'
+                        ? projection()
+                        : projection,
+                filter: {
+                    id: {
+                        $in: entityIds,
+                    },
                 },
-            },
-        });
+            });
         const renderValue = rows && rows.map(
             (row) => title(row)
         ).join(',');
