@@ -24,13 +24,14 @@ export default OakComponent({
         const { label: _label } = column;
         // 兼容小程序和web，数据要在这里处理
         // 小程序, 在这里可以直接使用t进行翻译
-        let labelMp = _label;
+        let labelMp = '';
         // 是否需要采用common的i18json
         const isCommonI18n = attrI18n === '$$createAt$$' || attrI18n === '$$updateAt$$' || attrI18n === '$$seq$$' || attrI18n === 'id';
-        if (isCommonI18n) {
-            labelMp = this.t(`common:${attrI18n}`)
-        }
-        else {
+        if (_label) {
+            labelMp = _label;
+        } else if (isCommonI18n) {
+            labelMp = this.t(`common:${attrI18n}`);
+        } else {
             labelMp =
                 entityI18n && attrI18n
                     ? this.t(`${entityI18n as string}:attr.${attrI18n}`)

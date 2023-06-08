@@ -89,11 +89,16 @@ export default function Render<ED2 extends ED>(
         return null;
     }
     // 拼接过滤项的label
-    let label = _label;
-    if (isCommonI18n) {
+    let label = '';
+    if (_label) {
+        label = _label;
+    } else if (isCommonI18n) {
         label = attrI18n ? t(`common:${attrI18n}`) : '';
     } else {
-        label = entityI18n && attrI18n ? t(`${entityI18n as string}:attr.${attrI18n}`) : '';
+        label =
+            entityI18n && attrI18n
+                ? t(`${entityI18n as string}:attr.${attrI18n}`)
+                : '';
     }
     let V;
     if (column.render) {
