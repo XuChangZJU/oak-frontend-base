@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table } from 'antd';
+import { Empty } from 'antd';
 import { WebComponentProps, RowWithActions } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 import AbstractList from '../list';
@@ -55,6 +55,8 @@ export default function Render(
         )
     }
     return (
-        <div>无数据</div>
-    )
+        <div>
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        </div>
+    );
 }
