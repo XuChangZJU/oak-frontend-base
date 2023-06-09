@@ -1,5 +1,5 @@
-import PureList from '../../list';
-import FilterPanel from '../../filterPanel';
+import PureList from '../../../components/list';
+import FilterPanel from '../../../components/filterPanel';
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -15,15 +15,15 @@ export default function render(
         {
             relations: RowWithActions<ED, 'relation'>[];
             hasRelationEntites: string[];
-            onActionClicked: (id: string, entity: keyof ED) => void;
-            onRelationClicked: (id: string, entity: keyof ED) => void;
         },
         {
-
+            onActionClicked: (id: string, entity: keyof ED) => void;
+            onRelationClicked: (id: string, entity: keyof ED) => void;
         }
     >
 ) {
-    const { relations, oakLoading, oakFullpath, hasRelationEntites, onActionClicked, onRelationClicked } = props.data;
+    const { relations, oakLoading, oakFullpath, hasRelationEntites } = props.data;
+    const { onActionClicked, onRelationClicked } = props.methods;
     return (
         <>
             <FilterPanel

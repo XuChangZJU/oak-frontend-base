@@ -9,12 +9,13 @@ export default OakComponent({
             links,
         };
     },
-    properties: {
-        onEntityClicked: (entity: string) => undefined,
-    },
     methods: {
         onEntityClicked(entity: string) {
-            this.props.onEntityClicked!(entity);
-        }
+            this.features.navigator.navigateTo({
+                url: '/relation/entity',
+            }, {
+                entity,
+            });
+        },
     }
 });

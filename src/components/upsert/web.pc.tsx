@@ -35,10 +35,10 @@ function makeAttrInput<T extends keyof ED>(
     const [sl, setSl] = useState(false);
     const [poi, setPoi] = useState<
         | {
-              poiName: string;
-              coordinate: [number, number];
-              areaId: string;
-          }
+            poiName: string;
+            coordinate: [number, number];
+            areaId: string;
+        }
         | undefined
     >(undefined);
     const {
@@ -335,10 +335,6 @@ export default function render<T extends keyof ED>(
         <Form
             labelCol={{ span: 4 }}
             layout="horizontal"
-            style={{
-                margin: '0px auto',
-                maxWidth: '100%',
-            }}
         >
             {renderData.map((ele) => {
                 // 因为i18n渲染机制的缘故，t必须放到这里来计算

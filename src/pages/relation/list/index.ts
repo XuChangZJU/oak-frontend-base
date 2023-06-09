@@ -69,8 +69,24 @@ export default OakComponent({
     properties: {
         entity: '' as keyof ED,
         entityId: '',
-        onActionClicked: (id: string, entity: string) => undefined,
-        onRelationClicked: (id: string, entity: string, entityId: string) => undefined,
     },
     features: ['relationAuth'],
+    methods: {        
+        onActionClicked(id: string, entity: string) {
+            this.features.navigator.navigateTo({
+                url: '/relation/actionAuthBySource',
+            }, {
+                relationId: id,
+                entity,
+            });
+        },
+        onRelationClicked(id: string, entity: string) {
+            this.features.navigator.navigateTo({
+                url: '/relation/relationAuthBySource',
+            }, {
+                relationId: id,
+                entity,
+            });
+        }
+    }
 });

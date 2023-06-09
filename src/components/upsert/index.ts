@@ -17,12 +17,11 @@ export default OakComponent({
         helps: {} as Record<string, string>, // Record<string, string>;
         entity: '' as keyof ED,
         attributes: [] as OakAbsAttrUpsertDef<ED, keyof ED>[],
-        data: {} as ED[keyof ED]['Schema'],
         layout: 'horizontal' as 'horizontal' | 'vertical',
         mode: 'default' as 'default' | 'card',
     },
-    formData() {
-        const { data, entity } = this.props;
+    formData({ data }) {
+        const { entity } = this.props;
         const { transformer } = this.state;
         const renderData = transformer(data!);
         const renderData1 = renderData?.map((ele) => {
@@ -56,11 +55,6 @@ export default OakComponent({
     },
     data: {
         transformer: (() => []) as DataUpsertTransformer<ED, keyof ED>,
-    },
-    listeners: {
-        data() {
-            this.reRender();
-        },
     },
     lifetimes: {
         async attached() {
