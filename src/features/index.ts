@@ -37,7 +37,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store);
     const location = new Location();
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, authDict);
-    const locales = new Locales(aspectWrapper);
+    const locales = new Locales(aspectWrapper, makeBridgeUrlFn);
     const geo = new Geo(aspectWrapper);
     const eventBus = new EventBus();
     const localStorage = new LocalStorage();
