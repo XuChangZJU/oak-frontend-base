@@ -70,7 +70,15 @@ export function initialize<
         },
     };
 
-    const features = initBasicFeatures(wrapper, storageSchema, () => frontendContextBuilder()(cacheStore), cacheStore, relationDict || {}, authDict || {}, colorDict || {});
+    const features = initBasicFeatures(
+        wrapper, 
+        storageSchema, 
+        () => frontendContextBuilder()(cacheStore), 
+        cacheStore, 
+        relationDict || {}, 
+        authDict || {}, 
+        colorDict || {},
+        (url, headers) => connector.makeBridgeUrl(url, headers));
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
     if (actionDict) {

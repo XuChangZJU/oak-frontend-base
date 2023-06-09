@@ -23,7 +23,7 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
     [K in keyof ED]?: {
         [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
     };
-}, authDict: AuthDefDict<ED>, colorDict: ColorDict<ED>): BasicFeatures<ED, Cxt, FrontCxt, AD>;
+}, authDict: AuthDefDict<ED>, colorDict: ColorDict<ED>, makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string): BasicFeatures<ED, Cxt, FrontCxt, AD>;
 export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>> = {
     cache: Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     location: Location;

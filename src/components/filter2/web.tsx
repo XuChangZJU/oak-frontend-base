@@ -175,7 +175,7 @@ export default function Render<ED2 extends ED>(
             const { showTime = false } = dateProps || {};
             V = (
                 <DatePicker.RangePicker
-                    placeholder={placeholder || t('placeholder.select')}
+                    // placeholder={placeholder || t('placeholder.select')}
                     style={{ width: '100%' }}
                     showTime={showTime}
                     onChange={(dates, dateStrings) => {

@@ -21,6 +21,7 @@ export declare type ColumnProps<ED extends BaseEntityDict & EntityDict, T extend
         }>;
         transformInOption: (option: string | number | Record<string, any>) => void;
         transformOutOption: (option: string | number | Record<string, any>) => void;
+        exclude?: string | string[];
     };
     dateProps?: {
         range?: boolean;

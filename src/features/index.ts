@@ -32,7 +32,8 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
             }
         },
         authDict: AuthDefDict<ED>,
-        colorDict: ColorDict<ED>) {
+        colorDict: ColorDict<ED>,
+        makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string) {
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store);
     const location = new Location();
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, authDict);

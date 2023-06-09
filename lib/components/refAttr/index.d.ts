@@ -1,6 +1,7 @@
 /// <reference types="react" />
 import { ED, OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 declare const _default: (props: import("../..").ReactComponentProps<import("oak-domain/lib/types").EntityDict & import("oak-domain/lib/base-app-domain").EntityDict, string | number, false, {
+    placeholder: string | undefined;
     multiple: boolean;
     entityId: string;
     entityIds: string[];

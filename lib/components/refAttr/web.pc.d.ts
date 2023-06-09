@@ -14,5 +14,6 @@ export default function render(props: WebComponentProps<ED, keyof EntityDict, fa
     }[];
     pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
     onChange: (value: string[]) => void;
+    placeholder: string;
 }>): JSX.Element;
 export {};
