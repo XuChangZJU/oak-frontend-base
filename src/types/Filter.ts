@@ -42,6 +42,7 @@ export type ColumnProps<ED extends BaseEntityDict & EntityDict, T extends keyof 
         transformOutOption: (
             option: string | number | Record<string, any>
         ) => void;
+        exclude?: string | string[]; //排除某些值，比如状态，某些页面只显示特有的值
     };
     dateProps?: {
         range?: boolean;
