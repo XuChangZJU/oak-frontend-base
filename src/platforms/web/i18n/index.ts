@@ -33,9 +33,10 @@ async function translationService(
     namespace: string
 ) {
     const url = `${process.env.PUBLIC_URL}/locales/${language}/${namespace}.json`;
-    const response = await fetch(url);
+  
     let json = {};
     try {
+        const response = await fetch(url);
         json = await response.json();
     } catch (e) {
         if (process.env.NODE_ENV !== 'production') {
@@ -62,7 +63,9 @@ async function translationService(
                 `[i18n]:${namespace}-${k}最新的服务器数据中无此键值`
             );
         }
-        assign(result, { [k]: v });
+        if (v) {
+            assign(result, { [k]: v });
+        }
     });
 
     return result;

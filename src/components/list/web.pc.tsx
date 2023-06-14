@@ -11,7 +11,7 @@ import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps } from '../../types/AbstractComponent';
 import { Action, CascadeActionItem } from 'oak-domain/lib/types';
 import { Schema } from 'oak-domain/lib/base-app-domain/UserEntityGrant/Schema';
 import { getPath, getWidth, getValue, getLabel, resolvePath, getType } from '../../utils/usefulFn';
@@ -119,7 +119,7 @@ export default function Render(
         {
             width: 'xl' | 'lg' | 'md' | 'sm' | 'xs';
             loading: boolean;
-            extraActions: string[];
+            extraActions: OakExtraActionProps[];
             entity: string;
             schema: StorageSchema<EntityDict & BaseEntityDict>;
             attributes: OakAbsAttrDef[],
@@ -148,7 +148,6 @@ export default function Render(
         entity,
         schema,
         extraActions,
-        oakEntity,
         data,
         columns,
         colorDict,
@@ -185,8 +184,12 @@ export default function Render(
                 const column: ColumnType<any> = {
                     key: path,
                     title,
-                    align: 'center',
+                    // 不是很清楚这些数字的类型，需要到再添加
+                    align: ['float', 'int', 'bigint', 'decimal', 'price'].includes(type!) ? 'right' : 'left',
                     render: (v: string, row: any) => {
+                        if (typeof ele !== 'string' && ele.render) {
+                            return ele.render(row);
+                        }
                         const value = getValue(ele, row, path, entityI8n, attr, attrType, t);
                         let color = 'black';
                         if (type === 'tag' && !!value) {
@@ -205,7 +208,7 @@ export default function Render(
             if (!disabledOp && tableColumns) {
                     tableColumns.push({
                     fixed: 'right',
-                    align: 'center',
+                    align: 'left',
                     title: '操作',
                     key: 'operation',
                     width: opSizeForWidth[width] || 300,

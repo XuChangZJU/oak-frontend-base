@@ -42,7 +42,7 @@ export async function onPathSet<
             // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
             const oakFilters2 = typeof oakFilters === 'string' ? JSON.parse(oakFilters) : oakFilters;
             filters2.push(...oakFilters2);
-        } 
+        }
         if (filters) {
             for (const ele of filters) {
                 const { filter, '#name': name } = ele;
@@ -103,7 +103,7 @@ export async function onPathSet<
             features.runningTree.subscribeNode(
                 (path2) => {
                     // 父结点改变，子结点要重渲染
-                    if (this.state.oakFullpath.includes(path2)) {
+                    if (this.state.oakFullpath?.includes(path2)) {
                         this.reRender();
                     }
                 },

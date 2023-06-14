@@ -8,6 +8,11 @@ export declare type OakActionBtnProps = {
     type?: 'a' | 'button';
     ctxType?: string;
 };
+export declare type OakExtraActionProps = {
+    action: string;
+    label: string;
+    show: boolean;
+};
 export declare type OakActionsProps = {
     action: string;
     label?: string;
@@ -21,7 +26,8 @@ export declare type OakAbsDerivedAttrDef = {
     label: string;
     value?: string;
     width?: RenderWidth;
-    type?: 'img' | 'file' | 'avatar' | 'text';
+    type?: ('img' | 'file' | 'avatar' | 'text') | DataType;
+    render?: (row: any) => React.ReactNode | undefined;
 };
 export declare type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
 export declare type CardDef = {
@@ -36,7 +42,7 @@ export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, 
     entity: T;
     projection: ED[T]['Selection']['data'];
     title: (row: Partial<ED[T]['Schema']>) => string;
-    titleLabel: string;
+    titleLabel?: string;
     filter?: ED[T]['Selection']['filter'];
     sorter?: ED[T]['Selection']['sorter'];
     getDynamicSelectors?: () => Promise<{

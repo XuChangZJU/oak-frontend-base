@@ -1,6 +1,6 @@
 {
     "name": "oak-frontend-base",
-    "version": "2.5.9",
+    "version": "2.5.10",
     "description": "oak框架中前端与业务逻辑无关的平台部分",
     "author": {
         "name": "XuChang"

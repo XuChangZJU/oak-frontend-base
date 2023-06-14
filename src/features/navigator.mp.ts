@@ -30,8 +30,12 @@ export class Navigator extends Feature {
         const currentPage = pages[pages.length - 1]; //获取当前页面的对象
         const url = currentPage.route; //当前页面url
         const options = currentPage.options; //如果要获取url中所带的参数可以查看options
+        const pathname = url
+            .replace('/pages', '')
+            .replace('pages', '')
+            .replace('/index', '');
         return {
-            pathname: url,
+            pathname: pathname,
             state: options,
             key: `${pages.length - 1}`,
         };

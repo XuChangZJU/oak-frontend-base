@@ -1,4 +1,4 @@
-import { CardDef, ED, OakAbsAttrDef, onActionFnDef } from '../../types/AbstractComponent';
+import { CardDef, ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
 import { analyzeAttrMobileForCard } from '../../utils/usefulFn';
 import assert from 'assert';
 import { TableProps, PaginationProps } from 'antd';
@@ -8,18 +8,24 @@ export default OakComponent({
     isList: false,
     properties: {
         entity: '' as keyof ED,
-        extraActions: [] as string[],
+        extraActions: [] as OakExtraActionProps[],
         onAction: (() => undefined) as Function,
         disabledOp: false,
         attributes: [] as OakAbsAttrDef[],
         attributesMb: {} as CardDef,
         data: [] as RowWithActions<ED, keyof ED>[],
         loading: false,
-        tablePagination: {} as TableProps<RowWithActions<ED, keyof ED>[]>['pagination'],
+        tablePagination: {} as TableProps<
+            RowWithActions<ED, keyof ED>[]
+        >['pagination'],
         rowSelection: {} as {
-            type: 'checkbox' | 'radio',
-            selectedRowKeys?: string[],
-            onChange: (selectedRowKeys: string[], row: RowWithActions<ED, keyof ED>[], info?: { type: 'single' | 'multiple' | 'none' }) => void,
+            type: 'checkbox' | 'radio';
+            selectedRowKeys?: string[];
+            onChange: (
+                selectedRowKeys: string[],
+                selectedRows: RowWithActions<ED, keyof ED>[],
+                info?: { type: 'single' | 'multiple' | 'none' }
+            ) => void;
         },
         scroll: {} as TableProps<ED[keyof ED]['Schema'][]>['scroll'],
     },
@@ -30,12 +36,12 @@ export default OakComponent({
             const mobileData = converter(data!);
             return {
                 mobileData,
-            }
+            };
         }
-        return {}
+        return {};
     },
     data: {
-        converter: ((data: any) => <any>[])
+        converter: (data: any) => <any>[],
     },
     listeners: {
         data() {
@@ -51,17 +57,23 @@ export default OakComponent({
             assert(!!data, 'data不能为空');
             assert(!!entity, 'list属性entity不能为空');
             if (attributesMb) {
-                const converter = analyzeAttrMobileForCard(schema, entity, (k, params) => this.t(k, params), attributesMb as CardDef, colorDict);
+                const converter = analyzeAttrMobileForCard(
+                    schema,
+                    entity,
+                    (k, params) => this.t(k, params),
+                    attributesMb as CardDef,
+                    colorDict
+                );
                 this.setState({
                     converter,
                     colorDict,
-                })
+                });
             }
             this.setState({
                 schema,
                 colorDict,
-            })
-        }
+            });
+        },
     },
     methods: {
         onActionMp(e: WechatMiniprogram.TouchEvent) {
@@ -72,9 +84,9 @@ export default OakComponent({
                 record: row,
                 action,
                 cascadeAction,
-            })
+            });
         },
-    }
+    },
 }) as <ED2 extends ED, T2 extends keyof ED2, T3 extends keyof ED = keyof ED>(
     props: ReactComponentProps<
         ED2,
@@ -82,20 +94,26 @@ export default OakComponent({
         false,
         {
             entity: T2;
-            extraActions: string[];
+            extraActions: OakExtraActionProps[];
             onAction: onActionFnDef;
             disabledOp: boolean;
             attributes: OakAbsAttrDef[];
             attributesMb: CardDef;
-            data: RowWithActions<ED2, T2> [];
+            data: RowWithActions<ED2, T2>[];
             loading: boolean;
-            tablePagination: TableProps<RowWithActions<ED2, T2>[]> ['pagination'],
-            rowSelection: {
-                type: 'checkbox' | 'radio',
-                selectedRowKeys?: string[],
-                onChange: (selectedRowKeys: string[], row: RowWithActions<ED2, T2>[], info?: { type: 'single' | 'multiple' | 'none' }) => void,
+            tablePagination?: TableProps<
+                RowWithActions<ED2, T2>[]
+            >['pagination'];
+            rowSelection?: {
+                type: 'checkbox' | 'radio';
+                selectedRowKeys?: string[];
+                onChange: (
+                    selectedRowKeys: string[],
+                    row: RowWithActions<ED2, T2>[],
+                    info?: { type: 'single' | 'multiple' | 'none' }
+                ) => void;
             };
-            scroll: TableProps<ED2[T2]['Schema'][] > ['scroll'];
+            scroll?: TableProps<ED2[T2]['Schema'][]>['scroll'];
         }
     >
 ) => React.ReactElement;

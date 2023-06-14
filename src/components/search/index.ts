@@ -17,7 +17,7 @@ export default OakComponent({
     isList: true,
     properties: {
         entity: '' as keyof ED,
-        attrbutes: [] as string[],
+        attributes: [] as string[],
         placeholder: '',
     },
     data: {

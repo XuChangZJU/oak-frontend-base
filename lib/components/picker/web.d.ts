@@ -1,11 +1,11 @@
 /// <reference types="react" />
-import { WebComponentProps } from '../../types/Page';
+import { WebComponentProps, RowWithActions } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 export default function Render(props: WebComponentProps<ED, keyof ED, false, {
-    entity: string;
-    rows: ED[keyof ED]['Schema'][];
+    entity: keyof ED;
+    rows: RowWithActions<ED, keyof ED>[];
     projection: Record<string, any>;
-    onSelect: (rows: ED[keyof ED]['Schema'][]) => void;
+    onSelect: (rows: RowWithActions<ED, keyof ED>[]) => void;
     multiple: boolean;
     titleLabel: string;
 }, {}>): JSX.Element;

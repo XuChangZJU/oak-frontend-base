@@ -60,6 +60,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     private sorters;
     private pagination;
     private ids;
+    private aggr?;
     private syncHandler;
     getChildPath(child: SingleNode<ED, T, Cxt, FrontCxt, AD>): string;
     setFiltersAndSortedApplied(): void;
@@ -132,6 +133,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
 }
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?;
+    private aggr?;
     private children;
     private filters?;
     private operation?;

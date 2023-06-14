@@ -43,30 +43,9 @@ function ItemComponent(
     </a>;
 }
 
-function getLabel(actionItem: ActionDef<ED, keyof EntityDict>, entity: string, t: (key: string) => string) {
-    if (typeof actionItem !=='string') {
-        return actionItem.label!
-    }
-    else {
-        if (['update', 'create', 'detail'].includes(actionItem)) {
-            return t(`common:action.${actionItem}`)
-        }
-        else {
-            return t(`${entity}:action.${actionItem}`)
-        }
-    }
-}
 
 type CascadeActionDef = {
     [K in keyof EntityDict[keyof EntityDict]['Schema']]?: ActionDef<EntityDict & BaseEntityDict, keyof EntityDict>[];
-}
-function getLabel2(schema: StorageSchema<EntityDict & BaseEntityDict>, path: string, actionItem: ActionDef<EntityDict & BaseEntityDict, keyof EntityDict>, entity: string, t: (key: string) => string) {
-    if (typeof actionItem !== 'string') {
-        return actionItem.label!;
-    }
-    const { entity: entityI18n } = resolvePath(schema, entity, path);
-    const label = t(`${entityI18n}:action.${actionItem}`)
-    return label;
 }
 
 export default function Render(
@@ -102,11 +81,11 @@ export default function Render(
     const zhCNKeys: number = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
     useEffect(() => {
         makeItems();
-    }, [zhCNKeys])
+    }, [zhCNKeys, actions, cascadeActions])
     return (
         <div className={Style.panelContainer}>
             <Space align='center' style={{ width: '100%' }}>
-                <Space align='center'>
+                <Space align='center' size={12}>
                     <>
                         {items?.map((ele, index: number) => {
                             return (

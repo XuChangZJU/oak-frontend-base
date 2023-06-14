@@ -21,17 +21,21 @@ export default OakComponent({
         const { column } = this.props;
         assert(!!column, 'column缺失');
         const { entityI18n, attrI18n, viewType, attribute } = this.state;
-        const { label: _label } = column;
+        const { label: _label, selectProps } = column;
         // 兼容小程序和web，数据要在这里处理
         // 小程序, 在这里可以直接使用t进行翻译
-        let labelMp = _label;
+        let labelMp = '';
         // 是否需要采用common的i18json
         const isCommonI18n = attrI18n === '$$createAt$$' || attrI18n === '$$updateAt$$' || attrI18n === '$$seq$$' || attrI18n === 'id';
-        if (isCommonI18n) {
-            labelMp = this.t(`common:${attrI18n}`)
-        }
-        else {
-            labelMp = this.t(`${entityI18n as string}:attr.${attrI18n}`)
+        if (_label) {
+            labelMp = _label;
+        } else if (isCommonI18n) {
+            labelMp = this.t(`common:${attrI18n}`);
+        } else {
+            labelMp =
+                entityI18n && attrI18n
+                    ? this.t(`${entityI18n as string}:attr.${attrI18n}`)
+                    : '';
         }
         // enum类型和布尔类型采用select组件，组合渲染所需的options
         let options: { value: string | boolean }[] = []; // web使用
@@ -40,14 +44,29 @@ export default OakComponent({
             const enumeration = attribute?.enumeration;
             // weblabel目前只能在render的时候翻译
             if (enumeration) {
-                options = enumeration.map((ele: string) => ({
-                    value: ele,
-                }));
-                optionsMp = enumeration.map((ele: string) => ({
-                    label: this.t(`${entityI18n as string}:v.${attrI18n}.${ele}`),
-                    value: ele,
-                    checked: false,
-                }));
+                let exclude: string[] = [];
+                if (selectProps?.exclude) {
+                    if (typeof selectProps.exclude === 'string') {
+                        exclude = [selectProps.exclude];
+                    }
+                    else {
+                        exclude = selectProps.exclude;
+                    }
+                }
+                options = enumeration
+                    .filter((ele) => !exclude.includes(ele))
+                    .map((ele: string) => ({
+                        value: ele,
+                    }));
+                optionsMp = enumeration
+                    .filter((ele) => !exclude.includes(ele))
+                    .map((ele: string) => ({
+                        label: this.t(
+                            `${entityI18n as string}:v.${attrI18n}.${ele}`
+                        ),
+                        value: ele,
+                        checked: false,
+                    }));
             }
             else {
                 options = [
@@ -276,7 +295,7 @@ export default OakComponent({
             if (viewType === 'Input' && op === '$text') {
                 return set({}, '$text.$search', value);
             }
-            if (viewType === 'Select' && !op) {
+            if ((viewType === 'Select' || viewType === 'RefAttr') && !op) {
                 return set({}, getOp(column!), (value as React.Key[])[0]);
             }
             if (viewType === 'DatePicker') {

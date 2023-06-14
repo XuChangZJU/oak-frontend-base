@@ -9,6 +9,7 @@ export default OakComponent({
         return this.props.pickerDef!.entity as keyof ED;
     }, */
     properties: {
+        placeholder: undefined as string | undefined,
         multiple: false,
         entityId: '',
         entityIds: [] as string[],
@@ -16,32 +17,25 @@ export default OakComponent({
         onChange: (() => undefined) as (value: string[]) => void,
     },
     formData() {
-        const { multiple, entityIds, entityId, pickerRender } = this.props;
+        const { multiple, entityIds, pickerRender } = this.props;
         const { entity, projection, title } = pickerRender as OakAbsRefAttrPickerRender<ED, keyof ED>;
-        if (multiple) {
-            const rows = entityIds && this.features.cache.get(entity, {
-                data: typeof projection === 'function' ? projection() : projection,
+        const rows =
+            entityIds &&
+            entityIds.length &&
+            this.features.cache.get(entity, {
+                data:
+                    typeof projection === 'function'
+                        ? projection()
+                        : projection,
                 filter: {
                     id: {
                         $in: entityIds,
                     },
                 },
             });
-            const renderValue = rows && rows.map(
-                (row) => title(row)
-            ).join(',');
-            return {
-                renderValue,
-            };
-        }
-        const row = entityId! && this.features.cache.get(entity, {
-            data: typeof projection === 'function' ? projection() : projection,
-            filter: {
-                id: entityId,
-            },
-        })[0];
-        const renderValue = row && title(row);
-
+        const renderValue = rows && rows.length ? rows.map(
+            (row) => title(row)
+        ).join(',') : '';
         return {
             renderValue,
         };
@@ -72,7 +66,6 @@ export default OakComponent({
             }
             else if (mode === 'select') {
                 // select也先取（可以点击再取，但这样初始状态不好渲染）
-                assert(!multiple, '选择为多项时不支持multiple');
                 assert(typeof count === 'number' && count <= 20, 'select类型的外键选择，总数必须小于20');
             }
             else {

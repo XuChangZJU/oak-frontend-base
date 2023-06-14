@@ -1,6 +1,7 @@
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
+
 export type RenderWidth = 1 | 2 | 3 | 4;
 
 export type OakActionBtnProps = {
@@ -9,6 +10,12 @@ export type OakActionBtnProps = {
     type?: 'a' | 'button';
     ctxType?: string;
 };
+
+export type OakExtraActionProps = {
+    action: string;
+    label: string;
+    show: boolean;
+}
 
 export type OakActionsProps = {
     action: string;
@@ -25,7 +32,8 @@ export type OakAbsDerivedAttrDef = {
     label: string;
     value?: string;
     width?: RenderWidth;
-    type?: 'img' | 'file' | 'avatar' | 'text';
+    type?: ('img' | 'file' | 'avatar' | 'text') | DataType;
+    render?: (row: any) => React.ReactNode | undefined;
 };
 
 export type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
@@ -47,7 +55,7 @@ export interface OakAbsRefAttrPickerDef<
     entity: T;
     projection: ED[T]['Selection']['data'];
     title: (row: Partial<ED[T]['Schema']>) => string;
-    titleLabel: string;
+    titleLabel?: string;
     filter?: ED[T]['Selection']['filter'];
     sorter?: ED[T]['Selection']['sorter'];
     getDynamicSelectors?: () => Promise<{

@@ -70,7 +70,8 @@ export function initialize<
         relationCascadePathGraph,
         authDeduceRelationMap,
         selectFreeEntities,
-        colorDict
+        colorDict,
+        (url, headers) => connector.makeBridgeUrl(url, headers)
     );
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));

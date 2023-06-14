@@ -38,7 +38,7 @@ abstract class Node<
     private cascadeActions?: () => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     };
-    private relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>; 
+    private relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>;
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
@@ -160,7 +160,7 @@ abstract class Node<
 
     protected getProjection(context?: FrontCxt): ED[T]['Selection']['data'] | undefined {
         const projection = typeof this.projection === 'function' ? (this.projection as Function)() : (this.projection && cloneDeep(this.projection));
-              
+
         return projection;
     }
 
@@ -214,6 +214,7 @@ class ListNode<
     private sorters: (NamedSorterItem<ED, T> & { applied?: true })[];
     private pagination: Pagination;
     private ids: string[] | undefined;
+    private aggr?: (Partial<ED[T]['Schema']> | undefined)[];
 
     private syncHandler: (records: OpRecord<ED>[]) => void;
 
@@ -554,9 +555,27 @@ class ListNode<
                 filter: filter2,
                 sorter,
             }, context, this.isLoading());
-            return result.filter(
+
+
+            const r2 = result.filter(
                 ele => ele.$$createAt$$ === 1 || (this.ids?.includes(ele.id!))
             );
+            if (this.aggr) {
+                // 如果有聚合查询的结果，这里按理不应该有aggregate和create同时出现，但也以防万一
+                this.aggr.forEach(
+                    (ele, idx) => {
+                        const id = this.ids![idx];
+                        assert(id);
+                        const row = r2.find(
+                            ele => ele.id === id
+                        );
+                        assert(id);
+                        merge(row, ele);
+                    }
+                );
+            }
+
+            return r2;
         }
         return [];
         /* const finalIds = result.filter(
@@ -863,7 +882,7 @@ class ListNode<
                     },
                     undefined,
                     getCount,
-                    ({ ids, count }) => {
+                    ({ ids, count, aggr }) => {
                         this.pagination.currentPage = currentPage3 + 1;
                         this.pagination.more = ids.length === pageSize;
                         this.setLoading(false);
@@ -879,6 +898,12 @@ class ListNode<
                         } else {
                             this.ids = ids;
                         }
+                        if (append) {
+                            this.aggr = (this.aggr || []).concat(aggr || []);
+                        } else {
+                            this.aggr = aggr;
+                        }
+
                     }
                 );
             } catch (err) {
@@ -909,7 +934,7 @@ class ListNode<
         if (this.dirty) {
             this.dirty = undefined;
             this.updates = {};
-    
+
             for (const k in this.children) {
                 this.children[k].clean();
             }
@@ -944,6 +969,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?: string;
+    private aggr?: Partial<ED[T]['Schema']>;
     private children: {
         [K: string]: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     };
@@ -954,7 +980,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         operation: ED[T]['CreateSingle'] | ED[T]['Update'] | ED[T]['Remove'];
     };
 
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, 
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
         parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
         path?: string,
@@ -1066,6 +1092,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     id,
                 },
             }, context, this.isLoading());
+            if (this.aggr) {
+                merge(result[0], this.aggr);
+            }
             return result[0];
         }
     }
@@ -1284,7 +1313,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 const { data: [value] } = await this.cache.refresh(this.entity, {
                     data: projection,
                     filter,
-                }, undefined, undefined, () => {
+                }, undefined, undefined, ({ aggr }) => {
                     // 刷新后所有的更新都应当被丢弃（子层上可能会自动建立了this.create动作） 这里可能会有问题 by Xc 20230329
                     if (this.schema[this.entity].toModi) {
                         // 对于modi对象，在此缓存modiIds
@@ -1302,6 +1331,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                             this.modiIds = rows.map(ele => ele.id!);
                         }
                     }
+                    this.aggr = aggr && aggr[0];
                     this.setFiltersAndSortedApplied();
                     this.setLoading(false);
                     this.clean();
@@ -1318,7 +1348,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (this.dirty) {
             this.dirty = undefined;
             this.operation = undefined;
-    
+
             for (const child in this.children) {
                 this.children[child]!.clean();
             }
@@ -2154,7 +2184,7 @@ export class RunningTree<
                     operations.filter((ele) => !!ele).map((ele) => ele.entity)
                 );
                 assert(entities.length === 1);
-    
+
                 const result = await this.cache.operate(
                     entities[0],
                     operations
@@ -2167,16 +2197,16 @@ export class RunningTree<
                         node.setExecuting(false);
                     }
                 );
-    
+
                 await node.doAfterTrigger();
-    
+
                 return result;
             }
             node.clean();
             node.setExecuting(false);
             await node.doAfterTrigger();
 
-            return { message: 'No Operation' };            
+            return { message: 'No Operation' };
         } catch (err) {
             node.setExecuting(false);
             throw err;

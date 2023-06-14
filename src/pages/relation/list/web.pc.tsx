@@ -55,7 +55,7 @@ export default function render(
                     title: 'title',
                     rows: ['entity', 'entityId', 'name', 'display'],
                 }}
-                extraActions={['action', 'relation']}
+                extraActions={[{ action: 'action', label: '动作', show: true }, { action: 'relation', label: '关系', show: true }]}
                 onAction={(row: ED['relation']['OpSchema'], action: string) => { 
                     const { id, entity } = row;
                     if (action === 'action') {
