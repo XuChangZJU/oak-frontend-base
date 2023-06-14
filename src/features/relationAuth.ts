@@ -43,7 +43,7 @@ export class RelationAuth<
     ) {
         super();
         this.aspectWrapper = aspectWrapper,
-            this.cache = cache;
+        this.cache = cache;
         this.actionCascadePathGraph = actionCascadePathGraph;
         this.relationCascadePathGraph = relationCascadePathGraph;
         this.actionCascadePathMap = {};
@@ -225,5 +225,54 @@ export class RelationAuth<
 
     checkRelation<T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: FrontCxt) {
         this.baseRelationAuth.checkRelationSync(entity, operation, context);
+    }
+
+    async getRelationIdByName(entity: keyof ED, name: string, entityId?: string) {
+        const filter: ED['relation']['Selection']['filter'] = {
+            entity: entity as string,
+            name,
+        };
+        if (entityId) {
+            filter.$or = [
+                {
+                    entityId,
+                },
+                {
+                    entityId: {
+                        $exists: false,
+                    },
+                }
+            ];
+        }
+        else {
+            filter.entityId = {
+                $exists: false,
+            };
+        }
+        const { data: relations } = await this.cache.refresh('relation', {
+            data: {
+                id: 1,
+                entity: 1,
+                entityId: 1,
+                name: 1,
+                display: 1,
+                actionAuth$relation: {
+                    $entity: 'actionAuth',
+                    data: {
+                        id: 1,
+                        path: 1,
+                        deActions: 1,
+                        destEntity: 1,
+                    },
+                },
+            },
+            filter,
+        });
+        if (relations.length === 2) {
+            return relations.find(
+                ele => ele.entityId
+            )!.id;
+        }
+        return relations[0].id;
     }
 }

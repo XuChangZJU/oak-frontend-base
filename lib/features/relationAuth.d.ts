@@ -41,4 +41,5 @@ export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt ex
     getCascadeRelationAuthsBySource(entity: keyof ED): AuthCascadePath<ED>[];
     getCascadeRelationAuths(entity: keyof ED, ir: boolean): AuthCascadePath<ED>[];
     checkRelation<T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: FrontCxt): void;
+    getRelationIdByName(entity: keyof ED, name: string, entityId?: string): Promise<ED["relation"]["Schema"]["id"] | undefined>;
 }
