@@ -2338,7 +2338,7 @@ export class RunningTree<
             node.setExecuting(false);
             await node.doAfterTrigger();
 
-            return { message: 'No Operation' };
+            return;
         } catch (err) {
             node.setExecuting(false);
             throw err;
