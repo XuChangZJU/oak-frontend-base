@@ -363,7 +363,7 @@ class ListNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Node<ED, T, Cxt, FrontCxt, AD> {
+> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     private updates: Record<
         string,
@@ -1061,7 +1061,7 @@ class ListNode<
                         } else {
                             this.aggr = aggr;
                         }
-                       
+
                     }
                 );
             } catch (err) {
@@ -1092,7 +1092,7 @@ class ListNode<
         if (this.dirty) {
             this.dirty = undefined;
             this.updates = {};
-    
+
             for (const k in this.children) {
                 this.children[k].clean();
             }
@@ -1500,7 +1500,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (this.dirty) {
             this.dirty = undefined;
             this.operation = undefined;
-    
+
             for (const child in this.children) {
                 this.children[child]!.clean();
             }
@@ -1636,7 +1636,7 @@ class VirtualNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private dirty: boolean;
     private executing: boolean;
     private loading = false;
@@ -1821,7 +1821,7 @@ export class RunningTree<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
     private authDict: AuthDefDict<ED>;
@@ -2338,7 +2338,7 @@ export class RunningTree<
             node.setExecuting(false);
             await node.doAfterTrigger();
 
-            return;
+            return { message: 'No Operation'};
         } catch (err) {
             node.setExecuting(false);
             throw err;
