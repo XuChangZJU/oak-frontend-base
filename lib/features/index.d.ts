@@ -16,6 +16,7 @@ import { Navigator } from './navigator';
 import { Port } from './port';
 import { RelationAuth } from './relationAuth';
 import { Style } from './style';
+import { ContextMenuFactory } from './contextMenuFactory';
 import { Geo } from './geo';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
@@ -34,4 +35,5 @@ export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt ex
     relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     style: Style<ED>;
     geo: Geo<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
+    contextMenuFactory: ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
 };

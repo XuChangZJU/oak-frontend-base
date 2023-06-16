@@ -17,6 +17,7 @@ import { Navigator } from './navigator';
 import { Port } from './port';
 import { RelationAuth } from './relationAuth';
 import { Style } from './style';
+import { ContextMenuFactory } from './contextMenuFactory';
 import { Geo } from './geo';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
@@ -46,6 +47,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
     const navigator = new Navigator();
     const port = new Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper);
     const style = new Style<ED>(colorDict);
+    const contextMenuFactory = new ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, actionCascadePathGraph);
     return {
         cache,
         location,
@@ -60,6 +62,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         port,
         style,
         geo,
+        contextMenuFactory,
     } as BasicFeatures<ED, Cxt, FrontCxt, AD>;
 }
 
@@ -82,4 +85,5 @@ export type BasicFeatures<
     relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     style: Style<ED>;
     geo: Geo<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
+    contextMenuFactory: ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
 };
