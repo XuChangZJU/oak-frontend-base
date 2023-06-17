@@ -10,7 +10,6 @@ import { Cache } from './cache';
 
 interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     name: string;
-    icon?: string;
     entity: T;
     action: ED[T]['Action'];
     data?: ED[T]['Update']['data'];
