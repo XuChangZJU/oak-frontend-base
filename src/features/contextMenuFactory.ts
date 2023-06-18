@@ -7,6 +7,7 @@ import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { combineFilters } from 'oak-domain/lib/store/filter';
 import { Cache } from './cache';
+import { Feature } from '../types/Feature';
 
 interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     name: string;
@@ -24,7 +25,7 @@ export class ContextMenuFactory<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>
-    > {
+    >  extends Feature {
     cache: Cache<ED, Cxt, FrontCxt, AD>;
     menuWrappers?: IMenuWrapper<ED, keyof ED>[];
     cascadePathGraph: AuthCascadePath<ED>[];
@@ -80,6 +81,7 @@ export class ContextMenuFactory<
     }
 
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, cascadePathGraph: AuthCascadePath<ED>[]) {
+        super();
         this.cache = cache;
         this.cascadePathGraph = cascadePathGraph;
     }
