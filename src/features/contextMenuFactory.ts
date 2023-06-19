@@ -8,12 +8,14 @@ import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { combineFilters } from 'oak-domain/lib/store/filter';
 import { Cache } from './cache';
 import { Feature } from '../types/Feature';
+import { judgeRelation } from 'oak-domain/lib/store/relation';
 
 interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     name: string;
     entity: T;
     action: ED[T]['Action'];
     data?: ED[T]['Update']['data'];
+    paths?: string[];
 };
 
 interface IMenuWrapper<ED extends EntityDict & BaseEntityDict, T extends keyof ED> extends IMenu<ED, T> {
@@ -57,19 +59,43 @@ export class ContextMenuFactory<
 
         return menus.map(
             (menu) => {
-                const { entity: destEntity } = menu;
+                const { entity: destEntity, paths: cascadePaths } = menu;
                 const filtersMaker = (sourceEntity: keyof ED, entityId: string) => {
                     // 在cascadePathMap中找到可能的路径并构建对应的filter
                     const paths = pathMap[destEntity]!.filter(
-                        (ele) => ele[2] === sourceEntity
+                        (ele) => {
+                            if (cascadePaths) {
+                                assert(cascadePaths.length > 0);
+                                return ele[2] === sourceEntity && cascadePaths.includes(ele[1]);
+                            }
+                            return ele[2] === sourceEntity;
+                        }
                     );
                     return paths.map(
                         (path) => {
                             const p = path[1];
-                            const p2 = p.concat('Id');
-                            const filter: ED[keyof ED]['Selection']['filter'] = {};
-                            set(filter, p2, entityId);
-                            return filter;
+                            const ps = p.split('.');
+                            const makeFilterInner = (entity: keyof ED, idx: number): ED[keyof ED]['Selection']['filter'] => {
+                                const attr = ps[idx];
+                                const rel = judgeRelation(this.cache.getSchema(), entity, attr);
+                                if (idx === ps.length - 1) {
+                                    if (rel === 2) {
+                                        return {
+                                            entity: attr,
+                                            entityId,
+                                        };
+                                    }
+                                    assert(typeof rel === 'string');
+                                    return {
+                                        [`${attr}Id`]: entityId,
+                                    };
+                                }
+                                const e = rel === 2 ? attr : rel as string;
+                                return {
+                                    [attr]: makeFilterInner(e, idx + 1),
+                                };
+                            }
+                            return makeFilterInner(destEntity, 0);
                         }
                     )
                 };
@@ -91,19 +117,22 @@ export class ContextMenuFactory<
         this.menuWrappers = this.makeMenuWrappers(menus);
     }
 
-    getMenusByContext(entity: keyof ED, entityId: string) {
+    getMenusByContext<OMenu extends IMenu<ED, keyof ED>>(entity: keyof ED, entityId: string) {
         assert(this.menuWrappers, '应当先调用setMenus才能动态判定菜单');
         const menus = this.menuWrappers.filter(
             (wrapper) => {
                 const { entity: destEntity, data, filtersMaker, action } = wrapper;
                 const filters = filtersMaker(entity, entityId);
-                const filter = combineFilters(filters);
-                const allow = this.cache.checkOperation(destEntity, action, data, filter);
-                return allow;
+                if (filters.length > 0) {
+                    const filter = combineFilters(filters);
+                    const allow = this.cache.checkOperation(destEntity, action, data, filter);
+                    return allow;
+                }
+                return false;
             }
         ).map(
             (wrapper) => omit(wrapper, ['filtersMaker'])
-        ) as IMenu<ED, keyof ED>[];
+        ) as OMenu[];
 
         return menus;
     }

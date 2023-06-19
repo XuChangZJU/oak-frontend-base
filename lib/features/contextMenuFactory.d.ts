@@ -10,6 +10,7 @@ interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     entity: T;
     action: ED[T]['Action'];
     data?: ED[T]['Update']['data'];
+    paths?: string[];
 }
 interface IMenuWrapper<ED extends EntityDict & BaseEntityDict, T extends keyof ED> extends IMenu<ED, T> {
     filtersMaker: (entity: keyof ED, entityId: string) => Array<ED[T]['Selection']['filter']>;
@@ -21,6 +22,6 @@ export declare class ContextMenuFactory<ED extends EntityDict & BaseEntityDict, 
     private makeMenuWrappers;
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, cascadePathGraph: AuthCascadePath<ED>[]);
     setMenus(menus: IMenu<ED, keyof ED>[]): void;
-    getMenusByContext(entity: keyof ED, entityId: string): IMenu<ED, keyof ED>[];
+    getMenusByContext<OMenu extends IMenu<ED, keyof ED>>(entity: keyof ED, entityId: string): OMenu[];
 }
 export {};
