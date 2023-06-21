@@ -14,7 +14,6 @@ interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     name: string;
     entity: T;
     action: ED[T]['Action'];
-    data?: ED[T]['Update']['data'];
     paths?: string[];
 };
 
@@ -121,11 +120,11 @@ export class ContextMenuFactory<
         assert(this.menuWrappers, '应当先调用setMenus才能动态判定菜单');
         const menus = this.menuWrappers.filter(
             (wrapper) => {
-                const { entity: destEntity, data, filtersMaker, action } = wrapper;
+                const { entity: destEntity, filtersMaker, action } = wrapper;
                 const filters = filtersMaker(entity, entityId);
                 if (filters.length > 0) {
                     const filter = combineFilters(filters);
-                    const allow = this.cache.checkOperation(destEntity, action, data, filter);
+                    const allow = this.cache.checkOperation(destEntity, action, undefined, filter, ['logical', 'relation', 'logicalRelation', 'row']);
                     return allow;
                 }
                 return false;

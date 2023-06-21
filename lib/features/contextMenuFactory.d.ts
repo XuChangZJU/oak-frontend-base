@@ -9,7 +9,6 @@ interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     name: string;
     entity: T;
     action: ED[T]['Action'];
-    data?: ED[T]['Update']['data'];
     paths?: string[];
 }
 interface IMenuWrapper<ED extends EntityDict & BaseEntityDict, T extends keyof ED> extends IMenu<ED, T> {
