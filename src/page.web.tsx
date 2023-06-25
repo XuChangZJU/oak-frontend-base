@@ -949,11 +949,36 @@ export function createComponent<
             }
             if (option.features) {
                 option.features.forEach(
-                    ele => this.subscribed.push(
-                        features[ele].subscribe(
-                            () => this.reRender()
-                        )
-                    )
+                    ele => {
+                        if (typeof ele === 'string') {
+                            this.subscribed.push(
+                                features[ele].subscribe(
+                                    () => this.reRender()
+                                )
+                            );
+                        }
+                        else {
+                            assert(typeof ele === 'object');
+                            const { feature, behavior } = ele;
+                            this.subscribed.push(
+                                features[feature].subscribe(
+                                    () => {
+                                        switch(behavior) {
+                                            case 'reRender': {
+                                                this.reRender();
+                                                return;
+                                            }
+                                            default: {
+                                                assert(behavior === 'refresh');
+                                                this.refresh();
+                                                return;
+                                            }
+                                        }
+                                    }
+                                )
+                            );
+                        }
+                    }
                 );
             }
         }

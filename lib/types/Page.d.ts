@@ -30,11 +30,15 @@ export declare type RowWithActions<ED extends EntityDict & BaseEntityDict, T ext
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     };
 };
+declare type FeatureDef<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>> = (keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>)) | {
+    feature: keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>);
+    behavior: 'reRender' | 'refresh';
+};
 interface ComponentOption<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends DataOption, TProperty extends DataOption, TMethod extends Record<string, Function>, EMethod extends Record<string, Function> = {}> {
     entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => T);
     path?: string;
     isList: IsList;
-    features?: (keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>))[];
+    features?: FeatureDef<ED, Cxt, FrontCxt, AD, FD>[];
     cascadeActions?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     };
