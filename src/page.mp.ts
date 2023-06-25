@@ -629,6 +629,14 @@ const oakBehavior = Behavior<
                 afterExecute
             );
         },
+
+        isCreation(path) {
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            return this.features.runningTree.isCreation(path2);
+        },
+
         async aggregate(aggregation) {
             return await this.features.cache.aggregate(
                 this.state.oakEntity,

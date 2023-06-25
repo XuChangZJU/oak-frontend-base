@@ -1965,6 +1965,14 @@ export class RunningTree<
         node.remove(beforeExecute, afterExecute);
     }
 
+    isCreation(path: string) {
+        const node = this.findNode(path);
+        assert(node instanceof SingleNode);
+        const oper = node.composeOperations();
+
+        return !!(oper && oper[0].operation.action === 'create');
+    }
+
     isLoading(path: string) {
         const node = this.findNode(path);
         return node?.isLoading();

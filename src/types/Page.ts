@@ -403,6 +403,7 @@ export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T 
     create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
     update: (data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
     remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
+    isCreation: (path?: string) => boolean;
 }
 
 export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
@@ -508,7 +509,7 @@ export type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedF
     | 'addNamedSorter' | 'removeNamedSorter' | 'removeNamedSorterByName' | 'setPageSize' | 'setCurrentPage' | 'addItem' | 'removeItem' | 'updateItem' | 'resetItem' | 'recoverItem';
 
 // 暴露给single组件的方法
-export type WebComponentSingleMethodNames = 'update' | 'remove' | 'create';
+export type WebComponentSingleMethodNames = 'update' | 'remove' | 'create' | 'isCreation';
 
 export type WebComponentProps<
     ED extends EntityDict & BaseEntityDict,
