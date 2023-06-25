@@ -903,14 +903,15 @@ class ListNode<
                         } else {
                             this.aggr = aggr;
                         }
-
                     }
                 );
+                this.publish();
             } catch (err) {
                 this.setLoading(false);
                 if (append) {
                     this.loadingMore = false;
                 }
+                this.publish();
                 throw err;
             }
         }
@@ -1336,9 +1337,11 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     this.setLoading(false);
                     this.clean();
                 });
+                this.publish();
             }
             catch (err) {
                 this.setLoading(false);
+                this.publish();
                 throw err;
             }
         }

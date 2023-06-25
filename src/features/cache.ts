@@ -67,10 +67,10 @@ export class Cache<
         try {
             const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
             this.refreshing = false;
-            callback && callback(result, opRecords);
             if (opRecords) {
                 this.sync(opRecords);
             }
+            callback && callback(result, opRecords);
             return {
                 result,
                 message,
