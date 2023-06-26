@@ -11,7 +11,7 @@ export declare class Port<ED extends EntityDict & BaseEntityDict, Cxt extends As
         opRecords?: import("oak-domain/lib/types").OpRecord<ED>[] | undefined;
         message?: string | null | undefined;
     }>;
-    exportEntity<T extends keyof ED>(entity: T, id: string, filter?: ED[T]['Selection']['filter']): Promise<{
+    exportEntity<T extends keyof ED>(entity: T, id: string, filter?: ED[T]['Selection']['filter'], properties?: Record<string, any>): Promise<{
         result: Awaited<ReturnType<AD["exportEntity"]>>;
         opRecords?: import("oak-domain/lib/types").OpRecord<ED>[] | undefined;
         message?: string | null | undefined;
