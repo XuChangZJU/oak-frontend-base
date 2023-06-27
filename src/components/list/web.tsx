@@ -54,7 +54,6 @@ export default function Render(
         rowSelection
     } = data;
     const useSelect = !!rowSelection?.type;
-    console.log(rowSelection);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     return (
         <div className={styles.container}>

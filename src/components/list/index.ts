@@ -12,7 +12,6 @@ export default OakComponent({
         onAction: (() => undefined) as Function,
         disabledOp: false,
         attributes: [] as OakAbsAttrDef[],
-        attributesMb: {} as CardDef,
         data: [] as RowWithActions<ED, keyof ED>[],
         loading: false,
         tablePagination: {} as TableProps<
@@ -27,7 +26,6 @@ export default OakComponent({
                 info?: { type: 'single' | 'multiple' | 'none' }
             ) => void;
         },
-        scroll: {} as TableProps<ED[keyof ED]['Schema'][]>['scroll'],
     },
     formData({ props }) {
         const { converter } = this.state;
@@ -51,25 +49,20 @@ export default OakComponent({
     lifetimes: {
         async ready() {
             // 因为部分i18json数据请求较慢，会导致converter，columnDef解析出错
-            const { attributes, entity, data, attributesMb } = this.props;
+            const { attributes, entity, data } = this.props;
             const schema = this.features.cache.getSchema();
             const colorDict = this.features.style.getColorDict();
             assert(!!data, 'data不能为空');
             assert(!!entity, 'list属性entity不能为空');
-            if (attributesMb) {
-                const converter = analyzeAttrMobileForCard(
-                    schema,
-                    entity,
-                    (k, params) => this.t(k, params),
-                    attributesMb as CardDef,
-                    colorDict
-                );
-                this.setState({
-                    converter,
-                    colorDict,
-                });
-            }
+            assert(attributes?.length, 'attributes不能为空');
+            const converter = analyzeAttrMobileForCard(
+                schema,
+                entity,
+                (k, params) => this.t(k, params),
+                attributes,
+            );
             this.setState({
+                converter,
                 schema,
                 colorDict,
             });
@@ -98,7 +91,6 @@ export default OakComponent({
             onAction: onActionFnDef;
             disabledOp: boolean;
             attributes: OakAbsAttrDef[];
-            attributesMb: CardDef;
             data: RowWithActions<ED2, T2>[];
             loading: boolean;
             tablePagination?: TableProps<
@@ -113,7 +105,6 @@ export default OakComponent({
                     info?: { type: 'single' | 'multiple' | 'none' }
                 ) => void;
             };
-            scroll?: TableProps<ED2[T2]['Schema'][]>['scroll'];
         }
     >
 ) => React.ReactElement;

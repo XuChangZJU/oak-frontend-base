@@ -30,7 +30,7 @@ import { ColorDict } from 'oak-domain/lib/types/Style';
 import dayjs from 'dayjs';
 
 const tableWidthMap: Record<number, number> = {
-    1: 140,
+    1: 120,
     2: 200,
     3: 300,
     4: 400,
@@ -63,15 +63,20 @@ export function resolvePath<ED extends EntityDict & BaseEntityDict>(
     dataSchema: StorageSchema<ED>,
     entity: keyof ED,
     path: string
-) {
+): {
+    entity: keyof ED,
+    attr: string,
+    attrType: DataType | 'ref' | undefined,
+    attribute: Attribute | undefined,
+} {
     assert(!path.includes('['), '数组索引不需要携带[],请使用arr.0.value');
     const attrs = path.split('.');
 
     let idx = 0;
     let _entity = entity;
-    let attr: string;
-    let attrType: DataType | 'ref';
-    let attribute: Attribute;
+    let attr: string = path;
+    let attrType: DataType | 'ref' | undefined = undefined;
+    let attribute: Attribute | undefined = undefined;
     while (idx <= attrs.length - 1) {
         attr = attrs[idx];
         if (!isNaN(parseInt(attr))) {
@@ -108,17 +113,16 @@ export function resolvePath<ED extends EntityDict & BaseEntityDict>(
             return {
                 entity: 'notExist',
                 attr: path,
-                attrType: '',
-                attribute: undefined,
+                attrType: undefined,
+                attribute,
             }
         }
     }
-
     return {
         entity: _entity,
-        attr: attr!,
-        attrType: attrType!,
-        attribute: attribute!,
+        attr,
+        attrType,
+        attribute,
     };
 }
 
@@ -158,29 +162,24 @@ export function getLabel<ED extends EntityDict & BaseEntityDict>(
 // 目前width属性可以是undefined，只有特殊type或用户自定义才有值，这样其余attr属性可以自适应
 export function getWidth(
     attribute: OakAbsAttrDef,
-    attrType: string,
-    useFor: 'table' | 'other'
+    attrType: DataType | 'ref' | undefined,
 ) {
     let width;
-    if (attrType === 'enum' && useFor === 'table') {
-        width = 1;
+    if (attrType === 'enum') {
+        width = 120;
     }
     if (isAttrbuteType(attribute).width) {
         width = isAttrbuteType(attribute).width;
-    }
-    if (width && useFor === 'table') {
-        width = tableWidthMap[width];
     }
     return width;
 }
 
 export function getValue<ED extends EntityDict & BaseEntityDict>(
-    attribute: OakAbsAttrDef,
     data: any,
     path: string,
     entity: keyof ED,
     attr: string,
-    attrType: string,
+    attrType: DataType | 'ref' | undefined,
     t: (k: string, params?: object) => string
 ) {
     let value = get(data, path);
@@ -192,23 +191,23 @@ export function getValue<ED extends EntityDict & BaseEntityDict>(
     if (attrType === 'datetime' && value) {
         value = dayjs(value).format('YYYY-MM-DD HH:mm');
     }
-    if (isAttrbuteType(attribute).value) {
-        value = isAttrbuteType(attribute).value;
-    }
     return value;
 }
 
-export function getType(attribute: OakAbsAttrDef, attrType: string) {
-    if (attrType === 'enum') {
-        return 'tag';
+export function getAlign(attrType: DataType): 'left' | 'right' | 'center' {
+    const rightType: DataType[] = ['float', 'int', 'bigint', 'decimal', 'money'];
+    if (rightType.includes(attrType)) {
+        return 'right'
     }
-    if (attrType === 'datetime') {
-        return 'datetime';
-    }
+    return 'left'
+}
+
+export function getType(attribute: OakAbsAttrDef, attrType: OakAbsDerivedAttrDef['type']) {
+    let type = attrType;
     if (isAttrbuteType(attribute).type) {
-        return isAttrbuteType(attrType).type;
+        type =  isAttrbuteType(attribute).type;
     }
-    return attrType;
+    return type;
 }
 
 function getLabelI18<ED extends EntityDict & BaseEntityDict>(
@@ -238,7 +237,6 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(
             const {
                 attrType,
                 attr,
-                attribute,
                 entity: entityI8n,
             } = resolvePath(dataSchema, entity, path);
             const label = `${entityI8n as string}:attr.${attr}`;
@@ -388,32 +386,19 @@ export function analyzeDataUpsertTransformer<
         });
 }
 
+
 export function analyzeAttrMobileForCard<
     ED extends EntityDict & BaseEntityDict
 >(
     dataSchema: StorageSchema<ED>,
     entity: keyof ED,
     t: (k: string, params?: object) => string,
-    mobileAttrDef: CardDef,
-    colorDict: ColorDict<ED>
+    attributes: OakAbsAttrDef[],
 ) {
     return (data: any[]) => {
         // 遍历用户传入的数据源
         const coverData = data.map((row) => {
-            let title = '';
-            // title如果是path进行解析
-            if (mobileAttrDef.title) {
-                title =
-                    typeof mobileAttrDef.title === 'string'
-                        ? get(row, mobileAttrDef.title)
-                        : mobileAttrDef.title;
-            }
-            // rows即卡片主体要渲染的数据
-            assert(
-                !!(mobileAttrDef.rows && mobileAttrDef.rows.length),
-                'attributeMb中的rows不能为空'
-            );
-            const rows = mobileAttrDef.rows.map((attribute) => {
+            const rows = attributes.map((attribute) => {
                 const path = getPath(attribute);
                 const {
                     attrType,
@@ -422,7 +407,6 @@ export function analyzeAttrMobileForCard<
                 } = resolvePath(dataSchema, entity, path);
                 const label = getLabel(attribute, entity, attr, t);
                 const value = getValue(
-                    attribute,
                     row,
                     path,
                     entity,
@@ -435,38 +419,7 @@ export function analyzeAttrMobileForCard<
                     value,
                 };
             });
-            // 处理state 卡片右上角的stateView要显示的内容
-            let color = 'default';
-            let state;
-            if (
-                mobileAttrDef.state &&
-                typeof mobileAttrDef.state === 'string'
-            ) {
-                const { attr, entity: entityI8n } = resolvePath(
-                    dataSchema,
-                    entity,
-                    mobileAttrDef.state
-                );
-                const rowValue = get(row, mobileAttrDef.state);
-                const value = t(`${String(entityI8n)}:v.${attr}.${rowValue}`);
-                if (colorDict) {
-                    color = (<any>colorDict)[entityI8n]![attr]![
-                        rowValue
-                    ] as string;
-                }
-                state = {
-                    color,
-                    value,
-                };
-            } else {
-                state = mobileAttrDef.state;
-            }
-            return {
-                title,
-                rows,
-                state,
-                record: row,
-            };
+            return rows;
         });
         return coverData;
     };

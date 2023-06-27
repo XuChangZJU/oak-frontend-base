@@ -24,10 +24,8 @@ export declare type OakAbsNativeAttrDef = {
 export declare type OakAbsDerivedAttrDef = {
     path: string;
     label: string;
-    value?: string;
-    width?: RenderWidth;
-    type?: ('img' | 'file' | 'avatar' | 'text') | DataType;
-    render?: (row: any) => React.ReactNode | undefined;
+    width?: number;
+    type?: 'image' | 'link' | DataType | 'ref';
 };
 export declare type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
 export declare type CardDef = {

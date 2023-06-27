@@ -51,10 +51,6 @@ export default function render(
                 loading={oakLoading}
                 data={relations || []}
                 attributes={['entity', 'entityId', 'name', 'display']}
-                attributesMb={{
-                    title: 'title',
-                    rows: ['entity', 'entityId', 'name', 'display'],
-                }}
                 extraActions={[{ action: 'action', label: '动作', show: true }, { action: 'relation', label: '关系', show: true }]}
                 onAction={(row: ED['relation']['OpSchema'], action: string) => { 
                     const { id, entity } = row;

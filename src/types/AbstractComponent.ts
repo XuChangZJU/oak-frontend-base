@@ -1,7 +1,6 @@
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
-
 export type RenderWidth = 1 | 2 | 3 | 4;
 
 export type OakActionBtnProps = {
@@ -30,10 +29,8 @@ export type OakAbsNativeAttrDef = {
 export type OakAbsDerivedAttrDef = {
     path: string;
     label: string;
-    value?: string;
-    width?: RenderWidth;
-    type?: ('img' | 'file' | 'avatar' | 'text') | DataType;
-    render?: (row: any) => React.ReactNode | undefined;
+    width?: number;
+    type?: 'image' | 'link' | DataType | 'ref';
 };
 
 export type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
@@ -176,3 +173,4 @@ export type onActionFnDef = (
     action: string,
     cascadeAction?: CascadeActionProps
 ) => void;
+
