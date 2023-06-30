@@ -1,21 +1,32 @@
-import React from 'react';
-
+import React, { useState, useEffect } from 'react';
 import { Space, Tag, Tooltip, Typography } from 'antd';
-
-import { OakAbsDerivedAttrDef } from '../../../types/AbstractComponent';
 import ImgBox from '../../imgBox';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { WebComponentProps } from '../../../types/Page';
+import { OakAbsDerivedAttrDef } from '../../../types/AbstractComponent';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
 const { Link } = Typography;
 
-type Props = {
-    value: string | string[];
-    type: OakAbsDerivedAttrDef['type'],
-    color: string;
-}
-
-function TableCell(props: Props) {
-    const { value, type, color } = props;
-    if (!value) {
+export default function Render(
+    props: WebComponentProps<
+        EntityDict & BaseEntityDict,
+        keyof EntityDict,
+        false,
+        {
+            value: string | string[];
+            type: OakAbsDerivedAttrDef['type'],
+            color: string;
+        },
+        {
+        }
+    >
+) {
+    const { methods, data: oakData } = props;
+    const {
+       value, type, color
+    } = oakData;
+    if (value === null || value === '' || value === undefined) {
         return (<>--</>);
     }
     // 属性类型是enum要使用标签
@@ -64,5 +75,3 @@ function TableCell(props: Props) {
         </Tooltip>
     )
 }
-
-export default TableCell;

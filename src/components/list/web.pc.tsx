@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Table, Tag, TableProps, PaginationProps, Space, Button, Avatar } from 'antd';
 import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
 import assert from 'assert';
@@ -9,10 +9,13 @@ import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps, ListButtonProps } from '../../types/AbstractComponent';
 import { getPath, getWidth, getValue, getLabel, resolvePath, getType, getAlign } from '../../utils/usefulFn';
 import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
-import TableCell from './tableCell';
+import TableCell from './renderCell';
+import Style from './web.module.less';
+import { TableContext } from '../listPro';
+
 type ED = EntityDict & BaseEntityDict;
 
 
@@ -42,8 +45,6 @@ export default function Render(
 ) {
     const { methods, data: oakData } = props;
     const { t } = methods;
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-    const [tableColumns, setTabelColumns] = useState([] as ColumnsType<any>);
     const {
         loading,
         entity,
@@ -58,11 +59,19 @@ export default function Render(
         attributes,
         i18n,
     } = oakData;
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [tableColumns, setTabelColumns] = useState([] as ColumnsType<any>);
+    const { tableAttributes, setSchema } = useContext(TableContext);
     // 为了i18更新时能够重新渲染
     const zhCNKeys = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
     useEffect(() => {
         if (schema) {
-            const tableColumns: ColumnsType<any> = attributes && attributes.map((ele) => {
+            setSchema && setSchema(schema);
+            let showAttributes = attributes;
+            if (tableAttributes) {
+                showAttributes = tableAttributes.filter((ele) => ele.show).map((ele) => ele.attribute);
+            }
+            const tableColumns: ColumnsType<any> = showAttributes && showAttributes.map((ele) => {
                 const path = getPath(ele);
                 const {attrType, attr, entity: entityI8n } = resolvePath<ED>(schema, entity, path);
                 if (entityI8n === 'notExist') {
@@ -81,8 +90,10 @@ export default function Render(
                     render: (v: string, row: any) => {
                         const value = getValue(row, path, entityI8n, attr, attrType, t);
                         const stateValue = get(row, path);
-                        assert(!!(colorDict?.[entityI8n]?.[attr]?.[stateValue]), `${entity}实体iState颜色定义缺失`)
-                        const color = colorDict && colorDict[entityI8n]![attr]![stateValue] as string;
+                        const color = colorDict && colorDict[entityI8n]?.[attr]?.[stateValue] as string;
+                        if (type === 'enum') {
+                            assert(color, `${entity}实体${attr}颜色定义缺失`)
+                        }
                         return (<TableCell color={color} value={value} type={type!} />)
                     }
                 }
@@ -123,7 +134,7 @@ export default function Render(
             }
             setTabelColumns(tableColumns)
         }
-    }, [data, zhCNKeys, schema])
+    }, [data, zhCNKeys, schema, tableAttributes])
     return (
         <Table
             rowKey="id"

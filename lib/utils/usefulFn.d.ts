@@ -20,6 +20,10 @@ export declare function getType(attribute: OakAbsAttrDef, attrType: OakAbsDerive
 export declare function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, attrDefs: OakAbsAttrDef[], colorDict?: ColorDict<ED>): DataTransformer;
 export declare function analyzeDataUpsertTransformer<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(dataSchema: StorageSchema<ED>, entity: T, attrUpsertDefs: OakAbsAttrUpsertDef<ED, T>[]): (data: any) => AttrUpsertRender<ED, T>[];
 export declare function analyzeAttrMobileForCard<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, t: (k: string, params?: object) => string, attributes: OakAbsAttrDef[]): (data: any[]) => {
-    label: string;
-    value: any;
-}[][];
+    data: {
+        label: string;
+        value: any;
+        type: "link" | "ref" | DataType | undefined;
+    }[];
+    record: any;
+}[];

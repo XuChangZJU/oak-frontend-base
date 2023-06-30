@@ -191,6 +191,9 @@ export function getValue<ED extends EntityDict & BaseEntityDict>(
     if (attrType === 'datetime' && value) {
         value = dayjs(value).format('YYYY-MM-DD HH:mm');
     }
+    if (attrType === 'boolean' && typeof value === 'boolean') {
+        value = t(`common:${String(value)}`);
+    }
     return value;
 }
 
@@ -405,21 +408,26 @@ export function analyzeAttrMobileForCard<
                     attr,
                     entity: entityI8n,
                 } = resolvePath(dataSchema, entity, path);
-                const label = getLabel(attribute, entity, attr, t);
+                const label = getLabel(attribute, entityI8n, attr, t);
                 const value = getValue(
                     row,
                     path,
-                    entity,
+                    entityI8n,
                     attr,
                     attrType,
                     t
                 );
+                const type = getType(attribute, attrType);
                 return {
                     label,
                     value,
+                    type,
                 };
             });
-            return rows;
+            return {
+                data: rows,
+                record: row,
+            };
         });
         return coverData;
     };

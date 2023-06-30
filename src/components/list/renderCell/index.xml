@@ -1,0 +1,16 @@
+<block wx:if="{{value === '' || value === undefined || value === null}}">
+    <view class="text">--</view>
+</block>
+<block wx:if="{{type === image}}">
+    <block wx:if="{{value.length}}">
+        <block wx:for="{{value}}">
+            <image src="{{item}}" style="width: 100px;height: 60px" mode="aspectFit" />
+        </block>
+    </block>
+    <block wx:else>
+        <image src="{{value}}" style="width: 100px;height: 60px" mode="aspectFit" />
+    </block>
+</block>
+<block wx:else>
+    <view class="text">{{value}}</view>
+</block>

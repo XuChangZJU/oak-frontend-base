@@ -3,20 +3,17 @@ import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { RowWithActions, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
+import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
 declare type ED = EntityDict & BaseEntityDict;
 export default function Render(props: WebComponentProps<EntityDict & BaseEntityDict, keyof EntityDict, false, {
     entity: string;
     extraActions: OakExtraActionProps[];
     mobileData: {
-        title: any;
-        rows: {
+        data: {
             label: string;
-            value: string;
+            value: string | string[];
+            type: DataType | 'ref' | 'image';
         }[];
-        state: {
-            color: string;
-            value: string;
-        };
         record: any;
     }[];
     onAction?: onActionFnDef;

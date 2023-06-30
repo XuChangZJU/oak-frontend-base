@@ -8,8 +8,9 @@ import { ActionDef, RowWithActions, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import styles from './mobile.module.less';
 import { Checkbox } from 'antd-mobile'
-import classnames from 'classnames';
+import RenderCell from './renderCell';
 import { CascadeActionProps, onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
+import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
 type ED = EntityDict & BaseEntityDict;
 
 type CascadeActionDef = {
@@ -25,10 +26,12 @@ export default function Render(
             entity: string;
             extraActions: OakExtraActionProps[];
             mobileData: {
-                title: any;
-                rows: { label: string; value: string }[];
-                state: { color: string; value: string };
-                record: any,
+                data: {
+                    label: string;
+                    value: string | string[],
+                    type: DataType | 'ref' | 'image'
+                }[];
+                record: any;
             }[];
             onAction?: onActionFnDef;
             disabledOp: boolean;
@@ -53,6 +56,7 @@ export default function Render(
         disabledOp = false,
         rowSelection
     } = data;
+    console.log(mobileData);
     const useSelect = !!rowSelection?.type;
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     return (
@@ -81,47 +85,35 @@ export default function Render(
                                     }}
                                 />
                             )}
-                            <div className={styles.card} onClick={() => {
-                                const index = selectedRowKeys.findIndex((ele2) => ele2 === ele.record?.id);
-                                let keys = selectedRowKeys;
-                                if (rowSelection?.type === 'checkbox') {
-                                    if (index !== -1) {
-                                        keys.splice(index, 1)
+                            <div
+                                className={styles.card}
+                                onClick={() => {
+                                    const index = selectedRowKeys.findIndex((ele2) => ele2 === ele.record?.id);
+                                    let keys = selectedRowKeys;
+                                    if (rowSelection?.type === 'checkbox') {
+                                        if (index !== -1) {
+                                            keys.splice(index, 1)
+                                        }
+                                        else {
+                                            keys.push(ele.record?.id)
+                                        }
+                                        setSelectedRowKeys([...selectedRowKeys]);
                                     }
                                     else {
-                                        keys.push(ele.record?.id)
+                                        keys = [ele.record?.id];
+                                        setSelectedRowKeys([ele.record?.id])
                                     }
-                                    setSelectedRowKeys([...selectedRowKeys]);
-                                }
-                                else {
-                                    keys = [ele.record?.id];
-                                    setSelectedRowKeys([ele.record?.id])
-                                }
-                                rowSelection?.onChange && rowSelection?.onChange(keys, ele.record, {type: rowSelection.type === 'checkbox' ? 'multiple' : 'single'});
-                            }}>
-                                {ele.title && (
-                                    <div className={styles.titleView}>
-                                        <div className={styles.title}>
-                                            {ele.title}
-                                        </div>
-                                        {ele.state && (
-                                            <div className={styles.stateView}>
-                                                <div className={classnames(styles.badge, styles[ele.state.color])}></div>
-                                                <div>
-                                                    {ele.state.value}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                    rowSelection?.onChange && rowSelection?.onChange(keys, ele.record, {type: rowSelection.type === 'checkbox' ? 'multiple' : 'single'});
+                                }}
+                            >
                                 <div className={styles.cardContent}>
-                                    {ele.rows && ele.rows.map((row) => (
+                                    {ele.data.map((ele2) => (
                                         <div className={styles.textView}>
                                             <div className={styles.label}>
-                                                {row.label}
+                                                {ele2.label}
                                             </div>
                                             <div className={styles.value}>
-                                                {row.value}
+                                                <RenderCell value={ele2.value} type={ele2.type}  />
                                             </div>
                                         </div>
                                     ))}

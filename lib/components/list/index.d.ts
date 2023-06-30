@@ -1,7 +1,8 @@
-import { ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
+import { ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps } from '../../types/AbstractComponent';
 import { TableProps } from 'antd';
 import { RowWithActions, ReactComponentProps } from '../../types/Page';
 declare const _default: <ED2 extends ED, T2 extends keyof ED2, T3 extends string | number = string | number>(props: ReactComponentProps<ED2, T2, false, {
+    buttonGroup: ListButtonProps[];
     entity: T2;
     extraActions: OakExtraActionProps[];
     onAction: onActionFnDef;
