@@ -4,7 +4,7 @@ import { ReactComponentProps } from '../../../types/Page';
 export default OakComponent({
     isList: false,
     properties: {
-        item: [] as ListButtonProps[],
+        items: [] as ListButtonProps[],
     },
 }) as <ED2 extends ED, T2 extends keyof ED2>(
     props: ReactComponentProps<
@@ -12,7 +12,7 @@ export default OakComponent({
         T2,
         false,
         {
-            item: ListButtonProps[]
+            items: ListButtonProps[]
         }
     >
 ) => React.ReactElement;

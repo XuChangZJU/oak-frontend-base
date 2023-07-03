@@ -8,6 +8,7 @@ import { TableProps, PaginationProps } from 'antd';
 import { RowWithActions, ReactComponentProps } from '../../types/Page';
 import List from '../list';
 import ToolBar from '../list/toolBar';
+import ButtonGroup from '../list/buttonGroup';
 import Style from './index.module.less';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { useWidth } from '../../platforms/web/responsive/useWidth';
@@ -91,6 +92,11 @@ const ProList = (props: Props) => {
                         reload={() => {
                             onReload && onReload();
                         }}
+                    />
+                )}
+                {isMobile && (
+                    <ButtonGroup
+                        items={buttonGroup}
                     />
                 )}
                 <List

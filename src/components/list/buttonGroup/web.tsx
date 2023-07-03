@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Spin } from 'antd';
+import { FloatButton } from 'antd';
 import { WebComponentProps } from '../../../types/Page';
 
-import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Checkbox } from 'antd-mobile';
+import { ListButtonProps } from '../../../types/AbstractComponent';
+
+import {
+    BarsOutlined,
+} from '@ant-design/icons';
 type ED = EntityDict & BaseEntityDict;
 
 export default function Render(
@@ -15,6 +18,7 @@ export default function Render(
         keyof EntityDict,
         false,
         {
+            items: ListButtonProps[];
         },
         {
         }
@@ -23,11 +27,36 @@ export default function Render(
     const { methods, data } = props;
     const { t } = methods;
     const {
-       
+       items
     } = data;
+    if (items && items.length === 1) {
+        const item = items[0];
+        return (
+            <FloatButton
+                shape="circle"
+                type="primary"
+                style={{ right: 24 }}
+                icon={item.icon}
+                description={item.icon ? null : item.label}
+                onClick={() => item.onClick()}
+            />
+        )
+    }
     return (
-        <div>
-           待开发
-        </div>
+        <FloatButton.Group
+            shape='circle'
+            trigger="click"
+            type="primary"
+            style={{ right: 24 }}
+            icon={<BarsOutlined />}
+        >
+            {items && items.map((ele) => (
+                <FloatButton
+                    icon={ele.icon}
+                    description={ele.icon ? null : ele.label}
+                    onClick={() => ele.onClick()}
+                />
+            ))}
+        </FloatButton.Group>
     );
 }

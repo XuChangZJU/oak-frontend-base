@@ -34,7 +34,7 @@ function ToolBar(props: ToolBarProps) {
             <div className={Style.toolbarRight}>
                 <Space>
                     {buttonGroup && buttonGroup.length && (
-                        <ButtonGroup item={buttonGroup} />
+                        <ButtonGroup items={buttonGroup} />
                     )}
                     <Tooltip title={t('reload')}>
                         <div className={Style.reloadIconBox} onClick={() => {

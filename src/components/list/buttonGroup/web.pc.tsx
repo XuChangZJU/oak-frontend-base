@@ -14,7 +14,7 @@ export default function Render(
         keyof EntityDict,
         false,
         {
-            item: ListButtonProps[];
+            items: ListButtonProps[];
         },
         {
         }
@@ -22,12 +22,12 @@ export default function Render(
 ) {
     const { methods, data: oakData } = props;
     const {
-       item
+       items
     } = oakData;
     // 为了i18更新时能够重新渲染
     return (
         <Space>
-            {item.map((ele) => (
+            {items.map((ele) => (
                 <Button type={ele.type} onClick={ele.onClick}>
                     {ele.label}
                 </Button>
