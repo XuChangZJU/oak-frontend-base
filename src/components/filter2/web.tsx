@@ -139,8 +139,8 @@ export default function Render<ED2 extends ED>(
                     allowClear
                     placeholder={placeholder || t('placeholder.select')}
                     onChange={(value) => {
-                        let value2 = multiple ? [value] : value;
-                        if ((value === undefined || value === null) && multiple) {
+                        let value2 = multiple ? value : [value];
+                        if (value === undefined || value === null) {
                             value2 = [];
                         }
                         setFilterAndResetFilter(
