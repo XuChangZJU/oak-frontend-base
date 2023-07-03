@@ -171,6 +171,9 @@ export function getWidth(
     if (isAttrbuteType(attribute).width) {
         width = isAttrbuteType(attribute).width;
     }
+    if (isAttrbuteType(attribute).span) {
+        width = tableWidthMap[isAttrbuteType(attribute).span!]
+    }
     return width;
 }
 
