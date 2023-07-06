@@ -73,28 +73,35 @@ export class ContextMenuFactory<
                     return paths.map(
                         (path) => {
                             const p = path[1];
-                            const ps = p.split('.');
-                            const makeFilterInner = (entity: keyof ED, idx: number): ED[keyof ED]['Selection']['filter'] => {
-                                const attr = ps[idx];
-                                const rel = judgeRelation(this.cache.getSchema(), entity, attr);
-                                if (idx === ps.length - 1) {
-                                    if (rel === 2) {
-                                        return {
-                                            entity: attr,
-                                            entityId,
-                                        };
-                                    }
-                                    assert(typeof rel === 'string');
-                                    return {
-                                        [`${attr}Id`]: entityId,
-                                    };
-                                }
-                                const e = rel === 2 ? attr : rel as string;
+                            if (p === '') {
                                 return {
-                                    [attr]: makeFilterInner(e, idx + 1),
+                                    id: entityId,
                                 };
                             }
-                            return makeFilterInner(destEntity, 0);
+                            else {
+                                const ps = p.split('.');
+                                const makeFilterInner = (entity: keyof ED, idx: number): ED[keyof ED]['Selection']['filter'] => {
+                                    const attr = ps[idx];
+                                    const rel = judgeRelation(this.cache.getSchema(), entity, attr);
+                                    if (idx === ps.length - 1) {
+                                        if (rel === 2) {
+                                            return {
+                                                entity: attr,
+                                                entityId,
+                                            };
+                                        }
+                                        assert(typeof rel === 'string');
+                                        return {
+                                            [`${attr}Id`]: entityId,
+                                        };
+                                    }
+                                    const e = rel === 2 ? attr : rel as string;
+                                    return {
+                                        [attr]: makeFilterInner(e, idx + 1),
+                                    };
+                                };
+                                return makeFilterInner(destEntity, 0);
+                            }
                         }
                     )
                 };
