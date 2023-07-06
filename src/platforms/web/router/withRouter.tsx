@@ -1,5 +1,5 @@
 import React from 'react';
-
+// @ts-ignore
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useWidth } from './../responsive';
