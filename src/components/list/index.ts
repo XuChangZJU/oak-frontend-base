@@ -52,7 +52,6 @@ export default OakComponent({
         async ready() {
             // 因为部分i18json数据请求较慢，会导致converter，columnDef解析出错
             const { attributes, entity, data, attributesMb } = this.props;
-            const { t } = this;
             const schema = this.features.cache.getSchema();
             const colorDict = this.features.style.getColorDict();
             assert(!!data, 'data不能为空');
@@ -61,7 +60,7 @@ export default OakComponent({
                 const converter = analyzeAttrMobileForCard(
                     schema,
                     entity,
-                    t,
+                    (k, params) => this.t(k, params),
                     attributesMb as CardDef,
                     colorDict
                 );
