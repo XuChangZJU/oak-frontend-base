@@ -1,0 +1,30 @@
+.oak-pull-to-refresh-content {
+    transform-origin: left top 0px;
+}
+
+.oak-pull-to-refresh-content-wrapper {
+    overflow: hidden;
+}
+
+.oak-pull-to-refresh-transition {
+    transition: transform 0.3s;
+}
+
+.oak-pull-to-refresh-indicator {
+    color: grey;
+    text-align: center;
+    height: 25px;
+    line-height: 25px;
+}
+
+.oak-pull-to-refresh-down .oak-pull-to-refresh-indicator {
+    margin-top: -25px;
+}
+
+.oak-pull-to-refresh-up .oak-pull-to-refresh-indicator {
+    margin-bottom: -25px;
+}
+
+.oak-pull-to-refresh-content-wrapper .oak-pull-to-refresh-content>:nth-child(2) {
+    min-height: 100vh;
+}
