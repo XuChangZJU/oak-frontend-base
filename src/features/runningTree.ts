@@ -2167,8 +2167,8 @@ export class RunningTree<
     }
 
     getOperations(path: string) {
-        const node = this.findNode(path)!;
-        const operations = node.composeOperations();
+        const node = this.findNode(path);
+        const operations = node?.composeOperations();
         return operations;
     }
 
