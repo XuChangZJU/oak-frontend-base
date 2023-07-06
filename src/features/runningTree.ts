@@ -959,7 +959,7 @@ class ListNode<
 
     // 查看这个list上所有数据必须遵守的等值限制
     getIntrinsticFilters() {
-        const filters = this.constructFilters();
+        const filters = this.constructFilters(undefined, undefined, true);
         return combineFilters(filters || []);
     }
 }

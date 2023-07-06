@@ -67,10 +67,11 @@ export class Cache<
         try {
             const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
             this.refreshing = false;
-            callback && callback(result, opRecords);
             if (opRecords) {
                 this.sync(opRecords);
             }
+            callback && callback(result, opRecords);
+            this.publish();
             return {
                 result,
                 message,
@@ -82,6 +83,7 @@ export class Cache<
                 const { opRecord } = e;
                 if (opRecord) {
                     this.sync([opRecord]);
+                    this.publish();
                 }
             }
             throw e;
@@ -171,7 +173,6 @@ export class Cache<
 
         // 唤起同步注册的回调
         this.syncEventsCallbacks.map((ele) => ele(records));
-        this.publish();
     }
 
     /**
