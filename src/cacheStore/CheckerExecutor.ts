@@ -12,10 +12,10 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
         [K in keyof ED]?: {
             [A: string]: Array<{
                 priority: number;
-                fn: (operation: Omit<ED[K]['Operation'], 'id'>, context: Cxt, option: SelectOption | OperateOption) => void;
+                fn: (operation: Omit<ED[K]['Operation'], 'id'>, context: SyncContext<ED>, option: SelectOption | OperateOption) => void;
                 type: CheckerType;
                 when: 'before' | 'after';
-                filter?: ED[K]['Update']['filter'] | ((operation: Omit<ED[K]['Operation'], 'id'>, context: Cxt, option: SelectOption | OperateOption) => ED[K]['Update']['filter']);
+                filter?: ED[K]['Update']['filter'] | ((operation: Omit<ED[K]['Operation'], 'id'>, context: SyncContext<ED>, option: SelectOption | OperateOption) => ED[K]['Update']['filter']);
             }>;
         };
     } = {};
@@ -37,7 +37,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                 checkers.splice(iter, 0, {
                     type,
                     priority: priority!,
-                    fn: fn as (operation: Omit<ED[T]['Operation'], 'id'>, context: Cxt, option: OperateOption | SelectOption) => void,
+                    fn: fn as (operation: Omit<ED[T]['Operation'], 'id'>, context: SyncContext<ED>, option: OperateOption | SelectOption) => void,
                     when,
                     filter: conditionalFilter,
                 });
@@ -77,7 +77,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
         }
     }
 
-    check<T extends keyof ED>(entity: T, operation: Omit<ED[T]['Operation'], 'id'>, context: Cxt, when?: 'before' | 'after', checkerTypes?: CheckerType[]) {
+    check<T extends keyof ED>(entity: T, operation: Omit<ED[T]['Operation'], 'id'>, context: SyncContext<ED>, when?: 'before' | 'after', checkerTypes?: CheckerType[]) {
         const { action } = operation;
         const checkers = this.checkerMap[entity] && this.checkerMap[entity]![action];
         if (checkers) {
@@ -87,7 +87,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                 if (filter) {
                     const filterr = typeof filter === 'function' ? filter(operation, context, {}) : filter;
                     assert(!(filter instanceof Promise), `对${entity as string}的动作${action}上定义的checker，其filter返回了Promise，请注意将同步和异步的返回区分对待`);
-                    const isRepel = checkFilterRepel<ED, T, Cxt>(entity, context, filterr, operation.filter, true);
+                    const isRepel = checkFilterRepel<ED, T, SyncContext<ED>>(entity, context, filterr, operation.filter, true);
                     assert(typeof isRepel === 'boolean');
                     if (isRepel) {
                         continue;

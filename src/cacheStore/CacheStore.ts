@@ -1,4 +1,4 @@
-import { AggregationResult, EntityDict, OperationResult, OpRecord, SelectOption } from 'oak-domain/lib/types/Entity';
+import { AggregationResult, EntityDict, OperateOption, OperationResult, OpRecord, SelectOption } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from "oak-domain/lib/types/Storage";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Checker, CheckerType, TxnOption } from 'oak-domain/lib/types';
@@ -32,6 +32,20 @@ export class CacheStore<
         return this.aggregateSync(entity, aggregation, context, option);
     }
 
+    protected cascadeUpdate<T extends keyof ED, OP extends OperateOption>(entity: T, operation: ED[T]['Operation'], context: SyncContext<ED>, option: OP): OperationResult<ED> {        
+        assert(context.getCurrentTxnId());
+        if (!option.blockTrigger) {
+            this.checkerExecutor.check(entity, operation, context, 'before');
+        }
+        const result = super.cascadeUpdate(entity, operation, context, option);
+
+        if (!option.blockTrigger) {
+            this.checkerExecutor.check(entity, operation, context, 'after');
+        }
+
+        return result;
+    }
+
     operate<T extends keyof ED, OP extends TreeStoreOperateOption>(
         entity: T,
         operation: ED[T]['Operation'],
@@ -39,14 +53,7 @@ export class CacheStore<
         option: OP
     ): OperationResult<ED> {
         assert(context.getCurrentTxnId());
-        if (!option.blockTrigger) {
-            this.checkerExecutor.check(entity, operation, context, 'before');
-        }
         const result = super.operateSync(entity, operation, context, option);
-        if (!option.blockTrigger) {
-            this.checkerExecutor.check(entity, operation, context, 'after');
-        }
-
         return result;
     }
 

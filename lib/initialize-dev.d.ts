@@ -30,5 +30,5 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
         [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
     };
 }, colorDict?: ColorDict<ED>, importations?: Importation<ED, keyof ED, any>[], exportations?: Exportation<ED, keyof ED, any>[]): {
-    features: BasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
+    features: BasicFeatures<ED, Cxt, SyncContext<ED>, CommonAspectDict<ED, Cxt> & AD>;
 };
