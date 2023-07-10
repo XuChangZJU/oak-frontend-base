@@ -145,7 +145,7 @@ export async function onPathSet<
             }
         );
     }
-    if (entity && projection || oakProjection) {
+    if (entity && (projection || oakProjection)) {
         this.refresh();
     }
     else {

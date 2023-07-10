@@ -17,6 +17,8 @@ import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
 import { RelationAuth } from './relationAuth';
 
+const MODI_NEXT_PATH_SUFFIX = ':next';
+
 abstract class Node<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
@@ -1860,7 +1862,7 @@ export class RunningTree<
         const node = this.findNode(path);
         const paths = path.split('.');
         const root = this.root[paths[0]];
-        const includeModi = path.includes(':next');
+        const includeModi = path.includes(MODI_NEXT_PATH_SUFFIX);
         if (node) {
             const context = this.cache.begin();
             assert(node instanceof ListNode || node instanceof SingleNode);
@@ -1992,6 +1994,9 @@ export class RunningTree<
     }
 
     async refresh(path: string) {
+        if (path.includes(MODI_NEXT_PATH_SUFFIX)) {
+            return;
+        }
         const node = this.findNode(path);
         if (node instanceof ListNode) {
             await node.refresh(1, true);
