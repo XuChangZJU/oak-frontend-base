@@ -1479,7 +1479,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     this.aggr = aggr && aggr[0];
                     this.setFiltersAndSortedApplied();
                     this.setLoading(false);
-                    this.clean();
+                    //this.clean();
                 });
                 // 对于modi对象，在此缓存modiIds
                 if (this.schema[this.entity].toModi && value) {
@@ -2338,7 +2338,7 @@ export class RunningTree<
             node.setExecuting(false);
             await node.doAfterTrigger();
 
-            return { message: 'No Operation'};
+            return { message: 'No Operation' };
         } catch (err) {
             node.setExecuting(false);
             throw err;
