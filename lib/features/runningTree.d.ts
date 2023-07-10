@@ -9,6 +9,7 @@ import { ActionDef } from '../types/Page';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { RelationAuth } from './relationAuth';
+export declare const MODI_NEXT_PATH_SUFFIX = ":next";
 declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     protected entity: T;
     protected schema: StorageSchema<ED>;

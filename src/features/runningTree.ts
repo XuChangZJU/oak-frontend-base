@@ -17,7 +17,7 @@ import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
 import { RelationAuth } from './relationAuth';
 
-const MODI_NEXT_PATH_SUFFIX = ':next';
+export const MODI_NEXT_PATH_SUFFIX = ':next';
 
 abstract class Node<
     ED extends EntityDict & BaseEntityDict,

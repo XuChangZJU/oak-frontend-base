@@ -21,6 +21,7 @@ import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { MessageProps } from './types/Message';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { addFilterSegment, combineFilters } from 'oak-domain/lib/store/filter';
+import { MODI_NEXT_PATH_SUFFIX } from './features/runningTree';
 
 export async function onPathSet<
     ED extends EntityDict & BaseEntityDict,
@@ -145,7 +146,7 @@ export async function onPathSet<
             }
         );
     }
-    if (entity && (projection || oakProjection)) {
+    if (entity && (projection || oakProjection) && !oakPath2?.includes(MODI_NEXT_PATH_SUFFIX)) {
         this.refresh();
     }
     else {
