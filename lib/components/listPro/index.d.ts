@@ -4,7 +4,7 @@ import { TableProps } from 'antd';
 import { RowWithActions } from '../../types/Page';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 declare type Props = {
-    title: string;
+    title?: string;
     buttonGroup?: ListButtonProps[];
     onReload?: () => void;
     entity: keyof ED;

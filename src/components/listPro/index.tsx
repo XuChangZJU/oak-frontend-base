@@ -12,8 +12,9 @@ import ButtonGroup from '../list/buttonGroup';
 import Style from './index.module.less';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { useWidth } from '../../platforms/web/responsive/useWidth';
+import { useTranslation } from 'react-i18next';
 type Props = {
-    title: string;
+    title?: string;
     buttonGroup?: ListButtonProps[];
     onReload?: () => void;
     entity: keyof ED;
@@ -71,6 +72,8 @@ const ProList = (props: Props) => {
     const [schema, setSchema] = useState(undefined);
     const width = useWidth();
     const isMobile = width === 'xs';
+    const { t } = useTranslation();
+
     return (
         <TableContext.Provider
             value={{
@@ -87,7 +90,7 @@ const ProList = (props: Props) => {
             <div className={Style.listContainer}>
                 {!isMobile && (
                     <ToolBar
-                        title={title}
+                        title={title || t('list', { name: t(`${entity}:name`)})}
                         buttonGroup={buttonGroup}
                         reload={() => {
                             onReload && onReload();
