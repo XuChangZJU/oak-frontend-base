@@ -486,14 +486,7 @@ export async function refresh<
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>
     ) {
     if (this.state.oakFullpath) {
-        try {
-            await this.features.runningTree.refresh(this.state.oakFullpath);
-        } catch (err) {
-            this.setMessage({
-                type: 'error',
-                content: (err as Error).message,
-            });
-        }
+        await this.features.runningTree.refresh(this.state.oakFullpath);
     }
 }
 

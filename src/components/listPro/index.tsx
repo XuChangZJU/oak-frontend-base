@@ -15,14 +15,14 @@ import { useWidth } from '../../platforms/web/responsive/useWidth';
 type Props = {
     title: string;
     buttonGroup?: ListButtonProps[];
-    onReload: () => void;
+    onReload?: () => void;
     entity: keyof ED;
     extraActions?: OakExtraActionProps[];
     onAction: onActionFnDef;
     disabledOp?: boolean;
     attributes: OakAbsAttrDef[];
     data: RowWithActions<ED, keyof ED>[];
-    loading: boolean;
+    loading?: boolean;
     tablePagination?: TableProps<
         RowWithActions<ED, keyof ED>[]
     >['pagination'];
@@ -100,7 +100,6 @@ const ProList = (props: Props) => {
                     />
                 )}
                 <List
-                    buttonGroup={buttonGroup}
                     entity={entity}
                     extraActions={extraActions}
                     onAction={onAction}

@@ -7,7 +7,6 @@ import { RowWithActions, ReactComponentProps } from '../../types/Page';
 export default OakComponent({
     isList: false,
     properties: {
-        buttonGroup: [] as ListButtonProps[],
         entity: '' as keyof ED,
         extraActions: [] as OakExtraActionProps[],
         onAction: (() => undefined) as Function,
@@ -87,7 +86,6 @@ export default OakComponent({
         T2,
         false,
         {
-            buttonGroup: ListButtonProps[];
             entity: T2;
             extraActions: OakExtraActionProps[];
             onAction: onActionFnDef;

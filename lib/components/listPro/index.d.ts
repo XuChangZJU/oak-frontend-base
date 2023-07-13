@@ -6,14 +6,14 @@ import { StorageSchema } from 'oak-domain/lib/types/Storage';
 declare type Props = {
     title: string;
     buttonGroup?: ListButtonProps[];
-    onReload: () => void;
+    onReload?: () => void;
     entity: keyof ED;
     extraActions?: OakExtraActionProps[];
     onAction: onActionFnDef;
     disabledOp?: boolean;
     attributes: OakAbsAttrDef[];
     data: RowWithActions<ED, keyof ED>[];
-    loading: boolean;
+    loading?: boolean;
     tablePagination?: TableProps<RowWithActions<ED, keyof ED>[]>['pagination'];
     rowSelection?: {
         type: 'checkbox' | 'radio';
