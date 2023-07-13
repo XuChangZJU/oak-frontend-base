@@ -74,9 +74,6 @@ export default function Render<ED2 extends ED>(
     } = props.data;
     const {
         t,
-        addNamedFilter,
-        removeNamedFilterByName,
-        refresh,
         getNamedFilter,
         setFilterAndResetFilter,
     } = props.methods;

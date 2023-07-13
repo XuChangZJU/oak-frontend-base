@@ -7,16 +7,16 @@ import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { translateCheckerInSyncContext } from 'oak-domain/lib/store/checker';
 import { checkFilterRepel } from 'oak-domain/lib/store/filter';
 
-export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt extends SyncContext<ED>> {
+export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict, Cxt extends SyncContext<ED>> {
     static All_Checker_Types: CheckerType[] = ['data', 'logical', 'logicalRelation', 'relation', 'row'];
     private checkerMap: {
         [K in keyof ED]?: {
             [A: string]: Array<{
                 priority: number;
-                fn: (operation: Omit<ED[K]['Operation'], 'id'>, context: Cxt, option: SelectOption | OperateOption) => void;
+                fn: (operation: Omit<ED[K]['Operation'], 'id'>, context: SyncContext<ED>, option: SelectOption | OperateOption) => void;
                 type: CheckerType;
                 when: 'before' | 'after';
-                filter?: ED[K]['Update']['filter'] | ((operation: Omit<ED[K]['Operation'], 'id'>, context: Cxt, option: SelectOption | OperateOption) => ED[K]['Update']['filter']);
+                filter?: ED[K]['Update']['filter'] | ((operation: Omit<ED[K]['Operation'], 'id'>, context: SyncContext<ED>, option: SelectOption | OperateOption) => ED[K]['Update']['filter']);
             }>;
         };
     } = {};
@@ -42,7 +42,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                 checkers.splice(iter, 0, {
                     type,
                     priority: priority!,
-                    fn: fn as (operation: Omit<ED[T]['Operation'], 'id'>, context: Cxt, option: OperateOption | SelectOption) => void,
+                    fn: fn as (operation: Omit<ED[T]['Operation'], 'id'>, context: SyncContext<ED>, option: OperateOption | SelectOption) => void,
                     when,
                     filter: conditionalFilter,
                 });
@@ -101,7 +101,7 @@ export default class CheckerExecutor<ED extends EntityDict & BaseEntityDict,Cxt 
                 if (filter) {
                     const filterr = typeof filter === 'function' ? filter(operation, context, {}) : filter;
                     assert(!(filter instanceof Promise), `对${entity as string}的动作${action}上定义的checker，其filter返回了Promise，请注意将同步和异步的返回区分对待`);
-                    const isRepel = checkFilterRepel<ED, T, Cxt>(entity, context, filterr, operation.filter, true);
+                    const isRepel = checkFilterRepel<ED, T, SyncContext<ED>>(entity, context, filterr, operation.filter, true);
                     assert(typeof isRepel === 'boolean');
                     if (isRepel) {
                         continue;
