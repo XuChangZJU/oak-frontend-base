@@ -1,6 +1,11 @@
+.oak-pull-to-refresh {
+    height: 100%;
+}
+
 .oak-pull-to-refresh-content {
     height: 100%;
     transform-origin: left top 0px;
+    overflow-y: scroll;
 }
 
 .oak-pull-to-refresh-content-wrapper {
@@ -28,5 +33,5 @@
 }
 
 .oak-pull-to-refresh-content-wrapper .oak-pull-to-refresh-content>:nth-child(2) {
-    height: 100%;
+    height: auto;
 }

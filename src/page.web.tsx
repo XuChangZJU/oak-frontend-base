@@ -973,7 +973,7 @@ export function createComponent<
                             this.subscribed.push(
                                 features[feature].subscribe(
                                     () => {
-                                        switch(behavior) {
+                                        switch (behavior) {
                                             case 'reRender': {
                                                 this.reRender();
                                                 return;
@@ -1049,12 +1049,12 @@ export function createComponent<
             const Render = getRender.call(this);
 
             if (this.supportPullDownRefresh()) {
-                const Child = React.cloneElement(
+                return (
                     <PullToRefresh
                         onRefresh={async () => {
                             (this as any).pullDownRefresh = true;
                             await this.refresh();
-                            (this as any).pullDownRefresh = true;
+                            (this as any).pullDownRefresh = false;
                         }}
                         refreshing={oakPullDownRefreshLoading}
                         distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}
@@ -1064,17 +1064,14 @@ export function createComponent<
                             release: this.t('common:ptrRelease'),
                             finish: this.t('common:ptrFinish'),
                         }}
-                    />,
-                    {
-                        getScrollContainer: () => document.body,
-                    },
-                    <Render methods={this.methodProps} data={{
-                        ...this.defaultProperties,
-                        ...this.state,
-                        ...this.props,
-                    }} />
+                    >
+                        <Render methods={this.methodProps} data={{
+                            ...this.defaultProperties,
+                            ...this.state,
+                            ...this.props,
+                        }} />
+                    </PullToRefresh>
                 );
-                return Child;
             }
             return <Render methods={this.methodProps} data={{
                 ...this.defaultProperties,
