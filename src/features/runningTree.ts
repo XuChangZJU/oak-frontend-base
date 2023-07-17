@@ -1398,105 +1398,114 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, context?: FrontCxt): ED[T2]['Selection']['filter'] | undefined {
         const value = this.getFreshValue(context);
 
-        for (const key in this.children) {
-            if (childNode === this.children[key]) {
-                const rel = this.judgeRelation(key);
-                if (rel === 2) {
-                    assert(false, '当前SingleNode应该自主管理id');
-                    // 基于entity/entityId的多对一
-                    /*  if (value) {
-                         // 要么没有行(因为属性不全所以没有返回行，比如从list -> detail)；如果取到了行但此属性为空，则说明一定是singleNode到singleNode的create
-                         if (value?.entityId) {
-                             assert(value?.entity === this.children[key].getEntity());
-                             return {
-                                 id: value!.entityId!,
-                             };
+        /**
+         * 此处原来的代码即使取不到value也要返回类似{ id: this.id }，但这样会造成以下问题：
+         * 在A对象的listNode上通过addItem创建了一个A的singleNode，再在A的SingleNode上创建一个B对象的listNode，此时B的refresh在A的SingleNode上
+         * getParentFilter会返回一个在后台并不存在的id，从而导致后续问题
+         * 
+         * 改过以后此处代码调用关系比较复杂，可能有潜在问题。by Xc 20230717
+         */
+        if (value) {
+            for (const key in this.children) {
+                if (childNode === this.children[key]) {
+                    const rel = this.judgeRelation(key);
+                    if (rel === 2) {
+                        assert(false, '当前SingleNode应该自主管理id');
+                        // 基于entity/entityId的多对一
+                        /*  if (value) {
+                             // 要么没有行(因为属性不全所以没有返回行，比如从list -> detail)；如果取到了行但此属性为空，则说明一定是singleNode到singleNode的create
+                             if (value?.entityId) {
+                                 assert(value?.entity === this.children[key].getEntity());
+                                 return {
+                                     id: value!.entityId!,
+                                 };
+                             }
+                             return;
                          }
-                         return;
-                     }
-                     const filter = this.getFilter();
-                     if (filter) {
-                         return {
-                             id: {
-                                 $in: {
-                                     entity: this.entity,
-                                     data: {
-                                         entityId: 1,
-                                     },
-                                     filter: addFilterSegment(filter, {
-                                         entity: childNode.getEntity(),
-                                     }),
-                                 }
-                             },
-                         };
-                     } */
-                }
-                else if (typeof rel === 'string') {
-                    assert(false, '当前SingleNode应该自主管理id');
-                    /* if (value) {
-                        // 要么没有行(因为属性不全所以没有返回行，比如从list -> detail)；如果取到了行但此属性为空，则说明一定是singleNode到singleNode的create
-                        if (value && value[`${rel}Id`]) {
-                            return {
-                                id: value[`${rel}Id`],
-                            };
-                        }
-                        return;
+                         const filter = this.getFilter();
+                         if (filter) {
+                             return {
+                                 id: {
+                                     $in: {
+                                         entity: this.entity,
+                                         data: {
+                                             entityId: 1,
+                                         },
+                                         filter: addFilterSegment(filter, {
+                                             entity: childNode.getEntity(),
+                                         }),
+                                     }
+                                 },
+                             };
+                         } */
                     }
-                    const filter = this.getFilter();
-                    if (filter) {
-                        return {
-                            id: {
-                                $in: {
-                                    entity: this.entity,
-                                    data: {
-                                        [`${rel}Id`]: 1,
-                                    },
-                                    filter,
-                                },
-                            },
-                        };
-                    } */
-                }
-                else {
-                    assert(rel instanceof Array && !key.endsWith('$$aggr'));
-                    if (rel[1]) {
-                        // 基于普通外键的一对多
-                        if (value) {
-                            return {
-                                [rel[1]]: value!.id,
-                            };
+                    else if (typeof rel === 'string') {
+                        assert(false, '当前SingleNode应该自主管理id');
+                        /* if (value) {
+                            // 要么没有行(因为属性不全所以没有返回行，比如从list -> detail)；如果取到了行但此属性为空，则说明一定是singleNode到singleNode的create
+                            if (value && value[`${rel}Id`]) {
+                                return {
+                                    id: value[`${rel}Id`],
+                                };
+                            }
+                            return;
                         }
                         const filter = this.getFilter();
                         if (filter) {
-                            if (filter.id && Object.keys(filter).length === 1) {
-                                return {
-                                    [rel[1]]: filter.id,
-                                };
-                            }
                             return {
-                                [rel[1].slice(0, rel[1].length - 2)]: filter,
+                                id: {
+                                    $in: {
+                                        entity: this.entity,
+                                        data: {
+                                            [`${rel}Id`]: 1,
+                                        },
+                                        filter,
+                                    },
+                                },
                             };
-                        }
+                        } */
                     }
                     else {
-                        // 基于entity/entityId的一对多 
-                        if (value) {
-                            return {
-                                entity: this.entity,
-                                entityId: value!.id,
-                            };
-                        }
-                        const filter = this.getFilter();
-                        if (filter) {
-                            if (filter.id && Object.keys(filter).length === 1) {
+                        assert(rel instanceof Array && !key.endsWith('$$aggr'));
+                        if (rel[1]) {
+                            // 基于普通外键的一对多
+                            if (value) {
                                 return {
-                                    entity: this.entity,
-                                    entityId: filter.id,
+                                    [rel[1]]: value!.id,
                                 };
                             }
-                            return {
-                                [this.entity]: filter,
-                            };
+                            /* const filter = this.getFilter();
+                            if (filter) {
+                                if (filter.id && Object.keys(filter).length === 1) {
+                                    return {
+                                        [rel[1]]: filter.id,
+                                    };
+                                }
+                                return {
+                                    [rel[1].slice(0, rel[1].length - 2)]: filter,
+                                };
+                            } */
+                        }
+                        else {
+                            // 基于entity/entityId的一对多 
+                            if (value) {
+                                return {
+                                    entity: this.entity,
+                                    entityId: value!.id,
+                                };
+                            }
+                            /* const filter = this.getFilter();
+                            if (filter) {
+                                if (filter.id && Object.keys(filter).length === 1) {
+                                    return {
+                                        entity: this.entity,
+                                        entityId: filter.id,
+                                    };
+                                }
+                                return {
+                                    [this.entity]: filter,
+                                };
+                            } */
                         }
                     }
                 }
