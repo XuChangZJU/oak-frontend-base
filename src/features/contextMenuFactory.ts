@@ -130,9 +130,14 @@ export class ContextMenuFactory<
                 const { entity: destEntity, filtersMaker, action } = wrapper;
                 const filters = filtersMaker(entity, entityId);
                 if (filters.length > 0) {
-                    const filter = combineFilters(filters);
-                    const allow = this.cache.checkOperation(destEntity, action, undefined, filter, ['logical', 'relation', 'logicalRelation', 'row']);
-                    return allow;
+                    // 这里应该是or关系，paths表达的路径中只要有一条满足就可能满足
+                    const allows = filters.map(
+                        (filter) => this.cache.checkOperation(destEntity, action, undefined, filter, ['logical', 'relation', 'logicalRelation', 'row'])
+                    );
+                    if (allows.indexOf(true) >= 0) {
+                        return true;
+                    }
+                    return false;                    
                 }
                 return false;
             }
