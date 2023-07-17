@@ -224,6 +224,7 @@ function checkActionsAndCascadeEntities<
                         const [{ operation }] = this.features.runningTree.getOperations(this.state.oakFullpath!)!;
 
                         if (this.checkOperation(this.state.oakEntity, 'create', operation.data as ED[T]['Update']['data'], undefined, checkTypes)) {
+                            legalActions.push(action);
                             if (rows['#oakLegalActions']) {
                                 rows['#oakLegalActions'].push(action);
                             }
