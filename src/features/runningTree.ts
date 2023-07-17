@@ -212,8 +212,8 @@ class ListNode<
         }
     >;
 
-    private filters: (NamedFilterItem<ED, T> & { applied?: true })[];
-    private sorters: (NamedSorterItem<ED, T> & { applied?: true })[];
+    private filters: (NamedFilterItem<ED, T> & { applied?: boolean })[];
+    private sorters: (NamedSorterItem<ED, T> & { applied?: boolean })[];
     private pagination: Pagination;
     private ids: string[] | undefined;
     private aggr?: (Partial<ED[T]['Schema']> | undefined)[];
@@ -411,7 +411,9 @@ class ListNode<
     }
 
     setNamedFilters(filters: NamedFilterItem<ED, T>[], refresh?: boolean) {
-        this.filters = filters;
+        this.filters = filters.map(
+            (ele) => Object.assign({}, ele, { applied: false })
+        );
         if (refresh) {
             this.refresh(1, true);
         } else {
@@ -425,9 +427,9 @@ class ListNode<
             (ele) => filter['#name'] && ele['#name'] === filter['#name']
         );
         if (fIndex >= 0) {
-            this.filters.splice(fIndex, 1, filter);
+            this.filters.splice(fIndex, 1, Object.assign({}, filter, { applied: false }));
         } else {
-            this.filters.push(filter);
+            this.filters.push(Object.assign({}, filter, { applied: false }));
         }
         if (refresh) {
             this.refresh(1, true);
@@ -474,7 +476,9 @@ class ListNode<
     }
 
     setNamedSorters(sorters: NamedSorterItem<ED, T>[], refresh?: boolean) {
-        this.sorters = sorters;
+        this.sorters = sorters.map(
+            ele => Object.assign({}, ele, { applied: false })
+        );
         if (refresh) {
             this.refresh(1, true);
         } else {
@@ -488,9 +492,9 @@ class ListNode<
             (ele) => sorter['#name'] && ele['#name'] === sorter['#name']
         );
         if (fIndex >= 0) {
-            this.sorters.splice(fIndex, 1, sorter);
+            this.sorters.splice(fIndex, 1, Object.assign({}, sorter, { applied: false }));
         } else {
-            this.sorters.push(sorter);
+            this.sorters.push(Object.assign({}, sorter, { applied: false }));
         }
         if (refresh) {
             this.refresh(1, true);
@@ -805,7 +809,7 @@ class ListNode<
     private constructFilters(context?: FrontCxt, withParent?: boolean, ignoreUnapplied?: true) {
         const { filters: ownFilters } = this;
         const filters = ownFilters.filter(
-            ele => !ignoreUnapplied || ele.applied
+            ele => !ignoreUnapplied || ele.applied === true || ele.applied === undefined            // 如果是undefined，说明不可以移除（构造时就存在），也得返回
         ).map((ele) => {
             const { filter } = ele;
             if (typeof filter === 'function') {
