@@ -4,7 +4,7 @@ import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
 import { merge, pull } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
-import { OakRowUnexistedException, OakRowInconsistencyException, OakException } from 'oak-domain/lib/types/Exception';
+import { OakRowUnexistedException, OakRowInconsistencyException, OakException, OakUserException } from 'oak-domain/lib/types/Exception';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import assert from 'assert';
@@ -197,6 +197,9 @@ export class Cache<
             return true;
         } catch (err) {
             context.rollback();
+            if (!(err instanceof OakUserException)) {
+                throw err;
+            }
             return err as Error;
         }
     }
@@ -216,6 +219,9 @@ export class Cache<
         }
         catch (err) {
             context.rollback();
+            if (!(err instanceof OakUserException)) {
+                throw err;
+            }
             return false;
         }
     }
