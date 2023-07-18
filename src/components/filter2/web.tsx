@@ -124,7 +124,7 @@ export default function Render<ED2 extends ED>(
             const options2 = options.map((ele) => ({
                 label:
                     typeof ele.value === 'boolean'
-                        ? t(`${ele.value ? 'filter2:tip.yes' : 'tip.no'}`)
+                        ? t(`${ele.value ? 'tip.yes' : 'tip.no'}`)
                         : t(
                               `${entityI18n as string}:v.${attrI18n}.${
                                   ele.value

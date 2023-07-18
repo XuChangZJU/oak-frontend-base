@@ -28,6 +28,7 @@ import {
 } from 'oak-domain/lib/types/schema/DataTypes';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import dayjs from 'dayjs';
+import { ThousandCont } from 'oak-domain/lib/utils/money';
 
 const tableWidthMap: Record<number, number> = {
     1: 120,
@@ -196,6 +197,9 @@ export function getValue<ED extends EntityDict & BaseEntityDict>(
     }
     if (attrType === 'boolean' && typeof value === 'boolean') {
         value = t(`common:${String(value)}`);
+    }
+    if (attrType === 'money' && typeof value === 'number') {
+        value = ThousandCont(value);
     }
     return value;
 }
