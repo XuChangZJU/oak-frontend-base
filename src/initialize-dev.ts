@@ -10,15 +10,13 @@ import {
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { createDynamicCheckers } from 'oak-domain/lib/checkers/index';
-import { createDynamicTriggers } from 'oak-domain/lib/triggers/index';
+import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
 
 import { createDebugStore, clearMaterializedData } from './debugStore';
 
 import { initialize as initBasicFeatures } from './features';
 import { intersection } from 'oak-domain/lib/utils/lodash';
 import commonAspectDict from 'oak-common-aspect';
-import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
 import { CommonAspectDict, registerPorts } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
@@ -49,7 +47,7 @@ export function initialize<
         frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
         backendContextBuilder: (contextStr?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>,
         aspectDict: AD,
-        triggers: Array<Trigger<ED, keyof ED, Cxt>>,
+        triggers: Array<Trigger<ED, keyof ED, Cxt | FrontCxt>>,
         checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
         watchers: Array<Watcher<ED, keyof ED, Cxt>>,
         timers: Array<Timer<ED, Cxt>>,
@@ -68,14 +66,16 @@ export function initialize<
         );
     }
     const aspectDict2 = Object.assign({}, aspectDict, commonAspectDict);
-    const checkers2 = (checkers).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema));
-    const triggers2 = createDynamicTriggers<ED, Cxt>(storageSchema).concat(triggers);
+    const { checkers: intCheckers, triggers: intTriggers, watchers: intWatchers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict);
+    const checkers2 = checkers.concat(intCheckers);
+    const triggers2 = triggers.concat(intTriggers);
+    const watchers2 = watchers.concat(intWatchers);
     const debugStore = createDebugStore(
         storageSchema,
         backendContextBuilder,
         triggers2,
         checkers2,
-        watchers,
+        watchers2,
         timers,
         startRoutines,
         initialData,
@@ -125,15 +125,7 @@ export function initialize<
         selectFreeEntities,
         colorDict);
 
-    checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
-    if (actionDict) {
-        const { checkers: adCheckers } = analyzeActionDefDict(
-            storageSchema,
-            actionDict
-        );
-        adCheckers.forEach((checker) => cacheStore.registerChecker(checker));
-    }
-    cacheStore.registerGeneralChecker('relation', (entity, operation, context) => features.relationAuth.checkRelation(entity, operation, context));
+    checkers2.forEach((checker) => cacheStore.registerChecker(checker));
 
     registerPorts(importations || [], exportations || []);
 

@@ -35,7 +35,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string) {
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store);
     const location = new Location();
-    const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, cache, 
+    const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, cache, 
         actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities);
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, relationAuth);
     const locales = new Locales(aspectWrapper, makeBridgeUrlFn);
@@ -47,7 +47,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
     const navigator = new Navigator();
     const port = new Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper);
     const style = new Style<ED>(colorDict);
-    const contextMenuFactory = new ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, actionCascadePathGraph);
+    const contextMenuFactory = new ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, relationAuth, actionCascadePathGraph);
     return {
         cache,
         location,

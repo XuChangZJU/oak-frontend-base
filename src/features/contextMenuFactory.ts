@@ -9,6 +9,8 @@ import { combineFilters } from 'oak-domain/lib/store/filter';
 import { Cache } from './cache';
 import { Feature } from '../types/Feature';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
+import { RelationAuth } from './relationAuth';
+import { generateNewId } from 'oak-domain/lib/utils/uuid';
 
 interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     name: string;
@@ -30,6 +32,7 @@ export class ContextMenuFactory<
     cache: Cache<ED, Cxt, FrontCxt, AD>;
     menuWrappers?: IMenuWrapper<ED, keyof ED>[];
     cascadePathGraph: AuthCascadePath<ED>[];
+    relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>;
 
     private makeMenuWrappers(menus: IMenu<ED, keyof ED>[]): IMenuWrapper<ED, keyof ED>[] {
         const destEntities = uniq(
@@ -112,10 +115,11 @@ export class ContextMenuFactory<
         );
     }
 
-    constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, cascadePathGraph: AuthCascadePath<ED>[]) {
+    constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, cascadePathGraph: AuthCascadePath<ED>[]) {
         super();
         this.cache = cache;
         this.cascadePathGraph = cascadePathGraph;
+        this.relationAuth = relationAuth;
     }
 
     setMenus(menus: IMenu<ED, keyof ED>[]) {
@@ -132,7 +136,14 @@ export class ContextMenuFactory<
                 if (filters.length > 0) {
                     // 这里应该是or关系，paths表达的路径中只要有一条满足就可能满足
                     const allows = filters.map(
-                        (filter) => this.cache.checkOperation(destEntity, action, undefined, filter, ['logical', 'relation', 'logicalRelation', 'row'])
+                        (filter) => {
+                            // relationAuth和其它的checker现在分开判断
+                            return this.relationAuth.checkRelation(destEntity, {
+                                action,
+                                data: undefined as any,
+                                filter,
+                            } as Omit<ED[keyof ED]['Operation'], 'id'>) && this.cache.checkOperation(destEntity, action, undefined, filter, ['logical', 'relation', 'logicalRelation', 'row']);
+                        }
                     );
                     if (allows.indexOf(true) >= 0) {
                         return true;

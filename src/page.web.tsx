@@ -388,6 +388,22 @@ abstract class OakComponentBase<
         filter?: ED[T]['Update']['filter'],
         checkerTypes?: CheckerType[]
     ) {
+        if (checkerTypes?.includes('relation')) {
+            return this.features.relationAuth.checkRelation(
+                entity,
+                {
+                    action,
+                    data,
+                    filter,
+                } as Omit<ED[keyof ED]['Operation'], 'id'>
+            ) && this.features.cache.checkOperation(
+                entity,
+                action,
+                data,
+                filter,
+                checkerTypes
+            )
+        }
         return this.features.cache.checkOperation(
             entity,
             action,

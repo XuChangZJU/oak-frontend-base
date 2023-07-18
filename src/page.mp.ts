@@ -320,6 +320,22 @@ const oakBehavior = Behavior<
         },
 
         checkOperation(entity, action, data, filter, checkerTypes) {
+            if (checkerTypes?.includes('relation')) {
+                return this.features.relationAuth.checkRelation(
+                    entity,
+                    {
+                        action,
+                        data,
+                        filter,
+                    } as Omit<EDD[keyof EDD]['Operation'], 'id'>
+                ) && this.features.cache.checkOperation(
+                    entity,
+                    action,
+                    data,
+                    filter,
+                    checkerTypes
+                )
+            }
             return this.features.cache.checkOperation(
                 entity,
                 action,

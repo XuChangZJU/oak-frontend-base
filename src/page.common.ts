@@ -22,6 +22,7 @@ import { MessageProps } from './types/Message';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { addFilterSegment, combineFilters } from 'oak-domain/lib/store/filter';
 import { MODI_NEXT_PATH_SUFFIX } from './features/runningTree';
+import { generateNewId } from 'oak-domain/lib/utils/uuid';
 
 export async function onPathSet<
     ED extends EntityDict & BaseEntityDict,
@@ -174,7 +175,7 @@ function checkActionsAndCascadeEntities<
                 const filter = this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath!);
                 if (action === 'create' || typeof action === 'object' && action.action === 'create') {
                     // 创建对象的判定不落在具体行上，但要考虑list上外键相关属性的限制
-                    const data = typeof action === 'object' && cloneDeep(action.data);
+                    const data = typeof action === 'object' && Object.assign(cloneDeep(action.data) || {}, { id: generateNewId() });
                     if (this.checkOperation(this.state.oakEntity, 'create', data as any, filter, checkTypes)) {
                         legalActions.push(action);
                     }
@@ -289,8 +290,9 @@ function checkActionsAndCascadeEntities<
                             rows.forEach(
                                 (row) => {
                                     const intrinsticData = rel[1] ? {
+                                        id: generateNewId(),
                                         [rel[1]]: row.id,
-                                    } : { entity: this.state.oakEntity, entityId: row.id };
+                                    } : { id: generateNewId(), entity: this.state.oakEntity, entityId: row.id };
                                     if (typeof action === 'object') {
                                         Object.assign(intrinsticData, action.data);
                                     }
@@ -338,8 +340,9 @@ function checkActionsAndCascadeEntities<
                     else {
                         if (action === 'create' || typeof action === 'object' && action.action === 'create') {
                             const intrinsticData = rel[1] ? {
+                                id: generateNewId(),
                                 [rel[1]]: rows.id,
-                            } : { entity: this.state.oakEntity, entityId: rows.id };
+                            } : { id: generateNewId(), entity: this.state.oakEntity, entityId: rows.id };
                             if (typeof action === 'object') {
                                 Object.assign(intrinsticData, action.data);
                             }

@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, AuthCascadePath, AuthDeduceRelationMap } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, AuthCascadePath, AuthDeduceRelationMap, OakUserException } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -17,6 +17,7 @@ export class RelationAuth<
     AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>
     > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
+    private contextBuilder: () => FrontCxt;
     private aspectWrapper: AspectWrapper<ED, Cxt, AD>;
     private actionCascadePathGraph: AuthCascadePath<ED>[];
     private actionCascadePathMap: Record<string, AuthCascadePath<ED>[]>;
@@ -35,6 +36,7 @@ export class RelationAuth<
 
     constructor(
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
+        contextBuilder: () => FrontCxt,
         cache: Cache<ED, Cxt, FrontCxt, AD>,
         actionCascadePathGraph: AuthCascadePath<ED>[],
         relationCascadePathGraph: AuthCascadePath<ED>[],
@@ -42,7 +44,8 @@ export class RelationAuth<
         selectFreeEntities: (keyof ED)[],
     ) {
         super();
-        this.aspectWrapper = aspectWrapper,
+        this.aspectWrapper = aspectWrapper;
+        this.contextBuilder = contextBuilder;
         this.cache = cache;
         this.actionCascadePathGraph = actionCascadePathGraph;
         this.relationCascadePathGraph = relationCascadePathGraph;
@@ -223,8 +226,21 @@ export class RelationAuth<
         return relationAuths;
     }
 
-    checkRelation<T extends keyof ED>(entity: T, operation: ED[T]['Operation'] | ED[T]['Selection'], context: FrontCxt) {
-        this.baseRelationAuth.checkRelationSync(entity, operation, context);
+    checkRelation<T extends keyof ED>(entity: T, operation: Omit< ED[T]['Operation'] | ED[T]['Selection'], 'id'>) {
+        const context = this.contextBuilder();
+        context.begin();
+        try {
+            this.baseRelationAuth.checkRelationSync(entity, operation, context);
+        }
+        catch (err) {
+            context.rollback();
+            if (!(err instanceof OakUserException)) {
+                throw err;
+            }
+            return false;
+        }
+        context.rollback();
+        return true;
     }
 
     async getRelationIdByName(entity: keyof ED, name: string, entityId?: string) {

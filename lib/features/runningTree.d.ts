@@ -50,7 +50,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     getParent(): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD> | undefined;
     protected getProjection(context?: FrontCxt): ED[T]['Selection']['data'] | undefined;
     setProjection(projection: ED[T]['Selection']['data']): void;
-    protected judgeRelation(attr: string): string | 0 | 1 | 2 | string[];
+    protected judgeRelation(attr: string): string | 0 | 1 | string[] | 2;
     protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }

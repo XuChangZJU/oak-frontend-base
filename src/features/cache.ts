@@ -8,6 +8,7 @@ import { OakRowUnexistedException, OakRowInconsistencyException, OakException, O
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import assert from 'assert';
+import { generateNewId } from 'oak-domain/lib/utils/uuid';
 
 export class Cache<
     ED extends EntityDict & BaseEntityDict,
@@ -210,7 +211,7 @@ export class Cache<
         const operation = {
             action,
             filter,
-            data,
+            data
         } as ED[T]['Update'];
         try {
             this.cacheStore!.check(entity, operation, context, checkerTypes);

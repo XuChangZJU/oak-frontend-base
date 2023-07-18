@@ -4,12 +4,13 @@ import {
     Checker,
     StorageSchema,
     Connector,
+    Trigger,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 
 import { initialize as initBasicFeatures } from './features';
-import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
+import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
 import { createDynamicCheckers } from 'oak-domain/lib/checkers';
@@ -43,7 +44,10 @@ export function initialize<
     option: InitializeOptions<ED>
 ) {
     const {  actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, actionDict, selectFreeEntities, colorDict } = option;
-    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema));
+
+
+    const { checkers: intCheckers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict);
+    const checkers2 = checkers.concat(intCheckers);
 
     const cacheStore = new CacheStore<ED, FrontCxt>(
         storageSchema,
@@ -74,15 +78,7 @@ export function initialize<
         (url, headers) => connector.makeBridgeUrl(url, headers)
     );
 
-    checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
-    if (actionDict) {
-        const { checkers: adCheckers } = analyzeActionDefDict(
-            storageSchema,
-            actionDict
-        );
-        adCheckers.forEach((checker) => cacheStore.registerChecker(checker));
-    }
-    cacheStore.registerGeneralChecker('relation', (entity, operation, context) => features.relationAuth.checkRelation(entity, operation, context));
+    checkers2.forEach((checker) => cacheStore.registerChecker(checker));
 
     return {
         features,

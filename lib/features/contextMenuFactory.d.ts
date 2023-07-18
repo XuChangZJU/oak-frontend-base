@@ -5,6 +5,7 @@ import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { Cache } from './cache';
 import { Feature } from '../types/Feature';
+import { RelationAuth } from './relationAuth';
 interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     name: string;
     entity: T;
@@ -18,8 +19,9 @@ export declare class ContextMenuFactory<ED extends EntityDict & BaseEntityDict, 
     cache: Cache<ED, Cxt, FrontCxt, AD>;
     menuWrappers?: IMenuWrapper<ED, keyof ED>[];
     cascadePathGraph: AuthCascadePath<ED>[];
+    relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>;
     private makeMenuWrappers;
-    constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, cascadePathGraph: AuthCascadePath<ED>[]);
+    constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, cascadePathGraph: AuthCascadePath<ED>[]);
     setMenus(menus: IMenu<ED, keyof ED>[]): void;
     getMenusByContext<OMenu extends IMenu<ED, keyof ED>>(entity: keyof ED, entityId: string): OMenu[];
 }

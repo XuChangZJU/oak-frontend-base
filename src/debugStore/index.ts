@@ -4,7 +4,7 @@ import { DebugStore } from './DebugStore';
 import {
     Checker, Trigger, StorageSchema, EntityDict, ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, Routine, Timer, AuthCascadePath, AuthDeduceRelationMap} from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
+
 import { assert } from 'oak-domain/lib/utils/assert';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { generateNewIdAsync } from 'oak-domain/lib/utils/uuid';
@@ -268,13 +268,6 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
     );
 
     assert(actionDict);
-    const { triggers: adTriggers, checkers: adCheckers, watchers: adWatchers } = analyzeActionDefDict(storageSchema, actionDict!);
-    adTriggers.forEach(
-        ele => store.registerTrigger(ele)
-    );
-    adCheckers.forEach(
-        ele => store.registerChecker(ele)
-    );
 
     // 如果没有物化数据则使用initialData初始化debugStore
     const data = getMaterializedData();
@@ -299,7 +292,7 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
     }, 10000);
 
     // 启动watcher
-    initializeWatchers(store, contextBuilder, watchers.concat(adWatchers));
+    initializeWatchers(store, contextBuilder, watchers);
     // 启动timer
     if (timers) {
         initializeTimers(store, contextBuilder, timers);
