@@ -41,6 +41,7 @@ export class CacheStore<
             this.triggerExecutor.check(entity, operation, context as Cxt, 'before', option.checkerTypes);
         }
         if (operation.data) {
+            // 有时前台需要测试某个action行为，data会传undefined
             const result = super.cascadeUpdate(entity, operation, context, option);
     
             if (!option.blockTrigger) {

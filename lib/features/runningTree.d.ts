@@ -120,7 +120,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     }> | undefined;
     getProjection(context?: FrontCxt): ED[T]["Selection"]["data"] | undefined;
     private constructFilters;
-    constructSelection(withParent?: true, context?: FrontCxt, ignoreUnapplied?: true): {
+    constructSelection(withParent?: true, ignoreNewParent?: boolean, context?: FrontCxt, ignoreUnapplied?: true): {
         data: ED[T]["Selection"]["data"];
         filter: ED[T]["Selection"]["filter"] | undefined;
         sorter: ED[T]["Selection"]["sorter"];
@@ -175,7 +175,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
      * @param disableOperation
      * @returns
      */
-    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, context?: FrontCxt): ED[T2]['Selection']['filter'] | undefined;
+    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, context?: FrontCxt, ignoreNewParent?: boolean): ED[T2]['Selection']['filter'] | undefined;
 }
 declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private dirty;
