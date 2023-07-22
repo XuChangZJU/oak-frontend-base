@@ -1,13 +1,13 @@
 import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { Row, Radio, Col, Tabs, Checkbox, Table } from 'antd';
+import { Row, Radio, Col, Tabs, Checkbox, Table, Space, Button } from 'antd';
 import { Typography } from 'antd';
 const { Title, Text } = Typography;
 import ActionAuth from '../actionAuth';
 import RelationAuth from '../relationAuth';
 import { WebComponentProps } from '../../../types/Page';
 import { useState } from 'react';
-
+import ActionAuthSingle from '../../../components/relation/single';
 
 type ED = EntityDict & BaseEntityDict;
 
@@ -146,6 +146,16 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
             }
         );
     }
+    items.push({
+        label: '特定授权',
+        key: 'special',
+        children: (
+            <ActionAuthSingle
+                oakPath={oakFullpath ? `${oakFullpath}.actionAuths:2` : undefined}
+                entity={entity}
+            />
+        )
+    })
 
     const ActionSelector = actions && (
         <Row style={{ width: '100%' }} justify="center" align="middle">
