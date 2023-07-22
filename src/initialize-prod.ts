@@ -65,8 +65,8 @@ export function initialize<
         },
     };
 
-    const features = initBasicFeatures(
-        wrapper,
+    const features = initBasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>(
+        wrapper, 
         storageSchema, 
         () => frontendContextBuilder()(cacheStore), 
         cacheStore, 

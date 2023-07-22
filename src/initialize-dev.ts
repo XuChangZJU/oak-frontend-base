@@ -47,7 +47,7 @@ export function initialize<
         frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
         backendContextBuilder: (contextStr?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>,
         aspectDict: AD,
-        triggers: Array<Trigger<ED, keyof ED, Cxt | FrontCxt>>,
+        triggers: Array<Trigger<ED, keyof ED, Cxt>>,
         checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
         watchers: Array<Watcher<ED, keyof ED, Cxt>>,
         timers: Array<Timer<ED, Cxt>>,
@@ -114,7 +114,7 @@ export function initialize<
         },
     };
 
-    const features = initBasicFeatures(
+    const features = initBasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>(
         wrapper,
         storageSchema,
         () => frontendContextBuilder()(cacheStore),

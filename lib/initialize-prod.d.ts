@@ -20,5 +20,5 @@ import { InitializeOptions } from './types/Initialize';
  * @returns
  */
 export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(storageSchema: StorageSchema<ED>, frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt, connector: Connector<ED, Cxt, FrontCxt>, checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>, option: InitializeOptions<ED>): {
-    features: import("./features").BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
+    features: import("./features").BasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
 };
