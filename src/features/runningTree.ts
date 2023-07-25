@@ -965,7 +965,7 @@ class ListNode<
 
     // 查看这个list上所有数据必须遵守的限制
     getIntrinsticFilters() {
-        const filters = this.constructFilters(undefined, undefined, true);
+        const filters = this.constructFilters(undefined, true, true);
         return combineFilters(filters || []);
     }
 }
@@ -1398,7 +1398,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, context?: FrontCxt, ignoreNewParent?: boolean): ED[T2]['Selection']['filter'] | undefined {
         const value = this.getFreshValue(context);
 
-        if (value?.$$createAt$$ === 1 && ignoreNewParent) {
+        if ((!value || value.$$createAt$$ === 1) && ignoreNewParent) {
             return;            
         }
         for (const key in this.children) {
