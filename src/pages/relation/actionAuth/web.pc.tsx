@@ -1,12 +1,19 @@
-import { Table, Checkbox, Button, Row, Radio, Col } from 'antd';
-import { Typography } from 'antd';
+import { Table, Checkbox, Button, Row, Radio, Col, Typography, Space, Modal, Badge, Tag } from 'antd';
 const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { difference, intersection } from 'oak-domain/lib/utils/lodash';
+import { useState, useEffect } from 'react';
+import ActionAuthListSingle from '../../../components/relation/single';
 
 type ED = EntityDict & BaseEntityDict;
+
+type CascadeEntityActions = Array<{
+    path: AuthCascadePath<ED>;
+    relations: ED['relation']['Schema'][];
+    actionAuths?: ED['actionAuth']['OpSchema'][];
+}>;
 
 export default function render(
     props: WebComponentProps<
@@ -20,6 +27,7 @@ export default function render(
                 actionAuths?: ED['actionAuth']['OpSchema'][];
             }>;
             actions: string[];
+            entity: keyof EntityDict;
         },
         {
             onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) => void;
@@ -27,11 +35,11 @@ export default function render(
         }
     >
 ) {
-    const { cascadeEntityActions, oakDirty, actions } = props.data;
+    const { cascadeEntityActions, oakDirty, actions, entity } = props.data;
     const { onChange, t, clean, confirm } = props.methods;
-
     return (
-        <>
+        <Space direction="vertical" style={{ width: '100%' }}>
+            <ActionAuthListSingle entity={entity} />
             <Table
                 columns={[
                     {
@@ -123,6 +131,6 @@ export default function render(
                     {t("reset")}
                 </Button>
             </Row>
-        </>
+        </Space>
     );
 }

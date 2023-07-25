@@ -10,6 +10,7 @@ export default function render(props: WebComponentProps<ED, 'actionAuth', true, 
         actionAuths?: ED['actionAuth']['OpSchema'][];
     }>;
     actions: string[];
+    entity: keyof EntityDict;
 }, {
     onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) => void;
     confirm: () => void;

@@ -1,6 +1,9 @@
 import assert from "assert";
 import { uniq, pull, union } from 'oak-domain/lib/utils/lodash';
 import { ED } from "../../../types/AbstractComponent";
+import { groupBy } from "oak-domain/lib/utils/lodash";
+import { AuthCascadePath } from "oak-domain/lib/types";
+import { RowWithActions } from "../../../types/Page";
 
 export default OakComponent({
     entity: 'actionAuth',
@@ -80,6 +83,40 @@ export default OakComponent({
                 };
             }
         );
+        // path里含有$
+        const $pathActionAuths = data.filter((ele) => ele.path?.includes('$'));
+        // groupBy
+        // 分解groupBy 的key
+        const $actionAuthsObject = groupBy($pathActionAuths, 'path');
+        // 含有反向指针的路径，其所对应实体的请求放在了onChange方法
+        Object.keys($actionAuthsObject).forEach((ele) => {
+            const entities = ele.split('.');
+            const se = entities[entities.length - 1].split('$')[0];
+            const p = ele;
+            const de = entity!;
+            // 初始时 relation先用{name: relationName}表示 
+            const relations = this.features.relationAuth.getRelations(se!)?.map((ele) => ({name: ele})) as any;
+            const relations2 = this.features.cache.get('relation', {
+                data: {
+                    id: 1,
+                    entity: 1,
+                    entityId: 1,
+                    name: 1,
+                    display: 1,
+                },
+                filter: {
+                    entity: se as string,
+                    entityId: {
+                        $exists: false,
+                    },
+                },
+            });
+            cascadeEntityActions.push({
+                path: [de, p, se, true],
+                relations: relations2 || relations,
+                actionAuths: $actionAuthsObject[ele],
+            })
+        })
         return {
             cascadeEntityActions,
         };
@@ -108,6 +145,9 @@ export default OakComponent({
             });
         }
     },
+    data: {
+        relations2: [] as Partial<ED['relation']['Schema']>[],
+    },
     listeners: {
         actions(prev, next) {
             const actionAuths = this.features.runningTree.getFreshValue(this.state.oakFullpath);
@@ -124,12 +164,39 @@ export default OakComponent({
                 );
             }
             this.reRender();
-        }        
+        },
     },
     methods: {
-        onChange(checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) {
+        async onChange(checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema'], relationName?: string) {
             const { actions } = this.props;
             assert(actions && actions.length > 0);
+            if (!relationId) {
+                const se = path.split('$')[0];
+                const { data: relations } = await this.features.cache.refresh('relation', {
+                    data: {
+                        id: 1,
+                        entity: 1,
+                        entityId: 1,
+                        name: 1,
+                        display: 1,
+                    },
+                    filter: {
+                        entity: se,
+                        name: relationName,
+                        entityId: {
+                            $exists: false,
+                        },
+                    },
+                });
+                if (!relations || !relations.length) {
+                    this.setMessage({
+                        content: '数据缺失！',
+                        type: 'error',
+                    })
+                    return;
+                }
+                relationId = relations[0].id!;
+            }
             if (actionAuth) {
                 const { deActions } = actionAuth;
                 if (checked) {

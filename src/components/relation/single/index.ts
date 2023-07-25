@@ -5,34 +5,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 type ED = EntityDict & BaseEntityDict;
 
 export default OakComponent({
-    entity: 'actionAuth',
-    projection: {
-        id: 1,
-        path: 1,
-        relationId: 1,
-        relation: {
-            id: 1,
-            name: 1,
-        },
-        destEntity: 1,
-        deActions: 1,
-
-    },
-    isList: true,
-    filters: [
-        {
-            filter(){
-                const { entity } = this.props;
-                return {
-                    path: {
-                        $includes: '$',
-                        entity,
-                    }
-                }
-            },
-            '#name': 'path',
-        }
-    ],
+    isList: false,
     properties: {
         entity: '' as keyof ED,
     },
@@ -43,9 +16,7 @@ export default OakComponent({
         if (operations && operations.length) {
             showExecuteTip = true;
         }
-        console.log(operations)
         return {
-            rows,
             showExecuteTip,
         };
     },

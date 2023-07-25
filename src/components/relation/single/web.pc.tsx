@@ -53,7 +53,7 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                     </Button>
                 )}
                 onCancel={() => setOpen(false)}
-                width={1000}
+                width={900}
             >
                 <Space direction="vertical" style={{ width: '100%', marginTop: 16 }} size={16}>
                     <Space direction="vertical">
@@ -129,7 +129,8 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                                         if (checkExecute()) {
                                             return;
                                         }
-                                        breadcrumbItems.push(`${ele}$${entity}`);
+                                        const parentEntity = breadcrumbItems[breadcrumbItems.length - 1] || entity;
+                                        breadcrumbItems.push(`${ele}$${parentEntity}`);
                                         setBreadcrumbItems(breadcrumbItems)
                                         getNodes(ele)
                                     }}
@@ -147,49 +148,6 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                     />
                 </Space>
             </Modal>
-            <Table
-                rowKey={"relationId"}
-                dataSource={rows}
-                columns={[
-                    {
-                        width: 400,
-                        dataIndex: 'path',
-                        title: '路径',
-                    },
-                    {
-                        dataIndex: 'relation',
-                        title: '角色',
-                        render: (value, row) => row.relation?.name, 
-                    },
-                    {
-                        dataIndex: 'deActions',
-                        title: '权限',
-                        render: (value: string[]) => {
-                            return value.map((ele) => (
-                                <Tag>{ele}</Tag>
-                            ))
-                        }
-                    },
-                    {
-                        title: '操作',
-                        render: (value, row, index) => {
-                            return (
-                                <a
-                                    onClick={() => {
-                                        const path = row?.path as string;
-                                        const items = path.split('.');
-                                        setBreadcrumbItems(items);
-                                        setOpen(true);
-                                    }}
-                                >
-                                    编辑
-                                </a>
-                            )
-                        }
-                    }
-                ]}
-                pagination={false}
-            ></Table>
         </Space>
     );
 }
