@@ -24,7 +24,7 @@ export default function render(
             cascadeEntityActions: Array<{
                 path: AuthCascadePath<ED>;
                 relations: ED['relation']['Schema'][];
-                actionAuths?: ED['actionAuth']['OpSchema'][];
+                actionAuths?: ED['actionAuth']['Schema'][];
             }>;
             actions: string[];
             entity: keyof EntityDict;
@@ -79,7 +79,9 @@ export default function render(
                                                 let checked = false, indeterminate = false;
                                                 if (actionAuths && actions.length > 0) {
                                                     for (const aa of actionAuths) {
-                                                        if (!aa.$$deleteAt$$ && aa.relationId === r.id) {
+                                                        // 如果path中存在多对一的情况要使用name进行判断
+                                                        if (!aa.$$deleteAt$$ && (aa.relationId === r.id
+                                                            || (record.path.includes('$') && aa.relation.name === r.name))) {
                                                             const { deActions } = aa;
                                                             checked = difference(actions, deActions).length === 0;
                                                             indeterminate = !checked && intersection(actions, deActions).length > 0;
@@ -95,7 +97,7 @@ export default function render(
                                                         onChange={({ target }) => {
                                                             const { checked } = target;
                                                             const actionAuth = actionAuths?.find(
-                                                                ele => ele.relationId === r.id
+                                                                ele => ele.relationId === r.id || (record.path.includes('$') && ele.relation.name === r.name)
                                                             );
     
                                                             onChange(checked, r.id, path[1], actionAuth)

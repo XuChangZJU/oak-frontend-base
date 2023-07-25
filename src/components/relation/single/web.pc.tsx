@@ -44,12 +44,12 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
         <Space direction="vertical" style={{width: '100%'}}>
             <Button onClick={() => setOpen(true)}>设置</Button>
              <Modal
-                title={`权限设置(${entity})`}
+                title={`权限设置`}
                 open={open}
                 destroyOnClose={true}
                 footer={(
                     <Button onClick={() => setOpen(false)}>
-                        取消
+                        关闭
                     </Button>
                 )}
                 onCancel={() => setOpen(false)}
@@ -96,48 +96,54 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                             )}
                         </Space>
                     </Space>
-                    <Space direction="vertical">
-                        <Space align="center">
+                    <Space direction="vertical" style={{width: '100%'}}>
+                        <Space direction="vertical" style={{width: '100%'}}>
                             <Text style={{ fontSize: 16 }}>结点</Text>
-                            <Badge color={"var(--oak-color-primary)"} text="外键" style={{color: 'rgba(0, 0, 0, 0.45)'}} />
-                            <Badge color="cyan" text="反指结点" style={{color: 'rgba(0, 0, 0, 0.45)'}} />
-                        </Space>
-                        <Space wrap>
-                            {entityDNode.map((ele) => (
-                                <Tag
-                                    style={{cursor: 'pointer'}}
-                                    color="processing"
-                                    bordered={false}
-                                    onClick={() => {
-                                        if (checkExecute()) {
-                                            return;
-                                        }
-                                        breadcrumbItems.push(ele);
-                                        setBreadcrumbItems(breadcrumbItems)
-                                        getNodes(ele)
-                                    }}
-                                >
-                                    {ele}
-                                </Tag>
-                            ))}
-                            {entitySNode.map((ele) => (
-                                <Tag
-                                    style={{cursor: 'pointer'}}
-                                    color={"cyan"}
-                                    bordered={false}
-                                    onClick={() => {
-                                        if (checkExecute()) {
-                                            return;
-                                        }
-                                        const parentEntity = breadcrumbItems[breadcrumbItems.length - 1] || entity;
-                                        breadcrumbItems.push(`${ele}$${parentEntity}`);
-                                        setBreadcrumbItems(breadcrumbItems)
-                                        getNodes(ele)
-                                    }}
-                                >
-                                    {ele}
-                                </Tag>
-                            ))}
+                            <Space align="start" style={{width: '100%'}}>
+                                <Text>外键</Text>
+                                <Space wrap>
+                                     {entityDNode.map((ele) => (
+                                        <Tag
+                                            style={{cursor: 'pointer'}}
+                                            color="processing"
+                                            bordered={false}
+                                            onClick={() => {
+                                                if (checkExecute()) {
+                                                    return;
+                                                }
+                                                breadcrumbItems.push(ele);
+                                                setBreadcrumbItems(breadcrumbItems)
+                                                getNodes(ele)
+                                            }}
+                                        >
+                                            {ele}
+                                        </Tag>
+                                    ))}
+                                </Space>
+                            </Space>
+                            <Space align="start" style={{ width: '100%' }}>
+                                <Text>反指结点</Text>
+                                <Space wrap>
+                                    {entitySNode.map((ele) => (
+                                        <Tag
+                                            style={{cursor: 'pointer'}}
+                                            color={"cyan"}
+                                            bordered={false}
+                                            onClick={() => {
+                                                if (checkExecute()) {
+                                                    return;
+                                                }
+                                                const parentEntity = breadcrumbItems[breadcrumbItems.length - 1] || entity;
+                                                breadcrumbItems.push(`${ele}$${parentEntity}`);
+                                                setBreadcrumbItems(breadcrumbItems)
+                                                getNodes(ele)
+                                            }}
+                                        >
+                                            {ele}
+                                        </Tag>
+                                    ))}
+                                </Space>
+                            </Space>
                         </Space>
                     </Space>
                     <ActionAuthList
