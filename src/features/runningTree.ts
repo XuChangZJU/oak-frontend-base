@@ -830,7 +830,8 @@ class ListNode<
             }
         }
 
-        return filters;
+        // 返回的filter在上层做check的时候可能被改造掉
+        return cloneDeep(filters);
     }
 
     constructSelection(withParent?: true, ignoreNewParent?: boolean, context?: FrontCxt, ignoreUnapplied?: true) {
