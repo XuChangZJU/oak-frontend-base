@@ -146,16 +146,6 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
             }
         );
     }
-    items.push({
-        label: '特定授权',
-        key: 'special',
-        children: (
-            <ActionAuthSingle
-                oakPath={oakFullpath ? `${oakFullpath}.actionAuths:2` : undefined}
-                entity={entity}
-            />
-        )
-    })
 
     const ActionSelector = actions && (
         <Row style={{ width: '100%' }} justify="center" align="middle">

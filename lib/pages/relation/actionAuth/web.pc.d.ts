@@ -7,9 +7,10 @@ export default function render(props: WebComponentProps<ED, 'actionAuth', true, 
     cascadeEntityActions: Array<{
         path: AuthCascadePath<ED>;
         relations: ED['relation']['Schema'][];
-        actionAuths?: ED['actionAuth']['OpSchema'][];
+        actionAuths?: ED['actionAuth']['Schema'][];
     }>;
     actions: string[];
+    entity: keyof EntityDict;
 }, {
     onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) => void;
     confirm: () => void;

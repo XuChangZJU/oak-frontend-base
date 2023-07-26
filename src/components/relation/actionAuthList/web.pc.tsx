@@ -57,6 +57,7 @@ export default function render(
                 dataSource={datasource}
                 columns={[
                     {
+                        width: 200,
                         dataIndex: 'relation',
                         title: '角色'
                     },
@@ -72,6 +73,11 @@ export default function render(
                             const defaultValue = actionAuth ? actionAuth.deActions : [];
                             return (
                                 <Checkbox.Group
+                                    style={{
+                                        width: '100%',
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                    }}
                                     options={options}
                                     defaultValue={defaultValue}
                                     onChange={(checkedArr) => {

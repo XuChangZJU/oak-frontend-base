@@ -189,6 +189,11 @@ export class RelationAuth<
         return !!schema[entity].relation;
     }
 
+    getRelations(entity: keyof ED) {
+        const schema = this.cache.getSchema();
+        return schema[entity].relation;
+    }
+
     getCascadeActionEntitiesBySource(entity: keyof ED) {
         const paths = this.actionCascadePathGraph.filter(
             ele => ele[2] === entity && ele[3]

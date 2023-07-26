@@ -34,6 +34,7 @@ export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt ex
     getAllEntities(): string[];
     getActions(entity: keyof ED): string[];
     hasRelation(entity: keyof ED): boolean;
+    getRelations(entity: keyof ED): string[] | undefined;
     getCascadeActionEntitiesBySource(entity: keyof ED): {
         path: AuthCascadePath<ED>;
         actions: string[];
