@@ -113,40 +113,6 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
         );
     }
 
-    if (hasDirectRelationAuth) {
-        items.push(
-            {
-                label: 'directRelationAuth',
-                key: 'directRelationAuth',
-                children: (
-                    <Table
-                        columns={[
-                            {
-                                key: '2',
-                                title: t('sourceEntity'),
-                                width: 100,
-                                render: (value, record) => {
-                                    return record[2];
-                                },
-                            },
-                            {
-                                key: '1',
-                                title: t('path'),
-                                width: 200,
-                                render: (value, record) => {
-                                    return record[1];
-                                },
-                            },
-
-                        ]}
-                        dataSource={daas}
-                        pagination={false}
-                    />
-                )
-            }
-        );
-    }
-
     const ActionSelector = actions && (
         <Row style={{ width: '100%' }} justify="center" align="middle">
             <Text strong>{t('action')}:</Text>
