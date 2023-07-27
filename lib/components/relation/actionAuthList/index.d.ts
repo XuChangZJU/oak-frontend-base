@@ -4,5 +4,6 @@ declare const _default: (props: import("../../..").ReactComponentProps<EntityDic
     path: string;
     openTip: boolean;
     entity: string | number;
+    onClose: () => void;
 }>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;

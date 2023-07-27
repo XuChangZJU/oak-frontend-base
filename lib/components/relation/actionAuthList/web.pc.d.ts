@@ -16,5 +16,6 @@ export default function render(props: WebComponentProps<ED, 'actionAuth', true, 
     path: string;
     entity: keyof ED;
     openTip: boolean;
+    onClose: () => void;
 }, {}>): JSX.Element;
 export {};

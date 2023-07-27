@@ -10,14 +10,7 @@ export default OakComponent({
         entity: '' as keyof ED,
     },
     formData({ data: rows }) {
-        // 查看path为actionAuthList-cpn 是否有未提交的操作，如果有提示先提交
-        const operations = this.features.runningTree.getOperations('$actionAuthList-cpn');
-        let showExecuteTip = false;
-        if (operations && operations.length) {
-            showExecuteTip = true;
-        }
         return {
-            showExecuteTip,
         };
     },
     data: {
@@ -36,7 +29,7 @@ export default OakComponent({
             this.setState({
                 links,
             }, () => {
-                this.getNodes(entity);
+                this.getNodes(entity!);
             })
         }
     },
@@ -51,6 +44,19 @@ export default OakComponent({
                 entityDNode,
                 entitySNode,
             })
+        },
+        // 检查在当前路径下，是否有授权操作，如果有需要先保存
+        checkSelectRelation() {
+            const operations = this.features.runningTree.getOperations('$actionAuthList-cpn');
+            let showExecuteTip = false;
+            if (operations && operations.length) {
+                showExecuteTip = true;
+                this.setMessage({
+                    content: '请先保存当前授权',
+                    type: 'warning',
+                })
+            }
+            return showExecuteTip
         }
     }
 });

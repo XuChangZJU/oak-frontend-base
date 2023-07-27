@@ -95,7 +95,7 @@ export class RelationAuth<
         const nodeOutSet: Record<string, string[]> = {};
         const nodeInSet: Record<string, string[]> = {};
 
-        const ExcludeEntities = ['modi', 'modiEntity', 'oper', 'operEntity', 'relation', 'relationAuth', 'actionAuth', 'userRelation', 'user'];
+        const ExcludeEntities = ['modi', 'modiEntity', 'oper', 'operEntity', 'relation', 'relationAuth', 'actionAuth', 'userRelation'];
         for (const entity in schema) {
             if (ExcludeEntities.includes(entity)) {
                 continue;

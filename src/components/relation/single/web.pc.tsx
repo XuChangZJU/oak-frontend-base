@@ -15,31 +15,16 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
     entity: keyof ED;
     entityDNode: string[];
     entitySNode: string[];
-    showExecuteTip: boolean;
 }, {
     getNodes: (entity: keyof ED) => void;
+    checkSelectRelation: () => boolean;
 }>) {
     const { methods, data } = props;
-    const { entity, entityDNode, entitySNode, oakFullpath, showExecuteTip, rows } = data;
-    const { getNodes } = methods;
+    const { entity, entityDNode, entitySNode, oakFullpath, rows } = data;
+    const { getNodes, checkSelectRelation } = methods;
     const [open, setOpen] = useState(false);
     const [openTip, setOpenTip] = useState(false);
     const [breadcrumbItems, setBreadcrumbItems] = useState<string[]>([])
-    useEffect(() => {
-        if (!showExecuteTip) {
-            setOpenTip(false);
-        }
-    }, [showExecuteTip]);
-    const checkExecute = () => {
-        if (showExecuteTip) {
-            methods.setMessage({
-                content: '有未保存的权限设置，请先保存',
-                type: 'warning',
-            })
-            setOpenTip(true);
-            return true;
-        }
-    }
     return (
         <Space direction="vertical" style={{width: '100%'}}>
             <Button onClick={() => setOpen(true)}>设置</Button>
@@ -47,11 +32,7 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                 title={`权限设置`}
                 open={open}
                 destroyOnClose={true}
-                footer={(
-                    <Button onClick={() => setOpen(false)}>
-                        关闭
-                    </Button>
-                )}
+                footer={null}
                 onCancel={() => setOpen(false)}
                 width={900}
             >
@@ -66,7 +47,7 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                                             title: (
                                                 <a
                                                     onClick={() => {
-                                                        if (checkExecute()) {
+                                                        if (checkSelectRelation()) {
                                                             return;
                                                         }
                                                         const newItems = breadcrumbItems.slice(0, index + 1)
@@ -99,58 +80,68 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                     <Space direction="vertical" style={{width: '100%'}}>
                         <Space direction="vertical" style={{width: '100%'}}>
                             <Text style={{ fontSize: 16 }}>结点</Text>
-                            <Space align="start" style={{width: '100%'}}>
-                                <Text>外键</Text>
-                                <Space wrap>
-                                     {entityDNode.map((ele) => (
-                                        <Tag
-                                            style={{cursor: 'pointer'}}
-                                            color="processing"
-                                            bordered={false}
-                                            onClick={() => {
-                                                if (checkExecute()) {
-                                                    return;
-                                                }
-                                                breadcrumbItems.push(ele);
-                                                setBreadcrumbItems(breadcrumbItems)
-                                                getNodes(ele)
-                                            }}
-                                        >
-                                            {ele}
-                                        </Tag>
-                                    ))}
-                                </Space>
-                            </Space>
-                            <Space align="start" style={{ width: '100%' }}>
-                                <Text>反指结点</Text>
-                                <Space wrap>
-                                    {entitySNode.map((ele) => (
-                                        <Tag
-                                            style={{cursor: 'pointer'}}
-                                            color={"cyan"}
-                                            bordered={false}
-                                            onClick={() => {
-                                                if (checkExecute()) {
-                                                    return;
-                                                }
-                                                const parentEntity = breadcrumbItems[breadcrumbItems.length - 1] || entity;
-                                                breadcrumbItems.push(`${ele}$${parentEntity}`);
-                                                setBreadcrumbItems(breadcrumbItems)
-                                                getNodes(ele)
-                                            }}
-                                        >
-                                            {ele}
-                                        </Tag>
-                                    ))}
-                                </Space>
-                            </Space>
+                            <Row gutter={24}>
+                                <Col span={2}>
+                                    <Text style={{whiteSpace: 'nowrap'}}>外键</Text>
+                                </Col>
+                                <Col span={22}>
+                                    <Space wrap>
+                                        {entityDNode.map((ele) => (
+                                            <Tag
+                                                style={{cursor: 'pointer'}}
+                                                color="processing"
+                                                bordered={false}
+                                                onClick={() => {
+                                                    if (checkSelectRelation()) {
+                                                        return;
+                                                    }
+                                                    breadcrumbItems.push(ele);
+                                                    setBreadcrumbItems(breadcrumbItems)
+                                                    getNodes(ele)
+                                                }}
+                                            >
+                                                {ele}
+                                            </Tag>
+                                        ))}
+                                    </Space>
+                                </Col>
+                            </Row>
+                            <Row gutter={24}>
+                                <Col span={2}>
+                                    <Text style={{whiteSpace: 'nowrap', marginRight: 16}}>反指结点</Text>
+                                </Col>
+                                <Col span={22}>
+                                    <Space wrap>
+                                        {entitySNode.map((ele) => (
+                                            <Tag
+                                                style={{cursor: 'pointer'}}
+                                                color={"cyan"}
+                                                bordered={false}
+                                                onClick={() => {
+                                                    if (checkSelectRelation()) {
+                                                        return;
+                                                    }
+                                                    const parentEntity = breadcrumbItems[breadcrumbItems.length - 1] || entity;
+                                                    breadcrumbItems.push(`${ele}$${parentEntity}`);
+                                                    setBreadcrumbItems(breadcrumbItems)
+                                                    getNodes(ele)
+                                                }}
+                                            >
+                                                {ele}
+                                            </Tag>
+                                        ))}
+                                    </Space>
+                                </Col>
+                            </Row>
                         </Space>
                     </Space>
                     <ActionAuthList
                         oakPath="$actionAuthList-cpn"
                         entity={entity}
                         path={breadcrumbItems.join('.')}
-                        openTip={openTip}
+                        onClose={() => {
+                            setOpen(false);
+                        }}
                     />
                 </Space>
             </Modal>

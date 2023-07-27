@@ -8,8 +8,8 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
     entity: keyof ED;
     entityDNode: string[];
     entitySNode: string[];
-    showExecuteTip: boolean;
 }, {
     getNodes: (entity: keyof ED) => void;
+    checkSelectRelation: () => boolean;
 }>): JSX.Element;
 export {};

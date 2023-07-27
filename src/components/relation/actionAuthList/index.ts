@@ -21,6 +21,7 @@ export default OakComponent({
         path: '',
         openTip: false,
         entity: '' as keyof ED,
+        onClose: (() => undefined) as () => void,
     },
     filters: [
         {
@@ -74,7 +75,17 @@ export default OakComponent({
             const entities = path!.split('.');
             const sourceEntity = entities[entities?.length - 1];
             const source = sourceEntity.includes('$') ? sourceEntity.split('$')[0] : sourceEntity;
+            // 获取actions
+            const actions = this.features.relationAuth.getActions(entity!);
             // 获取relation
+            // user 没有relation
+            if (source === 'user') {
+                this.setState({
+                    relations: [{id: '', name: '当前用户'}],
+                    actions,
+                })
+                return;
+            }
             const { data: relations } = await this.features.cache.refresh('relation', {
                 data: {
                     id: 1,
@@ -90,8 +101,6 @@ export default OakComponent({
                     },
                 },
             });
-            // 获取actions
-            const actions = this.features.relationAuth.getActions(entity!);
             this.setState({
                 relations,
                 actions,

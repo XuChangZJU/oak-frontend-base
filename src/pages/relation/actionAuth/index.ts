@@ -117,6 +117,21 @@ export default OakComponent({
                 actionAuths: $actionAuthsObject[ele],
             })
         })
+
+        // path 中含有user 也要特殊处理
+        const hasUserActionAuths = data.filter((ele) => ele.path?.split('.').includes('user'));
+        const $actionAuthsObject2 = groupBy(hasUserActionAuths, 'path');
+        Object.keys($actionAuthsObject2).forEach((ele) => {
+            const entities = ele.split('.');
+            const se = entities[entities.length - 1].split('$')[0];
+            const p = ele;
+            const de = entity!;
+            cascadeEntityActions.push({
+                path: [de, p, se, true],
+                relations: [{id: '', name: '当前用户'}],
+                actionAuths: $actionAuthsObject2[ele],
+            })
+        })
         return {
             cascadeEntityActions,
         };
@@ -170,7 +185,8 @@ export default OakComponent({
         async onChange(checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema'], relationName?: string) {
             const { actions } = this.props;
             assert(actions && actions.length > 0);
-            if (!relationId) {
+            // 排除user这种情况
+            if (!relationId && (relationName && relationName !== '当前用户')) {
                 const se = path.split('$')[0];
                 const { data: relations } = await this.features.cache.refresh('relation', {
                     data: {

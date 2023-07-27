@@ -27,6 +27,7 @@ export default function render(
             path: string;
             entity: keyof ED;
             openTip: boolean;
+            onClose: () => void;
         },
         {
           
@@ -34,7 +35,7 @@ export default function render(
     >
 ) {
     const { data, methods } = props;
-    const { rows, relations, actions, path, entity, openTip, oakExecutable } = data;
+    const { rows, relations, actions, path, entity, openTip, oakExecutable, onClose } = data;
     const [datasource, setDatasource] = useState<TableData[]>([]);
     useEffect(() => {
         const tableRows: TableData[] = relations.map((ele) => ({
@@ -48,9 +49,6 @@ export default function render(
         <Space direction="vertical" style={{ width: '100%' }}>
             <Space>
                 <Text style={{fontSize: 16}}>授权</Text>
-                <Tooltip title={"点击保存"} open={openTip} placement="right">
-                    <Button type="link" disabled={!oakExecutable} onClick={() => methods.execute()}>保存</Button>
-                </Tooltip>
             </Space>
             <Table
                 rowKey={"relationId"}
@@ -83,7 +81,7 @@ export default function render(
                                     onChange={(checkedArr) => {
                                         if (!actionAuth) {
                                             methods.addItem({
-                                                relationId: row.relationId,
+                                                relationId: row.relationId || '',
                                                 path,
                                                 deActions: checkedArr as string[],
                                                 destEntity: entity as string,
@@ -105,6 +103,17 @@ export default function render(
                 ]}
                 pagination={false}
             ></Table>
+            <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', padding: 8 }}>
+                <Button
+                    type="primary"
+                    onClick={() => {
+                        methods.execute();
+                        onClose();
+                    }}
+                >
+                    保存并关闭
+                </Button>
+            </div>
         </Space>
     );
 }
