@@ -121,7 +121,8 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                                                     if (checkSelectRelation()) {
                                                         return;
                                                     }
-                                                    const parentEntity = breadcrumbItems[breadcrumbItems.length - 1] || entity;
+                                                    const preNode = breadcrumbItems[breadcrumbItems.length - 1] || entity as string;
+                                                    const parentEntity = preNode.includes('$') ? preNode.split('$')[0] : preNode;
                                                     breadcrumbItems.push(`${ele}$${parentEntity}`);
                                                     setBreadcrumbItems(breadcrumbItems)
                                                     getNodes(ele)
