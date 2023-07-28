@@ -156,7 +156,7 @@ export default function Render<ED2 extends ED>(
         case 'DatePicker': {
             const { dateProps } = column;
             const { showTime = false } = dateProps || {};
-            assert(op, '选择时间，算子必须传入');
+            //assert(op, '选择时间，算子必须传入');
             const unitOfTime = 'day';
             V = (
                 <DatePicker
