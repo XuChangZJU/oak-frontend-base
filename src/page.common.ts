@@ -184,7 +184,7 @@ function checkActionsAndCascadeEntities<
                     const a2 = typeof action === 'object' ? action.action : action;
                     // 先尝试整体测试是否通过，再测试每一行
                     // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
-                    if (this.checkOperation(this.state.oakEntity, a2, undefined, filter, checkTypes)) {
+                    if (filter && this.checkOperation(this.state.oakEntity, a2, undefined, filter, checkTypes)) {
                         rows.forEach(
                             (row) => {
                                 if (row['#oakLegalActions']) {
@@ -242,7 +242,7 @@ function checkActionsAndCascadeEntities<
                     const data = typeof action === 'object' ? action.data : undefined;
 
                     const filter = this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath!);
-                    if (this.checkOperation(this.state.oakEntity, a2, data as any, filter, checkTypes)) {
+                    if (filter && this.checkOperation(this.state.oakEntity, a2, data as any, filter, checkTypes)) {
                         legalActions.push(action);
                         if (rows['#oakLegalActions']) {
                             rows['#oakLegalActions'].push(action);
