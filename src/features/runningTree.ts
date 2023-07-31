@@ -870,8 +870,8 @@ class ListNode<
             filter,
             sorter,
         } = this.constructSelection(true, true);
-        // 若不存在有效的过滤条件（若有父结点但却为空时），则不能刷新
-        if (filter && projection) {
+        // 若不存在有效的过滤条件（若有父结点但却为空时，说明父结点是一个create动作，不用刷新），则不能刷新
+        if ((!this.getParent() || filter) && projection) {
             try {
                 this.setLoading(true);
                 if (append) {
