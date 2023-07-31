@@ -14,12 +14,9 @@ interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     name: string;
     entity: T;
     action: ED[T]['Action'];
-    paths?: string[];
+    paths: string[];
 };
 
-interface IMenuWrapper<ED extends EntityDict & BaseEntityDict, T extends keyof ED> extends IMenu<ED, T> {
-    filtersMaker: (entity: keyof ED, entityId: string) => Array<ED[T]['Selection']['filter']>;
-};
 
 export class ContextMenuFactory<
     ED extends EntityDict & BaseEntityDict,
@@ -101,7 +98,7 @@ export class ContextMenuFactory<
         const menus = this.menus.filter(
             (menu) => {
                 const { entity: destEntity, paths, action } = menu;
-                const filters = paths ? this.makeMenuFilters(destEntity, paths, entity, entityId) : [{}];   // 如果没有path，视为无法推断操作的filter，直接返回无任何限制
+                const filters = paths.length > 0 ? this.makeMenuFilters(destEntity, paths, entity, entityId) : [{}];   // 如果没有path，视为无法推断操作的filter，直接返回无任何限制
                 if (filters.length > 0) {
                     // 这里应该是or关系，paths表达的路径中只要有一条满足就可能满足
                     const allows = filters.map(
