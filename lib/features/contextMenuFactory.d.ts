@@ -1,5 +1,5 @@
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict, AuthCascadePath, Aspect } from 'oak-domain/lib/types';
+import { EntityDict, Aspect, AuthCascadePath } from 'oak-domain/lib/types';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
@@ -12,17 +12,14 @@ interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     action: ED[T]['Action'];
     paths?: string[];
 }
-interface IMenuWrapper<ED extends EntityDict & BaseEntityDict, T extends keyof ED> extends IMenu<ED, T> {
-    filtersMaker: (entity: keyof ED, entityId: string) => Array<ED[T]['Selection']['filter']>;
-}
 export declare class ContextMenuFactory<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends Feature {
     cache: Cache<ED, Cxt, FrontCxt, AD>;
-    menuWrappers?: IMenuWrapper<ED, keyof ED>[];
+    menus?: IMenu<ED, keyof ED>[];
     cascadePathGraph: AuthCascadePath<ED>[];
     relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>;
-    private makeMenuWrappers;
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, cascadePathGraph: AuthCascadePath<ED>[]);
     setMenus(menus: IMenu<ED, keyof ED>[]): void;
+    makeMenuFilters(destEntity: keyof ED, paths: string[], entity: keyof ED, entityId: string): (true | ED[keyof ED]["Selection"]["filter"])[];
     getMenusByContext<OMenu extends IMenu<ED, keyof ED>>(entity: keyof ED, entityId: string): OMenu[];
 }
 export {};

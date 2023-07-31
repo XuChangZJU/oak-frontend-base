@@ -1,16 +1,14 @@
 import assert from 'assert';
 import { uniq, set, omit } from 'oak-domain/lib/utils/lodash';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict, AuthCascadePath, Aspect } from 'oak-domain/lib/types';
+import { EntityDict, Aspect, AuthCascadePath } from 'oak-domain/lib/types';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
-import { combineFilters } from 'oak-domain/lib/store/filter';
 import { Cache } from './cache';
 import { Feature } from '../types/Feature';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { RelationAuth } from './relationAuth';
-import { generateNewId } from 'oak-domain/lib/utils/uuid';
 
 interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     name: string;
@@ -30,90 +28,9 @@ export class ContextMenuFactory<
     AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>
     >  extends Feature {
     cache: Cache<ED, Cxt, FrontCxt, AD>;
-    menuWrappers?: IMenuWrapper<ED, keyof ED>[];
+    menus?: IMenu<ED, keyof ED>[];
     cascadePathGraph: AuthCascadePath<ED>[];
     relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>;
-
-    private makeMenuWrappers(menus: IMenu<ED, keyof ED>[]): IMenuWrapper<ED, keyof ED>[] {
-        const destEntities = uniq(
-            menus.map(
-                ele => ele.entity
-            )
-        );
-        const pathMap: {
-            [E in keyof ED]?: AuthCascadePath<ED>[];
-        } = {};
-
-        this.cascadePathGraph.forEach(
-            (path) => {
-                const [destEntity, p, s, ir] = path;
-                if (ir && destEntities.includes(destEntity)) {
-                    // 应用在判定登录者身份时用的对象都是应用级对象，且以relation判定关系
-                    if (pathMap[destEntity]) {
-                        pathMap[destEntity]?.push(path);
-                    }
-                    else {
-                        pathMap[destEntity] = [path];
-                    }
-                }
-            }
-        );
-
-        return menus.map(
-            (menu) => {
-                const { entity: destEntity, paths: cascadePaths } = menu;
-                const filtersMaker = (sourceEntity: keyof ED, entityId: string) => {
-                    // 在cascadePathMap中找到可能的路径并构建对应的filter
-                    const paths = pathMap[destEntity]!.filter(
-                        (ele) => {
-                            if (cascadePaths) {
-                                assert(cascadePaths.length > 0);
-                                return ele[2] === sourceEntity && cascadePaths.includes(ele[1]);
-                            }
-                            return ele[2] === sourceEntity;
-                        }
-                    );
-                    return paths.map(
-                        (path) => {
-                            const p = path[1];
-                            if (p === '') {
-                                return {
-                                    id: entityId,
-                                };
-                            }
-                            else {
-                                const ps = p.split('.');
-                                const makeFilterInner = (entity: keyof ED, idx: number): ED[keyof ED]['Selection']['filter'] => {
-                                    const attr = ps[idx];
-                                    const rel = judgeRelation(this.cache.getSchema(), entity, attr);
-                                    if (idx === ps.length - 1) {
-                                        if (rel === 2) {
-                                            return {
-                                                entity: attr,
-                                                entityId,
-                                            };
-                                        }
-                                        assert(typeof rel === 'string');
-                                        return {
-                                            [`${attr}Id`]: entityId,
-                                        };
-                                    }
-                                    const e = rel === 2 ? attr : rel as string;
-                                    return {
-                                        [attr]: makeFilterInner(e, idx + 1),
-                                    };
-                                };
-                                return makeFilterInner(destEntity, 0);
-                            }
-                        }
-                    )
-                };
-                return Object.assign({}, menu, {
-                    filtersMaker,
-                });
-            }
-        );
-    }
 
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, cascadePathGraph: AuthCascadePath<ED>[]) {
         super();
@@ -123,20 +40,75 @@ export class ContextMenuFactory<
     }
 
     setMenus(menus: IMenu<ED, keyof ED>[]) {
-        assert(!this.menuWrappers, 'setMenus只应该全局调用一次');
-        this.menuWrappers = this.makeMenuWrappers(menus);
+        assert(!this.menus, 'setMenus只应该全局调用一次');
+        this.menus = menus;
+    }
+
+    makeMenuFilters(destEntity: keyof ED, paths: string[], entity: keyof ED, entityId: string) {
+        const schema = this.cache.getSchema();
+        assert(paths.length > 0);
+
+        const filters = paths.map(
+            (path) => {
+                if (path === '') {
+                    if (entity === destEntity) {
+                        return {
+                            id: entityId,
+                        } as ED[keyof ED]['Selection']['filter'];
+                    }
+                    return;
+                }
+                const pathhh = path.split('.');
+
+                const judgeIter = (e2: keyof ED, idx: number): true | undefined | ED[keyof ED]['Selection']['filter'] => {
+                    const rel = judgeRelation(schema, e2, pathhh[idx]);
+                    let e3 = e2;
+                    if (typeof rel === 'string') {
+                        e3 = rel;
+                    }
+                    else if (rel === 2) {
+                        e3 = pathhh[idx];
+                    }
+                    else {
+                        assert(rel instanceof Array);
+                        e3 = rel[0];
+                    }
+                    if (idx === pathhh.length - 1) {
+                        if (e3 === 'user') {
+                            // 用user连接说明一定满足
+                            return true;
+                        }
+                        if (e3 === entity) {
+                            const filter: ED[keyof ED]['Selection']['filter'] = {};
+                            return set(filter, `${path}.id`, entityId);
+                        }
+                        return undefined;
+                    }
+                    return judgeIter(e3, idx + 1);
+                }
+                
+                return judgeIter(destEntity, 0);
+            }
+        ).filter(
+            ele => !!ele
+        );
+
+        return filters as (true | ED[keyof ED]['Selection']['filter'])[];
     }
 
     getMenusByContext<OMenu extends IMenu<ED, keyof ED>>(entity: keyof ED, entityId: string) {
-        assert(this.menuWrappers, '应当先调用setMenus才能动态判定菜单');
-        const menus = this.menuWrappers.filter(
-            (wrapper) => {
-                const { entity: destEntity, filtersMaker, action } = wrapper;
-                const filters = filtersMaker(entity, entityId);
+        assert(this.menus, '应当先调用setMenus才能动态判定菜单');
+        const menus = this.menus.filter(
+            (menu) => {
+                const { entity: destEntity, paths, action } = menu;
+                const filters = paths ? this.makeMenuFilters(destEntity, paths, entity, entityId) : [{}];   // 如果没有path，视为无法推断操作的filter，直接返回无任何限制
                 if (filters.length > 0) {
                     // 这里应该是or关系，paths表达的路径中只要有一条满足就可能满足
                     const allows = filters.map(
                         (filter) => {
+                            if (filter === true) {
+                                return true;
+                            }
                             // relationAuth和其它的checker现在分开判断
                             return this.relationAuth.checkRelation(destEntity, {
                                 action,
