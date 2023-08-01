@@ -58,13 +58,14 @@ export class ContextMenuFactory<
                 const pathhh = path.split('.');
 
                 const judgeIter = (e2: keyof ED, idx: number): true | undefined | ED[keyof ED]['Selection']['filter'] => {
-                    const rel = judgeRelation(schema, e2, pathhh[idx]);
+                    const attr = pathhh[idx];
+                    const rel = judgeRelation(schema, e2, attr);
                     let e3 = e2;
                     if (typeof rel === 'string') {
                         e3 = rel;
                     }
                     else if (rel === 2) {
-                        e3 = pathhh[idx];
+                        e3 = attr;
                     }
                     else {
                         assert(rel instanceof Array);
@@ -77,7 +78,17 @@ export class ContextMenuFactory<
                         }
                         if (e3 === entity) {
                             const filter: ED[keyof ED]['Selection']['filter'] = {};
-                            return set(filter, `${path}.id`, entityId);
+                            const paths2 = pathhh.slice(0, pathhh.length - 1);
+                            if (rel === 2) {
+                                set(filter, paths2.concat('entity'), entity);
+                                set(filter, paths2.concat('entityId'), entityId);
+                            }
+                            else if (typeof rel === 'string') {
+                                set(filter, paths2.concat(`${attr}Id`), entityId);
+                            }
+                            else {
+                                return set(filter, `${path}.id`, entityId);
+                            }
                         }
                         return undefined;
                     }
