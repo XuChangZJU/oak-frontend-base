@@ -87,8 +87,9 @@ export class ContextMenuFactory<
                                 set(filter, paths2.concat(`${attr}Id`), entityId);
                             }
                             else {
-                                return set(filter, `${path}.id`, entityId);
+                                set(filter, `${path}.id`, entityId);
                             }
+                            return filter;
                         }
                         return undefined;
                     }
