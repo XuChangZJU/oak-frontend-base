@@ -46,11 +46,12 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
     }
 
     protected async cascadeUpdateAsync<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: AsyncContext<ED>, option: OP) {
-        if (!option.blockTrigger) {
+        // 如果是在modi处理过程中，所有的trigger也可以延时到apply时再处理（这时候因为modi中的数据并不实际存在，处理会有问题）
+        if (!option.blockTrigger && !option.modiParentEntity) {
             await this.executor.preOperation(entity, operation, context, option);
         }
         const result = await super.cascadeUpdateAsync(entity, operation, context, option);
-        if (!option.blockTrigger) {
+        if (!option.blockTrigger && !option.modiParentEntity) {
             await this.executor.postOperation(entity, operation, context, option);
         }
         return result;
@@ -62,7 +63,11 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         context: Cxt,
         option: OP
     ) {
-        assert(context.getCurrentTxnId());        
+        assert(context.getCurrentTxnId());
+        /**
+         * 这里似乎还有点问题，如果在后续的checker里增加了cascadeUpdate，是无法在一开始检查权限的
+         * 后台的DbStore也一样          by Xc 20230801
+         */
         await this.relationAuth.checkRelationAsync(entity, operation, context);
         return super.operateAsync(entity, operation, context, option);
     }
