@@ -26,6 +26,7 @@ export default OakComponent({
                 info?: { type: 'single' | 'multiple' | 'none' }
             ) => void;
         },
+        hideHeader: false,
     },
     formData({ props }) {
         const { converter } = this.state;

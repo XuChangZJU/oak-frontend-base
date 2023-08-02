@@ -38,6 +38,7 @@ export default function Render(
             onAction?: onActionFnDef;
             rowSelection?: TableProps<any[]>['rowSelection']
             i18n: any;
+            hideHeader?: boolean;
         },
         {
         }
@@ -58,12 +59,13 @@ export default function Render(
         rowSelection,
         attributes,
         i18n,
+        hideHeader,
     } = oakData;
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [tableColumns, setTabelColumns] = useState([] as ColumnsType<any>);
     const { tableAttributes, setSchema } = useContext(TableContext);
     // 为了i18更新时能够重新渲染
     const zhCNKeys = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
+    const selectedRowKeys = rowSelection.selectedRowKeys || [];
 
     // 如果字段过多，给table加上
     const showScroll = attributes && attributes.length >= 8;
@@ -145,7 +147,6 @@ export default function Render(
                 type: rowSelection?.type,
                 selectedRowKeys,
                 onChange: (selectedRowKeys, row, info) => {
-                    setSelectedRowKeys(selectedRowKeys);
                     rowSelection?.onChange && rowSelection?.onChange(selectedRowKeys, row, info);
                 }
             }}
@@ -169,17 +170,16 @@ export default function Render(
                             else {
                                 keys.push(record.id)
                             }
-                            setSelectedRowKeys([...selectedRowKeys]);
                         }
                         else {
                             keys = [record.id];
-                            setSelectedRowKeys([record.id])
                         }
                         const row = data.filter((ele) => keys.includes(ele.id));
                         rowSelection?.onChange && rowSelection?.onChange(keys, row, {type: 'all'});
                     }
                 }
             }}
+            showHeader={!hideHeader}
         >
         </Table>
     );
