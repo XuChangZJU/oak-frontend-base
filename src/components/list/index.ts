@@ -106,6 +106,7 @@ export default OakComponent({
                     info?: { type: 'single' | 'multiple' | 'none' }
                 ) => void;
             };
+            hideHeader: boolean;
         }
     >
 ) => React.ReactElement;

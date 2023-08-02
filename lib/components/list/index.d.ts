@@ -17,5 +17,6 @@ declare const _default: <ED2 extends ED, T2 extends keyof ED2, T3 extends string
             type: 'single' | 'multiple' | 'none';
         }) => void;
     } | undefined;
+    hideHeader: boolean;
 }>) => React.ReactElement;
 export default _default;
