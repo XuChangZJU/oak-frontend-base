@@ -65,7 +65,7 @@ export default function Render(
     const { tableAttributes, setSchema } = useContext(TableContext);
     // 为了i18更新时能够重新渲染
     const zhCNKeys = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
-    const selectedRowKeys = rowSelection.selectedRowKeys || [];
+    const selectedRowKeys = rowSelection?.selectedRowKeys || [];
 
     // 如果字段过多，给table加上
     const showScroll = attributes && attributes.length >= 8;

@@ -76,7 +76,7 @@ export default function Render(
                     }
                     trigger="click"
                 >
-                    <Button type='link' icon={<MoreOutlined />}></Button>
+                    <Button type="link" icon={(<MoreOutlined />)} />
                 </Popover>
             )}
         </div>
