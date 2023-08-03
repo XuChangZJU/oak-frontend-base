@@ -242,6 +242,8 @@ export declare type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'a
 export declare type WebComponentSingleMethodNames = 'update' | 'remove' | 'create' | 'isCreation';
 export declare type WebComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, TData extends DataOption = {}, TMethod extends MethodOption = {}> = {
     methods: TMethod & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
-    data: TData & OakComponentData<ED, T> & (IsList extends true ? OakListComoponetData<ED, T> : {});
+    data: TData & OakComponentData<ED, T> & (IsList extends true ? OakListComoponetData<ED, T> : {
+        oakId?: string;
+    });
 };
 export {};

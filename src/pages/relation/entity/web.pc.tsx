@@ -7,7 +7,7 @@ import ActionAuth from '../actionAuth';
 import RelationAuth from '../relationAuth';
 import { WebComponentProps } from '../../../types/Page';
 import { useState } from 'react';
-import ActionAuthSingle from '../../../components/relation/single';
+import Styles from './web.pc.module.less';
 
 type ED = EntityDict & BaseEntityDict;
 
@@ -64,7 +64,7 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
         }
     ];
 
-    if (hasDirectActionAuth) {
+    /* if (hasDirectActionAuth) {
         items.push(
             {
                 label: 'directActionAuth',
@@ -95,7 +95,7 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                 )
             }
         );
-    }
+    } */
 
     if (relations?.length > 0) {
         items.push(
@@ -149,7 +149,7 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
     const showRelationSelector = ['relationAuth', 'directRelationAuth'].includes(tab);
 
     return (
-        <>
+        <div className={Styles.container}>
             <Row justify="center" style={{ margin: 20, padding: 10, minHeight: 100 }} align="middle">
                 <Col span={8}>
                     <Row style={{ width: '100%' }} justify="center" align="middle">
@@ -168,6 +168,6 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                 items={items}
                 onChange={(key) => setTab(key)}
             />
-        </>
+        </div>
     );
 }

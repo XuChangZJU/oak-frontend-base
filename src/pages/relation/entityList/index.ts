@@ -9,13 +9,24 @@ export default OakComponent({
             links,
         };
     },
+    properties: {
+        onEntityClicked: (entity: string) => undefined as void,
+    },
     methods: {
         onEntityClicked(entity: string) {
-            this.features.navigator.navigateTo({
-                url: '/relation/entity',
-            }, {
-                entity,
-            });
+            if (this.props.onEntityClicked) {
+                this.props.onEntityClicked(entity);
+            }
+            else {
+                if (process.env.NODE_ENV === 'development') {
+                    console.warn('直接使用relation/entityList作为page用法即将废除，请使用自定义页面包裹');
+                }
+                this.features.navigator.navigateTo({
+                    url: '/relation/entity',
+                }, {
+                    entity,
+                });
+            }
         },
     }
 });

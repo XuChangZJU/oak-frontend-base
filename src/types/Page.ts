@@ -519,5 +519,7 @@ export type WebComponentProps<
     TMethod extends MethodOption = {}> = {
         methods: TMethod & OakCommonComponentMethods<ED, T>
         & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
-        data: TData & OakComponentData<ED, T> & (IsList extends true ? OakListComoponetData<ED, T> : {});
+        data: TData & OakComponentData<ED, T> & (IsList extends true ? OakListComoponetData<ED, T> : {
+            oakId?: string;
+        });
     }

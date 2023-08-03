@@ -40,7 +40,7 @@ export default OakComponent({
         currentPage: 0,
     },
     formData({ data: rows }) {
-        console.log(this.props.path);
+        // console.log(this.props.path);
         return {
             rows
         };

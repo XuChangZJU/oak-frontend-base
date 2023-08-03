@@ -5,6 +5,7 @@ import { Row, Switch, Col, Input, Form } from 'antd';
 import ReactEcharts from 'echarts-for-react';
 import { useState } from 'react';
 import { uniq } from 'oak-domain/lib/utils/lodash';
+import Styles from './web.pc.module.less';
 
 type ED = EntityDict & BaseEntityDict;
 
@@ -66,7 +67,7 @@ export default function render(
     }
 
     return (
-        <>
+        <div className={Styles.container}>
             <Form
                 style={{
                     margin: 20,
@@ -94,7 +95,7 @@ export default function render(
                 </Form.Item>
             </Form>
             <ReactEcharts
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: '100%', minHeight: 750 }}
                 option={{
                     tooltip: {},
                     series: [
@@ -147,6 +148,6 @@ export default function render(
                     },
                 }}
             />
-        </>
+        </div>
     );
 }
