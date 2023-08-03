@@ -1,0 +1,21 @@
+import React from 'react';
+import './index.less';
+declare type PageHeaderProps = {
+    style?: React.CSSProperties;
+    className?: string;
+    title?: React.ReactNode;
+    showBack?: boolean;
+    onBack?: () => void;
+    backIcon?: React.ReactNode;
+    delta?: number;
+    extra?: React.ReactNode;
+    subTitle?: React.ReactNode;
+    contentMargin?: boolean;
+    contentStyle?: React.CSSProperties;
+    contentClassName?: string;
+    tags?: React.ReactNode;
+    children?: React.ReactNode;
+    showHeader?: boolean;
+};
+declare const _default: React.MemoExoticComponent<(props: PageHeaderProps) => JSX.Element>;
+export default _default;
