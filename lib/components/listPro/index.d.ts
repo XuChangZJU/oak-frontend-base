@@ -9,7 +9,7 @@ declare type Props = {
     onReload?: () => void;
     entity: keyof ED;
     extraActions?: OakExtraActionProps[];
-    onAction: onActionFnDef;
+    onAction?: onActionFnDef;
     disabledOp?: boolean;
     attributes: OakAbsAttrDef[];
     data: RowWithActions<ED, keyof ED>[];
