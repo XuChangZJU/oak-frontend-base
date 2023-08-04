@@ -120,7 +120,7 @@ import {
 export type AttrRender = {
     label: string;
     value: any;
-    type: DataType | ('img' | 'file' | 'avatar' | 'ref');
+    type: DataType | ('img' | 'link' | 'ref');
     color?: string;
     width?: RenderWidth;
     attr: string;

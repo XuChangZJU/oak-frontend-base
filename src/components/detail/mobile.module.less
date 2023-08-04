@@ -1,0 +1,31 @@
+.panel {
+    display: flex;
+    flex-direction: column;
+}
+.title {
+    padding-block: 20px 10px;
+    padding-inline: 10px;
+    color: #888;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+}
+.panel_content {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+}
+.renderRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.renderLabel {
+    min-width: 140px;
+    margin-right: 16px;
+}
+
+[class='renderRow']:not(:last-child) {
+    margin-bottom: 10px;
+}
