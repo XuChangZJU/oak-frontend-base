@@ -85,7 +85,7 @@ import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes'
 export declare type AttrRender = {
     label: string;
     value: any;
-    type: DataType | ('img' | 'file' | 'avatar' | 'ref');
+    type: DataType | ('img' | 'link' | 'ref');
     color?: string;
     width?: RenderWidth;
     attr: string;

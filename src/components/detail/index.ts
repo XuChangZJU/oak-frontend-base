@@ -42,6 +42,9 @@ export default OakComponent({
     isList: false,
     properties: {
         entity: '' as keyof ED,
+        title: '',
+        bordered: false,
+        layout: 'horizontal' as 'horizontal' | 'vertical',
         attributes: [] as OakAbsAttrDef[],
         data: {} as ED[keyof ED]['Schema'],
         column: DEFAULT_COLUMN_MAP,
@@ -111,10 +114,13 @@ export default OakComponent({
         T2,
         false,
         {
-            column: ColumnMapType;
+            column?: ColumnMapType;
             entity: T2;
             attributes: OakAbsAttrDef[];
             data: Partial<ED2[T2]['Schema']>;
+            title?: string;
+            bordered?: boolean;
+            layout?: 'horizontal' | 'vertical',
         }
     >
 ) => React.ReactElement;
