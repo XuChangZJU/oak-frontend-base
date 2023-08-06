@@ -922,6 +922,10 @@ class ListNode<
                 throw err;
             }
         }
+        else {
+            // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
+            this.publish();
+        }
     }
 
     async loadMore() {
@@ -1351,6 +1355,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 this.publish();
                 throw err;
             }
+        }
+        else {
+            // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
+            this.publish();
         }
     }
 
