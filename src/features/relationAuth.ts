@@ -132,7 +132,13 @@ export class RelationAuth<
                         nodeInSet[ref] = [entity];
                     }
                     if (nodeOutSet[entity]) {
-                        nodeOutSet[entity].push(ref);
+                        // 如果外键ref是user 使用属性名以解决relation/entityList页面授权路径不对的问题
+                        if (ref === "user") {
+                            nodeOutSet[entity].push(attr);
+                        }
+                        else {
+                            nodeOutSet[entity].push(ref);
+                        }
                     }
                     else {
                         nodeOutSet[entity] = [ref];
