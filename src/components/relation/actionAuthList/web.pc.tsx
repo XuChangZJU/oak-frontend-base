@@ -79,10 +79,11 @@ export default function render(
                                     options={options}
                                     defaultValue={defaultValue}
                                     onChange={(checkedArr) => {
+                                        const path2 = path.replaceAll('(user)', '');
                                         if (!actionAuth) {
                                             methods.addItem({
                                                 relationId: row.relationId || '',
-                                                path,
+                                                path: path2,
                                                 deActions: checkedArr as string[],
                                                 destEntity: entity as string,
                                             })
