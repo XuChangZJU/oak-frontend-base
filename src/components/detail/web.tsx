@@ -49,7 +49,7 @@ const DEFAULT_COLUMN_MAP: ColumnMapType = {
 
 function RenderRow(props: { label: string; value: any; type: AttrRender['type'] }) {
     const { type, label, value } = props;
-    if (type === 'img') {
+    if (type === 'image') {
         if (value instanceof Array) {
             return (
                 <div className={styles.renderRow}>
