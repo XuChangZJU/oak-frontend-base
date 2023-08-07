@@ -81,7 +81,7 @@ export default OakComponent({
             });
         },
     },
-}) as <ED2 extends ED, T2 extends keyof ED2, T3 extends keyof ED = keyof ED>(
+}) as <ED2 extends ED, T2 extends keyof ED2>(
     props: ReactComponentProps<
         ED2,
         T2,

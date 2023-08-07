@@ -125,3 +125,13 @@ export declare type ListButtonProps = {
     icon?: React.ReactNode;
     onClick: () => void;
 };
+declare type ColSpanType = 1 | 2 | 3 | 4;
+export declare type ColumnMapType = {
+    xxl: ColSpanType;
+    xl: ColSpanType;
+    lg: ColSpanType;
+    md: ColSpanType;
+    sm: ColSpanType;
+    xs: ColSpanType;
+};
+export {};
