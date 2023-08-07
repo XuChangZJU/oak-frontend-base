@@ -1,4 +1,3 @@
-/// <reference types="react" />
 import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { WebComponentProps } from '../../../types/Page';
@@ -17,5 +16,5 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
 }, {
     onActionsSelected: (actions: string[]) => void;
     onRelationsSelected: (relationIds: string[]) => void;
-}>): JSX.Element;
+}>): import("react/jsx-runtime").JSX.Element;
 export {};

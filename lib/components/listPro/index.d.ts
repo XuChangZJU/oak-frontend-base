@@ -35,5 +35,5 @@ export declare const TableContext: React.Context<{
     setSchema: ((schema: any) => void) | undefined;
     onReset: (() => void) | undefined;
 }>;
-declare const ProList: (props: Props) => JSX.Element;
+declare const ProList: (props: Props) => import("react/jsx-runtime").JSX.Element;
 export default ProList;

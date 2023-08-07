@@ -1,4 +1,3 @@
-/// <reference types="react" />
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -24,5 +23,5 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
     dataSchema: StorageSchema<EntityDict>;
     column: ColumnMapType;
     renderData: AttrRender[];
-}, {}>): JSX.Element;
+}, {}>): import("react/jsx-runtime").JSX.Element;
 export {};

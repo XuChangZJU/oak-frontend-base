@@ -1,3 +1,2 @@
-/// <reference types="react" />
-declare function ColumnSetting(): JSX.Element;
+declare function ColumnSetting(): import("react/jsx-runtime").JSX.Element;
 export default ColumnSetting;

@@ -1,4 +1,3 @@
-/// <reference types="react" />
 declare type Props = {
     mode?: 'select';
     selected?: boolean;
@@ -10,5 +9,5 @@ declare type Props = {
     onClick?: () => void;
     type?: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down' | 'initial' | 'inherit';
 };
-declare function ImgBox(props: Props): JSX.Element;
+declare function ImgBox(props: Props): import("react/jsx-runtime").JSX.Element;
 export default ImgBox;
