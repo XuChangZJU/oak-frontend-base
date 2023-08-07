@@ -32,6 +32,10 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         this.relationAuth = new RelationAuth(storageSchema, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap, selectFreeEntities);        
     }
 
+    async exec(script: string, txnId?: string) {
+        throw new Error('debugStore dont support exec script directly');
+    }
+
     aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]["Aggregation"], context: Cxt, option: OP): Promise<AggregationResult<ED[T]["Schema"]>> {
         return this.aggregateAsync(entity, aggregation, context, option);
     }

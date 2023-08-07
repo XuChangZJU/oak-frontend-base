@@ -1,4 +1,3 @@
-/// <reference types="react" />
 declare type Props = {
     items: Array<{
         title: string;
@@ -6,5 +5,5 @@ declare type Props = {
     }>;
     title: string;
 };
-export default function Render(props: Props): JSX.Element;
+export default function Render(props: Props): import("react/jsx-runtime").JSX.Element;
 export {};

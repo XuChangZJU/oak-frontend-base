@@ -1,4 +1,3 @@
-/// <reference types="react" />
 import { TableProps } from 'antd';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../types/Page';
@@ -21,4 +20,4 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
     rowSelection?: TableProps<any[]>['rowSelection'];
     i18n: any;
     hideHeader?: boolean;
-}, {}>): JSX.Element;
+}, {}>): import("react/jsx-runtime").JSX.Element;

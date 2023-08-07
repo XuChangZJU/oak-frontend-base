@@ -922,6 +922,10 @@ class ListNode<
                 throw err;
             }
         }
+        else {
+            // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
+            this.publish();
+        }
     }
 
     async loadMore() {
@@ -1352,6 +1356,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 throw err;
             }
         }
+        else {
+            // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
+            this.publish();
+        }
     }
 
     clean() {
@@ -1399,7 +1407,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, context?: FrontCxt, ignoreNewParent?: boolean): ED[T2]['Selection']['filter'] | undefined {
         const value = this.getFreshValue(context);
 
-        if ((!value || value.$$createAt$$ === 1) && ignoreNewParent) {
+        if (value && value.$$createAt$$ === 1 && ignoreNewParent) {
             return;            
         }
         for (const key in this.children) {

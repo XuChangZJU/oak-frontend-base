@@ -1,4 +1,3 @@
-/// <reference types="react" />
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../../types/Page';
 import { OakAbsDerivedAttrDef } from '../../../types/AbstractComponent';
@@ -7,4 +6,4 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
     value: string | string[];
     type: OakAbsDerivedAttrDef['type'];
     color: string;
-}, {}>): JSX.Element;
+}, {}>): import("react/jsx-runtime").JSX.Element;
