@@ -79,7 +79,7 @@ export default OakComponent({
             const actions = this.features.relationAuth.getActions(entity!);
             // 获取relation
             // user 没有relation
-            if (source === 'user') {
+            if (source.includes('(user)')) {
                 this.setState({
                     relations: [{id: '', name: '当前用户'}],
                     actions,
