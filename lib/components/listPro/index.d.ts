@@ -3,22 +3,22 @@ import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, ED 
 import { TableProps } from 'antd';
 import { RowWithActions } from '../../types/Page';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-declare type Props = {
+declare type Props<ED2 extends ED, T extends keyof ED2> = {
     title?: string;
     buttonGroup?: ListButtonProps[];
     onReload?: () => void;
-    entity: keyof ED;
+    entity: T;
     extraActions?: OakExtraActionProps[];
     onAction?: onActionFnDef;
     disabledOp?: boolean;
     attributes: OakAbsAttrDef[];
-    data: RowWithActions<ED, keyof ED>[];
+    data: RowWithActions<ED2, T>[];
     loading?: boolean;
-    tablePagination?: TableProps<RowWithActions<ED, keyof ED>[]>['pagination'];
+    tablePagination?: TableProps<RowWithActions<ED2, T>[]>['pagination'];
     rowSelection?: {
         type: 'checkbox' | 'radio';
         selectedRowKeys?: string[];
-        onChange: (selectedRowKeys: string[], row: RowWithActions<ED, keyof ED>[], info?: {
+        onChange: (selectedRowKeys: string[], row: RowWithActions<ED2, T>[], info?: {
             type: 'single' | 'multiple' | 'none';
         }) => void;
     };
@@ -35,5 +35,5 @@ export declare const TableContext: React.Context<{
     setSchema: ((schema: any) => void) | undefined;
     onReset: (() => void) | undefined;
 }>;
-declare const ProList: (props: Props) => import("react/jsx-runtime").JSX.Element;
+declare const ProList: <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => import("react/jsx-runtime").JSX.Element;
 export default ProList;

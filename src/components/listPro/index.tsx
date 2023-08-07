@@ -13,26 +13,27 @@ import Style from './index.module.less';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { useWidth } from '../../platforms/web/responsive/useWidth';
 import { useTranslation } from 'react-i18next';
-type Props = {
+
+type Props<ED2 extends ED, T extends keyof ED2> = {
     title?: string;
     buttonGroup?: ListButtonProps[];
     onReload?: () => void;
-    entity: keyof ED;
+    entity: T;
     extraActions?: OakExtraActionProps[];
     onAction?: onActionFnDef;
     disabledOp?: boolean;
     attributes: OakAbsAttrDef[];
-    data: RowWithActions<ED, keyof ED>[];
+    data: RowWithActions<ED2, T>[];
     loading?: boolean;
     tablePagination?: TableProps<
-        RowWithActions<ED, keyof ED>[]
+        RowWithActions<ED2, T>[]
     >['pagination'];
     rowSelection?: {
         type: 'checkbox' | 'radio';
         selectedRowKeys?: string[];
         onChange: (
             selectedRowKeys: string[],
-            row: RowWithActions<ED, keyof ED>[],
+            row: RowWithActions<ED2, T>[],
             info?: { type: 'single' | 'multiple' | 'none' }
         ) => void;
     };
@@ -59,7 +60,7 @@ export const TableContext = createContext<{
     onReset: undefined,
 })
 
-const ProList = (props: Props) => {
+const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
     const {
         title, buttonGroup, entity, extraActions, onAction, disabledOp, attributes,
         data, loading, tablePagination, rowSelection, onReload,
@@ -78,7 +79,7 @@ const ProList = (props: Props) => {
         <TableContext.Provider
             value={{
                 tableAttributes,
-                entity,
+                entity: entity as string,
                 schema,
                 setTableAttributes,
                 setSchema,
@@ -90,7 +91,7 @@ const ProList = (props: Props) => {
             <div className={Style.listContainer}>
                 {!isMobile && (
                     <ToolBar
-                        title={title || t('list', { name: t(`${entity}:name`)})}
+                        title={title || t('list', { name: t(`${entity as string}:name`)})}
                         buttonGroup={buttonGroup}
                         reload={() => {
                             onReload && onReload();

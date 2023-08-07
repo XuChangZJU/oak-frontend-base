@@ -10,3 +10,4 @@ export * from './utils/bluetooth';
 export * from './types/Page';
 export * from './types/Initialize';
 export * from './types/Filter';
+export * from './types/AbstractComponent';
