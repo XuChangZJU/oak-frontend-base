@@ -82,7 +82,7 @@ function RenderRow(props: { label: string; value: any; type: AttrRender['type'] 
             <div className={styles.renderLabel}>
                 {label}
             </div>
-            <Ellipsis direction='end' content={value} />
+            <div className={styles.renderValue}>{value ? String(value) : '--'}</div>
         </div>
     )
 }
@@ -122,9 +122,11 @@ export default function Render(
                 </div>
             )}
             <div className={styles.panel_content}>
-                {renderData && renderData.map((ele) => (
-                    <RenderRow label={ele.label} value={ele.value} type={ele.type} />
-                ))}
+                <Space direction="vertical" style={{'--gap': '10px'}}>
+                    {renderData && renderData.map((ele) => (
+                        <RenderRow label={ele.label} value={ele.value} type={ele.type} />
+                    ))}
+                </Space>
             </div>
         </div>
     );
