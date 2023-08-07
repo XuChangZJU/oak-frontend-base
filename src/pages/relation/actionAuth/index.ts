@@ -118,8 +118,8 @@ export default OakComponent({
             })
         })
 
-        // path 中含有user 也要特殊处理
-        const hasUserActionAuths = data.filter((ele) => ele.path?.split('.').includes('user'));
+        // relationId为空字符串 表示为user的actionAuth 也要特殊处理
+        const hasUserActionAuths = data.filter((ele) => ele.relationId === '');
         const $actionAuthsObject2 = groupBy(hasUserActionAuths, 'path');
         Object.keys($actionAuthsObject2).forEach((ele) => {
             const entities = ele.split('.');
