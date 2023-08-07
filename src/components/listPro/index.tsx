@@ -90,7 +90,7 @@ const ProList = (props: Props) => {
             <div className={Style.listContainer}>
                 {!isMobile && (
                     <ToolBar
-                        title={title || t('list', { name: t(`${entity}:name`)})}
+                        title={title || t(`${entity}:name`) + t('list')}
                         buttonGroup={buttonGroup}
                         reload={() => {
                             onReload && onReload();
