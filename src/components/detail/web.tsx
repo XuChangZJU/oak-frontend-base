@@ -128,10 +128,10 @@ export default function Render(
                         const renderLabel = t(ele.label);
                         let renderValue = ele.value;
                         if (ele.type === 'enum') {
-                            renderValue = t(`${entity}:v.${ele.attr}.${ele.value}`)
+                            renderValue = ele.value && t(`${entity}:v.${ele.attr}.${ele.value}`)
                         }
                         if (ele.type === 'datetime') {
-                            renderValue = dayjs(ele.value).format('YYYY-MM-DD HH:mm');
+                            renderValue = ele.value && dayjs(ele.value).format('YYYY-MM-DD HH:mm');
                         }
                         return (
                             <RenderRow label={renderLabel} value={renderValue} type={ele.type} />
