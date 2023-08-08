@@ -1,4 +1,3 @@
-/// <reference types="react" />
 declare type LocationProps = {
     poiName?: string;
     coordinate?: [number, number];
@@ -16,5 +15,5 @@ export declare type Poi = {
     detail: string;
     coordinate: [number, number];
 };
-export default function Location(props: LocationProps): JSX.Element;
+export default function Location(props: LocationProps): import("react/jsx-runtime").JSX.Element;
 export {};

@@ -7,6 +7,7 @@ import {
     ED,
     OakAbsAttrDef,
     OakAbsAttrUpsertDef,
+    ColumnMapType,
 } from '../../types/AbstractComponent';
 import { makeDataTransformer } from '../../utils/usefulFn';
 import { ReactComponentProps } from '../../types/Page';
@@ -20,15 +21,6 @@ type AttrRender = {
     params: DataTypeParams;
     width?: 1 | 2 | 3 | 4;
     ref?: string;
-};
-export type ColSpanType = 1 | 2 | 3 | 4;
-type ColumnMapType = {
-    xxl: ColSpanType;
-    xl: ColSpanType;
-    lg: ColSpanType;
-    md: ColSpanType;
-    sm: ColSpanType;
-    xs: ColSpanType;
 };
 const DEFAULT_COLUMN_MAP: ColumnMapType = {
     xxl: 4,

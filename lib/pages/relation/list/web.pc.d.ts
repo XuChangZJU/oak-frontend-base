@@ -1,4 +1,3 @@
-/// <reference types="react" />
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -9,5 +8,5 @@ export default function render(props: WebComponentProps<ED, 'relation', true, {
 }, {
     onActionClicked: (id: string, entity: keyof ED) => void;
     onRelationClicked: (id: string, entity: keyof ED) => void;
-}>): JSX.Element;
+}>): import("react/jsx-runtime").JSX.Element;
 export {};

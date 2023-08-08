@@ -17,5 +17,5 @@ declare type PageHeaderProps = {
     children?: React.ReactNode;
     showHeader?: boolean;
 };
-declare const _default: React.MemoExoticComponent<(props: PageHeaderProps) => JSX.Element>;
+declare const _default: React.MemoExoticComponent<(props: PageHeaderProps) => import("react/jsx-runtime").JSX.Element>;
 export default _default;

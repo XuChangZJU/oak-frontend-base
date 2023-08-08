@@ -108,7 +108,7 @@ export default function Render(
                 ),
             });
         }
-        if (ele?.type === 'img') {
+        if (ele?.type === 'image') {
             Object.assign(item, {
                 value: (
                     <div>

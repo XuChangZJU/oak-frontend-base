@@ -120,7 +120,7 @@ import {
 export type AttrRender = {
     label: string;
     value: any;
-    type: DataType | ('img' | 'link' | 'ref');
+    type: DataType | ('image' | 'link' | 'ref');
     color?: string;
     width?: RenderWidth;
     attr: string;
@@ -183,3 +183,13 @@ export type ListButtonProps = {
     onClick: () => void;
 }
 
+
+type ColSpanType = 1 | 2 | 3 | 4;
+export type ColumnMapType = {
+    xxl: ColSpanType;
+    xl: ColSpanType;
+    lg: ColSpanType;
+    md: ColSpanType;
+    sm: ColSpanType;
+    xs: ColSpanType;
+};

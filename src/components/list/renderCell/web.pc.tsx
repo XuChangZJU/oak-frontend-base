@@ -31,8 +31,16 @@ export default function Render(
     }
     // 属性类型是enum要使用标签
     else if (type === 'enum') {
+        let renderColor = color;
+        // web端的Tag组件没有primary 和 danger
+        if (renderColor === 'primary') {
+            renderColor = 'processing';
+        }
+        if (renderColor === 'danger') {
+            renderColor = 'error'
+        }
         return (
-            <Tag color={color} >
+            <Tag color={renderColor} >
                 {value}
             </Tag>
         )

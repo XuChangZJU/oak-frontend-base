@@ -29,7 +29,7 @@ export default OakComponent({
                 const { path, entity } = this.props;
                 return {
                     destEntity: entity as string,
-                    path,
+                    path: path?.replaceAll('(user)', ''),
                 };
             },
             '#name': 'path',
@@ -40,7 +40,6 @@ export default OakComponent({
         currentPage: 0,
     },
     formData({ data: rows }) {
-        // console.log(this.props.path);
         return {
             rows
         };
@@ -56,7 +55,7 @@ export default OakComponent({
                 this.getRelationAndActions();
                 this.addNamedFilter({
                     filter: {
-                        path,
+                        path: path?.replaceAll('(user)', ''),
                         destEntity: entity as string,
                     },
                     '#name': 'path'
@@ -79,7 +78,7 @@ export default OakComponent({
             const actions = this.features.relationAuth.getActions(entity!);
             // 获取relation
             // user 没有relation
-            if (source === 'user') {
+            if (source.includes('(user)')) {
                 this.setState({
                     relations: [{id: '', name: '当前用户'}],
                     actions,

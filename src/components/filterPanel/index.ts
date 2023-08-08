@@ -2,6 +2,7 @@ import { ED } from '../../types/AbstractComponent';
 import { ColumnProps } from '../../types/Filter';
 import assert from 'assert';
 import { getFilterName } from '../filter2/utils';
+import { RowWithActions, ReactComponentProps } from '../../types/Page';
 
 export default OakComponent({
     entity() {
@@ -69,4 +70,14 @@ export default OakComponent({
             this.refresh();
         }
     },
-});
+}) as <ED2 extends ED, T2 extends keyof ED2>(
+    props: ReactComponentProps<
+        ED2,
+        T2,
+        false,
+        {
+            entity: T2;
+            columns: ColumnProps<ED2, T2>[];
+        }
+    >
+) => React.ReactElement;

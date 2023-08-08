@@ -1,4 +1,3 @@
-/// <reference types="react" />
 import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ED } from '../../types/AbstractComponent';
@@ -23,5 +22,5 @@ export default function Render(props: WebComponentProps<ED, keyof EntityDict, fa
     onAction: (action?: string, cascadeAction?: CascadeActionProps) => void;
 }, {
     makeItems: () => void;
-}>): JSX.Element;
+}>): import("react/jsx-runtime").JSX.Element;
 export {};
