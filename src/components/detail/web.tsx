@@ -11,7 +11,8 @@ import {
     DataTypeParams,
 } from 'oak-domain/lib/types/schema/DataTypes';
 import { AttrRender } from '../../types/AbstractComponent';
-
+import { getValue } from '../../utils/usefulFn';
+import dayjs from 'dayjs';
 // type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 
 export type ColSpanType = 1 | 2 | 3 | 4;
@@ -112,8 +113,8 @@ export default function Render(
     const {
         title,
         renderData,
+        entity,
     } = oakData;
-
     return (
         <div className={styles.panel}>
             {title && (
@@ -123,9 +124,19 @@ export default function Render(
             )}
             <div className={styles.panel_content}>
                 <Space direction="vertical" style={{'--gap': '10px'}}>
-                    {renderData && renderData.map((ele) => (
-                        <RenderRow label={ele.label} value={ele.value} type={ele.type} />
-                    ))}
+                    {renderData && renderData.map((ele) => {
+                        const renderLabel = t(ele.label);
+                        let renderValue = ele.value;
+                        if (ele.type === 'enum') {
+                            renderValue = t(`${entity}:v.${ele.attr}.${ele.value}`)
+                        }
+                        if (ele.type === 'datetime') {
+                            renderValue = dayjs(ele.value).format('YYYY-MM-DD HH:mm');
+                        }
+                        return (
+                            <RenderRow label={renderLabel} value={renderValue} type={ele.type} />
+                        )
+                    })}
                 </Space>
             </div>
         </div>
