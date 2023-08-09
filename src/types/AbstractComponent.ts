@@ -122,7 +122,7 @@ export type AttrRender = {
     value: any;
     type: DataType | ('image' | 'link' | 'ref');
     color?: string;
-    width?: RenderWidth;
+    span?: RenderWidth;
     attr: string;
 };
 

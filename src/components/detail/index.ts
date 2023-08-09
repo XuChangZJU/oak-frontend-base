@@ -14,6 +14,7 @@ import { ReactComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { Breakpoint } from 'antd';
 type AttrRender = {
     label: string;
     value: any;
@@ -22,14 +23,7 @@ type AttrRender = {
     width?: 1 | 2 | 3 | 4;
     ref?: string;
 };
-const DEFAULT_COLUMN_MAP: ColumnMapType = {
-    xxl: 4,
-    xl: 4,
-    lg: 4,
-    md: 3,
-    sm: 2,
-    xs: 1,
-};
+
 export default OakComponent({
     isList: false,
     properties: {
@@ -39,7 +33,7 @@ export default OakComponent({
         layout: 'horizontal' as 'horizontal' | 'vertical',
         attributes: [] as OakAbsAttrDef[],
         data: {} as ED[keyof ED]['Schema'],
-        column: DEFAULT_COLUMN_MAP,
+        column: 3,
     },
     formData() {
         const { data } = this.props;
@@ -106,7 +100,7 @@ export default OakComponent({
         T2,
         false,
         {
-            column?: ColumnMapType;
+            column?: number | Record<Breakpoint, number>;
             entity: T2;
             attributes: OakAbsAttrDef[];
             data: Partial<ED2[T2]['Schema']>;

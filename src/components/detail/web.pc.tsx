@@ -1,51 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { Tag, Descriptions, Image } from 'antd';
+import { Tag, Descriptions, Image, Card, Breakpoint, Space } from 'antd';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import styles from './web.module.less';
-import {
-    DataType,
-    DataTypeParams,
-} from 'oak-domain/lib/types/schema/DataTypes';
+import dayjs from 'dayjs';
+
 import { AttrRender } from '../../types/AbstractComponent';
 
-// type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 
-export type ColSpanType = 1 | 2 | 3 | 4;
-type ColumnMapType = {
-    xxl: ColSpanType;
-    xl: ColSpanType;
-    lg: ColSpanType;
-    md: ColSpanType;
-    sm: ColSpanType;
-    xs: ColSpanType;
-};
+function RenderRow(props: { value: any; color: string; type: AttrRender['type'] }) {
+    const { type, value, color } = props;
+    if (type === 'image') {
+        if (value instanceof Array) {
+            return (
+                <Space wrap>
+                    {value.map((ele) => (
+                        <Image width={100} height={100} src={ele} style={{objectFit: 'contain'}} />
+                    ))}
+                </Space>
+        )
+        }
+        else {
+            return (
+                <Space wrap>
+                    <Image width={100} height={100} src={value} style={{objectFit: 'contain'}} />
+                </Space>
+            )
+        }
+    }
+    if (type === 'enum') {
+        <Tag color={color}>
+            {value}
+        </Tag>
+    }
+    return value;
+}
 
-const DEFAULT_COLUMN_MAP: ColumnMapType = {
-    xxl: 4,
-    xl: 4,
-    lg: 4,
-    md: 3,
-    sm: 2,
-    xs: 1,
-};
-
-// function getColumn(column: ColSpanType | ColumnMapType, width: Width) {
-//     if (typeof column === 'number') {
-//         return column;
-//     }
-
-//     if (typeof column === 'object') {
-//         if (column[width] !== undefined) {
-//             return column[width] || DEFAULT_COLUMN_MAP[width];
-//         }
-//     }
-
-//     return 3;
-// }
 
 export default function Render(
     props: WebComponentProps<
@@ -61,7 +54,7 @@ export default function Render(
             handleClick?: (id: string, action: string) => void;
             colorDict: ColorDict<EntityDict & BaseEntityDict>;
             dataSchema: StorageSchema<EntityDict>;
-            column: ColumnMapType;
+            column: number | Record<Breakpoint, number>;
             renderData: AttrRender[];
         },
         {}
@@ -74,67 +67,31 @@ export default function Render(
         title,
         colorDict,
         bordered,
-        column = DEFAULT_COLUMN_MAP,
+        column,
         renderData,
         layout = "horizontal",
     } = oakData;
 
-    const data = renderData?.map((ele) => {
-        const item = {
-            label: ele.label,
-            span: 1,
-            value: ele.value || '未填写',
-            attr: ele.attr,
-        };
-        // 类型如果是日期占两格，文本类型占4格
-        // if (ele?.type === 'datetime') {
-        //     Object.assign(item, { span: 2 });
-        // }
-        if (ele?.type === 'text') {
-            Object.assign(item, { span: 4 });
-        }
-        //类型如果是枚举，用tag
-        if (ele?.type === 'enum') {
-            Object.assign(item, {
-                value: (
-                    <Tag
-                        color={
-                            colorDict![entity]![ele.attr]![String(ele.value)]
-                        }
-                    >
-                        {/* {ele.value} */}
-                        {t(`${entity}:v.${ele.attr}.${ele.value}`)}
-                    </Tag>
-                ),
-            });
-        }
-        if (ele?.type === 'image') {
-            Object.assign(item, {
-                value: (
-                    <div>
-                        {ele.value?.map((ele1: string | undefined) => (
-                            <Image
-                                src={ele1}
-                                width={120}
-                                height={120}
-                                className={styles.img}
-                            />
-                        ))}
-                    </div>
-                ),
-                span: 4,
-            });
-        }
-        return Object.assign(item);
-    });
-
     return (
-        <Descriptions title={title} column={column} bordered={bordered} layout={layout}>
-            {data?.map((ele) => (
-                <Descriptions.Item label={t(ele.label)} span={ele.span || 1}>
-                    {ele.value}
-                </Descriptions.Item>
-            ))}
-        </Descriptions>
+        <Card>
+            <Descriptions title={title} column={column} bordered={bordered} layout={layout}>
+                {renderData?.map((ele) => {
+                    let renderValue = ele.value || t('not_filled_in');
+                    console.log(renderValue);
+                    const color = colorDict && colorDict[entity]?.[ele.attr]?.[ele.value] as string || 'default';
+                    if (ele.type === 'enum') {
+                        renderValue = ele.value && t(`${entity}:v.${ele.attr}.${ele.value}`)
+                    }
+                    if (ele.type === 'datetime') {
+                        renderValue = ele.value && dayjs(ele.value).format('YYYY-MM-DD');
+                    }
+                    return (
+                        <Descriptions.Item label={t(ele.label)} span={ele.span || 1}>
+                            <RenderRow type={ele.type} value={renderValue} color={color} />
+                        </Descriptions.Item>
+                    )
+                })}
+            </Descriptions>
+        </Card>
     );
 }

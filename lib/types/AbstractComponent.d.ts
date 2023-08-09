@@ -85,9 +85,9 @@ import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes'
 export declare type AttrRender = {
     label: string;
     value: any;
-    type: DataType | ('img' | 'link' | 'ref');
+    type: DataType | ('image' | 'link' | 'ref');
     color?: string;
-    width?: RenderWidth;
+    span?: RenderWidth;
     attr: string;
 };
 export interface OakAbsNativeAttrUpsertRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED, A extends keyof ED[T]['OpSchema']> extends Omit<OakAbsNativeAttrUpsertDef<ED, T, A>, 'type'> {

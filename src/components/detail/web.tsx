@@ -25,28 +25,6 @@ type ColumnMapType = {
     xs: ColSpanType;
 };
 
-const DEFAULT_COLUMN_MAP: ColumnMapType = {
-    xxl: 4,
-    xl: 4,
-    lg: 4,
-    md: 3,
-    sm: 2,
-    xs: 1,
-};
-
-// function getColumn(column: ColSpanType | ColumnMapType, width: Width) {
-//     if (typeof column === 'number') {
-//         return column;
-//     }
-
-//     if (typeof column === 'object') {
-//         if (column[width] !== undefined) {
-//             return column[width] || DEFAULT_COLUMN_MAP[width];
-//         }
-//     }
-
-//     return 3;
-// }
 
 function RenderRow(props: { label: string; value: any; type: AttrRender['type'] }) {
     const { type, label, value } = props;
@@ -131,7 +109,7 @@ export default function Render(
                             renderValue = ele.value && t(`${entity}:v.${ele.attr}.${ele.value}`)
                         }
                         if (ele.type === 'datetime') {
-                            renderValue = ele.value && dayjs(ele.value).format('YYYY-MM-DD HH:mm');
+                            renderValue = ele.value && dayjs(ele.value).format('YYYY-MM-DD');
                         }
                         return (
                             <RenderRow label={renderLabel} value={renderValue} type={ele.type} />
