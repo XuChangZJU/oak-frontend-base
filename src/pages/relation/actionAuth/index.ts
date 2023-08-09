@@ -10,7 +10,7 @@ export default OakComponent({
     projection: {
         id: 1,
         relationId: 1,
-        path: 1,
+        paths: 1,
         deActions: 1,
         destEntity: 1,
         relation: {

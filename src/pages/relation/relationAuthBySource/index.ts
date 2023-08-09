@@ -15,7 +15,7 @@ export default OakComponent({
             entity: 1,
             entityId: 1,
         },
-        path: 1,
+        paths: 1,
         destRelationId: 1,
         destRelation: {
             id: 1,
