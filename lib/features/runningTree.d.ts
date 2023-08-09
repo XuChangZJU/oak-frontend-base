@@ -51,8 +51,6 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     protected getProjection(context?: FrontCxt): ED[T]['Selection']['data'] | undefined;
     setProjection(projection: ED[T]['Selection']['data']): void;
     protected judgeRelation(attr: string): string | 0 | 1 | string[] | 2;
-    protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']): boolean;
-    protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']): boolean;
 }
 declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private children;

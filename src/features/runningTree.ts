@@ -176,13 +176,13 @@ abstract class Node<
         return judgeRelation(this.schema, this.entity, attr2);
     }
 
-    protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']) {
+    /* protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']) {
         return contains(this.entity, this.schema, filter, conditionalFilter);
     }
 
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']) {
         return repel(this.entity, this.schema, filter1, filter2);
-    }
+    } */
 }
 
 const DEFAULT_PAGINATION: Pagination = {
@@ -268,6 +268,7 @@ class ListNode<
 
     onCacheSync(records: OpRecord<ED>[]) {
         // 只需要处理insert
+        // todo 这里处理有点问题，因为前台的sorter在处理enum类型时的结果和后台不一致，会导致数据顺序变乱 by Xc 20230809
         if (this.loading) {
             return;
         }
@@ -541,8 +542,10 @@ class ListNode<
          * 先修正为先取id，再取一次数据
          * 
          * 修改memeory-tree，当属性缺失不再报missedRow，改回直接用filter去取数据的逻辑
+         * 
+         * 这里不能用sorter排序，enum的排序顺序目前前后台尚不一致 by Xc 20230809
          */
-        const { data, sorter, filter } = this.constructSelection(true, false, context, true);
+        const { data, filter } = this.constructSelection(true, false, context, true);
 
         if (filter || this.ids) {
             const filter2 = filter && this.ids ? {
@@ -559,12 +562,23 @@ class ListNode<
             const result = this.cache.get(this.entity, {
                 data,
                 filter: filter2,
-                sorter,
             }, context, this.isLoading());
 
 
             const r2 = result.filter(
                 ele => ele.$$createAt$$ === 1 || (this.ids?.includes(ele.id!))
+            ).sort(
+                (ele1, ele2) => {
+                    if (ele1.$$createAt$$ === 1) {
+                        return -1;
+                    }
+                    else if (ele2.$$createAt$$ === 1) {
+                        return -1;
+                    }
+                    const idx1 = this.ids!.indexOf(ele1.id!);
+                    const idx2 = this.ids!.indexOf(ele2.id!);
+                    return idx1 - idx2;
+                }
             );
             if (this.aggr) {
                 // 如果有聚合查询的结果，这里按理不应该有aggregate和create同时出现，但也以防万一
