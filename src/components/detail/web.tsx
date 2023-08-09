@@ -11,7 +11,8 @@ import {
     DataTypeParams,
 } from 'oak-domain/lib/types/schema/DataTypes';
 import { AttrRender } from '../../types/AbstractComponent';
-
+import { getValue } from '../../utils/usefulFn';
+import dayjs from 'dayjs';
 // type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 
 export type ColSpanType = 1 | 2 | 3 | 4;
@@ -49,7 +50,7 @@ const DEFAULT_COLUMN_MAP: ColumnMapType = {
 
 function RenderRow(props: { label: string; value: any; type: AttrRender['type'] }) {
     const { type, label, value } = props;
-    if (type === 'img') {
+    if (type === 'image') {
         if (value instanceof Array) {
             return (
                 <div className={styles.renderRow}>
@@ -82,7 +83,7 @@ function RenderRow(props: { label: string; value: any; type: AttrRender['type'] 
             <div className={styles.renderLabel}>
                 {label}
             </div>
-            <Ellipsis direction='end' content={value} />
+            <div className={styles.renderValue}>{value ? String(value) : '--'}</div>
         </div>
     )
 }
@@ -112,8 +113,8 @@ export default function Render(
     const {
         title,
         renderData,
+        entity,
     } = oakData;
-
     return (
         <div className={styles.panel}>
             {title && (
@@ -122,9 +123,21 @@ export default function Render(
                 </div>
             )}
             <div className={styles.panel_content}>
-                {renderData && renderData.map((ele) => (
-                    <RenderRow label={ele.label} value={ele.value} type={ele.type} />
-                ))}
+                <Space direction="vertical" style={{'--gap': '10px'}}>
+                    {renderData && renderData.map((ele) => {
+                        const renderLabel = t(ele.label);
+                        let renderValue = ele.value;
+                        if (ele.type === 'enum') {
+                            renderValue = ele.value && t(`${entity}:v.${ele.attr}.${ele.value}`)
+                        }
+                        if (ele.type === 'datetime') {
+                            renderValue = ele.value && dayjs(ele.value).format('YYYY-MM-DD HH:mm');
+                        }
+                        return (
+                            <RenderRow label={renderLabel} value={renderValue} type={ele.type} />
+                        )
+                    })}
+                </Space>
             </div>
         </div>
     );

@@ -91,7 +91,7 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
             <div className={Style.listContainer}>
                 {!isMobile && (
                     <ToolBar
-                        title={title || t('list', { name: t(`${entity as string}:name`)})}
+                        title={title || (t(`${entity as string}:name`) + t('list'))}
                         buttonGroup={buttonGroup}
                         reload={() => {
                             onReload && onReload();
