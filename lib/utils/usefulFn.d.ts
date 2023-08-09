@@ -30,7 +30,7 @@ export declare function analyzeAttrMobileForCard<ED extends EntityDict & BaseEnt
         label: string;
         value: any;
     }[];
-    state: string | number | boolean | import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>> | import("react").ReactFragment | {
+    state: string | number | boolean | import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>> | Iterable<import("react").ReactNode> | {
         color: string;
         value: string;
     } | null | undefined;
