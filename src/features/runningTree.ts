@@ -703,7 +703,7 @@ class ListNode<
          * 
          * 修改memeory-tree，当属性缺失不再报missedRow，改回直接用filter去取数据的逻辑
          */
-        const { data, sorter, filter } = this.constructSelection(true, context, true);
+        const { data, filter } = this.constructSelection(true, context, true);
 
         const result = this.cache.get(this.entity, {
             data,
@@ -714,11 +714,22 @@ class ListNode<
                     }
                 }]
             },
-            sorter,
         }, context, this.isLoading());
 
         const r2 = result.filter(
             ele => ele.$$createAt$$ === 1 || (this.ids?.includes(ele.id!))
+        ).sort(
+            (ele1, ele2) => {
+                if (ele1.$$createAt$$ === 1) {
+                    return -1;
+                }
+                else if (ele2.$$createAt$$ === 1) {
+                    return -1;
+                }
+                const idx1 = this.ids!.indexOf(ele1.id!);
+                const idx2 = this.ids!.indexOf(ele2.id!);
+                return idx1 - idx2;
+            }
         );
         if (this.aggr) {
             // 如果有聚合查询的结果，这里按理不应该有aggregate和create同时出现，但也以防万一
