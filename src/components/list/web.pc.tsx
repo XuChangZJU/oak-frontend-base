@@ -78,7 +78,7 @@ export default function Render(
             }
             const tableColumns: ColumnsType<any> = showAttributes && showAttributes.map((ele) => {
                 const path = getPath(ele);
-                const {attrType, attr, entity: entityI8n } = resolvePath<ED>(schema, entity, path);
+                const { attrType, attr, entity: entityI8n } = resolvePath<ED>(schema, entity, path);
                 if (entityI8n === 'notExist') {
                     assert((ele as OakAbsDerivedAttrDef).width, `非schema属性${attr}需要自定义width`);
                     assert((ele as OakAbsDerivedAttrDef).type, `非schema属性${attr}需要自定义type`);
@@ -95,6 +95,9 @@ export default function Render(
                     render: (v: string, row: any) => {
                         const value = getValue(row, path, entityI8n, attr, attrType, t);
                         const stateValue = get(row, path);
+                        if (!stateValue) {
+                            return <></>
+                        }
                         const color = colorDict && colorDict[entityI8n]?.[attr]?.[stateValue] as string;
                         if (type === 'enum') {
                             assert(color, `${entity}实体${attr}颜色定义缺失`)
@@ -116,7 +119,7 @@ export default function Render(
                 return column;
             })
             if (!disabledOp && tableColumns) {
-                    tableColumns.push({
+                tableColumns.push({
                     fixed: 'right',
                     align: 'left',
                     title: '操作',
@@ -175,7 +178,7 @@ export default function Render(
                             keys = [record.id];
                         }
                         const row = data.filter((ele) => keys.includes(ele.id));
-                        rowSelection?.onChange && rowSelection?.onChange(keys, row, {type: 'all'});
+                        rowSelection?.onChange && rowSelection?.onChange(keys, row, { type: 'all' });
                     }
                 }
             }}
