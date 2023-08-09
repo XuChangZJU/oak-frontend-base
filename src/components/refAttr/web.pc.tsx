@@ -19,6 +19,7 @@ import { OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import Picker from '../picker';
 import { combineFilters } from 'oak-domain/lib/store/filter';
+import { StorageSchema } from 'oak-domain/lib/types';
 
 type ED = EntityDict & BaseEntityDict;
 
@@ -35,6 +36,7 @@ export default function render(
             pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
             onChange: (value: string[]) => void;
             placeholder: string;
+            schema: StorageSchema<EntityDict & BaseEntityDict>;
         }
     >
 ) {
@@ -46,6 +48,7 @@ export default function render(
         onChange,
         entityIds,
         placeholder,
+        schema,
     } = props.data;
     const { t } = props.methods;
     const { mode } = pickerRender;
@@ -138,7 +141,7 @@ export default function render(
                                     } = await getDynamicSelectors();
                                     if (dynamicFilter2 || filter) {
                                         setDynamicFilter(
-                                            combineFilters([
+                                            combineFilters(entity, schema, [
                                                 dynamicFilter2,
                                                 filter,
                                             ])
@@ -157,7 +160,7 @@ export default function render(
                                 } else {
                                     if (filter) {
                                         setDynamicFilter(
-                                            combineFilters([filter])
+                                            filter
                                         );
                                     }
                                     if (sorter) {

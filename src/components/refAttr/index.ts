@@ -36,8 +36,10 @@ export default OakComponent({
         const renderValue = rows && rows.length ? rows.map(
             (row) => title(row)
         ).join(',') : '';
+        const schema = this.features.cache.getSchema();
         return {
             renderValue,
+            schema,
         };
     },
     data: {

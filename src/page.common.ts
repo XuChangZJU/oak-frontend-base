@@ -20,7 +20,7 @@ import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { MessageProps } from './types/Message';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
-import { addFilterSegment, combineFilters } from 'oak-domain/lib/store/filter';
+import { combineFilters } from 'oak-domain/lib/store/filter';
 import { MODI_NEXT_PATH_SUFFIX } from './features/runningTree';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
 
@@ -310,7 +310,7 @@ function checkActionsAndCascadeEntities<
                             } : {
                                 [this.state.oakEntity]: this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath!),
                             };
-                            const filter2 = combineFilters([filter, intrinsticFilter]);
+                            const filter2 = combineFilters(rel[0], this.features.cache.getSchema(), [filter, intrinsticFilter]);
 
                             // 先尝试整体测试是否通过，再测试每一行
                             // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
@@ -356,7 +356,7 @@ function checkActionsAndCascadeEntities<
                             const intrinsticFilter = rel[1] ? {
                                 [rel[1]]: rows.id,
                             } : { entity: this.state.oakEntity, entityId: rows.id };
-                            const filter2 = combineFilters([filter, intrinsticFilter]);
+                            const filter2 = combineFilters(rel[0], this.features.cache.getSchema(), [filter, intrinsticFilter]);
 
                             // 先尝试整体测试是否通过，再测试每一行
                             // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高

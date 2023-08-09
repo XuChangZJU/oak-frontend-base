@@ -1,6 +1,6 @@
 import { assert } from 'oak-domain/lib/utils/assert';
 import { cloneDeep, pull, unset, merge, uniq } from "oak-domain/lib/utils/lodash";
-import { addFilterSegment, combineFilters, contains, repel, same } from "oak-domain/lib/store/filter";
+import { combineFilters, contains, repel, same } from "oak-domain/lib/store/filter";
 import { createOperationsFromModies } from 'oak-domain/lib/store/modi';
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, AspectWrapper, AuthDefDict, CascadeRelationItem, CascadeActionItem } from "oak-domain/lib/types";
@@ -866,7 +866,7 @@ class ListNode<
         const filters = this.constructFilters(context, withParent, ignoreNewParent, ignoreUnapplied);
 
         const filters2 = filters?.filter((ele) => !!ele);
-        const filter = filters2 ? combineFilters<ED, T>(filters2) : undefined;
+        const filter = filters2 ? combineFilters<ED, T>(this.entity, this.schema, filters2) : undefined;
         return {
             data,
             filter,
@@ -985,7 +985,7 @@ class ListNode<
     // 查看这个list上所有数据必须遵守的限制
     getIntrinsticFilters() {
         const filters = this.constructFilters(undefined, true, true);
-        return combineFilters(filters || []);
+        return combineFilters(this.entity, this.schema, filters || []);
     }
 }
 
@@ -1399,11 +1399,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             id: this.id,
         };
         if (this.filters) {
-            this.filters.forEach(
-                (f) => {
-                    filter = addFilterSegment(filter, f.filter)!;
-                }
-            );
+            filter = combineFilters(this.entity, this.schema, this.filters.map(
+                ele => typeof  ele.filter === 'function' ? ele.filter() : ele.filter
+            ).concat(filter));
         }
         return filter;
     }
