@@ -876,9 +876,10 @@ class ListNode<
 
     async refresh(pageNumber?: number, getCount?: true, append?: boolean) {
         const { entity, pagination } = this;
-        const { currentPage, pageSize } = pagination;
+        const { currentPage, pageSize, randomRange } = pagination;
         const currentPage3 =
             typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
+        assert(randomRange || currentPage3, 'list在访问数据时，如果设置了randomRange，则不应再有pageNumber');
         const {
             data: projection,
             filter,

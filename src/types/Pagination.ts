@@ -4,4 +4,5 @@ export interface Pagination {
     append?: boolean;
     more?: boolean;
     total?: number;
-};;
+    randomRange?: number;    
+};
