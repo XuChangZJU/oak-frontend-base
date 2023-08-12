@@ -14,11 +14,11 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>);
     getSchema(): import("oak-domain/lib/types").StorageSchema<ED>;
     getCurrentUserId(allowUnloggedIn?: boolean): string | undefined;
-    exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void): Promise<{
+    exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void, dontPublish?: true): Promise<{
         result: Awaited<ReturnType<AD[K]>>;
         message: string | null | undefined;
     }>;
-    refresh<T extends keyof ED, OP extends SelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true, callback?: (result: Awaited<ReturnType<AD['select']>>) => void): Promise<{
+    refresh<T extends keyof ED, OP extends SelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true, callback?: (result: Awaited<ReturnType<AD['select']>>) => void, dontPublish?: true): Promise<{
         data: Partial<ED[T]["Schema"]>[];
         count: number | undefined;
     }>;

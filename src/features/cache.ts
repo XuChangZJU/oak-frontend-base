@@ -63,7 +63,8 @@ export class Cache<
     async exec<K extends keyof AD>(
         name: K,
         params: Parameters<AD[K]>[0],
-        callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void
+        callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void,
+        dontPublish?: true,
     ) {
         try {
             const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
@@ -72,7 +73,7 @@ export class Cache<
                 this.sync(opRecords);
             }
             callback && callback(result, opRecords);
-            if (opRecords) {
+            if (opRecords && !dontPublish) {
                 this.publish();
             }
             return {
@@ -99,6 +100,7 @@ export class Cache<
         option?: OP,
         getCount?: true,
         callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
+        dontPublish?: true
     ) {
         this.refreshing = true;
         const { result: { ids, count, aggr } } = await this.exec('select', {
@@ -106,7 +108,7 @@ export class Cache<
             selection,
             option,
             getCount,
-        }, callback);
+        }, callback, dontPublish);
 
         const selection2 = Object.assign({}, selection, {
             filter: {

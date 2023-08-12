@@ -48,7 +48,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
     const navigator = new Navigator();
     const port = new Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper);
     const style = new Style<ED>(colorDict);
-    const locales = new Locales(cache, localStorage, environment, makeBridgeUrlFn);
+    const locales = new Locales(cache, localStorage, environment, 'zh_CN', makeBridgeUrlFn);        // 临时性代码，应由上层传入
     const contextMenuFactory = new ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, relationAuth, actionCascadePathGraph);
     return {
         cache,
