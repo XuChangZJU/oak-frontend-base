@@ -11,6 +11,7 @@ import { Locales } from './locales';
 import { EventBus } from './eventBus';
 import { LocalStorage } from './localStorage';
 import { Notification } from './notification';
+import { Environment } from './environment';
 import { Message } from './message';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { Navigator } from './navigator';
@@ -35,10 +36,10 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string) {
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store);
     const location = new Location();
+    const environment = new Environment();
     const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, cache, 
         actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities);
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, relationAuth);
-    const locales = new Locales(aspectWrapper, makeBridgeUrlFn);
     const geo = new Geo(aspectWrapper);
     const eventBus = new EventBus();
     const localStorage = new LocalStorage();
@@ -47,6 +48,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
     const navigator = new Navigator();
     const port = new Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper);
     const style = new Style<ED>(colorDict);
+    const locales = new Locales(cache, localStorage, environment, makeBridgeUrlFn);
     const contextMenuFactory = new ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, relationAuth, actionCascadePathGraph);
     return {
         cache,
@@ -75,7 +77,7 @@ export type BasicFeatures<
     cache: Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     location: Location;
     runningTree: RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
-    locales: Locales<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
+    locales: Locales<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     eventBus: EventBus;
     localStorage: LocalStorage;
     notification: Notification;

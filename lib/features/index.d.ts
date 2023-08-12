@@ -25,7 +25,7 @@ export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt ex
     cache: Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     location: Location;
     runningTree: RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
-    locales: Locales<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
+    locales: Locales<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     eventBus: EventBus;
     localStorage: LocalStorage;
     notification: Notification;

@@ -1,6 +1,6 @@
 import { unset } from 'oak-domain/lib/utils/lodash';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
-import { PromisefyOption } from '../types/Wx';
+import { PromisefyOption } from '../../types/Wx';
 
 export class Bluetooth {
     private serverDict: Record<string, WechatMiniprogram.BLEPeripheralServer>;

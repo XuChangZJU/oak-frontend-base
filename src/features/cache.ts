@@ -72,7 +72,9 @@ export class Cache<
                 this.sync(opRecords);
             }
             callback && callback(result, opRecords);
-            this.publish();
+            if (opRecords) {
+                this.publish();
+            }
             return {
                 result,
                 message,
