@@ -14,8 +14,9 @@ const LS_LNG_KEY = 'ofb-feature-locale-lng';
 export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private localStorage: LocalStorage;
+    private environment: Environment;
     private makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string
-    private lng: string;
+    private language: string;
 
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
@@ -26,28 +27,27 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         super();
         this.cache = cache;
         this.localStorage = localStorage;
+        this.environment = environment;
         const savedLng = localStorage.load(LS_LNG_KEY);
         if (savedLng) {
-            this.lng = savedLng;
+            this.language = savedLng;
         }
         else {
-            this.lng = 'zh_CN';
+            this.language = 'zh_CN';
             this.detectLanguange();
         }
         this.makeBridgeUrlFn = makeBridgeUrlFn;
     }
 
-    private detectLanguange() {
+    private async detectLanguange() {
+        const env = await this.environment.getEnv();
+        const { language } = env;
+        this.language = language;
+        this.localStorage.save(LS_LNG_KEY, language);
     }
 
-    async get(namespace: string | string[], locale: string, scene: string) {
-        const { result } = await this.cache.exec('getTranslations',
-            { namespace, locale },
-        );
-
-        return {
-            translations: result,
-        };
+    t(namespace: string | string[], key: string, params?: object) {
+        // todo
     }
 
     // 这个是临时的代码，等和auth线合并了再移到合适的feature里去

@@ -10,12 +10,11 @@ import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private cache;
     private localStorage;
+    private environment;
     private makeBridgeUrlFn?;
-    private lng;
+    private language;
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, localStorage: LocalStorage, environment: Environment, makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string);
     private detectLanguange;
-    get(namespace: string | string[], locale: string, scene: string): Promise<{
-        translations: Awaited<ReturnType<AD["getTranslations"]>>;
-    }>;
+    t(namespace: string | string[], key: string, params?: object): void;
     makeBridgeUrl(url: string, headers?: Record<string, string>): string;
 }

@@ -8,7 +8,7 @@ import { WebEnv } from 'oak-domain/lib/types/Environment';
  */
 export async function getEnv() {
     const fp = await FingerprintJS.load();
-    const result = await fp.get();
+    const [result, localStorageEnabled] = await Promise.all([fp.get(), navigator.storage.persisted()]);
 
     const { visitorId, components } = result;
     return Object.assign(
@@ -20,5 +20,7 @@ export async function getEnv() {
         ]), {
         type: 'web',
         visitorId,
+        localStorageEnabled,
+        language: navigator.language,
     }) as unknown as WebEnv;
 }
