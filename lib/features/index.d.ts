@@ -10,6 +10,7 @@ import { Locales } from './locales';
 import { EventBus } from './eventBus';
 import { LocalStorage } from './localStorage';
 import { Notification } from './notification';
+import { Environment } from './environment';
 import { Message } from './message';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { Navigator } from './navigator';
@@ -33,6 +34,7 @@ export declare type BasicFeatures<ED extends EntityDict & BaseEntityDict, Cxt ex
     navigator: Navigator;
     port: Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
     relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
+    environment: Environment;
     style: Style<ED>;
     geo: Geo<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
     contextMenuFactory: ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;

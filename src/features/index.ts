@@ -85,6 +85,7 @@ export type BasicFeatures<
     navigator: Navigator;
     port: Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
     relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
+    environment: Environment;
     style: Style<ED>;
     geo: Geo<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>;
     contextMenuFactory: ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
