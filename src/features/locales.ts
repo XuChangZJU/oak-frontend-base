@@ -61,7 +61,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
                 id: 1,
                 data: 1,
                 namespace: 1,
-                languange: 1,
+                language: 1,
             },
         });
         this.dataset = {};
