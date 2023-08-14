@@ -64,6 +64,7 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         port,
         style,
         geo,
+        environment,
         contextMenuFactory,
     } as BasicFeatures<ED, Cxt, FrontCxt, AD>;
 }
