@@ -97,6 +97,7 @@ const oakBehavior = Behavior<
             FDD;
         subscribed: Array<() => void>;
         oakOption: OakComponentOption<
+            boolean,
             EDD,
             keyof EDD,
             Cxt,
@@ -104,7 +105,6 @@ const oakBehavior = Behavior<
             ADD,
             FDD,
             Record<string, any>,
-            boolean,
             Record<string, any>,
             Record<string, any>,
             Record<string, Function>
@@ -837,6 +837,7 @@ function translatePropertiesToPropertyDefinitions(properties?: DataOption) {
 }
 
 export function createComponent<
+    IsList extends boolean,
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends AsyncContext<ED>,
@@ -844,12 +845,12 @@ export function createComponent<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>,
     FormedData extends Record<string, any>,
-    IsList extends boolean,
     TData extends DataOption = {},
     TProperty extends DataOption = {},
     TMethod extends Record<string, Function> = {}
 >(
     option: OakComponentOption<
+        IsList,
         ED,
         T,
         Cxt,
@@ -857,7 +858,6 @@ export function createComponent<
         AD,
         FD,
         FormedData,
-        IsList,
         TData,
         TProperty,
         TMethod
@@ -905,6 +905,7 @@ export function createComponent<
             FD;
             subscribed: Array<() => void>;
             oakOption: OakComponentOption<
+                IsList,
                 ED,
                 T,
                 Cxt,
@@ -912,7 +913,6 @@ export function createComponent<
                 AD,
                 FD,
                 FormedData,
-                IsList,
                 TData,
                 TProperty,
                 TMethod

@@ -30,7 +30,7 @@ export async function onPathSet<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>>(
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
-        option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>) {
+        option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>) {
     const { props, state } = this;
     const { oakPath, oakProjection, oakFilters, oakSorters, oakId } = props as ComponentProps<ED, T, true, {}>;
     const { entity, path, projection, isList, filters, sorters, pagination } = option;
@@ -162,7 +162,7 @@ function checkActionsAndCascadeEntities<
     FrontCxt extends SyncContext<ED>>(
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
         rows: Partial<ED[keyof ED]['Schema']> | Partial<ED[keyof ED]['Schema']>[],
-        option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>
+        option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>
     ) {
     const checkTypes = ['relation', 'row', 'logical', 'logicalRelation'] as CheckerType[];
     const actions = this.props.oakActions ? JSON.parse(this.props.oakActions) as ED[T]['Action'][] : (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
@@ -380,7 +380,7 @@ export function reRender<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>>(
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
-        option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>,
+        option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>,
         extra?: Record<string, any>) {
     const { features } = this;
     const { formData } = option;

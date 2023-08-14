@@ -50,6 +50,7 @@ abstract class OakComponentBase<
     abstract features: FD &
         BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     abstract oakOption: OakComponentOption<
+        IsList,
         ED,
         T,
         Cxt,
@@ -57,7 +58,6 @@ abstract class OakComponentBase<
         AD,
         FD,
         FormedData,
-        IsList,
         TData,
         TProperty,
         TMethod
@@ -681,6 +681,7 @@ function translateListeners(listeners?: Record<string, (prev: Record<string, any
 const DEFAULT_REACH_BOTTOM_DISTANCE = 50;
 
 export function createComponent<
+    IsList extends boolean,
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends AsyncContext<ED>,
@@ -688,12 +689,12 @@ export function createComponent<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>,
     FormedData extends Record<string, any>,
-    IsList extends boolean,
     TData extends Record<string, any> = {},
     TProperty extends DataOption = {},
     TMethod extends Record<string, Function> = {}
 >(
     option: OakComponentOption<
+        IsList,
         ED,
         T,
         Cxt,
@@ -701,7 +702,6 @@ export function createComponent<
         AD,
         FD,
         FormedData,
-        IsList,
         TData,
         TProperty,
         TMethod
@@ -711,6 +711,7 @@ export function createComponent<
     const {
         data, methods, lifetimes, getRender, path, listeners
     } = option as OakComponentOption<
+        IsList,
         ED,
         T,
         Cxt,
@@ -718,7 +719,6 @@ export function createComponent<
         AD,
         FD,
         FormedData,
-        IsList,
         TData,
         TProperty,
         TMethod

@@ -1,0 +1,11 @@
+{
+    "component": true,
+    "usingComponents": {
+        "l-dialog": "../../miniprogram_npm/lin-ui/dialog/index",
+        "l-button": "../../miniprogram_npm/lin-ui/button/index",
+        "l-popup": "../../miniprogram_npm/lin-ui/popup/index",
+        "oak-icon": "../icon/index",
+        "popover": "../../miniprogram_npm/popover/popover",
+        "popover-item": "../../miniprogram_npm/popover/popover-item"
+    }
+}

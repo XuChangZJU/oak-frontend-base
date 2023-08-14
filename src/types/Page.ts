@@ -114,6 +114,7 @@ type FeatureDef<
     };
 
 interface ComponentOption<
+    IsList extends boolean,
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends AsyncContext<ED>,
@@ -121,15 +122,14 @@ interface ComponentOption<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>,
     FormedData extends Record<string, any>,
-    IsList extends boolean,
     TData extends DataOption,
     TProperty extends DataOption,
     TMethod extends Record<string, Function>,
     EMethod extends Record<string, Function> = {},
     > {
+    isList: IsList;
     entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => T);
     path?: string;
-    isList: IsList;
     features?: FeatureDef<ED, Cxt, FrontCxt, AD, FD>[];
     cascadeActions?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
@@ -139,7 +139,7 @@ interface ComponentOption<
     append?: boolean;
     pagination?: Pagination;
     filters?: Array<{
-        filter: ED[T]['Selection']['filter'] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => ED[T]['Selection']['filter'] | undefined);
+        filter: NonNullable<ED[T]['Selection']['filter']> | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => ED[T]['Selection']['filter'] | undefined);
         '#name'?: string;
     }>;
     sorters?: Array<{
@@ -252,6 +252,7 @@ export type ComponentFullThisType<
     } & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
 
 export type OakComponentOption<
+    IsList extends boolean,
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends AsyncContext<ED>,
@@ -259,12 +260,11 @@ export type OakComponentOption<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>,
     FormedData extends Record<string, any>,
-    IsList extends boolean,
     TData extends Record<string, any>,
     TProperty extends DataOption,
     TMethod extends Record<string, Function>,
     EMethod extends Record<string, Function> = {},
-    > = ComponentOption<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod> &
+    > = ComponentOption<IsList, ED, T, Cxt, FrontCxt, AD, FD, FormedData, TData, TProperty, TMethod, EMethod> &
     Partial<{
         lifetimes: {
             created?(): void;
@@ -479,14 +479,15 @@ export type MakeOakComponent<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>
     > = <
+        IsList extends boolean,
         T extends keyof ED,
         FormedData extends DataOption,
-        IsList extends boolean,
         TData extends DataOption,
         TProperty extends DataOption,
         TMethod extends MethodOption
         >(
         options: OakComponentOption<
+            IsList,
             ED,
             T,
             Cxt,
@@ -494,7 +495,6 @@ export type MakeOakComponent<
             AD,
             FD,
             FormedData,
-            IsList,
             TData,
             TProperty,
             TMethod
