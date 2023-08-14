@@ -11,7 +11,7 @@ export default function render(props: WebComponentProps<ED, 'actionAuth', true, 
     actions: string[];
     entity: keyof EntityDict;
 }, {
-    onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) => void;
+    onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['Schema'][]) => void;
     confirm: () => void;
 }>): import("react/jsx-runtime").JSX.Element;
 export {};

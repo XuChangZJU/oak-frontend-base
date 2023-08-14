@@ -396,6 +396,14 @@ export function analyzeDataUpsertTransformer<
         });
 }
 
+type CoverData = {
+    data: {
+        label: string;
+        value: any;
+        type: OakAbsDerivedAttrDef['type'];
+    }[];
+    record: EntityDict[keyof EntityDict];
+}[]
 
 export function analyzeAttrMobileForCard<
     ED extends EntityDict & BaseEntityDict
@@ -404,7 +412,7 @@ export function analyzeAttrMobileForCard<
     entity: keyof ED,
     t: (k: string, params?: object) => string,
     attributes: OakAbsAttrDef[],
-) {
+): (data: any[]) => CoverData {
     return (data: any[]) => {
         // 遍历用户传入的数据源
         const coverData = data.map((row) => {

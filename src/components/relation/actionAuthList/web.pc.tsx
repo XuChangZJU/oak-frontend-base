@@ -23,7 +23,7 @@ export default function render(
             relations: EntityDict['relation']['Schema'][],
             actions: string[];
             datasource: TableData[];
-            rows: EntityDict['actionAuth']['Schema'][];
+            rows: ED['actionAuth']['Schema'][];
             path: string;
             entity: keyof ED;
             openTip: boolean;
@@ -67,7 +67,8 @@ export default function render(
                                 label: ele,
                                 value: ele,
                             }))
-                            const actionAuth = rows.find((ele) => ele.relationId === row.relationId);
+                            const actionAuth = rows.filter((ele) => ele.relationId === row.relationId)
+                                .sort((a, b) => b.deActions.length - a.deActions.length)?.[0];
                             const defaultValue = actionAuth ? actionAuth.deActions : [];
                             return (
                                 <Checkbox.Group
@@ -83,7 +84,7 @@ export default function render(
                                         if (!actionAuth) {
                                             methods.addItem({
                                                 relationId: row.relationId || '',
-                                                path: path2,
+                                                paths: [path2],
                                                 deActions: checkedArr as string[],
                                                 destEntity: entity as string,
                                             })

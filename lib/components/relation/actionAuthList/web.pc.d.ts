@@ -11,7 +11,7 @@ export default function render(props: WebComponentProps<ED, 'actionAuth', true, 
     relations: EntityDict['relation']['Schema'][];
     actions: string[];
     datasource: TableData[];
-    rows: EntityDict['actionAuth']['Schema'][];
+    rows: ED['actionAuth']['Schema'][];
     path: string;
     entity: keyof ED;
     openTip: boolean;

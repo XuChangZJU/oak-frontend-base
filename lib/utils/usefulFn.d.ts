@@ -19,11 +19,13 @@ export declare function getAlign(attrType: DataType): 'left' | 'right' | 'center
 export declare function getType(attribute: OakAbsAttrDef, attrType: OakAbsDerivedAttrDef['type']): "link" | "ref" | DataType | undefined;
 export declare function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, attrDefs: OakAbsAttrDef[], colorDict?: ColorDict<ED>): DataTransformer;
 export declare function analyzeDataUpsertTransformer<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(dataSchema: StorageSchema<ED>, entity: T, attrUpsertDefs: OakAbsAttrUpsertDef<ED, T>[]): (data: any) => AttrUpsertRender<ED, T>[];
-export declare function analyzeAttrMobileForCard<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, t: (k: string, params?: object) => string, attributes: OakAbsAttrDef[]): (data: any[]) => {
+declare type CoverData = {
     data: {
         label: string;
         value: any;
-        type: "link" | "ref" | DataType | undefined;
+        type: OakAbsDerivedAttrDef['type'];
     }[];
-    record: any;
+    record: EntityDict[keyof EntityDict];
 }[];
+export declare function analyzeAttrMobileForCard<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, t: (k: string, params?: object) => string, attributes: OakAbsAttrDef[]): (data: any[]) => CoverData;
+export {};
