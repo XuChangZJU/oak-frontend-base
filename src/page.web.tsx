@@ -362,8 +362,7 @@ abstract class OakComponentBase<
     }
 
     t(key: string, params?: object) {
-        // t是i18n注入的
-        return (this.props.t as Function)(key, params);
+        return this.features.locales.t(key, params);
     }
 
     execute(action?: ED[T]['Action'], messageProps?: boolean | MessageProps, path?: string) {

@@ -1,7 +1,4 @@
 import React, {createContext, useEffect, useMemo, useState} from 'react';
-
-import { Space, Tag, Tooltip, Typography } from 'antd';
-
 import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, ED } from '../../types/AbstractComponent';
 
 import { TableProps, PaginationProps } from 'antd';
@@ -12,7 +9,7 @@ import ButtonGroup from '../list/buttonGroup';
 import Style from './index.module.less';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { useWidth } from '../../platforms/web/responsive/useWidth';
-import { useTranslation } from 'react-i18next';
+import { useFeatures } from '../../platforms/web';
 
 type Props<ED2 extends ED, T extends keyof ED2> = {
     title?: string;
@@ -73,7 +70,7 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
     const [schema, setSchema] = useState(undefined);
     const width = useWidth();
     const isMobile = width === 'xs';
-    const { t } = useTranslation();
+    const features = useFeatures();
 
     return (
         <TableContext.Provider
@@ -91,7 +88,7 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
             <div className={Style.listContainer}>
                 {!isMobile && (
                     <ToolBar
-                        title={title || (t(`${entity as string}:name`) + t('list'))}
+                        title={title || (features.locales.t(`${entity as string}:name`) + features.locales.t('list'))}
                         buttonGroup={buttonGroup}
                         reload={() => {
                             onReload && onReload();

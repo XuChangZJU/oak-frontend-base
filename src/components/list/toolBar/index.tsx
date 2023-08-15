@@ -1,13 +1,13 @@
 import { Space, Tooltip, ButtonProps} from 'antd';
 import React, { useContext,  } from 'react';
 import Style from './index.module.less';
-import { useTranslation } from 'react-i18next';
 import {
  ReloadOutlined
 } from '@ant-design/icons';
 import ButtonGroup from '../buttonGroup';
 import ColumnSetting from '../columnSetting';
 import { TableContext } from '../../listPro';
+import { useFeatures } from '../../../platforms/web';
 
 
 type buttonProps = {
@@ -24,7 +24,7 @@ type ToolBarProps = {
 
 function ToolBar(props: ToolBarProps) {
     const { title, buttonGroup, reload } = props;
-    const { t } = useTranslation();
+    const features = useFeatures();
     const { tableAttributes, setTableAttributes } = useContext(TableContext);
     return (
         <div className={Style.toolbarContainer}>
@@ -36,7 +36,7 @@ function ToolBar(props: ToolBarProps) {
                     {buttonGroup && buttonGroup.length && (
                         <ButtonGroup items={buttonGroup} />
                     )}
-                    <Tooltip title={t('reload')}>
+                    <Tooltip title={features.locales.t('reload')}>
                         <div className={Style.reloadIconBox} onClick={() => {
                             reload()
                         }}>

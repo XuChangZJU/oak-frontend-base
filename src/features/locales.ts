@@ -7,8 +7,8 @@ import { Cache } from './cache';
 import { LocalStorage } from './localStorage';
 import { Environment } from './environment';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
-import { registerMissCallback, t } from '../utils/i18n';
 import assert from 'assert';
+import { I18n, Scope, TranslateOptions } from 'i18n-js';
 
 const LS_LNG_KEY = 'ofb-feature-locale-lng';
 
@@ -19,8 +19,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
     private makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string
     private language: string;
     private defaultLng: string;
-    private ignoreMiss?: boolean = false;
-    private dataset: Record<string, Record<string, any>> = {};
+    private i18n: I18n;
 
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
@@ -43,7 +42,23 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             this.language = defaultLng;
             this.detectLanguange();
         }
-        registerMissCallback((key) => this.loadData(key));
+        this.i18n = new I18n(undefined, {
+            defaultLocale: defaultLng,
+            locale: this.language,
+        });
+
+        // i18n miss的默认策略
+        this.i18n.missingBehavior = 'loadData';
+        this.i18n.missingTranslation.register("loadData", (i18n, scope, options) => {
+            this.loadData(scope);
+            assert(typeof scope === 'string');
+            return scope.split('.').pop()!;
+        });
+        // 同时注册一个返回空字符串的策略
+        this.i18n.missingTranslation.register("returnNull", (i18n, scope, options) => {
+            return '';
+        });
+
         this.makeBridgeUrlFn = makeBridgeUrlFn;
     }
 
@@ -64,24 +79,23 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
                 language: 1,
             },
         });
-        this.dataset = {};
+        const dataset: Record<string, any> = {};
         i18ns.forEach(
             ({ namespace, data, language }) => {
-                if (this.dataset[language!]) {
-                    this.dataset[language!]![namespace!] = data as Record<string, any>;
+                if (dataset[language!]) {
+                    dataset[language!]![namespace!] = data as Record<string, any>;
                 }
             }
         );
+        this.i18n.store(dataset);
     }
 
     /**
      * 当发生key缺失时，向服务器请求最新的i18n数据，这里要注意要避免因服务器也缺失导致的无限请求
      * @param ns 
      */
-    private async loadData(key: string) {
-        if (this.ignoreMiss) {
-            return;
-        }
+    private async loadData(key: Scope) {
+        assert(typeof key === 'string');
         const [ ns, key2 ] = key.split(':');
         const currentI18ns = this.cache.get('i18n', {
             data: {
@@ -127,18 +141,20 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         }, undefined, undefined, undefined, true);
 
         if (newI18ns.length > 0) {
+            const dataset: Record<string, any> = {};
             newI18ns.forEach(
                 ({ namespace, data, language }) => {
-                    if (this.dataset[language!]) {
-                        this.dataset[language!][namespace!] = data;
+                    if (dataset[language!]) {
+                        dataset[language!][namespace!] = data;
                     }
                     else {
-                        this.dataset[language!] = {
+                        dataset[language!] = {
                             [namespace!]: data,
                         };
                     }
                 }
             );
+            this.i18n.store(dataset);
             this.publish();
         }
         else {
@@ -146,8 +162,8 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         }
     }
 
-    t(key: string, params?: object) {
-        return t(key, this.dataset, this.language, this.defaultLng, params);
+    t(key: Scope, params?: TranslateOptions) {
+        return this.i18n.t(key, params);
     }
 
     // 需要暴露给小程序
@@ -155,15 +171,15 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         return {
             lng: this.language,
             defaultLng: this.defaultLng,
-            dataset: this.dataset,
+            dataset: this.i18n.translations,
         };
     }
 
     // 查看有无某值，不触发获取数据
-    hasKey(key: string, params?: object) {
-        this.ignoreMiss = true;
-        const result = t(key, this.dataset, this.language, undefined, params);
-        this.ignoreMiss = false;
+    hasKey(key: Scope, params?: TranslateOptions) {
+        this.i18n.missingBehavior = 'returnNull';
+        const result = this.i18n.t(key, params);
+        this.i18n.missingBehavior = 'loadData';
         return result;
     }
 

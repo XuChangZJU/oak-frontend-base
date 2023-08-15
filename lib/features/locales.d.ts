@@ -7,6 +7,7 @@ import { Cache } from './cache';
 import { LocalStorage } from './localStorage';
 import { Environment } from './environment';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { Scope, TranslateOptions } from 'i18n-js';
 export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private cache;
     private localStorage;
@@ -14,8 +15,7 @@ export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends
     private makeBridgeUrlFn?;
     private language;
     private defaultLng;
-    private ignoreMiss?;
-    private dataset;
+    private i18n;
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, localStorage: LocalStorage, environment: Environment, defaultLng: string, makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string);
     private detectLanguange;
     private resetDataset;
@@ -24,12 +24,12 @@ export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends
      * @param ns
      */
     private loadData;
-    t(key: string, params?: object): string;
+    t(key: Scope, params?: TranslateOptions): string;
     getDataSet(): {
         lng: string;
         defaultLng: string;
-        dataset: Record<string, Record<string, any>>;
+        dataset: import("i18n-js").Dict;
     };
-    hasKey(key: string, params?: object): string;
+    hasKey(key: Scope, params?: TranslateOptions): string;
     makeBridgeUrl(url: string, headers?: Record<string, string>): string;
 }

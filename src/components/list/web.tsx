@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Spin } from 'antd';
 import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
 import ActionBtn from '../actionBtn';

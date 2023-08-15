@@ -1,7 +1,6 @@
 import React from 'react';
 // @ts-ignore
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useWidth } from './../responsive';
 
 import URL from 'url';
@@ -89,7 +88,6 @@ const withRouter = (Component: React.ComponentType<any>, { path, properties }: {
         const location = useLocation();
         const routerParams = useParams(); // 取路由 xx/:abbr 通过这个函数取到
         const width = useWidth();
-        const { t, i18n } = useTranslation();
         const { forwardedRef, ...rest } = props;
 
         let params = {};
@@ -107,8 +105,6 @@ const withRouter = (Component: React.ComponentType<any>, { path, properties }: {
             <Component
                 {...rest}
                 {...params}
-                t={t}
-                i18n={i18n}
                 width={width}
                 location={location}
                 ref={forwardedRef}

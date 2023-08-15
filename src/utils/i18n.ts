@@ -4,7 +4,27 @@ export function registerMissCallback(callback: (key: string) => void) {
     MissCallback = callback;
 }
 
-// todo 实现i18n.t的逻辑，这段代码将被编译到wxs中供小程序使用。当发生miss时，调用MissCallback函数
+function get(object: Record<string, Record<string, any>>, path: string): string | undefined {
+    // 沿着路径寻找到对应的值，未找到则返回默认值 defaultValue
+    return (
+        _basePath(path).reduce((o: any, k: string) => {
+            return (o || {})[k];
+        }, object)
+    );
+}
+
+function _basePath(path: any): string[] {
+    if (Array.isArray(path)) return path;
+    // 若有 '[',']'，则替换成将 '[' 替换成 '.',去掉 ']'
+    return path.replace(/\[/g, '.').replace(/\]/g, '').replace(/:/g, '.').split('.');
+}
+
+
 export function t(key: string, locales: Record<string, Record<string, any>>, lng: string, fallbackLng?: string, params?: object): string {
-    throw new Error('not implemented yet');
+    const { [lng]: lngLocales } = locales;
+    const lngValue = lngLocales && get(lngLocales, key);
+    if (lngValue) {
+
+    }
+    return '';
 }

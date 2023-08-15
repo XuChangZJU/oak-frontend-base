@@ -5,10 +5,11 @@ import {
 } from '@ant-design/icons';
 import { Popover, Space, Tooltip, Tree, Button, TreeNodeProps} from 'antd';
 import React, { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import Style from './index.module.less';
 import { TableContext } from '../../listPro/index';
 import { getPath, getLabel, resolvePath } from '../../../utils/usefulFn';
+import { useFeatures } from '../../../platforms/web';
+import { Locales } from '../../../features/locales';
 
 function ListItem(props: {
   title: string;
@@ -19,7 +20,7 @@ function ListItem(props: {
   onMoveTop: () => void;
   onMoveBottom: () => void
 }) {
-  const { t } = useTranslation();
+  const features = useFeatures();
   const { title, onSelect, showToBottom, showToTop, onMoveTop, onMoveBottom } = props;
   return (
     <div className={Style.listItemView} onClick={onSelect}>
@@ -27,7 +28,7 @@ function ListItem(props: {
         {title}
       </div>
       <div className={Style.listIconView}>
-        <Tooltip title={t("leftPin")}>
+        <Tooltip title={features.locales.t("leftPin")}>
           {showToTop && (
             <div
               className={Style.listIcon}
@@ -41,7 +42,7 @@ function ListItem(props: {
             </div>
           )}
         </Tooltip>
-        <Tooltip title={t("rightPin")}>
+        <Tooltip title={features.locales.t("rightPin")}>
           {showToBottom && (
               <div
                 className={Style.listIcon}
@@ -67,7 +68,7 @@ type TreeNode = {
 }
 
 function ColumnSetting() {
-  const { t } = useTranslation();
+  const features = useFeatures();
   const { tableAttributes, entity, schema, setTableAttributes, onReset } = useContext(TableContext);
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
@@ -80,7 +81,7 @@ function ColumnSetting() {
         tableAttributes.forEach((ele, index) => {
           const path = getPath(ele.attribute);
           const { entity: entityI18n, attr } = resolvePath(schema, entity, path);
-          const title = getLabel(ele.attribute, entityI18n, attr, t);
+          const title = getLabel(ele.attribute, entityI18n, attr, (k, p) => features.locales.t(k, p));
           newTreeData.push({
             title,
             key: path,
@@ -163,8 +164,8 @@ function ColumnSetting() {
       arrow={false}
       title={
         <div className={Style.titleView}>
-          <strong>{t('columnSetting')}</strong>
-          <Button type='link' onClick={onReset}>{t('common:reset')}</Button>
+          <strong>{features.locales.t('columnSetting')}</strong>
+          <Button type='link' onClick={onReset}>{features.locales.t('common:reset')}</Button>
         </div>
       }
       trigger="click"
@@ -174,7 +175,7 @@ function ColumnSetting() {
       }
     >
       <Tooltip
-          title={t('columnSetting')}
+          title={features.locales.t('columnSetting')}
       >
         <div className={Style.iconBox}>
           <SettingOutlined />

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Breadcrumb, Divider } from 'antd';
 import { useFeatures } from '../../platforms/web/features';
-import { Navigator } from '../../features/navigator';
 
 type Props = {
     items: Array<{
@@ -14,7 +13,7 @@ type Props = {
 export default function Render(props: Props) {
     const { items, title } = props;
     const items2 = items.concat({ title });
-    const { navigator } = useFeatures<{ navigator: Navigator}>();
+    const { navigator } = useFeatures();
 
     return (
         <>
