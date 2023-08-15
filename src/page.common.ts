@@ -384,6 +384,8 @@ export function reRender<
         extra?: Record<string, any>) {
     const { features } = this;
     const { formData } = option;
+
+    const localeState = features.locales.getState();
     if (this.state.oakEntity && this.state.oakFullpath) {
         const rows = this.features.runningTree.getFreshValue(
             this.state.oakFullpath
@@ -412,6 +414,10 @@ export function reRender<
 
             Object.assign(data, {
                 oakLegalActions,
+                oakLocales: localeState.dataset,
+                oakLocalesVersion: localeState.version,
+                oakLng: localeState.lng,
+                oakDefaultLng: localeState.defaultLng,
             });
 
             if (option.isList) {
@@ -475,7 +481,11 @@ export function reRender<
             });
         }
 
-        Object.assign({
+        Object.assign(data, {
+            oakLocales: localeState.dataset,
+            oakLocalesVersion: localeState.version,
+            oakLng: localeState.lng,
+            oakDefaultLng: localeState.defaultLng,
             __time: Date.now(),
         });         // 有些环境下如果传空值不触发判断
         this.setState(data);

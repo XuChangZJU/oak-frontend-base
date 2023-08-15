@@ -176,12 +176,13 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         return this.i18n.t(key, params);
     }
 
-    // 需要暴露给小程序
-    getDataSet() {
+    // 获得当前locales的状态，小程序需要dataset去Wxs里渲染，同时reRender也要利用version触发render
+    getState() {
         return {
             lng: this.language,
             defaultLng: this.defaultLng,
             dataset: this.i18n.translations,
+            version: this.i18n.version,
         };
     }
 

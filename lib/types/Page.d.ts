@@ -232,6 +232,10 @@ export declare type OakComponentData<ED extends EntityDict & BaseEntityDict, T e
     oakFullpath: string;
     oakLegalActions?: ED[T]['Action'][];
     oakDisablePulldownRefresh: boolean;
+    oakLocales: Record<string, any>;
+    oakLocalesVersion: number;
+    oakLng: string;
+    oakDefaultLng: string;
 };
 declare type OakListComoponetData<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakPagination?: Pagination;

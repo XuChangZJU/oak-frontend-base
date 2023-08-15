@@ -59,7 +59,7 @@ export default OakComponent({
             const converter = analyzeAttrMobileForCard(
                 schema,
                 entity,
-                (k, params) => this.t(k, params),
+                this.t,
                 attributes!,
             );
             this.setState({

@@ -27,10 +27,11 @@ export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends
      */
     private loadData;
     t(key: Scope, params?: TranslateOptions): string;
-    getDataSet(): {
+    getState(): {
         lng: string;
         defaultLng: string;
         dataset: import("i18n-js").Dict;
+        version: number;
     };
     hasKey(key: Scope, params?: TranslateOptions): string;
     makeBridgeUrl(url: string, headers?: Record<string, string>): string;

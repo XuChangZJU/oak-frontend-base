@@ -461,6 +461,10 @@ export type OakComponentData<
         oakFullpath: string;
         oakLegalActions?: ED[T]['Action'][];
         oakDisablePulldownRefresh: boolean;
+        oakLocales: Record<string, any>;
+        oakLocalesVersion: number;
+        oakLng: string;
+        oakDefaultLng: string;
     };
 
 type OakListComoponetData<
