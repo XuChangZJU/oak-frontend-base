@@ -55,7 +55,7 @@ export default OakComponent({
                 const cascadePath = path[1];
 
                 const actionAuth = data?.find(
-                    ele => ele.path === cascadePath && ele.destEntity === path[0]
+                    ele => ele.paths?.includes(cascadePath) && ele.destEntity === path[0]
                 );
                 return {
                     actionAuth,
@@ -78,7 +78,7 @@ export default OakComponent({
             else {
                 this.addItem({
                     relationId: this.props.relationId,
-                    path: path[1],
+                    paths: [path[1]],
                     destEntity: path[0] as string,
                     deActions: actions,
                 });

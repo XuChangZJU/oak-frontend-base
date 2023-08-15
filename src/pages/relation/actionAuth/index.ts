@@ -1,5 +1,5 @@
 import assert from "assert";
-import { uniq, pull, union } from 'oak-domain/lib/utils/lodash';
+import { uniq, pull, union, difference } from 'oak-domain/lib/utils/lodash';
 import { ED } from "../../../types/AbstractComponent";
 import { groupBy } from "oak-domain/lib/utils/lodash";
 import { AuthCascadePath } from "oak-domain/lib/types";
@@ -59,7 +59,7 @@ export default OakComponent({
                 const [de, p, se] = ele;
 
                 const actionAuths = data?.filter(
-                    ele => ele.path === p && ele.destEntity === de
+                    ele => ele.destEntity === de
                 );
                 const relations = this.features.cache.get('relation', {
                     data: {
@@ -84,7 +84,19 @@ export default OakComponent({
             }
         );
         // path里含有$
-        const $pathActionAuths = data.filter((ele) => ele.path?.includes('$'));
+        const $pathActionAuths: (RowWithActions<ED, 'actionAuth'> & { path: string })[] = [];
+        data.forEach((ele) => {
+            if (ele.paths?.join('').includes('$')) {
+                ele.paths.forEach((path) => {
+                    if (path.includes('$')) {
+                        $pathActionAuths.push({
+                            ...ele,
+                            path,
+                        })
+                    }
+                })
+            }
+        })
         // groupBy
         // 分解groupBy 的key
         const $actionAuthsObject = groupBy($pathActionAuths, 'path');
@@ -119,7 +131,18 @@ export default OakComponent({
         })
 
         // relationId为空字符串 表示为user的actionAuth 也要特殊处理
-        const hasUserActionAuths = data.filter((ele) => ele.relationId === '');
+        const hasUserActionAuths: (RowWithActions<ED, 'actionAuth'> & { path: string })[] = [];
+        data.forEach((ele) => {
+            if (ele.relationId === '') {
+                ele.paths?.forEach((path) => {
+                    hasUserActionAuths.push({
+                        ...ele,
+                        path
+                    })
+                })
+            }
+        })
+        // const hasUserActionAuths = data.filter((ele) => ele.relationId === '');
         const $actionAuthsObject2 = groupBy(hasUserActionAuths, 'path');
         Object.keys($actionAuthsObject2).forEach((ele) => {
             const entities = ele.split('.');
@@ -182,7 +205,7 @@ export default OakComponent({
         },
     },
     methods: {
-        async onChange(checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema'], relationName?: string) {
+        async onChange(checked: boolean, relationId: string, path: string, actionAuths?: ED['actionAuth']['Schema'][], relationName?: string) {
             const { actions } = this.props;
             assert(actions && actions.length > 0);
             // 排除user这种情况
@@ -213,28 +236,63 @@ export default OakComponent({
                 }
                 relationId = relations[0].id!;
             }
-            if (actionAuth) {
-                const { deActions } = actionAuth;
+            if (actionAuths && actionAuths.length) {
+                // const { deActions } = actionAuth;
                 if (checked) {
-                    const deActions2 = union(deActions, actions);
-                    this.updateItem({
-                        deActions: deActions2,
-                    }, actionAuth.id);
+                    const dASameActionAuth = actionAuths.find((ele) => difference(actions, ele.deActions).length === 0);
+                    // 存在deActions相同，paths push并做去重处理
+                    if (dASameActionAuth) {
+                        this.updateItem({
+                            paths: dASameActionAuth.paths.concat(path),
+                        }, dASameActionAuth.id)
+                    }
+                    else {
+                        this.addItem({
+                            paths: [path],
+                            relationId,
+                            destEntity: this.props.entity as string,
+                            deActions: actions,
+                        });
+                    }
                 }
                 else {
-                    actions.forEach(
-                        action => pull(deActions, action)
-                    );
-                    this.updateItem({
-                        deActions,
-                    }, actionAuth.id);
+                    // 将path从paths中删除
+                    actionAuths.forEach((ele) => {
+                        const pathIndex = ele.paths.findIndex((pathE) => pathE === path);
+                        if (pathIndex !== -1) {
+                            const newPaths = [...ele.paths];
+                            newPaths.splice(pathIndex, 1);
+                            if (!newPaths.length) {
+                                this.removeItem(ele.id);
+                            }
+                            else {
+                                this.updateItem({
+                                    paths: newPaths
+                                }, ele.id);
+                            }
+                        }
+                    })
                 }
+                // if (checked) {
+                //     const deActions2 = union(deActions, actions);
+                //     this.updateItem({
+                //         deActions: deActions2,
+                //     }, actionAuth.id);
+                // }
+                // else {
+                //     actions.forEach(
+                //         action => pull(deActions, action)
+                //     );
+                //     this.updateItem({
+                //         deActions,
+                //     }, actionAuth.id);
+                // }
             }
             else {
                 // 新增actionAuth
                 assert(checked);
                 this.addItem({
-                    path,
+                    paths: [path],
                     relationId,
                     destEntity: this.props.entity as string,
                     deActions: actions,

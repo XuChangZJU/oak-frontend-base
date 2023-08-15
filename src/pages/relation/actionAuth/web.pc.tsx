@@ -3,7 +3,7 @@ const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { difference, intersection } from 'oak-domain/lib/utils/lodash';
+import { difference, intersection, isEqual } from 'oak-domain/lib/utils/lodash';
 import { useState, useEffect } from 'react';
 import ActionAuthListSingle from '../../../components/relation/single';
 
@@ -30,7 +30,7 @@ export default function render(
             entity: keyof EntityDict;
         },
         {
-            onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['OpSchema']) => void;
+            onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['Schema'][]) => void;
             confirm: () => void;
         }
     >
@@ -77,11 +77,17 @@ export default function render(
                                         relations?.map(
                                             (r) => {
                                                 let checked = false, indeterminate = false;
-                                                if (actionAuths && actions.length > 0) {
-                                                    for (const aa of actionAuths) {
+                                                // filter出对应path的actionAuth来决定relation的check
+                                                // sort deActions长的在后，不然会影响checked
+                                                const actionAuthsByPath = actionAuths?.filter((ele) => ele.paths.includes(path[1]))
+                                                    .sort((a, b) => b.deActions.length - a.deActions.length);
+                                                if (actionAuthsByPath && actions.length > 0) {
+                                                    for (const aa of actionAuthsByPath) {
+                                                        // 1.relationId相同，deActions也要相同
                                                         // 如果path中存在多对一的情况要使用name进行判断
                                                         if (!aa.$$deleteAt$$ && (aa.relationId === r.id
-                                                            || (record.path.includes('$') && aa.relation?.name === r.name))) {
+                                                            || (record.path.includes('$') && aa.relation?.name === r.name))
+                                                        ) {
                                                             const { deActions } = aa;
                                                             checked = difference(actions, deActions).length === 0;
                                                             indeterminate = !checked && intersection(actions, deActions).length > 0;
@@ -96,11 +102,11 @@ export default function render(
                                                         indeterminate={indeterminate}
                                                         onChange={({ target }) => {
                                                             const { checked } = target;
-                                                            const actionAuth = actionAuths?.find(
+                                                            const actionAuths2 = actionAuths?.filter(
                                                                 ele => ele.relationId === r.id || (record.path.includes('$') && ele.relation?.name === r.name)
                                                             );
     
-                                                            onChange(checked, r.id, path[1], actionAuth)
+                                                            onChange(checked, r.id, path[1], actionAuths2)
                                                         }}
                                                     >
                                                         {r.name}

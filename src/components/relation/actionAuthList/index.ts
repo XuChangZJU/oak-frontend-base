@@ -18,7 +18,7 @@ export default OakComponent({
     },
     isList: true,
     properties: {
-        path: '',
+        path: '' as string,
         openTip: false,
         entity: '' as keyof ED,
         onClose: (() => undefined) as () => void,
@@ -29,7 +29,9 @@ export default OakComponent({
                 const { path, entity } = this.props;
                 return {
                     destEntity: entity as string,
-                    path: path?.replaceAll('(user)', ''),
+                    paths: {
+                        $contains: path?.replaceAll('(user)', ''),
+                    },
                 };
             },
             '#name': 'path',
@@ -55,7 +57,9 @@ export default OakComponent({
                 this.getRelationAndActions();
                 this.addNamedFilter({
                     filter: {
-                        path: path?.replaceAll('(user)', ''),
+                        paths: {
+                            $contains: path?.replaceAll('(user)', ''),
+                        },
                         destEntity: entity as string,
                     },
                     '#name': 'path'
