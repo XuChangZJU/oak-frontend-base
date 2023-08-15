@@ -10,6 +10,7 @@ import Style from './index.module.less';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { useWidth } from '../../platforms/web/responsive/useWidth';
 import { useFeatures } from '../../platforms/web';
+import { Locales } from '../../features/locales';
 
 type Props<ED2 extends ED, T extends keyof ED2> = {
     title?: string;
@@ -70,7 +71,7 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
     const [schema, setSchema] = useState(undefined);
     const width = useWidth();
     const isMobile = width === 'xs';
-    const features = useFeatures();
+    const features = useFeatures<{ locales: Locales<any, any, any, any> }>();
 
     return (
         <TableContext.Provider

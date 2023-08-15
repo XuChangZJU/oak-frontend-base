@@ -8,6 +8,7 @@ import ButtonGroup from '../buttonGroup';
 import ColumnSetting from '../columnSetting';
 import { TableContext } from '../../listPro';
 import { useFeatures } from '../../../platforms/web';
+import { Locales } from '../../../features/locales';
 
 
 type buttonProps = {
@@ -24,7 +25,7 @@ type ToolBarProps = {
 
 function ToolBar(props: ToolBarProps) {
     const { title, buttonGroup, reload } = props;
-    const features = useFeatures();
+    const features = useFeatures<{ locales: Locales<any, any, any, any> }>();
     const { tableAttributes, setTableAttributes } = useContext(TableContext);
     return (
         <div className={Style.toolbarContainer}>

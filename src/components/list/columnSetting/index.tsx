@@ -20,7 +20,7 @@ function ListItem(props: {
   onMoveTop: () => void;
   onMoveBottom: () => void
 }) {
-  const features = useFeatures();
+  const features = useFeatures<{ locales: Locales<any, any, any, any> }>();
   const { title, onSelect, showToBottom, showToTop, onMoveTop, onMoveBottom } = props;
   return (
     <div className={Style.listItemView} onClick={onSelect}>
@@ -68,7 +68,7 @@ type TreeNode = {
 }
 
 function ColumnSetting() {
-  const features = useFeatures();
+  const features = useFeatures<{ locales: Locales<any, any, any, any> }>();
   const { tableAttributes, entity, schema, setTableAttributes, onReset } = useContext(TableContext);
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);

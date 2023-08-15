@@ -15,7 +15,7 @@ const FeaturesContext = React.createContext<{ features: any }>({
 });
 
 const FeaturesProvider: React.FC<{
-    features: FD;
+    features: Record<string, Feature>;
     children: React.ReactNode;
 }> = ({ features, children }) => {
     return createElement(
@@ -27,7 +27,7 @@ const FeaturesProvider: React.FC<{
     );
 };
 
-const useFeatures = <FD2 extends FD & Record<string, Feature>>() => {
+const useFeatures = <FD2 extends Record<string, Feature>>() => {
     const { features } = useContext<{
         features: FD2;
     }>(FeaturesContext);
