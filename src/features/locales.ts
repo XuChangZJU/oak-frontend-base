@@ -36,7 +36,6 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         const savedLng = localStorage.load(LS_LNG_KEY);
         if (savedLng) {
             this.language = savedLng;
-            this.resetDataset();
         }
         else {
             this.language = defaultLng;
@@ -46,6 +45,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             defaultLocale: defaultLng,
             locale: this.language,
         });
+        this.resetDataset();
 
         // i18n miss的默认策略
         this.i18n.missingBehavior = 'loadData';
@@ -67,7 +67,6 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         const { language } = env;
         this.language = language;
         this.localStorage.save(LS_LNG_KEY, language);
-        this.resetDataset();
     }
 
     private resetDataset() {
@@ -163,7 +162,8 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
     }
 
     t(key: Scope, params?: TranslateOptions) {
-        return this.i18n.t(key, params);
+        return key as string;
+        // return this.i18n.t(key, params);
     }
 
     // 需要暴露给小程序
