@@ -949,6 +949,9 @@ export function createComponent<
 
         async componentDidMount() {
             this.registerPageScroll();
+            this.subscribed.push(
+                features.locales.subscribe(() => this.reRender())
+            );
             if (option.entity) {
                 this.subscribed.push(
                     features.cache.subscribe(() => this.reRender())

@@ -9,6 +9,7 @@ import { Environment } from './environment';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { Scope, TranslateOptions } from 'i18n-js';
 export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
+    static MINIMAL_LOADING_GAP: number;
     private cache;
     private localStorage;
     private environment;
@@ -16,6 +17,7 @@ export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends
     private language;
     private defaultLng;
     private i18n;
+    private loadingRecord;
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, localStorage: LocalStorage, environment: Environment, defaultLng: string, makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string);
     private detectLanguange;
     private resetDataset;

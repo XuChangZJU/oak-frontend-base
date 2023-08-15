@@ -276,6 +276,12 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
         console.log('使用初始化数据建立debugStore', initialData);
     }
     else {
+        // 对static的对象，使用initialData，剩下的使用物化数据
+        for (const entity in initialData) {
+            if (storageSchema[entity].static) {
+                data.data[entity] = initialData[entity];
+            }
+        }
         initDataInStore(store, data.data, data.stat);
         console.log('使用物化数据建立debugStore', data);
     }

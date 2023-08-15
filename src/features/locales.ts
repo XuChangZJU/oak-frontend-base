@@ -9,10 +9,12 @@ import { Environment } from './environment';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import assert from 'assert';
 import { I18n, Scope, TranslateOptions } from 'i18n-js';
+import { uniq } from 'oak-domain/lib/utils/lodash';
 
 const LS_LNG_KEY = 'ofb-feature-locale-lng';
 
 export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
+    static MINIMAL_LOADING_GAP = 600 * 10000;       // 最小加载间歇
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private localStorage: LocalStorage;
     private environment: Environment;
@@ -20,6 +22,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
     private language: string;
     private defaultLng: string;
     private i18n: I18n;
+    private loadingRecord: Record<string, number> = {};
 
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
@@ -95,7 +98,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
      */
     private async loadData(key: Scope) {
         assert(typeof key === 'string');
-        const [ ns, key2 ] = key.split(':');
+        const [ ns ] = key.split('.');
         const currentI18ns = this.cache.get('i18n', {
             data: {
                 id: 1,
@@ -109,22 +112,28 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             }
         });
 
-        const filters: NonNullable<EntityDict['i18n']['Selection']['filter']>[] = [this.language, this.defaultLng].map(
+        const filters: NonNullable<EntityDict['i18n']['Selection']['filter']>[] = uniq([this.language, this.defaultLng]).map(
             ele => {
-                const current = currentI18ns.find(ele2 => ele2.namespace === ele);
+                const current = currentI18ns.find(ele2 => ele2.language === ele);
                 if (current) {
                     return {
-                        namespace: ele,
+                        language: ele,
                         $$updateAt$$: {
                             $gt: current.$$updateAt$$,
                         },
                     };
                 }
                 return {
-                    namespace: ele,
+                    language: ele,
                 };
             }
         );
+
+        const now = Date.now();
+        if (this.loadingRecord[ns] && now - this.loadingRecord[ns] < Locales.MINIMAL_LOADING_GAP) {
+            return;
+        }
+        this.loadingRecord[ns] = now;
         const { data: newI18ns } = await this.cache.refresh('i18n', {
             data: {
                 id: 1,
@@ -135,6 +144,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
                 $$updateAt$$: 1,
             },
             filter: {
+                namespace: ns,
                 $or: filters,
             }
         }, undefined, undefined, undefined, true);
@@ -162,8 +172,8 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
     }
 
     t(key: Scope, params?: TranslateOptions) {
-        return key as string;
-        // return this.i18n.t(key, params);
+        // return key as string;
+        return this.i18n.t(key, params);
     }
 
     // 需要暴露给小程序
