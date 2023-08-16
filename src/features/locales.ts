@@ -171,9 +171,32 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         }
     }
 
-    t(key: Scope, params?: TranslateOptions) {
+    /**
+     * translate函数，这里编译器会在params里注入两个参数 #oakNamespace 和 #oakModule，用以标识文件路径
+     * @param key 
+     * @param params 
+     * @returns 
+     */
+    t(key: string, params?: TranslateOptions) {
         // return key as string;
-        return this.i18n.t(key, params);
+        const ns = params!['#oakNamespace'];
+        const module = params!['#oakModule'];
+
+        let key2 = key;
+        if (key.includes('::')) {
+            // 公共模块
+            key2 = `${module}-l-${key}`.replace('::', '.');
+        }
+        else if (key.includes(':')) {
+            // entity
+            key2 = key.replace(':', '.');
+        }
+        else {
+            // 自身模块
+            key2 = `${ns}.${key}`;
+        }
+
+        return this.i18n.t(key2, params);
     }
 
     // 获得当前locales的状态，小程序需要dataset去Wxs里渲染，同时reRender也要利用version触发render

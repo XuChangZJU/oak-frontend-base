@@ -146,13 +146,15 @@ export function getLabel<ED extends EntityDict & BaseEntityDict>(
     attr: string,
     t: (k: string, params?: object) => string
 ) {
-    let label = t(`${entity as string}.attr.${attr}`);
+    let label = t(`${entity as string}:attr.${attr}`, {});
     if (
         attr === '$$createAt$$' ||
         attr === '$$updateAt$$' ||
         attr === '$$deleteAt$$'
     ) {
-        label = t(`oak-frontend-base-l-common.${attr}`);
+        label = t(`common::${attr}`, {
+            '#oakModule': 'oak-frontend-base',
+        });
     }
     if (isAttrbuteType(attribute).label) {
         label = isAttrbuteType(attribute).label;
@@ -189,14 +191,16 @@ export function getValue<ED extends EntityDict & BaseEntityDict>(
     let value = get(data, path);
     // 枚举类型还要通过i18转一下中文
     if (attrType === 'enum' && value) {
-        value = t(`${entity as string}.v.${attr}.${value}`);
+        value = t(`${entity as string}:v.${attr}.${value}`, {});
     }
     // 如果是dateTime
     if (attrType === 'datetime' && value) {
         value = dayjs(value).format('YYYY-MM-DD HH:mm');
     }
     if (attrType === 'boolean' && typeof value === 'boolean') {
-        value = t(`oak-frontend-base-l-common.${String(value)}`);
+        value = t(`common::${String(value)}`, {
+            '#oakModule': 'oak-frontend-base',
+        });
     }
     if (attrType === 'money' && typeof value === 'number') {
         value = ThousandCont(value);
@@ -231,7 +235,7 @@ function getLabelI18<ED extends EntityDict & BaseEntityDict>(
         entity,
         path
     );
-    return t(`${entityI8n as string}.attr.${attr}`);
+    return t(`${entityI8n as string}:attr.${attr}`, {});
 }
 
 export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(

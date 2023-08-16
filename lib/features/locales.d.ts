@@ -26,7 +26,13 @@ export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends
      * @param ns
      */
     private loadData;
-    t(key: Scope, params?: TranslateOptions): string;
+    /**
+     * translate函数，这里编译器会在params里注入两个参数 #oakNamespace 和 #oakModule，用以标识文件路径
+     * @param key
+     * @param params
+     * @returns
+     */
+    t(key: string, params?: TranslateOptions): string;
     getState(): {
         lng: string;
         defaultLng: string;
