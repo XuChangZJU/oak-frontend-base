@@ -165,7 +165,7 @@ function ColumnSetting() {
       title={
         <div className={Style.titleView}>
           <strong>{features.locales.t('columnSetting')}</strong>
-          <Button type='link' onClick={onReset}>{features.locales.t('common:reset')}</Button>
+          <Button type='link' onClick={onReset}>{features.locales.t('common::reset')}</Button>
         </div>
       }
       trigger="click"

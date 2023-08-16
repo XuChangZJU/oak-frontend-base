@@ -30,7 +30,7 @@ export default OakComponent({
         if (_label) {
             labelMp = _label;
         } else if (isCommonI18n) {
-            labelMp = this.t(`common:${attrI18n}`);
+            labelMp = this.t(`common::${attrI18n}`);
         } else {
             labelMp =
                 entityI18n && attrI18n

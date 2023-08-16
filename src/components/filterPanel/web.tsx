@@ -218,7 +218,7 @@ export default function Render<ED2 extends ED>(
                                 refresh();
                             }}
                         >
-                            {t('common:reset')}
+                            {t('common::reset')}
                         </Button>
                     </Badge>
                     <Button
@@ -231,7 +231,7 @@ export default function Render<ED2 extends ED>(
                             refresh();
                         }}
                     >
-                        {t('common:select')}
+                        {t('common::select')}
                     </Button>
                     {showExpandButton && (
                         <Button
@@ -241,7 +241,7 @@ export default function Render<ED2 extends ED>(
                             }}
                         >
                             <Space>
-                                {open ? t('common:shrink') : t('common:expand')}
+                                {open ? t('common::shrink') : t('common::expand')}
 
                                 {open ? <UpOutlined /> : <DownOutlined />}
                             </Space>

@@ -31,10 +31,10 @@
             <view class="draw-container">
                 <view class="opBtn-view">
                     <view class="cancel-btn" bindtap="closePopupMp">
-                        {{t('common:action.cancel')}}
+                        {{t('common::action.cancel')}}
                     </view>
                     <view class="confirm-btn" bindtap="onConfirmSelectMp">
-                        {{t('common:action.confirm')}}
+                        {{t('common::action.confirm')}}
                     </view>
                 </view>
                 <l-checkbox-group bind:linchange="onChangeTapMp">

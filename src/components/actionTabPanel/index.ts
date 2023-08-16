@@ -51,7 +51,7 @@ export default OakComponent({
 
             if (action) {
                 if (commonAction.includes(action)) {
-                    text = this.t(`common:action.${action}`);
+                    text = this.t(`common::action.${action}`);
                 } else if (entity) {
                     text = this.t(`${entity}:action.${action}`);
                 }

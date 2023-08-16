@@ -79,7 +79,7 @@ export default OakComponent({
     methods: {
         decodeTitle(entity: string, attr: string) {
             if (attr === ('$$createAt$$' || '$$updateAt$$')) {
-                return this.t(`common:${attr}`);
+                return this.t(`common::${attr}`);
             }
             return this.t(`${entity}:attr.${attr}`);
         },

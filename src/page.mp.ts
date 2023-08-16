@@ -118,10 +118,10 @@ const oakBehavior = Behavior<
             });
         },
         t(key: string, params?: object) {
-            //  common: {
+            //  common:: {
             //        GREETING: 'Hello {{name}}, nice to see you.',
             //   },
-            // t('common:GREETING', {name: "John Doe" })
+            // t('common::GREETING', {name: "John Doe" })
             const i18nInstance = getI18nInstanceWechatMp();
             if (!i18nInstance) {
                 throw new Error(

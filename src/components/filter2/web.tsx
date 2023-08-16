@@ -90,7 +90,7 @@ export default function Render<ED2 extends ED>(
     if (_label) {
         label = _label;
     } else if (isCommonI18n) {
-        label = attrI18n ? t(`common:${attrI18n}`) : '';
+        label = attrI18n ? t(`common::${attrI18n}`) : '';
     } else {
         label =
             entityI18n && attrI18n
