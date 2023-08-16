@@ -1077,10 +1077,10 @@ export function createComponent<
                         refreshing={oakPullDownRefreshLoading}
                         distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}
                         indicator={{
-                            activate: this.t('common::ptrActivate'),
-                            deactivate: this.t('common::ptrDeactivate'),
-                            release: this.t('common::ptrRelease'),
-                            finish: this.t('common::ptrFinish'),
+                            activate: this.t('common::ptrActivate', { '#oakModule': 'oak-frontend-base' }),
+                            deactivate: this.t('common::ptrDeactivate', { '#oakModule': 'oak-frontend-base' }),
+                            release: this.t('common::ptrRelease', { '#oakModule': 'oak-frontend-base' }),
+                            finish: this.t('common::ptrFinish', { '#oakModule': 'oak-frontend-base' }),
                         }}
                     >
                         <Render methods={this.methodProps} data={{

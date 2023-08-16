@@ -22,7 +22,6 @@ import {
 } from './page.common';
 import { MessageProps } from './types/Message';
 import { NotificationProps } from './types/Notification';
-import { CURRENT_LOCALE_DATA, CURRENT_LOCALE_KEY, getI18nInstanceWechatMp } from './platforms/wechatMp/i18n';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { cloneDeep } from 'oak-domain/lib/utils/lodash';
@@ -118,17 +117,7 @@ const oakBehavior = Behavior<
             });
         },
         t(key: string, params?: object) {
-            //  common:: {
-            //        GREETING: 'Hello {{name}}, nice to see you.',
-            //   },
-            // t('common::GREETING', {name: "John Doe" })
-            const i18nInstance = getI18nInstanceWechatMp();
-            if (!i18nInstance) {
-                throw new Error(
-                    '[i18n] ensure run initI18nWechatMp() in app.js before using I18n library'
-                );
-            }
-            return i18nInstance.getString(key, params);
+            return this.features.locales.t(key, params);
         },
 
         resolveInput(input: WechatMiniprogram.CustomEvent, keys) {
@@ -968,13 +957,10 @@ export function createComponent<
                 created && created.call(this);
             },
             attached() {
-                const i18nInstance = getI18nInstanceWechatMp();
-                if (i18nInstance) {
-                    (this as any).setState({
-                        [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
-                        [CURRENT_LOCALE_DATA]: i18nInstance.translations,
-                    });
-                }
+                this.subscribed.push(
+                    features.locales.subscribe(() => this.reRender())
+                );
+                
                 if (option.entity) {
                     this.subscribed.push(
                         features.cache.subscribe(() => this.reRender())
