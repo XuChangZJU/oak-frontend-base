@@ -73,24 +73,22 @@ export default function Render(
     } = oakData;
 
     return (
-        <Card>
-            <Descriptions title={title} column={column} bordered={bordered} layout={layout}>
-                {renderData?.map((ele) => {
-                    let renderValue = ele.value || t('not_filled_in');
-                    const color = colorDict && colorDict[entity]?.[ele.attr]?.[ele.value] as string || 'default';
-                    if (ele.type === 'enum') {
-                        renderValue = ele.value && t(`${entity}:v.${ele.attr}.${ele.value}`)
-                    }
-                    if (ele.type === 'datetime') {
-                        renderValue = ele.value && dayjs(ele.value).format('YYYY-MM-DD');
-                    }
-                    return (
-                        <Descriptions.Item label={t(ele.label)} span={ele.span || 1}>
-                            <RenderRow type={ele.type} value={renderValue} color={color} />
-                        </Descriptions.Item>
-                    )
-                })}
-            </Descriptions>
-        </Card>
+        <Descriptions title={title} column={column} bordered={bordered} layout={layout}>
+            {renderData?.map((ele) => {
+                let renderValue = ele.value || t('not_filled_in');
+                const color = colorDict && colorDict[entity]?.[ele.attr]?.[ele.value] as string || 'default';
+                if (ele.type === 'enum') {
+                    renderValue = ele.value && t(`${entity}:v.${ele.attr}.${ele.value}`)
+                }
+                if (ele.type === 'datetime') {
+                    renderValue = ele.value && dayjs(ele.value).format('YYYY-MM-DD');
+                }
+                return (
+                    <Descriptions.Item label={ele.label} span={ele.span || 1}>
+                        <RenderRow type={ele.type} value={renderValue} color={color} />
+                    </Descriptions.Item>
+                )
+            })}
+        </Descriptions>
     );
 }
