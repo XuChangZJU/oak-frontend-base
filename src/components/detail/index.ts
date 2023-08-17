@@ -68,8 +68,8 @@ export default OakComponent({
             const transformer = makeDataTransformer(
                 schema,
                 entity!,
-                attributes!
-                // (k, params) => this.t(k, params)
+                attributes!,
+                (k, params) => this.t(k, params)
             );
             this.setState({
                 transformer,

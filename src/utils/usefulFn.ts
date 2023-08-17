@@ -242,7 +242,7 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(
     dataSchema: StorageSchema<ED>,
     entity: keyof ED,
     attrDefs: OakAbsAttrDef[],
-    // t: (k: string, params?: object) => string,
+    t: (k: string, params?: object) => string,
     colorDict?: ColorDict<ED>
 ): DataTransformer {
     const transformerFixedPart = attrDefs.map((ele) => {
@@ -253,7 +253,7 @@ export function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(
                 attr,
                 entity: entityI8n,
             } = resolvePath(dataSchema, entity, path);
-            const label = `${entityI8n as string}:attr.${attr}`;
+            const label = getLabel(ele, entityI8n, attr, t);
             const type = attrType;
             return {
                 path,
