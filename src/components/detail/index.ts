@@ -69,7 +69,7 @@ export default OakComponent({
                 schema,
                 entity!,
                 attributes!,
-                (k, params) => this.t(k, params)
+                this.t,
             );
             this.setState({
                 transformer,
