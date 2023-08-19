@@ -71,6 +71,7 @@ const oakBehavior = Behavior<
                 callback?: () => void
             ) => void;
             onLoad: (query: Record<string, any>) => Promise<void>;
+            loadMissedLocales: (key: string) => void;
         },
     {
         prevState: Record<string, any>;
@@ -648,6 +649,10 @@ const oakBehavior = Behavior<
                 aggregation
             );
         },
+
+        loadMissedLocales(key: string) {
+            this.features.locales.loadMissedLocale(key);
+        }
     },
     observers: {
         oakPath(data) {

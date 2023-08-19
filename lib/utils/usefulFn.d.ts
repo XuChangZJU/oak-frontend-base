@@ -17,7 +17,7 @@ export declare function getWidth(attribute: OakAbsAttrDef, attrType: DataType | 
 export declare function getValue<ED extends EntityDict & BaseEntityDict>(data: any, path: string, entity: keyof ED, attr: string, attrType: DataType | 'ref' | undefined, t: (k: string, params?: object) => string): any;
 export declare function getAlign(attrType: DataType): 'left' | 'right' | 'center';
 export declare function getType(attribute: OakAbsAttrDef, attrType: OakAbsDerivedAttrDef['type']): "link" | "ref" | DataType | undefined;
-export declare function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, attrDefs: OakAbsAttrDef[], colorDict?: ColorDict<ED>): DataTransformer;
+export declare function makeDataTransformer<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, attrDefs: OakAbsAttrDef[], t: (k: string, params?: object) => string, colorDict?: ColorDict<ED>): DataTransformer;
 export declare function analyzeDataUpsertTransformer<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(dataSchema: StorageSchema<ED>, entity: T, attrUpsertDefs: OakAbsAttrUpsertDef<ED, T>[]): (data: any) => AttrUpsertRender<ED, T>[];
 declare type CoverData = {
     data: {

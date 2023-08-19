@@ -27,6 +27,11 @@ export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends
      */
     private loadData;
     /**
+     * 暴露给小程序的Wxs调用
+     * @param key
+     */
+    loadMissedLocale(key: string): void;
+    /**
      * translate函数，这里编译器会在params里注入两个参数 #oakNamespace 和 #oakModule，用以标识文件路径
      * @param key
      * @param params

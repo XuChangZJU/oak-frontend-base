@@ -36,6 +36,7 @@ function _getPlural(count: number) {
 const PlaceHolder = /(?:\{\{|%\{)(.*?)(?:\}\}?)/gm;
 function interpolate(message: any, options: Record<string, any>): string {
     if (typeof message === 'string') {
+        // 实测下这个正则在小程序wxs环境中过不去，原因未知  by Xc
         const matches = message.match(PlaceHolder);
 
         if (!matches) {
@@ -92,6 +93,8 @@ function constructFullKey(key: string, namespace: string, moduleName: string) {
     return key2;
 }
 
+let Instance:any = undefined;
+
 
 export function t(key: string, p1: any, p2: any, p3: any, p4: any, p5: any, p6: any): string {
     let fullKey = '';
@@ -137,8 +140,13 @@ export function t(key: string, p1: any, p2: any, p3: any, p4: any, p5: any, p6: 
     }
 
     // 到这里说明miss了，通知AppService层，并返回value
-    if (hasLocale) {
+    if (hasLocale && Instance) {
         // todo 
+        Instance.callMethod('loadMissedLocales', fullKey);
     }
     return fullKey.split('.').pop()!;
+}
+
+function propObserver(locales: any, oldValue: any, instance: any) {
+    Instance = instance;
 }
