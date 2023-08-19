@@ -11,4 +11,6 @@ export type InitializeOptions<ED extends EntityDict & BaseEntityDict> = {
     importations?: Importation<ED, keyof ED, any>[];
     exportations?: Exportation<ED, keyof ED, any>[];
     selectFreeEntities: (keyof ED)[];
+    createFreeEntities: (keyof ED)[];
+    updateFreeEntities: (keyof ED)[];
 };
