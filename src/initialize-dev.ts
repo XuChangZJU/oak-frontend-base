@@ -14,7 +14,7 @@ import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
 
 import { createDebugStore, clearMaterializedData } from './debugStore';
 
-import { initialize as initBasicFeatures } from './features';
+import { initializeStep1 as initBasicFeaturesStep1, initializeStep2 as initBasicFeaturesStep2 } from './features';
 import { intersection } from 'oak-domain/lib/utils/lodash';
 import commonAspectDict from 'oak-common-aspect';
 import { CommonAspectDict, registerPorts } from 'oak-common-aspect';
@@ -70,6 +70,9 @@ export function initialize<
     const checkers2 = checkers.concat(intCheckers);
     const triggers2 = triggers.concat(intTriggers);
     const watchers2 = watchers.concat(intWatchers);
+
+    const features1 = initBasicFeaturesStep1();
+
     const debugStore = createDebugStore(
         storageSchema,
         backendContextBuilder,
@@ -85,13 +88,13 @@ export function initialize<
         authDeduceRelationMap,
         selectFreeEntities,
         createFreeEntities,
-        updateFreeEntities
+        updateFreeEntities,
+        (key, data) => features1.localStorage.save(key, data),
+        (key) => features1.localStorage.load(key)
     );
 
     const cacheStore = new CacheStore<ED, FrontCxt>(
-        storageSchema,
-        () => debugStore.getCurrentData(),
-        () => clearMaterializedData(),
+        storageSchema
     );
 
     const wrapper: AspectWrapper<ED, Cxt, CommonAspectDict<ED, Cxt> & AD> = {
@@ -116,7 +119,8 @@ export function initialize<
         },
     };
 
-    const features = initBasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>(
+    const features2 = initBasicFeaturesStep2<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>(
+        features1,
         wrapper,
         storageSchema,
         () => frontendContextBuilder()(cacheStore),
@@ -127,12 +131,14 @@ export function initialize<
         selectFreeEntities,
         createFreeEntities,
         updateFreeEntities,
-        colorDict);
+        colorDict,        
+        () => debugStore.getCurrentData());
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker));
 
     registerPorts(importations || [], exportations || []);
 
+    const features = Object.assign(features2, features1)
     return {
         features,
     };

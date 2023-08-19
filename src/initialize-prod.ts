@@ -4,16 +4,14 @@ import {
     Checker,
     StorageSchema,
     Connector,
-    Trigger,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 
-import { initialize as initBasicFeatures } from './features';
+import { initializeStep1 as initBasicFeaturesStep1, initializeStep2 as initBasicFeaturesStep2 } from './features';
 import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
-import { createDynamicCheckers } from 'oak-domain/lib/checkers';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { InitializeOptions } from './types/Initialize';
@@ -50,6 +48,8 @@ export function initialize<
     const { checkers: intCheckers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict);
     const checkers2 = checkers.concat(intCheckers);
 
+    const features1 = initBasicFeaturesStep1();
+
     const cacheStore = new CacheStore<ED, FrontCxt>(
         storageSchema,
     );
@@ -66,7 +66,8 @@ export function initialize<
         },
     };
 
-    const features = initBasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>(
+    const features2 = initBasicFeaturesStep2<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>(
+        features1,
         wrapper, 
         storageSchema, 
         () => frontendContextBuilder()(cacheStore), 
@@ -78,11 +79,13 @@ export function initialize<
         createFreeEntities,
         updateFreeEntities,
         colorDict,
+        () => '请查看数据库中的数据',
         (url, headers) => connector.makeBridgeUrl(url, headers)
     );
 
     checkers2.forEach((checker) => cacheStore.registerChecker(checker));
 
+    const features = Object.assign(features1, features2);
     return {
         features,
     };

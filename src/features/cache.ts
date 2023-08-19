@@ -23,11 +23,13 @@ export class Cache<
     >;
     private contextBuilder?: () => FrontCxt;
     private refreshing = false;
+    private getFullDataFn: () => any;
 
     constructor(
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         contextBuilder: () => FrontCxt,
-        store: CacheStore<ED, FrontCxt>
+        store: CacheStore<ED, FrontCxt>,
+        getFullData: () => any
     ) {
         super();
         this.aspectWrapper = aspectWrapper;
@@ -35,6 +37,7 @@ export class Cache<
 
         this.contextBuilder = contextBuilder;
         this.cacheStore = store;
+        this.getFullDataFn = getFullData;
 
         // 在这里把wrapper的返回opRecords截取到并同步到cache中
         /* const { exec } = aspectWrapper;
@@ -316,11 +319,7 @@ export class Cache<
     }
 
     getFullData() {
-        return this.cacheStore!.getFullData();
-    }
-
-    resetInitialData() {
-        return this.cacheStore!.resetInitialData();
+        return this.getFullDataFn();
     }
 
     begin() {

@@ -17,18 +17,18 @@ export class CacheStore<
     Cxt extends SyncContext<ED>
     > extends TreeStore<ED> implements SyncRowStore<ED, SyncContext<ED>>{
     private triggerExecutor: SyncTriggerExecutor<ED, Cxt>;
-    private getFullDataFn?: () => any;
-    private resetInitialDataFn?: () => void;
+    private savedEntities: (keyof ED)[];
+    private keepFreshPeriod: number;
 
     constructor(
         storageSchema: StorageSchema<ED>,
-        getFullDataFn?: () => any,
-        resetInitialDataFn?: () => void
+        keepFreshPeriod: number,
+        savedEntities: (keyof ED)[],
     ) {
         super(storageSchema);
         this.triggerExecutor = new SyncTriggerExecutor();
-        this.getFullDataFn = getFullDataFn;
-        this.resetInitialDataFn = resetInitialDataFn;
+        this.keepFreshPeriod = keepFreshPeriod;
+        this.savedEntities = savedEntities;
     }
     
     aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]['Aggregation'], context: SyncContext<ED>, option: OP): AggregationResult<ED[T]['Schema']> {
@@ -131,21 +131,6 @@ export class CacheStore<
         this.triggerExecutor.registerTrigger(trigger);
     } */
 
-    /**
-     * 这个函数是在debug下用来获取debugStore的数据，release下不能使用
-     * @returns
-     */
-    getFullData() {
-        return this.getFullDataFn!();
-    }
-
-    /**
-     * 这个函数是在debug下用来初始化debugStore的数据，release下不能使用
-     * @returns
-     */
-    resetInitialData() {
-        return this.resetInitialDataFn!();
-    }
 
     count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]['Selection'], 'filter' | 'count'>, context: SyncContext<ED>, option: OP): number {
         const autoCommit = !context.getCurrentTxnId();

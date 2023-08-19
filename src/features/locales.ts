@@ -11,7 +11,7 @@ import assert from 'assert';
 import { I18n, Scope, TranslateOptions } from 'i18n-js';
 import { uniq } from 'oak-domain/lib/utils/lodash';
 
-const LS_LNG_KEY = 'ofb-feature-locale-lng';
+import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 
 export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     static MINIMAL_LOADING_GAP = 600 * 10000;       // 最小加载间歇
@@ -36,7 +36,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         this.localStorage = localStorage;
         this.defaultLng = defaultLng;
         this.environment = environment;
-        const savedLng = localStorage.load(LS_LNG_KEY);
+        const savedLng = localStorage.load(LOCAL_STORAGE_KEYS.localeLng);
         if (savedLng) {
             this.language = savedLng;
         }
@@ -69,7 +69,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         const env = await this.environment.getEnv();
         const { language } = env;
         this.language = language;
-        this.localStorage.save(LS_LNG_KEY, language);
+        this.localStorage.save(LOCAL_STORAGE_KEYS.localeLng, language);
     }
 
     private resetDataset() {

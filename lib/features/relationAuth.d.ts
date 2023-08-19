@@ -1,4 +1,4 @@
-import { EntityDict, AspectWrapper, Aspect, AuthCascadePath, AuthDeduceRelationMap } from 'oak-domain/lib/types';
+import { EntityDict, Aspect, AuthCascadePath, AuthDeduceRelationMap } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -8,7 +8,6 @@ import { Cache } from './cache';
 export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends Feature {
     private cache;
     private contextBuilder;
-    private aspectWrapper;
     private actionCascadePathGraph;
     private actionCascadePathMap;
     private relationCascadePathGraph;
@@ -16,7 +15,7 @@ export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt ex
     private authDeduceRelationMap;
     static IgnoredActions: string[];
     private entityGraph?;
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => FrontCxt, cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities: (keyof ED)[], createFreeEntities: (keyof ED)[], updateFreeEntities: (keyof ED)[]);
+    constructor(contextBuilder: () => FrontCxt, cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities: (keyof ED)[], createFreeEntities: (keyof ED)[], updateFreeEntities: (keyof ED)[]);
     private judgeRelation;
     getHasRelationEntities(): string[];
     getDeduceRelationAttribute(entity: keyof ED): string | undefined;

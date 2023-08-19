@@ -18,7 +18,6 @@ export class RelationAuth<
     > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private contextBuilder: () => FrontCxt;
-    private aspectWrapper: AspectWrapper<ED, Cxt, AD>;
     private actionCascadePathGraph: AuthCascadePath<ED>[];
     private actionCascadePathMap: Record<string, AuthCascadePath<ED>[]>;
     private relationCascadePathGraph: AuthCascadePath<ED>[];
@@ -35,7 +34,6 @@ export class RelationAuth<
     };
 
     constructor(
-        aspectWrapper: AspectWrapper<ED, Cxt, AD>,
         contextBuilder: () => FrontCxt,
         cache: Cache<ED, Cxt, FrontCxt, AD>,
         actionCascadePathGraph: AuthCascadePath<ED>[],
@@ -46,7 +44,6 @@ export class RelationAuth<
         updateFreeEntities: (keyof ED)[]
     ) {
         super();
-        this.aspectWrapper = aspectWrapper;
         this.contextBuilder = contextBuilder;
         this.cache = cache;
         this.actionCascadePathGraph = actionCascadePathGraph;

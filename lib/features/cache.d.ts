@@ -11,7 +11,8 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     private syncEventsCallbacks;
     private contextBuilder?;
     private refreshing;
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>);
+    private getFullDataFn;
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>, getFullData: () => any);
     getSchema(): import("oak-domain/lib/types").StorageSchema<ED>;
     getCurrentUserId(allowUnloggedIn?: boolean): string | undefined;
     exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void, dontPublish?: true): Promise<{
@@ -51,7 +52,6 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;
     getCachedData(): { [T in keyof ED]?: ED[T]["OpSchema"][] | undefined; };
     getFullData(): any;
-    resetInitialData(): void;
     begin(): FrontCxt;
     commit(context: FrontCxt): void;
     rollback(context: FrontCxt): void;
