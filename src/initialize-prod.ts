@@ -43,7 +43,8 @@ export function initialize<
     checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     option: InitializeOptions<ED>
 ) {
-    const {  actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, actionDict, selectFreeEntities, colorDict } = option;
+    const {  actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, actionDict, 
+        selectFreeEntities, createFreeEntities, updateFreeEntities, colorDict } = option;
 
 
     const { checkers: intCheckers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict);
@@ -74,6 +75,8 @@ export function initialize<
         relationCascadePathGraph,
         authDeduceRelationMap,
         selectFreeEntities,
+        createFreeEntities,
+        updateFreeEntities,
         colorDict,
         (url, headers) => connector.makeBridgeUrl(url, headers)
     );

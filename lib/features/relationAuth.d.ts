@@ -16,7 +16,7 @@ export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt ex
     private authDeduceRelationMap;
     static IgnoredActions: string[];
     private entityGraph?;
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => FrontCxt, cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities: (keyof ED)[]);
+    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => FrontCxt, cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities: (keyof ED)[], createFreeEntities: (keyof ED)[], updateFreeEntities: (keyof ED)[]);
     private judgeRelation;
     getHasRelationEntities(): string[];
     getDeduceRelationAttribute(entity: keyof ED): string | undefined;

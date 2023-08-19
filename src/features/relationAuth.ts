@@ -42,6 +42,8 @@ export class RelationAuth<
         relationCascadePathGraph: AuthCascadePath<ED>[],
         authDeduceRelationMap: AuthDeduceRelationMap<ED>,
         selectFreeEntities: (keyof ED)[],
+        createFreeEntities:  (keyof ED)[],
+        updateFreeEntities: (keyof ED)[]
     ) {
         super();
         this.aspectWrapper = aspectWrapper;
@@ -62,7 +64,8 @@ export class RelationAuth<
             }
         );
         this.authDeduceRelationMap = authDeduceRelationMap;
-        this.baseRelationAuth = new BaseRelationAuth(cache.getSchema(), actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities);
+        this.baseRelationAuth = new BaseRelationAuth(cache.getSchema(), actionCascadePathGraph, relationCascadePathGraph,
+            authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);
         this.buildEntityGraph();
     }
 

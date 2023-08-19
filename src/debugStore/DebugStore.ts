@@ -25,11 +25,13 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         actionCascadeGraph: AuthCascadePath<ED>[],
         relationCascadeGraph: AuthCascadePath<ED>[],
         authDeduceRelationMap: AuthDeduceRelationMap<ED>,
-        selectFreeEntities: (keyof ED)[]
+        selectFreeEntities: (keyof ED)[],
+        createFreeEntities:  (keyof ED)[],
+        updateFreeEntities: (keyof ED)[]
     ) {
         super(storageSchema);
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
-        this.relationAuth = new RelationAuth(storageSchema, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap, selectFreeEntities);        
+        this.relationAuth = new RelationAuth(storageSchema, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);        
     }
 
     async exec(script: string, txnId?: string) {

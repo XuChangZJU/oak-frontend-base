@@ -32,13 +32,15 @@ export function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends A
         relationCascadePathGraph: AuthCascadePath<ED>[],
         authDeduceRelationMap: AuthDeduceRelationMap<ED>,
         selectFreeEntities: (keyof ED)[],
+        createFreeEntities: (keyof ED)[],
+        updateFreeEntities: (keyof ED)[],
         colorDict: ColorDict<ED>,
         makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string) {
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store);
     const location = new Location();
     const environment = new Environment();
     const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, cache, 
-        actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities);
+        actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, relationAuth);
     const geo = new Geo(aspectWrapper);
     const eventBus = new EventBus();
