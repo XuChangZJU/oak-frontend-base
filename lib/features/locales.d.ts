@@ -17,12 +17,11 @@ export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends
     private language;
     private defaultLng;
     private i18n;
-    private loadingRecord;
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, localStorage: LocalStorage, environment: Environment, defaultLng: string, makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string);
     private detectLanguange;
     private resetDataset;
     /**
-     * 当发生key缺失时，向服务器请求最新的i18n数据，这里要注意要避免因服务器也缺失导致的无限请求
+     * 当发生key缺失时，向服务器请求最新的i18n数据，对i18n缓存数据的行为优化放在cache中统一进行
      * @param ns
      */
     private loadData;

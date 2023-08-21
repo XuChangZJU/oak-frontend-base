@@ -22,7 +22,6 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
     private language: string;
     private defaultLng: string;
     private i18n: I18n;
-    private loadingRecord: Record<string, number> = {};
 
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
@@ -93,47 +92,13 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
     }
 
     /**
-     * 当发生key缺失时，向服务器请求最新的i18n数据，这里要注意要避免因服务器也缺失导致的无限请求
+     * 当发生key缺失时，向服务器请求最新的i18n数据，对i18n缓存数据的行为优化放在cache中统一进行
      * @param ns 
      */
     private async loadData(key: Scope) {
         assert(typeof key === 'string');
         const [ ns ] = key.split('.');
-        const currentI18ns = this.cache.get('i18n', {
-            data: {
-                id: 1,
-                $$updateAt$$: 1,
-            },
-            filter: {
-                namespace: ns,
-                language: {
-                    $in: [this.language, this.defaultLng].filter(ele => !!ele)
-                },
-            }
-        });
 
-        const filters: NonNullable<EntityDict['i18n']['Selection']['filter']>[] = uniq([this.language, this.defaultLng]).map(
-            ele => {
-                const current = currentI18ns.find(ele2 => ele2.language === ele);
-                if (current) {
-                    return {
-                        language: ele,
-                        $$updateAt$$: {
-                            $gt: current.$$updateAt$$,
-                        },
-                    };
-                }
-                return {
-                    language: ele,
-                };
-            }
-        );
-
-        const now = Date.now();
-        if (this.loadingRecord[ns] && now - this.loadingRecord[ns] < Locales.MINIMAL_LOADING_GAP) {
-            return;
-        }
-        this.loadingRecord[ns] = now;
         const { data: newI18ns } = await this.cache.refresh('i18n', {
             data: {
                 id: 1,
@@ -145,7 +110,6 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             },
             filter: {
                 namespace: ns,
-                $or: filters,
             }
         }, undefined, undefined, undefined, true);
 

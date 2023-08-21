@@ -1,21 +1,30 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, StorageSchema, Checker, EXPRESSION_PREFIX } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
-import { merge, pull } from 'oak-domain/lib/utils/lodash';
+import { merge, pull, intersection, omit, pick } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { OakRowUnexistedException, OakRowInconsistencyException, OakException, OakUserException } from 'oak-domain/lib/types/Exception';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import assert from 'assert';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
+import { LocalStorage } from './localStorage';
+import { LOCAL_STORAGE_KEYS } from '../constant/constant';
+import { combineFilters } from 'oak-domain/lib/store/filter';
+
+const DEFAULT_KEEP_FRESH_PERIOD = 600 * 1000;       // 10分钟不刷新
+
+interface CacheSelectOption extends SelectOption {
+    ignoreKeepFreshRule?: true,
+};
 
 export class Cache<
     ED extends EntityDict & BaseEntityDict,
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>
-    > extends Feature {
+> extends Feature {
     cacheStore: CacheStore<ED, FrontCxt>;
     private aspectWrapper: AspectWrapper<ED, Cxt, AD>;
     private syncEventsCallbacks: Array<
@@ -23,35 +32,73 @@ export class Cache<
     >;
     private contextBuilder?: () => FrontCxt;
     private refreshing = false;
+    private savedEntities: (keyof ED)[];
+    private keepFreshPeriod: number;
+    private localStorage: LocalStorage;
     private getFullDataFn: () => any;
+    private refreshRecords: {
+        [T in keyof ED]?: Record<string, number>;
+    } = {};
 
     constructor(
+        storageSchema: StorageSchema<ED>,
         aspectWrapper: AspectWrapper<ED, Cxt, AD>,
-        contextBuilder: () => FrontCxt,
-        store: CacheStore<ED, FrontCxt>,
-        getFullData: () => any
+        frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
+        checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
+        getFullData: () => any,
+        localStorage: LocalStorage,
+        savedEntities?: (keyof ED)[],
+        keepFreshPeriod?: number,
     ) {
         super();
         this.aspectWrapper = aspectWrapper;
         this.syncEventsCallbacks = [];
 
-        this.contextBuilder = contextBuilder;
-        this.cacheStore = store;
-        this.getFullDataFn = getFullData;
+        this.cacheStore = new CacheStore(storageSchema);
+        this.contextBuilder = () => frontendContextBuilder()(this.cacheStore);
+        this.savedEntities = ['actionAuth', 'i18n', ...(savedEntities || [])];
+        this.keepFreshPeriod = keepFreshPeriod || DEFAULT_KEEP_FRESH_PERIOD;
+        this.localStorage = localStorage;
 
-        // 在这里把wrapper的返回opRecords截取到并同步到cache中
-        /* const { exec } = aspectWrapper;
-        aspectWrapper.exec = async <T extends keyof AD>(
-            name: T,
-            params: any
-        ) => {
-            const { result, opRecords } = await exec(name, params);
-            this.sync(opRecords);
-            return {
-                result,
-                opRecords,
-            };
-        }; */
+        checkers.forEach(
+            (checker) => this.cacheStore.registerChecker(checker)
+        );
+
+        this.getFullDataFn = getFullData;
+        this.initSavedLogic();
+    }
+
+    /**
+     * 处理cache中需要缓存的数据
+     */
+    private initSavedLogic() {
+        const data: {
+            [T in keyof ED]?: ED[T]['OpSchema'][];
+        } = {};
+        this.savedEntities.forEach(
+            (entity) => {
+                const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity as string}`;
+                const cached = this.localStorage.load(key);
+                if (cached) {
+                    data[entity] = cached;
+                }
+            }
+        );
+        this.cacheStore.resetInitialData(data);
+        this.cacheStore.onCommit((result) => {
+            const entities = Object.keys(result);
+            const referenced = intersection(entities, this.savedEntities);
+
+            if (referenced.length > 0) {
+                const saved = this.cacheStore.getCurrentData(referenced);
+                Object.keys(saved).forEach(
+                    (entity) => {
+                        const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity as string}`;
+                        this.localStorage.save(key, saved[entity]);
+                    }
+                )
+            }
+        });
     }
 
     getSchema() {
@@ -97,7 +144,141 @@ export class Cache<
         }
     }
 
-    async refresh<T extends keyof ED, OP extends SelectOption>(
+    private getRefreshRecordSize() {
+        let count = 0;
+        Object.keys(this.refreshRecords).forEach(
+            (entity) => count += Object.keys(this.refreshRecords[entity]!).length
+        );
+        return count;
+    }
+
+    private reduceRefreshRecord(now: number) {
+        Object.keys(this.refreshRecords).forEach(
+            (ele) => {
+                if (!this.savedEntities.includes(ele)) {
+                    const outdated: string[] = [];
+                    for (const filter in this.refreshRecords[ele]) {
+                        if (this.refreshRecords[ele]![filter]! < now - this.keepFreshPeriod) {
+                            outdated.push(filter);
+                        }
+                    }
+                    this.refreshRecords[ele as keyof ED] = omit(this.refreshRecords[ele], outdated);
+                }
+            }
+        );
+    }
+
+    private addRefreshRecord(entity: keyof ED, filter: string, now: number) {
+        const originTimestamp = this.refreshRecords[entity] && this.refreshRecords[entity]![filter];
+        if (this.refreshRecords[entity]) {
+            Object.assign(this.refreshRecords[entity]!, {
+                [filter]: now,
+            });
+        }
+        else {
+            Object.assign(this.refreshRecords, {
+                [entity]: {
+                    [filter]: now,
+                }
+            });
+        }
+
+        let count = this.getRefreshRecordSize();
+        if (count > 100) {
+            count = this.getRefreshRecordSize();
+            this.reduceRefreshRecord(now);
+            if (count > 100) {
+                console.warn('cache中的refreshRecord数量过多，请检查是否因为存在带有Date.now等变量的刷新例程！', this.refreshRecords);
+            }
+        }
+        if (originTimestamp) {
+            return () => this.addRefreshRecord(entity, filter, originTimestamp);
+        }
+    }
+
+    /**
+     * 判定一个refresh行为是否可以应用缓存优化
+     * 可以优化的selection必须满足：
+     * 1）没有indexFrom和count
+     * 2）没要求getCount
+     * 3）查询的projection和filter只限定在该对象自身属性上
+     * 4）有filter
+     * @param entity 
+     * @param selection 
+     * @param option 
+     * @param getCount 
+     */
+    private canOptimizeRefresh<T extends keyof ED, OP extends CacheSelectOption>(
+        entity: T,
+        selection: ED[T]['Selection'],
+        option?: OP,
+        getCount?: true): boolean {
+        if (getCount || selection.indexFrom || selection.count || selection.randomRange || !selection.filter || option?.ignoreKeepFreshRule) {
+            return false;
+        }
+
+        const { data, filter, sorter } = selection;
+
+        // projection中不能有cascade查询或者表达式
+        const checkProjection = (projection: ED[keyof ED]['Selection']['data']) => {
+            for (const attr in data) {
+                const rel = this.judgeRelation(entity, attr);
+                if (typeof rel !== 'number' || ![0, 1].includes(rel)) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        if (!checkProjection(data)) {
+            return false;
+        }
+
+        // filter中不能有cascade查询或者表达式
+        const checkFilter = (filter2: ED[keyof ED]['Selection']['filter']): boolean => {
+            for (const attr in filter2) {
+                if (['$and', '$or'].includes(attr)) {
+                    for (const f2 of filter2[attr]) {
+                        if (!checkFilter(f2)) {
+                            return false;
+                        }
+                    }
+                }
+                else if (attr === '$not') {
+                    if (!checkFilter(filter2[attr])) {
+                        return false;
+                    }
+                }
+                else if (!attr.startsWith('$') || !attr.startsWith('#')) {
+                    const rel = this.judgeRelation(entity, attr);
+                    if (typeof rel !== 'number' || ![0, 1].includes(rel)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        };
+
+        if (!checkFilter(filter)) {
+            return false;
+        }
+
+        if (sorter) {
+            for (const s of sorter) {
+                if (!checkProjection(s.$attr)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private filterToKey(filter: object) {
+        return JSON.stringify(filter);
+    }
+
+    async refresh<T extends keyof ED, OP extends CacheSelectOption>(
         entity: T,
         selection: ED[T]['Selection'],
         option?: OP,
@@ -105,29 +286,118 @@ export class Cache<
         callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
         dontPublish?: true
     ) {
-        this.refreshing = true;
-        const { result: { ids, count, aggr } } = await this.exec('select', {
-            entity,
-            selection,
-            option,
-            getCount,
-        }, callback, dontPublish);
+        // todo 还要判定没有aggregation
+        const canOptimize = this.canOptimizeRefresh(entity, selection, option, getCount);
+        let now = 0, key = '';
+        let undoSetRefreshRecord: undefined | (() => void);
+        if (canOptimize) {
+            const { filter } = selection;
+            assert(filter);
+            key = this.filterToKey(filter);
 
-        const selection2 = Object.assign({}, selection, {
-            filter: {
-                id: {
-                    $in: ids,
+            now = Date.now();
+            if (this.refreshRecords[entity] && this.refreshRecords[entity]![key]) {
+                if (this.refreshRecords[entity]![key] > now - this.keepFreshPeriod && this.savedEntities.includes(entity)) {
+                    // 对于savedEntities，同一查询条件不必过于频繁刷新，减少性能开销
+                    if (process.env.NODE_ENV === 'development') {
+                        // console.warn('根据keepFresh规则，省略了一次请求数据的行为', entity, selection);
+                    }
+                    const data = this.get(entity, selection);
+                    return {
+                        data,
+                    };
+                }
+                else {
+                    // 对于其它entity或者是过期的savedEntity，可以加上增量条件，只检查上次查询之后有更新的数据（减少网络传输开销）
+                    if (!this.savedEntities.includes(entity) && process.env.NODE_ENV === 'development') {
+                        console.log('对象的查询可能可以被缓存，请查看代码逻辑', entity);
+                    }
+                    selection.filter = combineFilters(entity, this.getSchema(), [selection.filter, {
+                        $$updateAt$$: {
+                            $gte: this.refreshRecords[entity]![key]!
+                        }
+                    }]);
                 }
             }
-        });
-        const data = this.get(entity, selection2);
-        if (aggr) {
-            merge(data, aggr);
+            else if (this.savedEntities.includes(entity)) {
+                // 启动以后的第一次查询，因为此entity会被缓存，因此可以利用满足查询条件的行上的$$updateAt$$作为上一次查询的时间戳，来最大限度利用缓存减少网络传输开销
+                const current = this.get(entity, {
+                    data: {
+                        id: 1,
+                        $$updateAt$$: 1,
+                    },
+                    filter,
+                });
+
+                if (current.length > 0) {
+                    let maxUpdateAt = 0;
+                    const ids = current.map(
+                        (row) => {
+                            if (typeof row.$$updateAt$$ === 'number' && row.$$updateAt$$ > maxUpdateAt) {
+                                maxUpdateAt = row.$$updateAt$$;
+                            }
+                            return row.id!;
+                        }
+                    );
+
+                    /**
+                     * 这个filter其实有疏漏，如果有一现有行的updateAt在它自己的updateAt和maxUpdateAt之间就会得不到更新，
+                     * 但作为savedEntites这一概率是极低的。
+                     */
+                    const filter: ED[T]['Selection']['filter'] = {
+                        $or: [
+                            {
+                                id: {
+                                    $nin: ids,
+                                },
+                            },
+                            {
+                                $$updateAt$$: {
+                                    $gte: maxUpdateAt,
+                                },
+                            }
+                        ],
+                    };
+
+                    selection.filter = combineFilters(entity, this.getSchema(), [filter, selection.filter]);
+                }
+            }
+            undoSetRefreshRecord = this.addRefreshRecord(entity, key, now);
         }
-        return {
-            data: data as Partial<ED[T]['Schema']>[],
-            count,
-        };
+
+        this.refreshing = true;
+        try {
+            const { result: { ids, count, aggr } } = await this.exec('select', {
+                entity,
+                selection,
+                option,
+                getCount,
+            }, callback, dontPublish);
+
+            if (canOptimize) {
+            }
+            const selection2 = Object.assign({}, selection, {
+                filter: {
+                    id: {
+                        $in: ids,
+                    }
+                }
+            });
+            const data = this.get(entity, selection2);
+            if (aggr) {
+                merge(data, aggr);
+            }
+            return {
+                data: data as Partial<ED[T]['Schema']>[],
+                count,
+            };
+        }
+        catch(err) {
+            this.refreshing = false;            
+            undoSetRefreshRecord && undoSetRefreshRecord();
+
+            throw err;
+        }
     }
 
 
@@ -297,7 +567,7 @@ export class Cache<
         context?: FrontCxt,
         allowMiss?: boolean
     ) {
-        const context2 = context ||  this.contextBuilder!();
+        const context2 = context || this.contextBuilder!();
 
         return this.getInner(entity, selection, context2, allowMiss);
     }

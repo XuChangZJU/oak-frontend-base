@@ -10,7 +10,9 @@ export type InitializeOptions<ED extends EntityDict & BaseEntityDict> = {
     colorDict: ColorDict<ED>;
     importations?: Importation<ED, keyof ED, any>[];
     exportations?: Exportation<ED, keyof ED, any>[];
-    selectFreeEntities: (keyof ED)[];
-    createFreeEntities: (keyof ED)[];
-    updateFreeEntities: (keyof ED)[];
+    selectFreeEntities?: (keyof ED)[];
+    createFreeEntities?: (keyof ED)[];
+    updateFreeEntities?: (keyof ED)[];
+    cacheSavedEntities?: (keyof ED)[];
+    cacheKeepFreshPeriod?: number;
 };

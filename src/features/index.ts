@@ -1,4 +1,4 @@
-import { Aspect, AspectWrapper, AuthCascadePath, AuthDeduceRelationMap, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, AspectWrapper, AuthCascadePath, AuthDeduceRelationMap, Checker, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 
@@ -27,20 +27,23 @@ export function initializeStep2<ED extends EntityDict & BaseEntityDict, Cxt exte
     features: Pick<BasicFeatures<ED, Cxt, FrontCxt, AD>, 'localStorage' | 'environment'>,
     aspectWrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>,
     storageSchema: StorageSchema<ED>,
-    contextBuilder: () => FrontCxt,
-    store: CacheStore<ED, FrontCxt>,
+    frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
+    checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     actionCascadePathGraph: AuthCascadePath<ED>[],
     relationCascadePathGraph: AuthCascadePath<ED>[],
     authDeduceRelationMap: AuthDeduceRelationMap<ED>,
-    selectFreeEntities: (keyof ED)[],
-    createFreeEntities: (keyof ED)[],
-    updateFreeEntities: (keyof ED)[],
     colorDict: ColorDict<ED>,
     getFullDataFn: () => any,
-    makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string) {
+    makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string,
+    selectFreeEntities?: (keyof ED)[],
+    createFreeEntities?: (keyof ED)[],
+    updateFreeEntities?: (keyof ED)[],
+    savedEntities?: (keyof ED)[],
+    keepFreshPeriod?: number) {
     const { localStorage, environment } = features;
-    const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper, contextBuilder, store, getFullDataFn);
-    const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(contextBuilder, cache,
+    const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(storageSchema, aspectWrapper, 
+        frontendContextBuilder, checkers, getFullDataFn, localStorage, savedEntities, keepFreshPeriod);
+    const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache,
         actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, relationAuth);
     const geo = new Geo(aspectWrapper);

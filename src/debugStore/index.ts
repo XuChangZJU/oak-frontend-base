@@ -215,11 +215,11 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
     actionCascadePathGraph: AuthCascadePath<ED>[],
     relationCascadePathGraph: AuthCascadePath<ED>[],
     authDeduceRelationMap: AuthDeduceRelationMap<ED>,
-    selectFreeEntities: (keyof ED)[],
-    createFreeEntities: (keyof ED)[],
-    updateFreeEntities: (keyof ED)[],
     saveFn: (key: string, data: any) => void,
-    loadFn: (key: string) => any) {
+    loadFn: (key: string) => any,
+    selectFreeEntities?: (keyof ED)[],
+    createFreeEntities?: (keyof ED)[],
+    updateFreeEntities?: (keyof ED)[],) {
     const store = new DebugStore<ED, Cxt>(storageSchema, contextBuilder, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap,
         selectFreeEntities, createFreeEntities, updateFreeEntities);
 

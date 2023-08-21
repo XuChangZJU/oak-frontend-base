@@ -1,4 +1,4 @@
-import { Aspect, AspectWrapper, AuthCascadePath, AuthDeduceRelationMap, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, AspectWrapper, AuthCascadePath, AuthDeduceRelationMap, Checker, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -21,7 +21,7 @@ import { ContextMenuFactory } from './contextMenuFactory';
 import { Geo } from './geo';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
-export declare function initializeStep2<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(features: Pick<BasicFeatures<ED, Cxt, FrontCxt, AD>, 'localStorage' | 'environment'>, aspectWrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>, storageSchema: StorageSchema<ED>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities: (keyof ED)[], createFreeEntities: (keyof ED)[], updateFreeEntities: (keyof ED)[], colorDict: ColorDict<ED>, getFullDataFn: () => any, makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string): {
+export declare function initializeStep2<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(features: Pick<BasicFeatures<ED, Cxt, FrontCxt, AD>, 'localStorage' | 'environment'>, aspectWrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>, storageSchema: StorageSchema<ED>, frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt, checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, colorDict: ColorDict<ED>, getFullDataFn: () => any, makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string, selectFreeEntities?: (keyof ED)[], createFreeEntities?: (keyof ED)[], updateFreeEntities?: (keyof ED)[], savedEntities?: (keyof ED)[], keepFreshPeriod?: number): {
     cache: Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     runningTree: RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;

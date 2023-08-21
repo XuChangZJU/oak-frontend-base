@@ -42,23 +42,24 @@ export function initialize<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    >(
-        storageSchema: StorageSchema<ED>,
-        frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
-        backendContextBuilder: (contextStr?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>,
-        aspectDict: AD,
-        triggers: Array<Trigger<ED, keyof ED, Cxt>>,
-        checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
-        watchers: Array<Watcher<ED, keyof ED, Cxt>>,
-        timers: Array<Timer<ED, Cxt>>,
-        startRoutines: Array<Routine<ED, Cxt>>,
-        initialData: {
-            [T in keyof ED]?: Array<ED[T]['OpSchema']>;
-        },
-        option: InitializeOptions<ED>
-    ) {
-    const { actionCascadePathGraph, actionDict, relationCascadePathGraph, authDeduceRelationMap, 
-        colorDict, importations, exportations, selectFreeEntities, createFreeEntities, updateFreeEntities } = option;
+>(
+    storageSchema: StorageSchema<ED>,
+    frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
+    backendContextBuilder: (contextStr?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>,
+    aspectDict: AD,
+    triggers: Array<Trigger<ED, keyof ED, Cxt>>,
+    checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
+    watchers: Array<Watcher<ED, keyof ED, Cxt>>,
+    timers: Array<Timer<ED, Cxt>>,
+    startRoutines: Array<Routine<ED, Cxt>>,
+    initialData: {
+        [T in keyof ED]?: Array<ED[T]['OpSchema']>;
+    },
+    option: InitializeOptions<ED>
+) {
+    const { actionCascadePathGraph, actionDict, relationCascadePathGraph, authDeduceRelationMap,
+        colorDict, importations, exportations, selectFreeEntities, createFreeEntities, updateFreeEntities,
+        cacheKeepFreshPeriod, cacheSavedEntities } = option;
     let intersected = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
     if (intersected.length > 0) {
         throw new Error(
@@ -86,20 +87,16 @@ export function initialize<
         actionCascadePathGraph,
         relationCascadePathGraph,
         authDeduceRelationMap,
+        (key, data) => features1.localStorage.save(key, data),
+        (key) => features1.localStorage.load(key),
         selectFreeEntities,
         createFreeEntities,
-        updateFreeEntities,
-        (key, data) => features1.localStorage.save(key, data),
-        (key) => features1.localStorage.load(key)
-    );
-
-    const cacheStore = new CacheStore<ED, FrontCxt>(
-        storageSchema
+        updateFreeEntities
     );
 
     const wrapper: AspectWrapper<ED, Cxt, CommonAspectDict<ED, Cxt> & AD> = {
         exec: async (name, params) => {
-            const context = frontendContextBuilder()(cacheStore);
+            const context = features2.cache.begin();
             const str = context.toString();
             const contextBackend = await backendContextBuilder(str)(debugStore);
             await contextBackend.begin();
@@ -123,18 +120,21 @@ export function initialize<
         features1,
         wrapper,
         storageSchema,
-        () => frontendContextBuilder()(cacheStore),
-        cacheStore,
+        frontendContextBuilder,
+        checkers2,
         actionCascadePathGraph,
         relationCascadePathGraph,
         authDeduceRelationMap,
+        colorDict,
+        () => debugStore.getCurrentData(),
+        undefined,
         selectFreeEntities,
         createFreeEntities,
         updateFreeEntities,
-        colorDict,        
-        () => debugStore.getCurrentData());
+        cacheSavedEntities,
+        cacheKeepFreshPeriod
+    );
 
-    checkers2.forEach((checker) => cacheStore.registerChecker(checker));
 
     registerPorts(importations || [], exportations || []);
 

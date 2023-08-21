@@ -7,7 +7,6 @@ import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { Cache } from './cache';
 export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends Feature {
     private cache;
-    private contextBuilder;
     private actionCascadePathGraph;
     private actionCascadePathMap;
     private relationCascadePathGraph;
@@ -15,7 +14,7 @@ export declare class RelationAuth<ED extends EntityDict & BaseEntityDict, Cxt ex
     private authDeduceRelationMap;
     static IgnoredActions: string[];
     private entityGraph?;
-    constructor(contextBuilder: () => FrontCxt, cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities: (keyof ED)[], createFreeEntities: (keyof ED)[], updateFreeEntities: (keyof ED)[]);
+    constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, actionCascadePathGraph: AuthCascadePath<ED>[], relationCascadePathGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities?: (keyof ED)[], createFreeEntities?: (keyof ED)[], updateFreeEntities?: (keyof ED)[]);
     private judgeRelation;
     getHasRelationEntities(): string[];
     getDeduceRelationAttribute(entity: keyof ED): string | undefined;

@@ -1,25 +1,57 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, StorageSchema, Checker } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { LocalStorage } from './localStorage';
+interface CacheSelectOption extends SelectOption {
+    ignoreKeepFreshRule?: true;
+}
 export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends Feature {
     cacheStore: CacheStore<ED, FrontCxt>;
     private aspectWrapper;
     private syncEventsCallbacks;
     private contextBuilder?;
     private refreshing;
+    private savedEntities;
+    private keepFreshPeriod;
+    private localStorage;
     private getFullDataFn;
-    constructor(aspectWrapper: AspectWrapper<ED, Cxt, AD>, contextBuilder: () => FrontCxt, store: CacheStore<ED, FrontCxt>, getFullData: () => any);
-    getSchema(): import("oak-domain/lib/types").StorageSchema<ED>;
+    private refreshRecords;
+    constructor(storageSchema: StorageSchema<ED>, aspectWrapper: AspectWrapper<ED, Cxt, AD>, frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt, checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>, getFullData: () => any, localStorage: LocalStorage, savedEntities?: (keyof ED)[], keepFreshPeriod?: number);
+    /**
+     * 处理cache中需要缓存的数据
+     */
+    private initSavedLogic;
+    getSchema(): StorageSchema<ED>;
     getCurrentUserId(allowUnloggedIn?: boolean): string | undefined;
     exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void, dontPublish?: true): Promise<{
         result: Awaited<ReturnType<AD[K]>>;
         message: string | null | undefined;
     }>;
-    refresh<T extends keyof ED, OP extends SelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true, callback?: (result: Awaited<ReturnType<AD['select']>>) => void, dontPublish?: true): Promise<{
+    private getRefreshRecordSize;
+    private reduceRefreshRecord;
+    private addRefreshRecord;
+    /**
+     * 判定一个refresh行为是否可以应用缓存优化
+     * 可以优化的selection必须满足：
+     * 1）没有indexFrom和count
+     * 2）没要求getCount
+     * 3）查询的projection和filter只限定在该对象自身属性上
+     * 4）有filter
+     * @param entity
+     * @param selection
+     * @param option
+     * @param getCount
+     */
+    private canOptimizeRefresh;
+    private filterToKey;
+    refresh<T extends keyof ED, OP extends CacheSelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true, callback?: (result: Awaited<ReturnType<AD['select']>>) => void, dontPublish?: true): Promise<{
+        data: Partial<ED[T]["Schema"]>[];
+        count?: undefined;
+    } | {
         data: Partial<ED[T]["Schema"]>[];
         count: number | undefined;
     }>;
@@ -56,3 +88,4 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     commit(context: FrontCxt): void;
     rollback(context: FrontCxt): void;
 }
+export {};

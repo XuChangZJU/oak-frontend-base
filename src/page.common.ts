@@ -167,7 +167,11 @@ function checkActionsAndCascadeEntities<
     const checkTypes = ['relation', 'row', 'logical', 'logicalRelation'] as CheckerType[];
     const actions = this.props.oakActions ? JSON.parse(this.props.oakActions) as ED[T]['Action'][] : (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
     const legalActions = [] as ActionDef<ED, T>[];
+
+    // 这里向服务器请求相应的actionAuth，cache层会对请求加以优化，避免反复过频的不必要取数据
+    const destEntities: (keyof ED)[] = [];
     if (actions) {
+        destEntities.push(this.state.oakEntity);
         // todo 这里actions整体进行测试的性能应该要高于一个个去测试
         for (const action of actions as ActionDef<ED, T>[]) {
             if (rows instanceof Array) {
@@ -284,6 +288,7 @@ function checkActionsAndCascadeEntities<
             if (cascadeActions) {
                 const rel = judgeRelation(this.features.cache.getSchema()!, this.state.oakEntity, e);
                 assert(rel instanceof Array, `${this.state.oakFullpath}上所定义的cascadeAction中的键值${e}不是一对多映射`);
+                destEntities.push(rel[0]);
                 for (const action of cascadeActions as ActionDef<ED, T>[]) {
                     if (rows instanceof Array) {
                         if (action === 'create' || typeof action === 'object' && action.action === 'create') {
@@ -368,7 +373,24 @@ function checkActionsAndCascadeEntities<
                 }
             }
         }
+    }
 
+    if (destEntities.length > 0) {
+        // 权限判断需要actionAuth的数据，这里向cache请求时，会根据keepFresh规则进行一定程度的优化。
+        this.features.cache.refresh('actionAuth', {
+            data: {
+                id: 1,
+                relationId: 1,
+                paths: 1,
+                destEntity: 1,
+                deActions: 1,
+            },
+            filter: {
+                destEntity: {
+                    $in: destEntities as string[],
+                }
+            }
+        });
     }
 
     return legalActions;

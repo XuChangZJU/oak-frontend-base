@@ -17,18 +17,12 @@ export class CacheStore<
     Cxt extends SyncContext<ED>
     > extends TreeStore<ED> implements SyncRowStore<ED, SyncContext<ED>>{
     private triggerExecutor: SyncTriggerExecutor<ED, Cxt>;
-    private savedEntities: (keyof ED)[];
-    private keepFreshPeriod: number;
 
     constructor(
         storageSchema: StorageSchema<ED>,
-        keepFreshPeriod: number,
-        savedEntities: (keyof ED)[],
     ) {
         super(storageSchema);
         this.triggerExecutor = new SyncTriggerExecutor();
-        this.keepFreshPeriod = keepFreshPeriod;
-        this.savedEntities = savedEntities;
     }
     
     aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]['Aggregation'], context: SyncContext<ED>, option: OP): AggregationResult<ED[T]['Schema']> {

@@ -17,7 +17,6 @@ export class RelationAuth<
     AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>
     > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
-    private contextBuilder: () => FrontCxt;
     private actionCascadePathGraph: AuthCascadePath<ED>[];
     private actionCascadePathMap: Record<string, AuthCascadePath<ED>[]>;
     private relationCascadePathGraph: AuthCascadePath<ED>[];
@@ -34,17 +33,15 @@ export class RelationAuth<
     };
 
     constructor(
-        contextBuilder: () => FrontCxt,
         cache: Cache<ED, Cxt, FrontCxt, AD>,
         actionCascadePathGraph: AuthCascadePath<ED>[],
         relationCascadePathGraph: AuthCascadePath<ED>[],
         authDeduceRelationMap: AuthDeduceRelationMap<ED>,
-        selectFreeEntities: (keyof ED)[],
-        createFreeEntities:  (keyof ED)[],
-        updateFreeEntities: (keyof ED)[]
+        selectFreeEntities?: (keyof ED)[],
+        createFreeEntities?:  (keyof ED)[],
+        updateFreeEntities?: (keyof ED)[]
     ) {
         super();
-        this.contextBuilder = contextBuilder;
         this.cache = cache;
         this.actionCascadePathGraph = actionCascadePathGraph;
         this.relationCascadePathGraph = relationCascadePathGraph;
@@ -238,7 +235,7 @@ export class RelationAuth<
     }
 
     checkRelation<T extends keyof ED>(entity: T, operation: Omit< ED[T]['Operation'] | ED[T]['Selection'], 'id'>) {
-        const context = this.contextBuilder();
+        const context = this.cache.begin();
         context.begin();
         try {
             this.baseRelationAuth.checkRelationSync(entity, operation, context);

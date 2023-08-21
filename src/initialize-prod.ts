@@ -42,7 +42,7 @@ export function initialize<
     option: InitializeOptions<ED>
 ) {
     const {  actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, actionDict, 
-        selectFreeEntities, createFreeEntities, updateFreeEntities, colorDict } = option;
+        selectFreeEntities, createFreeEntities, updateFreeEntities, colorDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
 
 
     const { checkers: intCheckers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict);
@@ -50,13 +50,9 @@ export function initialize<
 
     const features1 = initBasicFeaturesStep1();
 
-    const cacheStore = new CacheStore<ED, FrontCxt>(
-        storageSchema,
-    );
-
     const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
         exec: async (name, params) => {
-            const context = frontendContextBuilder()(cacheStore);
+            const context = features2.cache.begin();
             const { result, opRecords, message } = await connector.callAspect(name as string, params, context);
             return {
                 result,
@@ -70,20 +66,20 @@ export function initialize<
         features1,
         wrapper, 
         storageSchema, 
-        () => frontendContextBuilder()(cacheStore), 
-        cacheStore, 
+        frontendContextBuilder, 
+        checkers2,
         actionCascadePathGraph,
         relationCascadePathGraph,
         authDeduceRelationMap,
+        colorDict,
+        () => '请查看数据库中的数据',
+        (url, headers) => connector.makeBridgeUrl(url, headers),
         selectFreeEntities,
         createFreeEntities,
         updateFreeEntities,
-        colorDict,
-        () => '请查看数据库中的数据',
-        (url, headers) => connector.makeBridgeUrl(url, headers)
+        cacheSavedEntities,
+        cacheKeepFreshPeriod
     );
-
-    checkers2.forEach((checker) => cacheStore.registerChecker(checker));
 
     const features = Object.assign(features1, features2);
     return {
