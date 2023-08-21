@@ -121,6 +121,7 @@ export declare type CascadeActionProps = {
 export declare type onActionFnDef = (row: any, action: string, cascadeAction?: CascadeActionProps) => void;
 export declare type ListButtonProps = {
     label: string;
+    show?: boolean;
     type?: ButtonProps['type'];
     icon?: React.ReactNode;
     onClick: () => void;

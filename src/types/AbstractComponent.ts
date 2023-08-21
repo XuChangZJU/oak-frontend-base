@@ -178,6 +178,7 @@ export type onActionFnDef = (
 
 export type ListButtonProps = {
     label: string;
+    show?: boolean;
     type?: ButtonProps['type'],
     icon?: React.ReactNode,
     onClick: () => void;
