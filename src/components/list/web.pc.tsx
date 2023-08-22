@@ -95,7 +95,7 @@ export default function Render(
                     render: (v: string, row: any) => {
                         const value = getValue(row, path, entityI8n, attr, attrType, t);
                         const stateValue = get(row, path);
-                        if (!stateValue) {
+                        if ([null, undefined, ''].includes(stateValue)) {
                             return <></>
                         }
                         const color = colorDict && colorDict[entityI8n]?.[attr]?.[stateValue] as string;
