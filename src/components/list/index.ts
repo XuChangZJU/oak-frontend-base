@@ -1,5 +1,5 @@
-import { CardDef, ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps } from '../../types/AbstractComponent';
-import { analyzeAttrMobileForCard } from '../../utils/usefulFn';
+import { CardDef, ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
+import { analyzeAttrMobileForCard, translateAttributes } from '../../utils/usefulFn';
 import assert from 'assert';
 import { TableProps, PaginationProps } from 'antd';
 import { RowWithActions, ReactComponentProps } from '../../types/Page';
@@ -41,6 +41,7 @@ export default OakComponent({
     },
     data: {
         converter: (data: any) => <any>[],
+        judgeAttributes: [] as OakAbsAttrJudgeDef[],
     },
     listeners: {
         data() {
@@ -62,10 +63,12 @@ export default OakComponent({
                 this.t,
                 attributes!,
             );
+            const judgeAttributes = translateAttributes(schema, entity, attributes!);
             this.setState({
                 converter,
                 schema,
                 colorDict,
+                judgeAttributes,
             });
         },
     },

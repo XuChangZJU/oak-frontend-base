@@ -19,6 +19,7 @@ import {
     OakAbsNativeAttrUpsertRender,
     OakAbsGeoAttrUpsertDef,
     OakAbsNativeAttrUpsertDef,
+    OakAbsAttrJudgeDef,
 } from '../types/AbstractComponent';
 import { Attributes } from 'oak-domain/lib/types';
 import { get } from 'oak-domain/lib/utils/lodash';
@@ -146,20 +147,19 @@ export function getLabel<ED extends EntityDict & BaseEntityDict>(
     attr: string,
     t: (k: string, params?: object) => string
 ) {
-    let label = t(`${entity as string}:attr.${attr}`, {});
+    if (isAttrbuteType(attribute).label) {
+        return isAttrbuteType(attribute).label;
+    }
     if (
         attr === '$$createAt$$' ||
         attr === '$$updateAt$$' ||
         attr === '$$deleteAt$$'
     ) {
-        label = t(`common::${attr}`, {
+        return t(`common::${attr}`, {
             '#oakModule': 'oak-frontend-base',
         });
     }
-    if (isAttrbuteType(attribute).label) {
-        label = isAttrbuteType(attribute).label;
-    }
-    return label;
+    return t(`${entity as string}:attr.${attr}`, {});
 }
 
 // 目前width属性可以是undefined，只有特殊type或用户自定义才有值，这样其余attr属性可以自适应
@@ -408,6 +408,31 @@ type CoverData = {
     }[];
     record: EntityDict[keyof EntityDict];
 }[]
+
+export function translateAttributes<
+    ED extends EntityDict & BaseEntityDict
+>(
+    dataSchema: StorageSchema<ED>,
+    entity: keyof ED,
+    attributes: OakAbsAttrDef[],
+): OakAbsAttrJudgeDef[] {
+    const judgeAttributes: OakAbsAttrJudgeDef[] = attributes.map((ele) => {
+        const path = getPath(ele);
+        const {
+            attrType,
+            attr,
+            entity: entityI8n,
+        } = resolvePath(dataSchema, entity, path);
+        return {
+            path,
+            attrType,
+            attr,
+            attribute: ele,
+            entity: entityI8n as string,
+        }
+    })
+    return judgeAttributes;
+}
 
 export function analyzeAttrMobileForCard<
     ED extends EntityDict & BaseEntityDict

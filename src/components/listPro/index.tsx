@@ -1,6 +1,6 @@
 import React, {createContext, useEffect, useMemo, useState} from 'react';
-import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, ED } from '../../types/AbstractComponent';
-
+import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, ED, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
+import { translateAttributes } from '../../utils/usefulFn';
 import { TableProps, PaginationProps } from 'antd';
 import { RowWithActions, ReactComponentProps } from '../../types/Page';
 import List from '../list';
@@ -38,7 +38,7 @@ type Props<ED2 extends ED, T extends keyof ED2> = {
 }
 
 export type TabelAttributeType = {
-    attribute: OakAbsAttrDef,
+    attribute: OakAbsAttrJudgeDef,
     show: boolean;
 }
 
@@ -64,14 +64,17 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
         data, loading, tablePagination, rowSelection, onReload,
     } = props;
     const [tableAttributes, setTableAttributes] = useState<TabelAttributeType[]>([]);
-    useEffect(() => {
-        const newTabelAttributes: TabelAttributeType[] = attributes.map((ele) => ({attribute: ele, show: true}))
-        setTableAttributes(newTabelAttributes)
-    }, [attributes])
+    const features = useFeatures<{ locales: Locales<any, any, any, any> }>();
     const [schema, setSchema] = useState(undefined);
+    useEffect(() => {
+        if (schema) {
+            const judgeAttributes = translateAttributes(schema, entity as string, attributes);
+            const newTabelAttributes: TabelAttributeType[] = judgeAttributes.map((ele) => ({attribute: ele, show: true}))
+            setTableAttributes(newTabelAttributes)
+        }
+    }, [attributes, schema])
     const width = useWidth();
     const isMobile = width === 'xs';
-    const features = useFeatures<{ locales: Locales<any, any, any, any> }>();
 
     return (
         <TableContext.Provider
@@ -82,8 +85,11 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
                 setTableAttributes,
                 setSchema,
                 onReset: () => {
-                    const newTableAttr: TabelAttributeType[] = attributes.map((ele) => ({ attribute: ele, show: true }));
-                    setTableAttributes(newTableAttr);
+                    if (schema) {
+                        const judgeAttributes = translateAttributes(schema, entity as string, attributes);
+                        const newTableAttr: TabelAttributeType[] = judgeAttributes.map((ele) => ({ attribute: ele, show: true }));
+                        setTableAttributes(newTableAttr);
+                    }
                 }
             }}>
             <div className={Style.listContainer}>

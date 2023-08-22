@@ -1,5 +1,5 @@
 import React from 'react';
-import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, ED } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, ED, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
 import { TableProps } from 'antd';
 import { RowWithActions } from '../../types/Page';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
@@ -24,7 +24,7 @@ declare type Props<ED2 extends ED, T extends keyof ED2> = {
     };
 };
 export declare type TabelAttributeType = {
-    attribute: OakAbsAttrDef;
+    attribute: OakAbsAttrJudgeDef;
     show: boolean;
 };
 export declare const TableContext: React.Context<{

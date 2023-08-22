@@ -8,13 +8,15 @@ import {
     OakAbsAttrDef,
     OakAbsAttrUpsertDef,
     ColumnMapType,
+    OakAbsAttrJudgeDef
 } from '../../types/AbstractComponent';
-import { makeDataTransformer } from '../../utils/usefulFn';
+import { makeDataTransformer, translateAttributes } from '../../utils/usefulFn';
 import { ReactComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { Breakpoint } from 'antd';
+import assert from 'assert';
 type AttrRender = {
     label: string;
     value: any;
@@ -36,7 +38,7 @@ export default OakComponent({
         column: 3,
     },
     formData() {
-        const { data } = this.props;
+        const { data, attributes } = this.props;
         const { transformer } = this.state;
         const renderData = transformer(data!);
         const colorDict = this.features.style.getColorDict();
@@ -60,11 +62,14 @@ export default OakComponent({
     },
     data: {
         transformer: (() => []) as DataTransformer,
+        judgeAttributes: [] as OakAbsAttrJudgeDef[],
     },
     lifetimes: {
         ready() {
             const { attributes, entity } = this.props;
             const schema = this.features.cache.getSchema();
+            assert(attributes);
+            const judgeAttributes = translateAttributes(schema, entity!, attributes);
             const transformer = makeDataTransformer(
                 schema,
                 entity!,
@@ -73,6 +78,7 @@ export default OakComponent({
             );
             this.setState({
                 transformer,
+                judgeAttributes,
             });
         },
     },

@@ -8,7 +8,9 @@ import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import styles from './web.module.less';
 import dayjs from 'dayjs';
 
-import { AttrRender } from '../../types/AbstractComponent';
+import { AttrRender, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
+import { getLabel, getValue, getWidth } from '../../utils/usefulFn';
+import { get } from 'oak-domain/lib/utils/lodash';
 
 
 function RenderRow(props: { value: any; color: string; type: AttrRender['type'] }) {
@@ -50,12 +52,13 @@ export default function Render(
             title: string;
             bordered: boolean;
             layout: 'horizontal' | 'vertical'
-            // data: any[];
+            data: any;
             handleClick?: (id: string, action: string) => void;
             colorDict: ColorDict<EntityDict & BaseEntityDict>;
             dataSchema: StorageSchema<EntityDict>;
             column: number | Record<Breakpoint, number>;
             renderData: AttrRender[];
+            judgeAttributes: OakAbsAttrJudgeDef[];
         },
         {}
     >
@@ -70,28 +73,25 @@ export default function Render(
         column,
         renderData,
         layout = "horizontal",
+        judgeAttributes,
+        data,
     } = oakData;
 
     return (
         <Descriptions title={title} column={column} bordered={bordered} layout={layout}>
-            {renderData?.map((ele) => {
-                let renderValue = ele.value;
+            {judgeAttributes?.map((ele) => {
+                let renderValue = getValue(data, ele.path, ele.entity, ele.attr, ele.attrType, t);
+                let renderLabel = getLabel(ele.attribute, ele.entity, ele.attr, t);
+                const renderWidth = getWidth(ele.attribute, ele.attrType);
                 if ([null, '', undefined].includes(renderValue)) {
                     renderValue = t('not_filled_in');
                 }
-                const color = colorDict && colorDict[entity]?.[ele.attr]?.[ele.value] as string || 'default';
-                if (ele.type === 'enum') {
-                    renderValue = ele.value && t(`${entity}:v.${ele.attr}.${ele.value}`)
-                }
-                if (ele.type === 'datetime') {
-                    renderValue = ele.value && dayjs(ele.value).format('YYYY-MM-DD');
-                }
-                if (ele.type === 'boolean') {
-                    renderValue = t(`common:${renderValue}`)
-                }
+                const stateValue = get(data, ele.path);
+                        
+                const color = colorDict && colorDict[ele.entity]?.[ele.attr]?.[stateValue] as string || 'default';
                 return (
-                    <Descriptions.Item label={ele.label} span={ele.span || 1}>
-                        <RenderRow type={ele.type} value={renderValue} color={color} />
+                    <Descriptions.Item label={renderLabel} span={renderWidth || 1}>
+                        <RenderRow type={ele.attrType!} value={renderValue} color={color} />
                     </Descriptions.Item>
                 )
             })}
