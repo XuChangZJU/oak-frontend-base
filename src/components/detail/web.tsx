@@ -110,6 +110,9 @@ export default function Render(
                         if (ele.type === 'datetime') {
                             renderValue = ele.value && dayjs(ele.value).format('YYYY-MM-DD');
                         }
+                        if (ele.type === 'boolean') {
+                            renderValue = t(`common:${renderValue}`)
+                        }
                         return (
                             <RenderRow label={ele.label} value={renderValue} type={ele.type} />
                         )
