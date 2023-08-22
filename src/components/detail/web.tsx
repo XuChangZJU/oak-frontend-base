@@ -103,7 +103,6 @@ export default function Render(
             <div className={styles.panel_content}>
                 <Space direction="vertical" style={{'--gap': '10px'}}>
                     {renderData && renderData.map((ele) => {
-                        const renderLabel = t(ele.label);
                         let renderValue = ele.value;
                         if (ele.type === 'enum') {
                             renderValue = ele.value && t(`${entity}:v.${ele.attr}.${ele.value}`)
@@ -112,7 +111,7 @@ export default function Render(
                             renderValue = ele.value && dayjs(ele.value).format('YYYY-MM-DD');
                         }
                         return (
-                            <RenderRow label={renderLabel} value={renderValue} type={ele.type} />
+                            <RenderRow label={ele.label} value={renderValue} type={ele.type} />
                         )
                     })}
                 </Space>
