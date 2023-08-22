@@ -75,7 +75,7 @@ export default function Render(
     return (
         <Descriptions title={title} column={column} bordered={bordered} layout={layout}>
             {renderData?.map((ele) => {
-                let renderValue = ele.value || t('not_filled_in');
+                let renderValue = ele.value;
                 if ([null, '', undefined].includes(renderValue)) {
                     renderValue = t('not_filled_in');
                 }
