@@ -76,6 +76,9 @@ export default function Render(
         <Descriptions title={title} column={column} bordered={bordered} layout={layout}>
             {renderData?.map((ele) => {
                 let renderValue = ele.value || t('not_filled_in');
+                if ([null, '', undefined].includes(renderValue)) {
+                    renderValue = t('not_filled_in');
+                }
                 const color = colorDict && colorDict[entity]?.[ele.attr]?.[ele.value] as string || 'default';
                 if (ele.type === 'enum') {
                     renderValue = ele.value && t(`${entity}:v.${ele.attr}.${ele.value}`)
