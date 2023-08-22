@@ -290,9 +290,11 @@ export class Cache<
         const canOptimize = this.canOptimizeRefresh(entity, selection, option, getCount);
         let now = 0, key = '';
         let undoSetRefreshRecord: undefined | (() => void);
+        let originFilter: ED[T]['Selection']['filter'];
         if (canOptimize) {
             const { filter } = selection;
             assert(filter);
+            originFilter = filter;
             key = this.filterToKey(filter);
 
             now = Date.now();
@@ -374,14 +376,18 @@ export class Cache<
                 getCount,
             }, callback, dontPublish);
 
-            if (canOptimize) {
-            }
-            const selection2 = Object.assign({}, selection, {
-                filter: {
-                    id: {
-                        $in: ids,
-                    }
+            let filter2: ED[T]['Selection']['filter'] = {
+                id: {
+                    $in: ids,
                 }
+            };
+
+            if (canOptimize) {
+                filter2 = originFilter!;
+            }
+
+            const selection2 = Object.assign({}, selection, {
+                filter: filter2,
             });
             const data = this.get(entity, selection2);
             if (aggr) {
