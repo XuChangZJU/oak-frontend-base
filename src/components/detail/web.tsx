@@ -13,7 +13,7 @@ import {
 import { AttrRender, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
 import dayjs from 'dayjs';
 // type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
-import { getLabel, getValue, getWidth } from '../../utils/usefulFn';
+import { getLabel, getType, getValue, getWidth } from '../../utils/usefulFn';
 
 export type ColSpanType = 1 | 2 | 3 | 4;
 type ColumnMapType = {
@@ -108,11 +108,12 @@ export default function Render(
                     {judgeAttributes && judgeAttributes.map((ele) => {
                         let renderValue = getValue(data, ele.path, ele.entity, ele.attr, ele.attrType, t);
                         let renderLabel = getLabel(ele.attribute, ele.entity, ele.attr, t);
+                        const renderType = getType(ele.attribute, ele.attrType);
                         if ([null, '', undefined].includes(renderValue)) {
                             renderValue = t('not_filled_in');
                         }
                         return (
-                            <RenderRow label={renderLabel} value={renderValue} type={ele.attrType!} />
+                            <RenderRow label={renderLabel} value={renderValue} type={renderType!} />
                         )
                     })}
                 </Space>
