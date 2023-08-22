@@ -78,17 +78,15 @@ function ColumnSetting() {
     const newTreeData: TreeNode[] = [];
     const newCheckedKeys: string[] = [];
     if (schema && entity && tableAttributes) {
-        tableAttributes.forEach((ele, index) => {
-          const path = getPath(ele.attribute);
-          const { entity: entityI18n, attr } = resolvePath(schema, entity, path);
-          const title = getLabel(ele.attribute, entityI18n, attr, (k, p) => features.locales.t(k, p));
+      tableAttributes.forEach((ele, index) => {
+          const title = getLabel(ele.attribute.attribute, ele.attribute.entity, ele.attribute.attr, (k, p) => features.locales.t(k, p));
           newTreeData.push({
             title,
-            key: path,
+            key: ele.attribute.path,
             keyIndex: index,
           })
           if (ele.show) {
-            newCheckedKeys.push(path);
+            newCheckedKeys.push(ele.attribute.path);
           }
         })
     }
@@ -97,9 +95,9 @@ function ColumnSetting() {
   }, [tableAttributes, schema])
   const move = (path: string, targetPath: string, dropPosition: number) => {
       const newAttributes = [...tableAttributes!];
-      const findIndex = newAttributes.findIndex((ele) => getPath(ele.attribute) === path);
+      const findIndex = newAttributes.findIndex((ele) => getPath(ele.attribute.attribute) === path);
       const targetIndex = newAttributes.findIndex(
-        (ele) => getPath(ele.attribute) === targetPath,
+        (ele) => getPath(ele.attribute.attribute) === targetPath,
       );
       const isDownWard = dropPosition > findIndex;
       if (findIndex < 0) return;
@@ -119,7 +117,7 @@ function ColumnSetting() {
   };
   // tree的复选框选中,
   const onCheck = (node: TreeNodeProps) => {
-    const tableArr = tableAttributes!.find((ele) => getPath(ele.attribute) === node.key);
+    const tableArr = tableAttributes!.find((ele) => getPath(ele.attribute.attribute) === node.key);
     if (tableArr) {
       tableArr.show = !tableArr.show;
       setTableAttributes!([...tableAttributes!]);

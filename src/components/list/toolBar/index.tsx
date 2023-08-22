@@ -34,7 +34,7 @@ function ToolBar(props: ToolBarProps) {
             </div>
             <div className={Style.toolbarRight}>
                 <Space>
-                    {buttonGroup && buttonGroup.length && (
+                    {buttonGroup && buttonGroup.length > 0 && (
                         <ButtonGroup items={buttonGroup} />
                     )}
                     <Tooltip title={features.locales.t('reload')}>

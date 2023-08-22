@@ -30,6 +30,13 @@ export declare type OakAbsDerivedAttrDef = {
     type?: 'image' | 'link' | DataType | 'ref';
 };
 export declare type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
+export declare type OakAbsAttrJudgeDef = {
+    path: string;
+    entity: keyof ED;
+    attr: string;
+    attribute: OakAbsAttrDef;
+    attrType: DataType | 'ref' | undefined;
+};
 export declare type CardDef = {
     title: string | React.ReactNode;
     state?: string | React.ReactNode;
@@ -121,6 +128,7 @@ export declare type CascadeActionProps = {
 export declare type onActionFnDef = (row: any, action: string, cascadeAction?: CascadeActionProps) => void;
 export declare type ListButtonProps = {
     label: string;
+    show?: boolean;
     type?: ButtonProps['type'];
     icon?: React.ReactNode;
     onClick: () => void;

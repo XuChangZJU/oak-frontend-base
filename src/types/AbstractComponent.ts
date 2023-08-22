@@ -37,6 +37,14 @@ export type OakAbsDerivedAttrDef = {
 
 export type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
 
+export type OakAbsAttrJudgeDef = {
+    path: string;
+    entity: keyof ED;
+    attr: string;
+    attribute: OakAbsAttrDef;
+    attrType: DataType | 'ref' | undefined;
+}
+
 export type CardDef = {
     // string:path ReactNode自主渲染
     title: string | React.ReactNode;
@@ -178,6 +186,7 @@ export type onActionFnDef = (
 
 export type ListButtonProps = {
     label: string;
+    show?: boolean;
     type?: ButtonProps['type'],
     icon?: React.ReactNode,
     onClick: () => void;

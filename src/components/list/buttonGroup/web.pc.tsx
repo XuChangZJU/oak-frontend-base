@@ -27,7 +27,7 @@ export default function Render(
     // 为了i18更新时能够重新渲染
     return (
         <Space>
-            {items.map((ele) => (
+            {items.filter((ele) => ele.show).map((ele) => (
                 <Button type={ele.type} onClick={ele.onClick}>
                     {ele.label}
                 </Button>

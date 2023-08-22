@@ -10,10 +10,10 @@ import {
     DataType,
     DataTypeParams,
 } from 'oak-domain/lib/types/schema/DataTypes';
-import { AttrRender } from '../../types/AbstractComponent';
-import { getValue } from '../../utils/usefulFn';
+import { AttrRender, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
 import dayjs from 'dayjs';
 // type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+import { getLabel, getType, getValue, getWidth } from '../../utils/usefulFn';
 
 export type ColSpanType = 1 | 2 | 3 | 4;
 type ColumnMapType = {
@@ -76,12 +76,13 @@ export default function Render(
             title: string;
             bordered: boolean;
             layout: 'horizontal' | 'vertical'
-            // data: any[];
+            data: any;
             handleClick?: (id: string, action: string) => void;
             colorDict: ColorDict<EntityDict & BaseEntityDict>;
             dataSchema: StorageSchema<EntityDict>;
             column: ColumnMapType;
             renderData: AttrRender[];
+            judgeAttributes: OakAbsAttrJudgeDef[];
         },
         {}
     >
@@ -92,6 +93,8 @@ export default function Render(
         title,
         renderData,
         entity,
+        judgeAttributes,
+        data,
     } = oakData;
     return (
         <div className={styles.panel}>
@@ -102,17 +105,15 @@ export default function Render(
             )}
             <div className={styles.panel_content}>
                 <Space direction="vertical" style={{'--gap': '10px'}}>
-                    {renderData && renderData.map((ele) => {
-                        const renderLabel = t(ele.label);
-                        let renderValue = ele.value;
-                        if (ele.type === 'enum') {
-                            renderValue = ele.value && t(`${entity}:v.${ele.attr}.${ele.value}`)
-                        }
-                        if (ele.type === 'datetime') {
-                            renderValue = ele.value && dayjs(ele.value).format('YYYY-MM-DD');
+                    {judgeAttributes && judgeAttributes.map((ele) => {
+                        let renderValue = getValue(data, ele.path, ele.entity, ele.attr, ele.attrType, t);
+                        let renderLabel = getLabel(ele.attribute, ele.entity, ele.attr, t);
+                        const renderType = getType(ele.attribute, ele.attrType);
+                        if ([null, '', undefined].includes(renderValue)) {
+                            renderValue = t('not_filled_in');
                         }
                         return (
-                            <RenderRow label={renderLabel} value={renderValue} type={ele.type} />
+                            <RenderRow label={renderLabel} value={renderValue} type={renderType!} />
                         )
                     })}
                 </Space>

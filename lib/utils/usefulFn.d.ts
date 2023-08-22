@@ -1,7 +1,7 @@
 import { EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { StorageSchema, Attribute } from 'oak-domain/lib/types';
-import { OakAbsAttrDef, DataTransformer, OakAbsAttrUpsertDef, AttrUpsertRender, OakAbsDerivedAttrDef } from '../types/AbstractComponent';
+import { OakAbsAttrDef, DataTransformer, OakAbsAttrUpsertDef, AttrUpsertRender, OakAbsDerivedAttrDef, OakAbsAttrJudgeDef } from '../types/AbstractComponent';
 import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 export declare function getAttributes(attributes: Record<string, Attribute>): Record<string, Attribute>;
@@ -27,5 +27,6 @@ declare type CoverData = {
     }[];
     record: EntityDict[keyof EntityDict];
 }[];
+export declare function translateAttributes<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, attributes: OakAbsAttrDef[]): OakAbsAttrJudgeDef[];
 export declare function analyzeAttrMobileForCard<ED extends EntityDict & BaseEntityDict>(dataSchema: StorageSchema<ED>, entity: keyof ED, t: (k: string, params?: object) => string, attributes: OakAbsAttrDef[]): (data: any[]) => CoverData;
 export {};

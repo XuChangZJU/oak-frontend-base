@@ -9,7 +9,7 @@ import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps, ListButtonProps } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
 import { getPath, getWidth, getValue, getLabel, resolvePath, getType, getAlign } from '../../utils/usefulFn';
 import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
 import TableCell from './renderCell';
@@ -39,6 +39,7 @@ export default function Render(
             rowSelection?: TableProps<any[]>['rowSelection']
             i18n: any;
             hideHeader?: boolean;
+            judgeAttributes: OakAbsAttrJudgeDef[];
         },
         {
         }
@@ -60,6 +61,7 @@ export default function Render(
         attributes,
         i18n,
         hideHeader,
+        judgeAttributes,
     } = oakData;
     const [tableColumns, setTabelColumns] = useState([] as ColumnsType<any>);
     const { tableAttributes, setSchema } = useContext(TableContext);
@@ -72,35 +74,33 @@ export default function Render(
     useEffect(() => {
         if (schema) {
             setSchema && setSchema(schema);
-            let showAttributes = attributes;
+            let showAttributes = judgeAttributes;
             if (tableAttributes) {
                 showAttributes = tableAttributes.filter((ele) => ele.show).map((ele) => ele.attribute);
             }
             const tableColumns: ColumnsType<any> = showAttributes && showAttributes.map((ele) => {
-                const path = getPath(ele);
-                const { attrType, attr, entity: entityI8n } = resolvePath<ED>(schema, entity, path);
-                if (entityI8n === 'notExist') {
-                    assert((ele as OakAbsDerivedAttrDef).width, `非schema属性${attr}需要自定义width`);
-                    assert((ele as OakAbsDerivedAttrDef).type, `非schema属性${attr}需要自定义type`);
-                    assert((ele as OakAbsDerivedAttrDef).label, `非schema属性${attr}需要自定义label`);
+                if (ele.entity === 'notExist') {
+                    assert((ele.attribute as OakAbsDerivedAttrDef).width, `非schema属性${ele.attr}需要自定义width`);
+                    assert((ele.attribute as OakAbsDerivedAttrDef).type, `非schema属性${ele.attr}需要自定义type`);
+                    assert((ele.attribute as OakAbsDerivedAttrDef).label, `非schema属性${ele.attr}需要自定义label`);
                 }
-                const title = getLabel(ele, entityI8n, attr, t);
-                const width = getWidth(ele, attrType);
-                const type = getType(ele, attrType);
-                const align = getAlign(attrType as DataType);
+                const title = getLabel(ele.attribute, ele.entity, ele.attr, t);
+                const width = getWidth(ele.attribute, ele.attrType);
+                const type = getType(ele.attribute, ele.attrType);
+                const align = getAlign(ele.attrType as DataType);
                 const column: ColumnType<any> = {
-                    key: path,
+                    key: ele.path,
                     title,
                     align,
                     render: (v: string, row: any) => {
-                        const value = getValue(row, path, entityI8n, attr, attrType, t);
-                        const stateValue = get(row, path);
-                        if (!stateValue) {
+                        const value = getValue(row, ele.path, ele.entity, ele.attr, ele.attrType, t);
+                        const stateValue = get(row, ele.path);
+                        if ([null, undefined, ''].includes(stateValue)) {
                             return <></>
                         }
-                        const color = colorDict && colorDict[entityI8n]?.[attr]?.[stateValue] as string;
+                        const color = colorDict && colorDict[ele.entity]?.[ele.attr]?.[stateValue] as string;
                         if (type === 'enum') {
-                            assert(color, `${entity}实体${attr}颜色定义缺失`)
+                            assert(color, `${ele.entity}实体${ele.attr}颜色定义缺失`)
                         }
                         return (<TableCell color={color} value={value} type={type!} />)
                     }
