@@ -8,7 +8,7 @@ import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import styles from './web.module.less';
 import dayjs from 'dayjs';
 
-import { AttrRender, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
+import { AttrRender, OakAbsAttrJudgeDef, OakAbsDerivedAttrDef } from '../../types/AbstractComponent';
 import { getLabel, getType, getValue, getWidth } from '../../utils/usefulFn';
 import { get } from 'oak-domain/lib/utils/lodash';
 
@@ -83,7 +83,6 @@ export default function Render(
                 let renderValue = getValue(data, ele.path, ele.entity, ele.attr, ele.attrType, t);
                 let renderLabel = getLabel(ele.attribute, ele.entity, ele.attr, t);
                 const renderType = getType(ele.attribute, ele.attrType);
-                const renderWidth = getWidth(ele.attribute, ele.attrType);
                 if ([null, '', undefined].includes(renderValue)) {
                     renderValue = t('not_filled_in');
                 }
@@ -91,7 +90,7 @@ export default function Render(
                         
                 const color = colorDict && colorDict[ele.entity]?.[ele.attr]?.[stateValue] as string || 'default';
                 return (
-                    <Descriptions.Item label={renderLabel} span={renderWidth || 1}>
+                    <Descriptions.Item label={renderLabel} span={(ele.attribute as OakAbsDerivedAttrDef).span || 1}>
                         <RenderRow type={renderType!} value={renderValue} color={color} />
                     </Descriptions.Item>
                 )
