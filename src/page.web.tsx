@@ -733,6 +733,7 @@ export function createComponent<
         subscribed: Array<() => void> = [];
         methodProps: Record<string, Function>;
         defaultProperties: Record<string, any>;
+        unmounted: boolean = false;
 
         constructor(props: ComponentProps<ED, T, IsList, TProperty>) {
             super(props);
@@ -968,6 +969,9 @@ export function createComponent<
             if (option.entity) {
                 if (oakPath || this.iAmThePage() && path) {
                     await this.onPathSet();
+                    if (this.unmounted) {
+                        return;
+                    }
                     lifetimes?.ready && lifetimes.ready.call(this);
                     lifetimes?.show && lifetimes.show.call(this);
                 }
@@ -976,6 +980,9 @@ export function createComponent<
                 // 无entity的结点此时直接调ready生命周期
                 if (oakPath || this.iAmThePage() && path) {
                     await this.onPathSet();
+                    if (this.unmounted) {
+                        return;
+                    }
                 }
                 lifetimes?.ready && lifetimes.ready.call(this);
                 lifetimes?.show && lifetimes.show.call(this);
@@ -1024,6 +1031,7 @@ export function createComponent<
             this.unregisterPageScroll();
             this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && destroyNode.call(this as any);
             lifetimes?.detached && lifetimes.detached.call(this);
+            this.unmounted = true;
         }
 
         async componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
@@ -1031,6 +1039,9 @@ export function createComponent<
                 // oakPath如果是用变量初始化，在这里再执行onPathSet，如果有entity的结点在此执行ready
                 assert(this.props.oakPath);
                 await this.onPathSet();
+                if (this.unmounted) {
+                    return;
+                }
                 if (option.entity) {
                     lifetimes?.ready && lifetimes.ready.call(this);
                     lifetimes?.show && lifetimes.show.call(this);
