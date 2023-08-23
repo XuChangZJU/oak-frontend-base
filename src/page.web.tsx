@@ -848,6 +848,12 @@ export function createComponent<
                 },
                 resetItem: (id: string, path?: string) => {
                     return this.resetItem(id, path);
+                },
+                setId: (id: string) => {
+                    return this.setId(id);
+                },
+                unsetId: () => {
+                    return this.unsetId();
                 }
             } as Record<WebComponentListMethodNames, Function>);
 

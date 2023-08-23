@@ -1024,7 +1024,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (!id) {
             // 不传id先假设是创建动作
             this.create({});
-            this.id = this.operation!.operation.data.id;
+            // this.id = this.operation!.operation.data.id;
         }
         else {
             this.id = id;
@@ -1088,12 +1088,17 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     unsetId() {
         this.id = undefined;
+        this.create({});
         this.publish();
     }
 
-    // 最好用getFreshValue取值
     getId() {
-        return this.id;
+        if (this.id) {
+            return this.id;
+        }
+        if (this.operation && this.operation.operation.action === 'create') {
+            return this.operation.operation.data.id;
+        }
     }
 
     getChildren() {
@@ -1111,7 +1116,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     getFreshValue(context?: FrontCxt): Partial<ED[T]['Schema']> | undefined {
         const projection = this.getProjection(context, false);
-        const { id } = this;
+        const id = this.getId();
         if (projection) {
             const result = this.cache.get(this.entity, {
                 data: projection,
@@ -1161,7 +1166,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             beforeExecute,
             afterExecute,
         };
-        this.id = id;
         this.setDirty();
     }
 
@@ -1173,13 +1177,12 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 action: action || 'update',
                 data,
             };
-            if (this.id) {
-                Object.assign(operation, {
-                    filter: {
-                        id: this.id,
-                    },
-                });
-            }
+            assert(this.id);
+            Object.assign(operation, {
+                filter: {
+                    id: this.id,
+                },
+            });
             this.operation = {
                 operation,
                 beforeExecute,
@@ -1214,6 +1217,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     remove(beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+        assert(this.id);
         const operation: ED[T]['Remove'] = {
             id: generateNewId(),
             action: 'remove',
@@ -1381,6 +1385,9 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (this.dirty) {
             this.dirty = undefined;
             this.operation = undefined;
+            if (!this.id) {
+                this.create({});
+            }
 
             for (const child in this.children) {
                 this.children[child]!.clean();
@@ -1395,7 +1402,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             return;
         }
 
-        // singleNode的filter可以减枝权限的路径判断
+        // singleNode的filter可以优化权限的判断范围
         let filter: ED[T]['Selection']['filter'] = {
             id: this.id,
         };
