@@ -1080,16 +1080,23 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     setId(id: string) {
         if (id !== this.id) {
-            this.id = id;
+            // 如果本身是create， 这里无视就行（因为框架原因会调用一次）
+            if (this.operation?.operation.action === 'create') {
+                if (this.operation.operation.data.id === id) {
+                    return;
+                }
+            }
             assert(!this.dirty, 'setId时结点是dirty，在setId之前应当处理掉原有的update');
+            this.id = id;
             this.publish();
         }
     }
 
     unsetId() {
-        this.id = undefined;
-        this.create({});
-        this.publish();
+        if (this.id) {
+            this.id = undefined;
+            this.publish();
+        }
     }
 
     getId() {
@@ -1171,23 +1178,39 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     update(data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
         if (!this.operation) {
-            // 还是有可能是create
-            const operation: ED[T]['Update'] = {
-                id: generateNewId(),
-                action: action || 'update',
-                data,
-            };
-            assert(this.id);
-            Object.assign(operation, {
-                filter: {
-                    id: this.id,
-                },
-            });
-            this.operation = {
-                operation,
-                beforeExecute,
-                afterExecute,
-            };
+            if (this.id) {
+                const operation: ED[T]['Update'] = {
+                    id: generateNewId(),
+                    action: action || 'update',
+                    data,
+                };
+                Object.assign(operation, {
+                    filter: {
+                        id: this.id,
+                    },
+                });
+                this.operation = {
+                    operation,
+                    beforeExecute,
+                    afterExecute,
+                };
+            }
+            else {
+                // 有可能是create，上层不考虑两者的区别
+                assert(!action);
+                const operation: ED[T]['Update'] = {
+                    id: generateNewId(),
+                    action: 'create',
+                    data: Object.assign({}, data, {
+                        id: generateNewId(),
+                    }),
+                };
+                this.operation = {
+                    operation,
+                    beforeExecute,
+                    afterExecute,
+                };
+            }
         }
         else {
             const { operation } = this.operation;
@@ -1385,9 +1408,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         if (this.dirty) {
             this.dirty = undefined;
             this.operation = undefined;
-            if (!this.id) {
-                this.create({});
-            }
 
             for (const child in this.children) {
                 this.children[child]!.clean();
