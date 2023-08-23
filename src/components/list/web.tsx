@@ -55,7 +55,6 @@ export default function Render(
         disabledOp = false,
         rowSelection
     } = data;
-    console.log(mobileData);
     const useSelect = !!rowSelection?.type;
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     return (

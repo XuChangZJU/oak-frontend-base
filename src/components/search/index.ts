@@ -42,7 +42,6 @@ export default OakComponent({
         addFilterFn(searchValue: string) {
             const { attrbutes } = this.props as { attrbutes: string[] };
             if (!attrbutes || !attrbutes.length) {
-                console.log(searchValue);
                 this.addNamedFilter({
                     filter: {
                         $text: {
