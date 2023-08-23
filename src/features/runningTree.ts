@@ -901,6 +901,7 @@ class ListNode<
                         sorter,
                         indexFrom: currentPage3 * pageSize,
                         count: pageSize,
+                        randomRange,
                     },
                     undefined,
                     getCount,
