@@ -86,6 +86,11 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
                 if (dataset[language!]) {
                     dataset[language!]![namespace!] = data as Record<string, any>;
                 }
+                else {
+                    dataset[language!] = {
+                        [namespace!]: data,
+                    };
+                }
             }
         );
         this.i18n.store(dataset);
