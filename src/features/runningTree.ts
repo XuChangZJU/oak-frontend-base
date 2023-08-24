@@ -2088,9 +2088,9 @@ export class RunningTree<
     }
 
     async refresh(path: string) {
-        if (path.includes(MODI_NEXT_PATH_SUFFIX)) {
+        /* if (path.includes(MODI_NEXT_PATH_SUFFIX)) {
             return;
-        }
+        } */
         const node = this.findNode(path);
         if (node instanceof ListNode) {
             await node.refresh(1, true);
