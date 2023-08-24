@@ -1429,7 +1429,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         };
         if (this.filters) {
             filter = combineFilters(this.entity, this.schema, this.filters.map(
-                ele => typeof  ele.filter === 'function' ? ele.filter() : ele.filter
+                ele => typeof ele.filter === 'function' ? ele.filter() : ele.filter
             ).concat(filter));
         }
         return filter;
@@ -1449,7 +1449,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         const value = this.getFreshValue(context);
 
         if (value && value.$$createAt$$ === 1 && ignoreNewParent) {
-            return;            
+            return;
         }
         for (const key in this.children) {
             if (childNode === this.children[key]) {
@@ -1878,6 +1878,40 @@ export class RunningTree<
         }
 
         return node;
+    }
+
+    private checkSingleNodeIsModiNode(node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD>) {
+        const id = node.getId();
+        if (id) {
+            const modies = this.cache.get('modi', {
+                data: {
+                    id: 1,
+                },
+                filter: {
+                    entity: node.getEntity() as string,
+                    entityId: id,
+                    iState: 'active',
+                }
+            });
+            return modies.length > 0;
+        }
+        return false;
+    }
+
+    checkIsModiNode(path: string) {
+        if (!path.includes(MODI_NEXT_PATH_SUFFIX)) {
+            return false;
+        }
+        const node = this.findNode(path);
+        if (node instanceof SingleNode) {
+            return this.checkSingleNodeIsModiNode(node);
+        }
+        else {
+            assert(node instanceof ListNode);
+            const parent = node.getParent();
+            assert(parent instanceof SingleNode);
+            return this.checkSingleNodeIsModiNode(parent);
+        }
     }
 
     private findNode(path: string) {

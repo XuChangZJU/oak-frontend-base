@@ -123,6 +123,12 @@ export async function onPathSet<
             }
         );
 
+        if ((projection || oakProjection) && !features.runningTree.checkIsModiNode(oakPath2)) {
+            this.refresh();
+        }
+        else {
+            this.reRender();
+        }
     }
     else {
         // 创建virtualNode
@@ -146,11 +152,6 @@ export async function onPathSet<
                 }, () => resolve(0));
             }
         );
-    }
-    if (entity && (projection || oakProjection) && !oakPath2?.includes(MODI_NEXT_PATH_SUFFIX)) {
-        this.refresh();
-    }
-    else {
         this.reRender();
     }
 }
