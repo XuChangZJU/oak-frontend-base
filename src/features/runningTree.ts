@@ -1888,8 +1888,11 @@ export class RunningTree<
                     id: 1,
                 },
                 filter: {
-                    entity: node.getEntity() as string,
-                    entityId: id,
+                    targetEntity: node.getEntity() as string,
+                    action: 'create',
+                    data: {
+                        id,
+                    },
                     iState: 'active',
                 }
             });
