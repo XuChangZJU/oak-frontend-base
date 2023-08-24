@@ -97,21 +97,21 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
         );
     } */
 
-    if (relations?.length > 0) {
-        items.push(
-            {
-                label: 'relationAuth',
-                key: 'relationAuth',
-                children: (
-                    <RelationAuth
-                        entity={entity}
-                        oakPath={oakFullpath && `${oakFullpath}.relationAuths`}
-                        relationIds={relationIds}
-                    />
-                )
-            }
-        );
-    }
+    // if (relations?.length > 0) {
+    //     items.push(
+    //         {
+    //             label: 'relationAuth',
+    //             key: 'relationAuth',
+    //             children: (
+    //                 <RelationAuth
+    //                     entity={entity}
+    //                     oakPath={oakFullpath && `${oakFullpath}.relationAuths`}
+    //                     relationIds={relationIds}
+    //                 />
+    //             )
+    //         }
+    //     );
+    // }
 
     const ActionSelector = actions && (
         <Row style={{ width: '100%' }} justify="center" align="middle">

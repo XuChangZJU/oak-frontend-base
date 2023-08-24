@@ -9,7 +9,6 @@ export default OakComponent({
         id: 1,
         sourceRelationId: 1,
         destRelationId: 1,
-        paths: 1,
     },
     isList: true,
     properties: {
