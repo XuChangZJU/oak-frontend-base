@@ -5,7 +5,7 @@ declare type buttonProps = {
     onClick: () => void;
 };
 declare type ToolBarProps = {
-    title: string;
+    title?: string;
     buttonGroup?: buttonProps[];
     reload: () => void;
 };
