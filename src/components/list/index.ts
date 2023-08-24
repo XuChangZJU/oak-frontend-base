@@ -57,10 +57,11 @@ export default OakComponent({
             assert(!!data, 'data不能为空');
             assert(!!entity, 'list属性entity不能为空');
             // assert(attributes?.length, 'attributes不能为空');
+            const ttt = this.t.bind(this);
             const converter = analyzeAttrMobileForCard(
                 schema,
                 entity,
-                this.t,
+                ttt,
                 attributes!,
             );
             const judgeAttributes = translateAttributes(schema, entity, attributes!);
