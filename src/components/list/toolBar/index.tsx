@@ -18,7 +18,7 @@ type buttonProps = {
 } 
 
 type ToolBarProps = {
-    title: string;
+    title?: string;
     buttonGroup?: buttonProps[];
     reload: () => void;
 }
