@@ -95,7 +95,7 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
             <div className={Style.listContainer}>
                 {!isMobile && (
                     <ToolBar
-                        title={title || undefined}
+                        title={title}
                         buttonGroup={buttonGroup}
                         reload={() => {
                             onReload && onReload();

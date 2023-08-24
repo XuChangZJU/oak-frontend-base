@@ -173,9 +173,9 @@ export default OakComponent({
                     display: 1,
                 },
                 filter: {
-                    entity: {
-                        $in: destEntities,
-                    },
+                    // entity: {
+                    //     $in: destEntities,
+                    // },
                     entityId: {
                         $exists: false,
                     },
