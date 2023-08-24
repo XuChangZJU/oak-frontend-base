@@ -4,6 +4,8 @@ import { ED } from "../../../types/AbstractComponent";
 import { groupBy } from "oak-domain/lib/utils/lodash";
 import { AuthCascadePath } from "oak-domain/lib/types";
 import { RowWithActions } from "../../../types/Page";
+import { resolvePath } from "../../../utils/usefulFn";
+import { StorageSchema } from "oak-domain/lib/types";
 
 export default OakComponent({
     entity: 'actionAuth',
@@ -31,19 +33,19 @@ export default OakComponent({
                 return {
                     destEntity: entity as string,
                 };
-               /*  if (!actions || actions.length === 0) {
-                    return {
-                        destEntity: entity as string,
-                    };
-                }
-                else {
-                    return {
-                        destEntity: entity as string,
-                        deActions: {
-                            $overlaps: actions,
-                        },
-                    };
-                } */
+                /*  if (!actions || actions.length === 0) {
+                     return {
+                         destEntity: entity as string,
+                     };
+                 }
+                 else {
+                     return {
+                         destEntity: entity as string,
+                         deActions: {
+                             $overlaps: actions,
+                         },
+                     };
+                 } */
             }
         }
     ],
@@ -53,6 +55,7 @@ export default OakComponent({
     },
     formData({ data }) {
         const { entity } = this.props;
+        const schema = this.features.cache.getSchema();
         const cascadeEntities = this.features.relationAuth.getCascadeActionAuths(entity!, true);
         const cascadeEntityActions = cascadeEntities.map(
             (ele) => {
@@ -103,29 +106,36 @@ export default OakComponent({
         // 含有反向指针的路径，其所对应实体的请求放在了onChange方法
         Object.keys($actionAuthsObject).forEach((ele) => {
             const entities = ele.split('.');
+            const slicePath = entities[entities.length - 1];
             const se = entities[entities.length - 1].split('$')[0];
+            const relationEntity = this.resolveP(schema, ele, entity);
             const p = ele;
             const de = entity!;
-            // 初始时 relation先用{name: relationName}表示 
-            const relations = this.features.relationAuth.getRelations(se!)?.map((ele) => ({name: ele})) as any;
-            const relations2 = this.features.cache.get('relation', {
-                data: {
-                    id: 1,
-                    entity: 1,
-                    entityId: 1,
-                    name: 1,
-                    display: 1,
-                },
-                filter: {
-                    entity: se as string,
-                    entityId: {
-                        $exists: false,
+            // 初始时 relation先用{name: relationName}表示
+            let relations = [];
+            if (relationEntity === 'user') {
+                relations = [{ id: '', name: '当前用户' }];
+            }
+            else {
+                relations = this.features.cache.get('relation', {
+                    data: {
+                        id: 1,
+                        entity: 1,
+                        entityId: 1,
+                        name: 1,
+                        display: 1,
                     },
-                },
-            });
+                    filter: {
+                        entity: relationEntity as string,
+                        entityId: {
+                            $exists: false,
+                        },
+                    },
+                });
+            }
             cascadeEntityActions.push({
                 path: [de, p, se, true],
-                relations: relations2 || relations,
+                relations: relations,
                 actionAuths: $actionAuthsObject[ele],
             })
         })
@@ -151,7 +161,7 @@ export default OakComponent({
             const de = entity!;
             cascadeEntityActions.push({
                 path: [de, p, se, true],
-                relations: [{id: '', name: '当前用户'}],
+                relations: [{ id: '', name: '当前用户' }],
                 actionAuths: $actionAuthsObject2[ele],
             })
         })
@@ -297,10 +307,28 @@ export default OakComponent({
                     destEntity: this.props.entity as string,
                     deActions: actions,
                 });
-            }            
+            }
         },
         confirm() {
             this.execute();
         },
+        resolveP(schema: StorageSchema<ED>, path: string, destEntity: string) {
+            if (path === '') {
+                return destEntity;
+            }
+            const splitArr = path.split('.');
+            splitArr.unshift(destEntity);
+            for (let i = 1; i < splitArr.length; i++) {
+                if (splitArr[i].includes('$')) {
+                    splitArr[i] = splitArr[i].split('$')[0];
+                    continue;
+                }
+                // 用已解析的前项来解析后项
+                const { attributes } = schema[splitArr[i - 1]];
+                const { ref } = attributes[`${splitArr[i]}Id`];
+                splitArr[i] = ref as string;
+            }
+            return splitArr[splitArr.length - 1];
+        }
     }
 })
