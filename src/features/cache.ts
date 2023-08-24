@@ -284,7 +284,8 @@ export class Cache<
         option?: OP,
         getCount?: true,
         callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
-        dontPublish?: true
+        dontPublish?: true,
+        onlyReturnFresh?: true,
     ) {
         // todo 还要判定没有aggregation
         const canOptimize = this.canOptimizeRefresh(entity, selection, option, getCount);
@@ -303,6 +304,11 @@ export class Cache<
                     // 对于savedEntities，同一查询条件不必过于频繁刷新，减少性能开销
                     if (process.env.NODE_ENV === 'development') {
                         // console.warn('根据keepFresh规则，省略了一次请求数据的行为', entity, selection);
+                    }
+                    if (onlyReturnFresh) {
+                        return {
+                            data: [],
+                        };
                     }
                     const data = this.get(entity, selection);
                     return {
@@ -382,7 +388,7 @@ export class Cache<
                 }
             };
 
-            if (canOptimize) {
+            if (canOptimize && !onlyReturnFresh) {
                 filter2 = originFilter!;
             }
 

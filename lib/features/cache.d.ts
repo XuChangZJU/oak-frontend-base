@@ -48,7 +48,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
      */
     private canOptimizeRefresh;
     private filterToKey;
-    refresh<T extends keyof ED, OP extends CacheSelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true, callback?: (result: Awaited<ReturnType<AD['select']>>) => void, dontPublish?: true): Promise<{
+    refresh<T extends keyof ED, OP extends CacheSelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true, callback?: (result: Awaited<ReturnType<AD['select']>>) => void, dontPublish?: true, onlyReturnFresh?: true): Promise<{
         data: Partial<ED[T]["Schema"]>[];
         count?: undefined;
     } | {

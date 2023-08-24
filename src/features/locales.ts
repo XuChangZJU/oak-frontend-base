@@ -116,7 +116,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             filter: {
                 namespace: ns,
             }
-        }, undefined, undefined, undefined, true);
+        }, undefined, undefined, undefined, true, true);
 
         if (newI18ns.length > 0) {
             const dataset: Record<string, any> = {};
@@ -136,7 +136,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             this.publish();
         }
         else {
-            console.warn(`命名空间${ns}中的${key}缺失且请求不到更新的数据，请检查`);
+            console.warn(`命名空间${ns}中的${key}缺失且可能请求不到更新的数据，请检查`);
         }
     }
 
