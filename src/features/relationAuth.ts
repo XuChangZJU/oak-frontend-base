@@ -236,7 +236,6 @@ export class RelationAuth<
 
     checkRelation<T extends keyof ED>(entity: T, operation: Omit< ED[T]['Operation'] | ED[T]['Selection'], 'id'>) {
         const context = this.cache.begin();
-        context.begin();
         try {
             this.baseRelationAuth.checkRelationSync(entity, operation, context);
         }
