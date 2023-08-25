@@ -28,6 +28,7 @@ export class Navigator extends Feature {
 
     setNamespace(namespace: string) {
         this.namespace = namespace;
+        this.publish();
     }
 
     getLocation() {
