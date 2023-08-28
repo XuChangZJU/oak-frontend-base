@@ -637,4 +637,8 @@ export class Cache<
         this.context.rollback();
         this.context = undefined;
     }
+
+    buildContext() {
+        return this.contextBuilder!();
+    }
 }

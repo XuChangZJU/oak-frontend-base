@@ -87,5 +87,6 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     begin(): FrontCxt;
     commit(): void;
     rollback(): void;
+    buildContext(): FrontCxt;
 }
 export {};
