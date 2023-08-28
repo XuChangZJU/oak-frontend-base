@@ -33,15 +33,10 @@
         "uuid": "^8.3.2"
     },
     "peerDependencies": {
-        "i18next-browser-languagedetector": "^6.1.4",
-        "i18next-chained-backend": "^3.0.2",
-        "i18next-http-backend": "^1.4.1",
-        "i18next-localstorage-backend": "^3.1.3",
-        "i18next-resource-store-loader": "^0.1.2",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
-        "react-responsive": "^9.0.0-beta.10",
-        "react-router-dom": "^6.3.0"
+        "react-router-dom": "^6.3.0",
+        "react-responsive": "^9.0.0-beta.10"
     },
     "devDependencies": {
         "@babel/cli": "^7.12.13",
@@ -78,8 +73,9 @@
         "copy-svg": "copyfiles -u 1 src/**/*.svg lib/ & copyfiles -u 1 src/**/*.png lib/",
         "copy-less": "copyfiles -u 1 src/**/*.less lib/ & copyfiles -u 1 src/**/*.wxss lib/",
         "copy-wxs": "copyfiles -u 1 src/**/*.wxs lib/",
-        "copy-xml": "copyfiles -u 1 src/**/*.xml lib/ & copyfiles -u 1 src/**/*.wxml lib/",
-        "build": "tsc && npm run copy-js && npm run copy-less && npm run copy-wxs && npm run copy-svg && npm run copy-xml && npm run copy-json",
+        "copy-xml": "copyfiles -u 1 src/**/*.xml lib/",
+        "copy-wxml": "copyfiles -u 1 src/**/*.wxml lib/",
+        "build": "tsc && npm run copy-js && npm run copy-less && npm run copy-wxs && npm run copy-svg && npm run copy-xml && npm run copy-wxml && npm run copy-json",
         "test": "ts-node ./test/test.ts",
         "prepare": "rimraf node_modules/react & rimraf node_modules/react-dom & rimraf node_modules/react-router & rimraf node_modules/react-router-dom",
         "remove-antd": "rimraf node_modules/antd & rimraf node_modules/antd-mobile & rimraf node_modules/@ant-design & rimraf node_modules/antd-mobile-icons & rimraf node_modules/antd-mobile-v5-count"
