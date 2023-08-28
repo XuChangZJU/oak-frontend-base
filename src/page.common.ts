@@ -424,15 +424,20 @@ export function reRender<
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
         const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
 
+        let data: Record<string, any> = {};
         if (rows) {
-            const oakLegalActions = checkActionsAndCascadeEntities.call(this as any, rows, option as any);
-            const data: Record<string, any> = formData
+            const oakLegalActions = checkActionsAndCascadeEntities.call(
+                this as any,
+                rows,
+                option as any
+            );
+            data = formData
                 ? formData.call(this, {
-                    data: rows as RowWithActions<ED, T>,
-                    features,
-                    props: this.props,
-                    legalActions: oakLegalActions,
-                })
+                      data: rows as RowWithActions<ED, T>,
+                      features,
+                      props: this.props,
+                      legalActions: oakLegalActions,
+                  })
                 : {};
 
             Object.assign(data, {
@@ -447,7 +452,9 @@ export function reRender<
                 // 因为oakFilters和props里的oakFilters同名，这里只能先注掉，好像还没有组件用过
                 // const oakFilters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getFilters();
                 // const oakSorters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getSorters();
-                const oakPagination = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getPagination();
+                const oakPagination = (
+                    this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>
+                ).getPagination();
                 Object.assign(data, {
                     // oakFilters,
                     // oakSorters,
@@ -462,21 +469,21 @@ export function reRender<
                     });
                 }
             }
-            Object.assign(data, {
-                oakExecutable,
-                oakDirty,
-                oakLoading,
-                oakLoadingMore,
-                oakExecuting,
-                oakPullDownRefreshLoading,
-            });
-
-            if (extra) {
-                Object.assign(data, extra);
-            }
-
-            this.setState(data);
         }
+        Object.assign(data, {
+            oakExecutable,
+            oakDirty,
+            oakLoading,
+            oakLoadingMore,
+            oakExecuting,
+            oakPullDownRefreshLoading,
+        });
+
+        if (extra) {
+            Object.assign(data, extra);
+        }
+
+        this.setState(data);
     } else {
         const data: Record<string, any> = formData
             ? formData.call(this, {
