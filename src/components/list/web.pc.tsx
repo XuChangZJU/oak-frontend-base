@@ -10,7 +10,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { OakAbsAttrDef, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
-import { getPath, getWidth, getValue, getLabel, resolvePath, getType, getAlign } from '../../utils/usefulFn';
+import { getPath, getWidth, getValue, getLabel, resolvePath, getType, getAlign, getLinkUrl } from '../../utils/usefulFn';
 import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
 import TableCell from './renderCell';
 import Style from './web.module.less';
@@ -95,14 +95,18 @@ export default function Render(
                     render: (v: string, row: any) => {
                         const value = getValue(row, ele.path, ele.entity, ele.attr, ele.attrType, t);
                         const stateValue = get(row, ele.path);
+                        let href = '';
                         if ([null, undefined, ''].includes(stateValue)) {
                             return <></>
                         }
                         const color = colorDict && colorDict[ele.entity]?.[ele.attr]?.[stateValue] as string;
                         if (type === 'enum') {
-                            assert(color, `${ele.entity}实体${ele.attr}颜色定义缺失`)
+                            console.warn(color, `${ele.entity}实体${ele.attr}颜色定义缺失`)
                         }
-                        return (<TableCell color={color} value={value} type={type!} />)
+                        if (type === 'link') {
+                            href = getLinkUrl(ele.attribute, { oakId: row?.id });
+                        }
+                        return (<TableCell color={color} value={value} type={type!} linkUrl={href} />)
                     }
                 }
                 if (width) {

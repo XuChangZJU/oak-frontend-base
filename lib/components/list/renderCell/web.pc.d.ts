@@ -6,4 +6,5 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
     value: string | string[];
     type: OakAbsDerivedAttrDef['type'];
     color: string;
+    linkUrl: string;
 }, {}>): import("react/jsx-runtime").JSX.Element;

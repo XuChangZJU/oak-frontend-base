@@ -133,6 +133,22 @@ function isAttrbuteType(attribute: OakAbsAttrDef): OakAbsDerivedAttrDef {
     return attribute as OakAbsDerivedAttrDef;
 }
 
+export function getLinkUrl(attribute: OakAbsAttrDef, props: Record<string, string>): string {
+    if (typeof attribute === 'string') {
+        return '';
+    }
+    let href = attribute.linkUrl || '';
+    const searchParams: string[] = [];
+    Object.keys(props).forEach((ele) => {
+        searchParams.push(`${ele}=${props[ele]}`)
+    })
+    if (!href.includes('?')) {
+        href += '?';
+    }
+    href += searchParams.join('&');
+    return href;
+}
+
 // 以下几个get方法只需要两个参数attribute和一个解析path对象，只是后者类型还没定义
 export function getPath(attribute: OakAbsAttrDef) {
     if (typeof attribute === 'string') {

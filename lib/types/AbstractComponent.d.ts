@@ -28,6 +28,7 @@ export declare type OakAbsDerivedAttrDef = {
     width?: number;
     span?: number;
     type?: 'image' | 'link' | DataType | 'ref';
+    linkUrl?: string;
 };
 export declare type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
 export declare type OakAbsAttrJudgeDef = {

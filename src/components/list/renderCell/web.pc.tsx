@@ -17,6 +17,7 @@ export default function Render(
             value: string | string[];
             type: OakAbsDerivedAttrDef['type'],
             color: string;
+            linkUrl: string;
         },
         {
         }
@@ -24,14 +25,14 @@ export default function Render(
 ) {
     const { methods, data: oakData } = props;
     const {
-       value, type, color
+       value, type, color, linkUrl
     } = oakData;
     if (value === null || value === '' || value === undefined) {
         return (<>--</>);
     }
     // 属性类型是enum要使用标签
     else if (type === 'enum') {
-        let renderColor = color;
+        let renderColor = color || 'default';
         // web端的Tag组件没有primary 和 danger
         if (renderColor === 'primary') {
             renderColor = 'processing';
@@ -60,19 +61,26 @@ export default function Render(
         )
     }
     else if (type === 'link') {
+        let href = linkUrl;
         if (value instanceof Array) {
             return (
                 <Space direction="vertical">
-                    {value.map((ele) => (
-                        <Link href={ele} target="_blank">
-                            {ele}
-                        </Link>
-                    ))}
+                    {value.map((ele) => {
+                        href = ele;
+                        if (linkUrl) {
+                            href = linkUrl
+                        }
+                        return (
+                            <Link href={href}>
+                                {ele}
+                            </Link>
+                        )
+                    })}
                 </Space>
             )
         }
         return (
-            <Link href={value} target="_blank">
+            <Link href={href}>
                 {value}
             </Link>
         )

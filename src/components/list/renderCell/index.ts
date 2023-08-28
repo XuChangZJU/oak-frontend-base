@@ -7,6 +7,7 @@ export default OakComponent({
         value: '',
         type: '',
         color: '',
+        linkUrl: '',
     },
 }) as <ED2 extends ED, T2 extends keyof ED2>(
     props: ReactComponentProps<
@@ -17,6 +18,7 @@ export default OakComponent({
             value: string | string[];
             type: OakAbsDerivedAttrDef['type'],
             color: string;
+            linkUrl: string;
         }
     >
 ) => React.ReactElement;

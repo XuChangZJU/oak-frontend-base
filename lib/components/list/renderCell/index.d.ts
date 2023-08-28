@@ -4,5 +4,6 @@ declare const _default: <ED2 extends ED, T2 extends keyof ED2>(props: ReactCompo
     value: string | string[];
     type: OakAbsDerivedAttrDef['type'];
     color: string;
+    linkUrl: string;
 }>) => React.ReactElement;
 export default _default;

@@ -11,6 +11,7 @@ export declare function resolvePath<ED extends EntityDict & BaseEntityDict>(data
     attrType: DataType | 'ref' | undefined;
     attribute: Attribute | undefined;
 };
+export declare function getLinkUrl(attribute: OakAbsAttrDef, props: Record<string, string>): string;
 export declare function getPath(attribute: OakAbsAttrDef): string;
 export declare function getLabel<ED extends EntityDict & BaseEntityDict>(attribute: OakAbsAttrDef, entity: keyof ED, attr: string, t: (k: string, params?: object) => string): string;
 export declare function getWidth(attribute: OakAbsAttrDef, attrType: DataType | 'ref' | undefined): number | undefined;

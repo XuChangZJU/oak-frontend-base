@@ -33,6 +33,7 @@ export type OakAbsDerivedAttrDef = {
     width?: number;
     span?: number;
     type?: 'image' | 'link' | DataType | 'ref';
+    linkUrl?: string;
 };
 
 export type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
