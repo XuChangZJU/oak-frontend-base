@@ -39,6 +39,7 @@ export class Cache<
     private refreshRecords: {
         [T in keyof ED]?: Record<string, number>;
     } = {};
+    private context?: FrontCxt;
 
     constructor(
         storageSchema: StorageSchema<ED>,
@@ -105,10 +106,10 @@ export class Cache<
         return this.cacheStore.getSchema();
     }
 
-    getCurrentUserId(allowUnloggedIn?: boolean) {
+    /* getCurrentUserId(allowUnloggedIn?: boolean) {
         const context = this.contextBuilder && this.contextBuilder();
         return context?.getCurrentUserId(allowUnloggedIn);
-    }
+    } */
 
     async exec<K extends keyof AD>(
         name: K,
@@ -472,21 +473,20 @@ export class Cache<
      * @returns
      */
     tryRedoOperations<T extends keyof ED>(operations: ({ operation: ED[T]['Operation']; entity: T })[]) {
-        const context = this.contextBuilder!();
-        context.begin();
+        this.begin();
         try {
             for (const oper of operations) {
                 const { entity, operation } = oper;
-                this.cacheStore!.operate(entity, operation, context, {
+                this.context!.operate(entity, operation, {
                     dontCollect: true,
                     dontCreateOper: true,
                     dontCreateModi: true,
                 });
             }
-            context.rollback();
+            this.rollback();
             return true;
         } catch (err) {
-            context.rollback();
+            this.rollback();
             if (!(err instanceof OakUserException)) {
                 throw err;
             }
@@ -495,20 +495,27 @@ export class Cache<
     }
 
     checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) {
-        const context = this.contextBuilder!();
-        context.begin();
+        let autoCommit = false;
+        if (!this.context) {
+            this.begin();
+            autoCommit = true;
+        }
         const operation = {
             action,
             filter,
             data
         } as ED[T]['Update'];
         try {
-            this.cacheStore!.check(entity, operation, context, checkerTypes);
-            context.rollback();
+            this.cacheStore!.check(entity, operation, this.context!, checkerTypes);
+            if (autoCommit) {
+                this.rollback();
+            }
             return true;
         }
         catch (err) {
-            context.rollback();
+            if (autoCommit) {
+                this.rollback();
+            }
             if (!(err instanceof OakUserException)) {
                 throw err;
             }
@@ -519,11 +526,12 @@ export class Cache<
     redoOperation(opers: Array<{
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
-    }>, context: FrontCxt) {
+    }>) {
+        assert(this.context);
         opers.forEach(
             (oper) => {
                 const { entity, operation } = oper;
-                this.cacheStore!.operate(entity, operation, context, {
+                this.cacheStore!.operate(entity, operation, this.context!, {
                     dontCollect: true,
                     dontCreateOper: true,
                     blockTrigger: true,
@@ -537,20 +545,30 @@ export class Cache<
     private getInner<T extends keyof ED>(
         entity: T,
         selection: ED[T]['Selection'],
-        context: SyncContext<ED>,
         allowMiss?: boolean): Partial<ED[T]['Schema']>[] {
+        let autoCommit = false;
+        if (!this.context) {
+            this.begin();
+            autoCommit = true;
+        }
         try {
             const result = this.cacheStore!.select(
                 entity,
                 selection,
-                context,
+                this.context!,
                 {
                     dontCollect: true,
                     includedDeleted: true,
                 }
             );
+            if (autoCommit) {
+                this.commit();
+            }
             return result;
         } catch (err) {
+            if (autoCommit) {
+                this.rollback();
+            }
             if (err instanceof OakRowUnexistedException) {
                 if (!this.refreshing && !allowMiss) {
                     const missedRows = err.getRows();
@@ -576,12 +594,9 @@ export class Cache<
     get<T extends keyof ED>(
         entity: T,
         selection: ED[T]['Selection'],
-        context?: FrontCxt,
         allowMiss?: boolean
     ) {
-        const context2 = context || this.contextBuilder!();
-
-        return this.getInner(entity, selection, context2, allowMiss);
+        return this.getInner(entity, selection, allowMiss);
     }
 
     judgeRelation(entity: keyof ED, attr: string) {
@@ -605,16 +620,21 @@ export class Cache<
     }
 
     begin() {
-        const context = this.contextBuilder!();
-        context.begin();
-        return context;
+        assert(!this.context);
+        this.context = this.contextBuilder!();
+        this.context.begin();
+        return this.context;
     }
 
-    commit(context: FrontCxt) {
-        context.commit();
+    commit() {
+        assert(this.context);
+        this.context.commit();
+        this.context = undefined;
     }
 
-    rollback(context: FrontCxt) {
-        context.rollback();
+    rollback() {
+        assert(this.context);
+        this.context.rollback();
+        this.context = undefined;
     }
 }

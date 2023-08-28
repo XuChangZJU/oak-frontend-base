@@ -48,7 +48,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     isExecuting(): boolean;
     setExecuting(executing: boolean): void;
     getParent(): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD> | undefined;
-    protected getProjection(context?: FrontCxt): ED[T]['Selection']['data'] | undefined;
+    protected getProjection(): ED[T]['Selection']['data'] | undefined;
     setProjection(projection: ED[T]['Selection']['data']): void;
     protected judgeRelation(attr: string): string | 0 | 1 | string[] | 2;
 }
@@ -95,7 +95,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     addNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(name: string, refresh: boolean): void;
-    getFreshValue(context: FrontCxt): Array<Partial<ED[T]['Schema']>>;
+    getFreshValue(): Array<Partial<ED[T]['Schema']>>;
     addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     removeItem(id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     recoverItem(id: string): void;
@@ -116,9 +116,9 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
     }> | undefined;
-    getProjection(context?: FrontCxt): ED[T]["Selection"]["data"] | undefined;
+    getProjection(): ED[T]["Selection"]["data"] | undefined;
     private constructFilters;
-    constructSelection(withParent?: true, ignoreNewParent?: boolean, context?: FrontCxt, ignoreUnapplied?: true): {
+    constructSelection(withParent?: true, ignoreNewParent?: boolean, ignoreUnapplied?: true): {
         data: ED[T]["Selection"]["data"];
         filter: ED[T]["Selection"]["filter"] | undefined;
         sorter: ED[T]["Selection"]["sorter"];
@@ -152,7 +152,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     };
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
-    getFreshValue(context?: FrontCxt): Partial<ED[T]['Schema']> | undefined;
+    getFreshValue(): Partial<ED[T]['Schema']> | undefined;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
@@ -162,7 +162,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
     }> | undefined;
-    getProjection(context?: FrontCxt, withDecendants?: boolean): ED[T]["Selection"]["data"] | undefined;
+    getProjection(withDecendants?: boolean): ED[T]["Selection"]["data"] | undefined;
     refresh(): Promise<void>;
     clean(): void;
     private getFilter;
@@ -173,7 +173,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
      * @param disableOperation
      * @returns
      */
-    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, context?: FrontCxt, ignoreNewParent?: boolean): ED[T2]['Selection']['filter'] | undefined;
+    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, ignoreNewParent?: boolean): ED[T2]['Selection']['filter'] | undefined;
 }
 declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private dirty;

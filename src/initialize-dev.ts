@@ -98,7 +98,7 @@ export function initialize<
         exec: async (name, params) => {
             const context = features2.cache.begin();
             const str = context.toString();
-            context.commit();
+            features2.cache.commit();
             const contextBackend = await backendContextBuilder(str)(debugStore);
             await contextBackend.begin();
             let result;

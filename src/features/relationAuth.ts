@@ -240,13 +240,13 @@ export class RelationAuth<
             this.baseRelationAuth.checkRelationSync(entity, operation, context);
         }
         catch (err) {
-            context.rollback();
+            this.cache.rollback();
             if (!(err instanceof OakUserException)) {
                 throw err;
             }
             return false;
         }
-        context.rollback();
+        this.cache.rollback();
         return true;
     }
 

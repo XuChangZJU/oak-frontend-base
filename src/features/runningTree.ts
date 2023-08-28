@@ -160,7 +160,7 @@ abstract class Node<
         return this.parent;
     }
 
-    protected getProjection(context?: FrontCxt): ED[T]['Selection']['data'] | undefined {
+    protected getProjection(): ED[T]['Selection']['data'] | undefined {
         const projection = typeof this.projection === 'function' ? (this.projection as Function)() : (this.projection && cloneDeep(this.projection));
 
         return projection;
@@ -320,7 +320,7 @@ class ListNode<
             此时对userRelation的删除动作就会导致user不会被移出list
          */
         if (needRefresh) {
-            const { filter, sorter } = this.constructSelection(true, false, undefined, true);
+            const { filter, sorter } = this.constructSelection(true, false, true);
             if (filter) {
                 const result = this.cache.get(this.getEntity(), {
                     data: {
@@ -532,7 +532,7 @@ class ListNode<
         }
     }
 
-    getFreshValue(context: FrontCxt): Array<Partial<ED[T]['Schema']>> {
+    getFreshValue(): Array<Partial<ED[T]['Schema']>> {
         /**
          * 满足当前结点的数据应当是所有满足当前filter条件且ids在当前ids中的数据
          * 但如果是当前事务create的行则例外（当前页面上正在create的数据）
@@ -545,7 +545,7 @@ class ListNode<
          * 
          * 这里不能用sorter排序，enum的排序顺序目前前后台尚不一致 by Xc 20230809
          */
-        const { data, filter } = this.constructSelection(true, false, context, true);
+        const { data, filter } = this.constructSelection(true, false, true);
 
         if (filter || this.ids) {
             const filter2 = filter && this.ids ? {
@@ -562,7 +562,7 @@ class ListNode<
             const result = this.cache.get(this.entity, {
                 data,
                 filter: filter2,
-            }, context, this.isLoading());
+            }, this.isLoading());
 
 
             const r2 = result.filter(
@@ -607,7 +607,7 @@ class ListNode<
                 id: { $in: finalIds },
             },
             sorter,
-        }, context, this.isLoading()); */
+        }, this.isLoading()); */
     }
 
     addItem(
@@ -810,8 +810,8 @@ class ListNode<
         return operations;
     }
 
-    getProjection(context?: FrontCxt) {
-        const projection = super.getProjection(context);
+    getProjection() {
+        const projection = super.getProjection();
         // List必须自主决定Projection
         /* if (this.children.length > 0) {
             const subProjection = await this.children[0].getProjection();
@@ -820,7 +820,7 @@ class ListNode<
         return projection;
     }
 
-    private constructFilters(context?: FrontCxt, withParent?: boolean, ignoreNewParent?: boolean, ignoreUnapplied?: true) {
+    private constructFilters(withParent?: boolean, ignoreNewParent?: boolean, ignoreUnapplied?: true) {
         const { filters: ownFilters } = this;
         const filters = ownFilters.filter(
             ele => !ignoreUnapplied || ele.applied === true || ele.applied === undefined            // 如果是undefined，说明不可以移除（构造时就存在），也得返回
@@ -834,7 +834,7 @@ class ListNode<
 
         if (withParent && this.parent) {
             if (this.parent instanceof SingleNode) {
-                const filterOfParent = this.parent.getParentFilter<T>(this, context, ignoreNewParent);
+                const filterOfParent = this.parent.getParentFilter<T>(this, ignoreNewParent);
                 if (filterOfParent) {
                     filters.push(filterOfParent as any);
                 } else {
@@ -848,9 +848,9 @@ class ListNode<
         return cloneDeep(filters);
     }
 
-    constructSelection(withParent?: true, ignoreNewParent?: boolean, context?: FrontCxt, ignoreUnapplied?: true) {
+    constructSelection(withParent?: true, ignoreNewParent?: boolean, ignoreUnapplied?: true) {
         const { sorters } = this;
-        const data = this.getProjection(context);
+        const data = this.getProjection();
         assert(data, '取数据时找不到projection信息');
         const sorterArr = sorters.filter(
             ele => !ignoreUnapplied || ele.applied
@@ -863,7 +863,7 @@ class ListNode<
         })
             .filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
 
-        const filters = this.constructFilters(context, withParent, ignoreNewParent, ignoreUnapplied);
+        const filters = this.constructFilters(withParent, ignoreNewParent, ignoreUnapplied);
 
         const filters2 = filters?.filter((ele) => !!ele);
         const filter = filters2 ? combineFilters<ED, T>(this.entity, this.schema, filters2) : undefined;
@@ -1122,8 +1122,8 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         unset(this.children, path);
     }
 
-    getFreshValue(context?: FrontCxt): Partial<ED[T]['Schema']> | undefined {
-        const projection = this.getProjection(context, false);
+    getFreshValue(): Partial<ED[T]['Schema']> | undefined {
+        const projection = this.getProjection(false);
         const id = this.getId();
         if (projection) {
             const result = this.cache.get(this.entity, {
@@ -1131,7 +1131,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 filter: {
                     id,
                 },
-            }, context, this.isLoading());
+            }, this.isLoading());
             if (this.aggr) {
                 merge(result[0], this.aggr);
             }
@@ -1311,17 +1311,17 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
     }
 
-    getProjection(context?: FrontCxt, withDecendants?: boolean) {
+    getProjection(withDecendants?: boolean) {
         if (this.parent && this.parent instanceof ListNode) {
-            return this.parent.getProjection(context);
+            return this.parent.getProjection();
         }
-        const projection = super.getProjection(context);
+        const projection = super.getProjection();
         if (projection && withDecendants) {
             for (const k in this.children) {
                 if (k.indexOf(':') === -1) {
                     const rel = this.judgeRelation(k);
                     if (rel === 2) {
-                        const subProjection = this.children[k].getProjection(context, true);
+                        const subProjection = this.children[k].getProjection(true);
                         Object.assign(projection, {
                             entity: 1,
                             entityId: 1,
@@ -1329,7 +1329,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         });
                     }
                     else if (typeof rel === 'string') {
-                        const subProjection = this.children[k].getProjection(context, true);
+                        const subProjection = this.children[k].getProjection(true);
                         Object.assign(projection, {
                             [`${k}Id`]: 1,
                             [k]: subProjection,
@@ -1359,7 +1359,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             return;
         }
         // SingleNode如果是非根结点，其id应该在第一次refresh的时候来确定        
-        const projection = this.getProjection(undefined, true);
+        const projection = this.getProjection(true);
         const filter = this.getFilter();
         if (projection && filter) {
             this.setLoading(true);
@@ -1445,8 +1445,8 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
      * @param disableOperation 
      * @returns 
      */
-    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, context?: FrontCxt, ignoreNewParent?: boolean): ED[T2]['Selection']['filter'] | undefined {
-        const value = this.getFreshValue(context);
+    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, ignoreNewParent?: boolean): ED[T2]['Selection']['filter'] | undefined {
+        const value = this.getFreshValue();
 
         if (value && value.$$createAt$$ === 1 && ignoreNewParent) {
             return;
@@ -1958,20 +1958,20 @@ export class RunningTree<
         const root = this.root[paths[0]];
         const includeModi = path.includes(MODI_NEXT_PATH_SUFFIX);
         if (node) {
-            const context = this.cache.begin();
+            this.cache.begin();
             assert(node instanceof ListNode || node instanceof SingleNode);
             if (includeModi) {
                 const opers2 = node.getActiveModiOperations();
                 if (opers2) {
-                    this.cache.redoOperation(opers2, context);
+                    this.cache.redoOperation(opers2);
                 }
             }
             const opers = root?.composeOperations();
             if (opers) {
-                this.cache.redoOperation(opers, context);
+                this.cache.redoOperation(opers);
             }
-            const value = node.getFreshValue(context);
-            context.rollback();
+            const value = node.getFreshValue();
+            this.cache.rollback();
             return value;
         }
     }
