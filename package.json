@@ -29,14 +29,16 @@
         "ol": "^7.3.0",
         "react-scripts": "^5.0.1",
         "rmc-pull-to-refresh": "^1.0.13",
+        "socket.io-client": "^4.7.2",
         "url": "^0.11.0",
-        "uuid": "^8.3.2"
+        "uuid": "^8.3.2",
+        "weapp.socket.io": "^2.2.1"
     },
     "peerDependencies": {
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
-        "react-router-dom": "^6.3.0",
-        "react-responsive": "^9.0.0-beta.10"
+        "react-responsive": "^9.0.0-beta.10",
+        "react-router-dom": "^6.3.0"
     },
     "devDependencies": {
         "@babel/cli": "^7.12.13",
