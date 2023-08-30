@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, StorageSchema, Checker, EXPRESSION_PREFIX } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, StorageSchema, Checker, SubDataDef } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -18,6 +18,7 @@ const DEFAULT_KEEP_FRESH_PERIOD = 600 * 1000;       // 10分钟不刷新
 interface CacheSelectOption extends SelectOption {
     ignoreKeepFreshRule?: true,
 };
+
 
 export class Cache<
     ED extends EntityDict & BaseEntityDict,
@@ -640,5 +641,16 @@ export class Cache<
 
     buildContext() {
         return this.contextBuilder!();
+    }
+
+    sub(data: Array<SubDataDef<ED, keyof ED>>, callback: (records: OpRecord<ED>[], ids: string[]) => void) {
+        return this.aspectWrapper.sub(data, (records, ids) => {
+            this.sync(records),
+            callback(records, ids);
+        });
+    }
+
+    unsub(ids: string[]) {
+        return this.aspectWrapper.unsub(ids);
     }
 }

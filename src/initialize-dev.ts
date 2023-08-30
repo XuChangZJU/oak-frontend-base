@@ -9,7 +9,7 @@ import {
     Timer,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict, OpRecord, SubDataDef } from 'oak-domain/lib/types/Entity';
 import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
 
 import { createDebugStore, clearMaterializedData } from './debugStore';
@@ -113,6 +113,18 @@ export function initialize<
                 opRecords: contextBackend.opRecords,
                 message: contextBackend.getMessage(),
             };
+        },
+
+        /**
+         * dev模式下订阅数据没有意义（单用户模式）
+         * @param data 
+         * @returns 
+         */
+        sub: function (data: SubDataDef<ED, keyof ED>[], callback: (records: OpRecord<ED>[], ids: string[]) => void): Promise<void> {
+            return Promise.resolve();
+        },
+        unsub: function (ids: string[]): Promise<void> {
+            return Promise.resolve();
         },
     };
 
