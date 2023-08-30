@@ -70,11 +70,12 @@ export default OakComponent({
             const schema = this.features.cache.getSchema();
             assert(attributes);
             const judgeAttributes = translateAttributes(schema, entity!, attributes);
+            const ttt = this.t.bind(this);
             const transformer = makeDataTransformer(
                 schema,
                 entity!,
                 attributes!,
-                this.t,
+                ttt,
             );
             this.setState({
                 transformer,
