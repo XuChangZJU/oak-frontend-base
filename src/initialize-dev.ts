@@ -114,18 +114,6 @@ export function initialize<
                 message: contextBackend.getMessage(),
             };
         },
-
-        /**
-         * dev模式下订阅数据没有意义（单用户模式）
-         * @param data 
-         * @returns 
-         */
-        sub: function (data: SubDataDef<ED, keyof ED>[], callback: (records: OpRecord<ED>[], ids: string[]) => void): Promise<void> {
-            return Promise.resolve();
-        },
-        unsub: function (ids: string[]): Promise<void> {
-            return Promise.resolve();
-        },
     };
 
     const features2 = initBasicFeaturesStep2<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>(
