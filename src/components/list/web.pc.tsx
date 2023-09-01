@@ -1,114 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect, useContext } from 'react';
 import { Table, Tag, TableProps, PaginationProps, Space, Button, Avatar } from 'antd';
 import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
 import assert from 'assert';
 import { get } from 'oak-domain/lib/utils/lodash';
-import dayjs from 'dayjs';
 import ActionBtn from '../actionBtn';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps } from '../../types/AbstractComponent';
-import { Action, CascadeActionItem } from 'oak-domain/lib/types';
-import { Schema } from 'oak-domain/lib/base-app-domain/UserEntityGrant/Schema';
-import { getPath, getWidth, getValue, getLabel, resolvePath, getType } from '../../utils/usefulFn';
-import ImgBox from '../imgBox';
+import { OakAbsAttrDef, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
+import { getPath, getWidth, getValue, getLabel, resolvePath, getType, getAlign, getLinkUrl } from '../../utils/usefulFn';
+import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
+import TableCell from './renderCell';
+import Style from './web.module.less';
+import { TableContext } from '../listPro';
+
 type ED = EntityDict & BaseEntityDict;
-type Width = 'xl' | 'lg' | 'md' | 'sm' | 'xs';
-
-function getDownload(file: { filename: string; url: string }) {
-    const aLink = document.createElement('a');
-    fetch(file?.url)
-        .then((res) => res.blob())
-        .then((blob) => {
-            // 将链接地址字符内容转变成blob地址
-            aLink.href = URL.createObjectURL(blob);
-            aLink.download = file?.filename;
-            aLink.style.display = 'none';
-            document.body.appendChild(aLink);
-            aLink.click();
-        });
-}
-
-type RenderCellProps = {
-    value: any;
-    type: string;
-    color: string
-}
-
-function RenderCell(props: RenderCellProps) {
-    const { value, type, color } = props;
-    if (!value) {
-        return (<>--</>);
-    }
-    // 属性类型是enum要使用标签
-    else if (type === 'tag') {
-        return (
-            <Tag color={color} >
-                {value}
-            </Tag>
-        )
-    }
-    else if (type === 'img') {
-        if (value instanceof Array) {
-            return (
-                <Space>
-                    {value.map((ele) => (
-                        <ImgBox src={ele.url} width={120} height={70} />
-                    ))}
-                </Space>
-            )
-        }
-        return (
-            <ImgBox src={value.url} width={120} height={70} />
-        )
-    }
-    else if (type === 'avatar') {
-        return (
-            <Avatar src={value} />
-        )
-    }
-    else if (type === 'file') {
-        if (value instanceof Array) {
-            return (
-                <Space direction="vertical">
-                    {value.map((ele) => (
-                        <Button type="dashed" /* icon={} */ onClick={() => getDownload(ele)}>
-                            {ele.filename}
-                        </Button>
-                    ))}
-                </Space>
-            )
-        }
-        return (
-            <Button type="dashed" /* icon={}  */onClick={() => getDownload(value)}>
-                {value.filename}
-            </Button>
-        )
-    }
-    return (
-        <>{value}</>
-    )
-}
-
-const sizeForWidth: Record<Width,TableProps<any[]>['size']> = {
-    'xl': 'large',
-    'lg': 'middle',
-    'md': 'small',
-    'sm': 'small',
-    'xs': 'small',
-};
-
-const opSizeForWidth = {
-    'xl': 280,
-    'lg': 260,
-    'md': 200,
-    'sm': 180,
-    'xs': 180,
-}
 
 
 export default function Render(
@@ -123,17 +31,15 @@ export default function Render(
             entity: string;
             schema: StorageSchema<EntityDict & BaseEntityDict>;
             attributes: OakAbsAttrDef[],
-            columns: ColumnDefProps[],
-            mobileData: AttrRender[]
             data: any[];
             disabledOp: boolean;
             colorDict: ColorDict<EntityDict & BaseEntityDict>;
-            handleClick?: (id: string, action: string) => void;
             tablePagination?: TableProps<any[]>['pagination'];
             onAction?: onActionFnDef;
             rowSelection?: TableProps<any[]>['rowSelection']
-            scroll?: TableProps<any[]>['scroll'],
             i18n: any;
+            hideHeader?: boolean;
+            judgeAttributes: OakAbsAttrJudgeDef[];
         },
         {
         }
@@ -141,83 +47,96 @@ export default function Render(
 ) {
     const { methods, data: oakData } = props;
     const { t } = methods;
-    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-    const [tableColumns, setTabelColumns] = useState([] as ColumnsType<any>);
     const {
         loading,
         entity,
         schema,
         extraActions,
         data,
-        columns,
         colorDict,
         disabledOp = false,
-        handleClick,
         tablePagination,
         onAction,
         rowSelection,
-        width,
-        scroll,
         attributes,
         i18n,
+        hideHeader,
+        judgeAttributes,
     } = oakData;
+    const [tableColumns, setTabelColumns] = useState([] as ColumnsType<any>);
+    const { tableAttributes, setSchema } = useContext(TableContext);
     // 为了i18更新时能够重新渲染
     const zhCNKeys = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
+    const selectedRowKeys = rowSelection?.selectedRowKeys || [];
+
+    // 如果字段过多，给table加上
+    const showScroll = attributes && attributes.length >= 8;
     useEffect(() => {
         if (schema) {
-            const tableColumns: ColumnsType<any> = attributes && attributes.map((ele) => {
-                const path = getPath(ele);
-                const {
-                    attrType,
-                    attr,
-                    attribute,
-                    entity: entityI8n,
-                } = resolvePath<ED>(schema, entity, path);
-                if (entityI8n === 'notExist') {
-                    assert(!!(ele as OakAbsDerivedAttrDef).width, `非schema属性${attr}需要自定义width`);
-                    assert(!!(ele as OakAbsDerivedAttrDef).type, `非schema属性${attr}需要自定义type`);
-                    assert(!!(ele as OakAbsDerivedAttrDef).label, `非schema属性${attr}需要自定义label`);
+            setSchema && setSchema(schema);
+            let showAttributes = judgeAttributes;
+            if (tableAttributes) {
+                showAttributes = tableAttributes.filter((ele) => ele.show).map((ele) => ele.attribute);
+            }
+            const tableColumns: ColumnsType<any> = showAttributes && showAttributes.map((ele) => {
+                if (ele.entity === 'notExist') {
+                    assert((ele.attribute as OakAbsDerivedAttrDef).width, `非schema属性${ele.attr}需要自定义width`);
+                    assert((ele.attribute as OakAbsDerivedAttrDef).type, `非schema属性${ele.attr}需要自定义type`);
+                    assert((ele.attribute as OakAbsDerivedAttrDef).label, `非schema属性${ele.attr}需要自定义label`);
                 }
-                const title = getLabel(ele, entityI8n, attr, t);
-                const width = getWidth(ele, attrType, 'table');
-                const type = getType(ele, attrType);
+                const title = getLabel(ele.attribute, ele.entity, ele.attr, t);
+                const width = getWidth(ele.attribute, ele.attrType);
+                const type = getType(ele.attribute, ele.attrType);
+                const align = getAlign(ele.attrType as DataType);
                 const column: ColumnType<any> = {
-                    key: path,
+                    key: ele.path,
                     title,
-                    // 不是很清楚这些数字的类型，需要到再添加
-                    align: ['float', 'int', 'bigint', 'decimal', 'price'].includes(type!) ? 'right' : 'left',
+                    align,
                     render: (v: string, row: any) => {
-                        if (typeof ele !== 'string' && ele.render) {
-                            return ele.render(row);
+                        const value = getValue(row, ele.path, ele.entity, ele.attr, ele.attrType, t);
+                        const stateValue = get(row, ele.path);
+                        let href = '';
+                        if ([null, undefined, ''].includes(stateValue)) {
+                            return <></>
                         }
-                        const value = getValue(ele, row, path, entityI8n, attr, attrType, t);
-                        let color = 'black';
-                        if (type === 'tag' && !!value) {
-                            const stateValue = get(row, path);
-                            assert(!!(colorDict?.[entityI8n]?.[attr]?.[stateValue]), `${entity}实体iState颜色定义缺失`)
-                            color = colorDict && colorDict![entityI8n]![attr]![value] as string;
+                        const color = colorDict && colorDict[ele.entity]?.[ele.attr]?.[stateValue] as string;
+                        if (type === 'enum') {
+                            console.warn(color, `${ele.entity}实体${ele.attr}颜色定义缺失`)
                         }
-                        return (<RenderCell color={color} value={value} type={type!} />)
+                        if (type === 'link') {
+                            href = getLinkUrl(ele.attribute, { oakId: row?.id });
+                        }
+                        return (<TableCell color={color} value={value} type={type!} linkUrl={href} />)
                     }
                 }
                 if (width) {
                     Object.assign(column, { width });
                 }
+                else {
+                    // 没有宽度的设置ellipsis
+                    Object.assign(column, {
+                        ellipsis: {
+                            showTitle: false,
+                        }
+                    })
+                }
                 return column;
             })
             if (!disabledOp && tableColumns) {
-                    tableColumns.push({
+                tableColumns.push({
                     fixed: 'right',
                     align: 'left',
                     title: '操作',
                     key: 'operation',
-                    width: opSizeForWidth[width] || 300,
+                    width: 280,
                     render: (value: any, row: any) => {
+                        const oakActions = row?.['#oakLegalActions'] as string[];
+                        // assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
                         return (
                             <ActionBtn
                                 entity={entity}
                                 extraActions={extraActions}
-                                actions={row?.['#oakLegalActions']}
+                                actions={oakActions || []}
                                 cascadeActions={row?.['#oakLegalCascadeActions']}
                                 onAction={(action: string, cascadeAction: CascadeActionProps) => onAction && onAction(row, action, cascadeAction)}
                             />
@@ -227,16 +146,14 @@ export default function Render(
             }
             setTabelColumns(tableColumns)
         }
-    }, [data, zhCNKeys, schema])
+    }, [data, zhCNKeys, schema, tableAttributes])
     return (
         <Table
-            size={sizeForWidth[width]}
             rowKey="id"
             rowSelection={rowSelection?.type && {
                 type: rowSelection?.type,
                 selectedRowKeys,
                 onChange: (selectedRowKeys, row, info) => {
-                    setSelectedRowKeys(selectedRowKeys);
                     rowSelection?.onChange && rowSelection?.onChange(selectedRowKeys, row, info);
                 }
             }}
@@ -244,7 +161,10 @@ export default function Render(
             dataSource={data}
             columns={tableColumns}
             pagination={tablePagination}
-            scroll={{...scroll}}
+            scroll={showScroll ? {
+                scrollToFirstRowOnChange: true,
+                x: 1200,
+            } : {}}
             onRow={(record) => {
                 return {
                     onClick: () => {
@@ -257,17 +177,16 @@ export default function Render(
                             else {
                                 keys.push(record.id)
                             }
-                            setSelectedRowKeys([...selectedRowKeys]);
                         }
                         else {
                             keys = [record.id];
-                            setSelectedRowKeys([record.id])
                         }
                         const row = data.filter((ele) => keys.includes(ele.id));
-                        rowSelection?.onChange && rowSelection?.onChange(keys, row, {type: 'all'});
+                        rowSelection?.onChange && rowSelection?.onChange(keys, row, { type: 'all' });
                     }
                 }
             }}
+            showHeader={!hideHeader}
         >
         </Table>
     );

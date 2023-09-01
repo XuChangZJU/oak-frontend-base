@@ -1,6 +1,6 @@
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-
+import { ButtonProps } from 'antd';
 
 export type RenderWidth = 1 | 2 | 3 | 4;
 
@@ -30,13 +30,21 @@ export type OakAbsNativeAttrDef = {
 export type OakAbsDerivedAttrDef = {
     path: string;
     label: string;
-    value?: string;
-    width?: RenderWidth;
-    type?: ('img' | 'file' | 'avatar' | 'text') | DataType;
-    render?: (row: any) => React.ReactNode | undefined;
+    width?: number;
+    span?: number;
+    type?: 'image' | 'link' | DataType | 'ref';
+    linkUrl?: string;
 };
 
 export type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
+
+export type OakAbsAttrJudgeDef = {
+    path: string;
+    entity: keyof ED;
+    attr: string;
+    attribute: OakAbsAttrDef;
+    attrType: DataType | 'ref' | undefined;
+}
 
 export type CardDef = {
     // string:path ReactNode自主渲染
@@ -121,9 +129,9 @@ import {
 export type AttrRender = {
     label: string;
     value: any;
-    type: DataType | ('img' | 'file' | 'avatar' | 'ref');
+    type: DataType | ('image' | 'link' | 'ref');
     color?: string;
-    width?: RenderWidth;
+    span?: RenderWidth;
     attr: string;
 };
 
@@ -176,3 +184,22 @@ export type onActionFnDef = (
     action: string,
     cascadeAction?: CascadeActionProps
 ) => void;
+
+export type ListButtonProps = {
+    label: string;
+    show?: boolean;
+    type?: ButtonProps['type'],
+    icon?: React.ReactNode,
+    onClick: () => void;
+}
+
+
+type ColSpanType = 1 | 2 | 3 | 4;
+export type ColumnMapType = {
+    xxl: ColSpanType;
+    xl: ColSpanType;
+    lg: ColSpanType;
+    md: ColSpanType;
+    sm: ColSpanType;
+    xs: ColSpanType;
+};

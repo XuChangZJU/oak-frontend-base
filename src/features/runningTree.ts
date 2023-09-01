@@ -1,6 +1,6 @@
 import { assert } from 'oak-domain/lib/utils/assert';
 import { cloneDeep, pull, unset, merge, uniq } from "oak-domain/lib/utils/lodash";
-import { addFilterSegment, combineFilters, contains, repel, same } from "oak-domain/lib/store/filter";
+import { combineFilters, contains, repel, same } from "oak-domain/lib/store/filter";
 import { createOperationsFromModies } from 'oak-domain/lib/store/modi';
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, AspectWrapper, AuthDefDict, CascadeRelationItem, CascadeActionItem } from "oak-domain/lib/types";
@@ -15,141 +15,9 @@ import { ActionDef } from '../types/Page';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
-import { firstLetterUpperCase } from 'oak-domain/lib/utils/string';
+import { RelationAuth } from './relationAuth';
 
-type Operation<ED extends EntityDict & BaseEntityDict, T extends keyof ED, OmitId extends boolean = false> = {
-    oper: OmitId extends true ? Omit<ED[T]['Operation'], 'id'> : ED[T]['Operation'];
-    beforeExecute?: () => Promise<void>;
-    afterExecute?: () => Promise<void>;
-};
-
-function translateAuthItemToProjection<ED extends EntityDict & BaseEntityDict>(
-    schema: StorageSchema<ED>,
-    entity: keyof ED,
-    item: CascadeActionItem,
-    userId: string,
-    prefix?: string): Partial<ED[keyof ED]['Selection']['data']> {
-    const { cascadePath, relations } = item;
-    const paths = cascadePath.split('.');
-
-    const makeUserEntityProjection = (entity2: keyof ED) => {
-        assert(entity2 !== 'user');
-        const filter = {
-            userId,
-        };
-        // 数组目前不太好merge
-        /* if (relations) {
-            Object.assign(filter, {
-                relation: {
-                    $in: relations,
-                }
-            });
-        } */
-        const projection = {
-            id: 1,
-            [`user${firstLetterUpperCase(entity2 as string)}$${entity2 as string}$244`]: {
-                $entity: `user${firstLetterUpperCase(entity2 as string)}`,
-                data: {
-                    id: 1,
-                    userId: 1,
-                    [`${entity2 as string}Id`]: 1,
-                    relation: 1,
-                },
-                filter,
-            },
-        };
-        return projection as Partial<ED[keyof ED]['Selection']['data']>;
-    };
-
-    const translateIter = (entity2: keyof ED, iter: number): Partial<ED[keyof ED]['Selection']['data']> => {
-        const attr = paths[iter];
-        const rel = judgeRelation(schema, entity2, attr);
-        if (iter === paths.length - 1) {
-            if (rel === 2) {
-                if (attr === 'user') {
-                    return {
-                        id: 1,
-                        entity: 1,
-                        entityId: 1,
-                    };
-                }
-                else {
-                    return {
-                        id: 1,
-                        [attr]: makeUserEntityProjection(attr),
-                    }
-                }
-            }
-            else {
-                if (rel === 'user') {
-                    return {
-                        id: 1,
-                        [`${attr}Id`]: 1,
-                    };
-                }
-                else {
-                    return {
-                        id: 1,
-                        [attr]: makeUserEntityProjection(rel as keyof ED),
-                    };
-                }
-            }
-        }
-        else {
-            const proj2 = translateIter(rel === 2 ? attr : rel as keyof ED, iter + 1);
-            return {
-                id: 1,
-                [attr]: proj2,
-            };
-        }
-    };
-
-    if (!cascadePath) {
-        return makeUserEntityProjection(entity);
-    }
-
-    if (prefix && paths[0] !== prefix) {
-        // 不在相关路径上的关系在这里不查
-        return {};
-    }
-
-    return translateIter(entity, 0);
-}
-
-function makeRelationRefProjection<ED extends EntityDict & BaseEntityDict, T extends keyof ED>(
-    schema: StorageSchema<ED>, authDict: AuthDefDict<ED>,
-    entity: T, action: ED[T]['Action'], userId: string, prefix?: string) {
-    const proj: Partial<ED[T]['Selection']['data']> = {};
-    if (authDict[entity] && authDict[entity]?.actionAuth && authDict[entity]?.actionAuth![action]) {
-        const actionDef = authDict[entity]?.actionAuth![action]!;
-        if (actionDef instanceof Array) {
-            const proj2 = actionDef.map(
-                (ad) => {
-                    if (ad instanceof Array) {
-                        const proj3 = ad.map(
-                            (add) => translateAuthItemToProjection(schema, entity, add, userId, prefix)
-                        ).reduce(
-                            (prev, current) => merge(prev, current),
-                            {}
-                        ) as Partial<ED[T]['Selection']['data']>;
-                        return proj3;
-                    }
-                    return translateAuthItemToProjection(schema, entity, ad, userId, prefix);
-                }
-            ).reduce(
-                (prev, current) => merge(prev, current),
-                {}
-            ) as Partial<ED[T]['Selection']['data']>;
-            merge(proj, proj2);
-        }
-        else {
-            const proj2 = translateAuthItemToProjection(schema, entity, actionDef, userId);
-            merge(proj, proj2);
-        }
-
-    }
-    return proj;
-}
+export const MODI_NEXT_PATH_SUFFIX = ':next';
 
 abstract class Node<
     ED extends EntityDict & BaseEntityDict,
@@ -160,7 +28,6 @@ abstract class Node<
     protected entity: T;
     // protected fullPath: string;
     protected schema: StorageSchema<ED>;
-    private authDict: AuthDefDict<ED>;
     protected projection?: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);      // 只在Page层有
     protected parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     protected dirty?: boolean;
@@ -173,9 +40,9 @@ abstract class Node<
     private cascadeActions?: () => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     };
+    private relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>;
 
-
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>,
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
         parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
         path?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]),
@@ -185,8 +52,8 @@ abstract class Node<
         super();
         this.entity = entity;
         this.schema = schema;
-        this.authDict = authDict;
         this.cache = cache;
+        this.relationAuth = relationAuth;
         this.projection = projection;
         this.parent = parent;
         this.dirty = undefined;
@@ -293,40 +160,8 @@ abstract class Node<
         return this.parent;
     }
 
-    protected getProjection(context?: FrontCxt): ED[T]['Selection']['data'] | undefined {
+    protected getProjection(): ED[T]['Selection']['data'] | undefined {
         const projection = typeof this.projection === 'function' ? (this.projection as Function)() : (this.projection && cloneDeep(this.projection));
-        // 根据actions和cascadeActions的定义，将对应的projection构建出来
-        const userId = context ? context.getCurrentUserId(true) : this.cache.getCurrentUserId(true);
-        if (userId && projection) {
-            if (this.actions) {
-                const actions = typeof this.actions === 'function' ? this.actions() : this.actions;
-                for (const a of actions) {
-                    const action = typeof a === 'object' ? a.action : a;
-                    const proj = makeRelationRefProjection(this.schema, this.authDict, this.entity!, action, userId);
-                    merge(projection, proj);
-                }
-            }
-
-            if (this.cascadeActions) {
-                const cas = this.cascadeActions();
-                for (const attr in cas) {
-                    const rel = this.judgeRelation(attr);
-                    assert(rel instanceof Array);
-                    for (const a of cas[attr]!) {
-                        const action = typeof a === 'object' ? a.action : a;
-                        if (rel[1]) {
-                            const proj = makeRelationRefProjection(this.schema, this.authDict, rel[0], action, this.entity as string);
-                            merge(projection, proj[rel[1].slice(0, rel[1].length - 2)]);
-                        }
-                        else {
-                            const proj = makeRelationRefProjection(this.schema, this.authDict, rel[0], action, this.entity as string);
-                            merge(projection, proj[this.entity as string]);
-                        }
-
-                    }
-                }
-            }
-        }
 
         return projection;
     }
@@ -341,13 +176,13 @@ abstract class Node<
         return judgeRelation(this.schema, this.entity, attr2);
     }
 
-    protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']) {
+    /* protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']) {
         return contains(this.entity, this.schema, filter, conditionalFilter);
     }
 
     protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']) {
         return repel(this.entity, this.schema, filter1, filter2);
-    }
+    } */
 }
 
 const DEFAULT_PAGINATION: Pagination = {
@@ -377,8 +212,8 @@ class ListNode<
         }
     >;
 
-    private filters: (NamedFilterItem<ED, T> & { applied?: true })[];
-    private sorters: (NamedSorterItem<ED, T> & { applied?: true })[];
+    private filters: (NamedFilterItem<ED, T> & { applied?: boolean })[];
+    private sorters: (NamedSorterItem<ED, T> & { applied?: boolean })[];
     private pagination: Pagination;
     private ids: string[] | undefined;
     private aggr?: (Partial<ED[T]['Schema']> | undefined)[];
@@ -433,6 +268,7 @@ class ListNode<
 
     onCacheSync(records: OpRecord<ED>[]) {
         // 只需要处理insert
+        // todo 这里处理有点问题，因为前台的sorter在处理enum类型时的结果和后台不一致，会导致数据顺序变乱 by Xc 20230809
         if (this.loading) {
             return;
         }
@@ -484,7 +320,7 @@ class ListNode<
             此时对userRelation的删除动作就会导致user不会被移出list
          */
         if (needRefresh) {
-            const { filter, sorter } = this.constructSelection(true);
+            const { filter, sorter } = this.constructSelection(true, false, true);
             if (filter) {
                 const result = this.cache.get(this.getEntity(), {
                     data: {
@@ -492,7 +328,7 @@ class ListNode<
                     },
                     filter,
                     sorter,
-                });
+                }, true);
                 this.ids = result.map((ele) => ele.id) as unknown as string[];
             }
         }
@@ -509,7 +345,7 @@ class ListNode<
         entity: T,
         schema: StorageSchema<ED>,
         cache: Cache<ED, Cxt, FrontCxt, AD>,
-        authDict: AuthDefDict<ED>,
+        relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
         projection?:
             | ED[T]['Selection']['data']
             | (() => Promise<ED[T]['Selection']['data']>),
@@ -525,7 +361,7 @@ class ListNode<
             [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
         }
     ) {
-        super(entity, schema, cache, authDict, projection, parent, path, actions, cascadeActions);
+        super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
         this.filters = filters || [];
         this.sorters = sorters || [];
@@ -576,7 +412,9 @@ class ListNode<
     }
 
     setNamedFilters(filters: NamedFilterItem<ED, T>[], refresh?: boolean) {
-        this.filters = filters;
+        this.filters = filters.map(
+            (ele) => Object.assign({}, ele, { applied: false })
+        );
         if (refresh) {
             this.refresh(1, true);
         } else {
@@ -590,9 +428,9 @@ class ListNode<
             (ele) => filter['#name'] && ele['#name'] === filter['#name']
         );
         if (fIndex >= 0) {
-            this.filters.splice(fIndex, 1, filter);
+            this.filters.splice(fIndex, 1, Object.assign({}, filter, { applied: false }));
         } else {
-            this.filters.push(filter);
+            this.filters.push(Object.assign({}, filter, { applied: false }));
         }
         if (refresh) {
             this.refresh(1, true);
@@ -639,7 +477,9 @@ class ListNode<
     }
 
     setNamedSorters(sorters: NamedSorterItem<ED, T>[], refresh?: boolean) {
-        this.sorters = sorters;
+        this.sorters = sorters.map(
+            ele => Object.assign({}, ele, { applied: false })
+        );
         if (refresh) {
             this.refresh(1, true);
         } else {
@@ -653,9 +493,9 @@ class ListNode<
             (ele) => sorter['#name'] && ele['#name'] === sorter['#name']
         );
         if (fIndex >= 0) {
-            this.sorters.splice(fIndex, 1, sorter);
+            this.sorters.splice(fIndex, 1, Object.assign({}, sorter, { applied: false }));
         } else {
-            this.sorters.push(sorter);
+            this.sorters.push(Object.assign({}, sorter, { applied: false }));
         }
         if (refresh) {
             this.refresh(1, true);
@@ -692,7 +532,7 @@ class ListNode<
         }
     }
 
-    getFreshValue(context: FrontCxt): Array<Partial<ED[T]['Schema']>> {
+    getFreshValue(): Array<Partial<ED[T]['Schema']>> {
         /**
          * 满足当前结点的数据应当是所有满足当前filter条件且ids在当前ids中的数据
          * 但如果是当前事务create的行则例外（当前页面上正在create的数据）
@@ -702,51 +542,62 @@ class ListNode<
          * 先修正为先取id，再取一次数据
          * 
          * 修改memeory-tree，当属性缺失不再报missedRow，改回直接用filter去取数据的逻辑
+         * 
+         * 这里不能用sorter排序，enum的排序顺序目前前后台尚不一致 by Xc 20230809
          */
-        const { data, filter } = this.constructSelection(true, context, true);
+        const { data, filter } = this.constructSelection(true, false, true);
 
-        const result = this.cache.get(this.entity, {
-            data,
-            filter: {
+        if (filter || this.ids) {
+            const filter2 = filter && this.ids ? {
                 $or: [filter, {
                     id: {
                         $in: this.ids || [],
                     }
                 }]
-            },
-        }, context, this.isLoading());
+            } : filter || {
+                id: {
+                    $in: this.ids,
+                }
+            };
+            const result = this.cache.get(this.entity, {
+                data,
+                filter: filter2,
+            }, true);
 
-        const r2 = result.filter(
-            ele => ele.$$createAt$$ === 1 || (this.ids?.includes(ele.id!))
-        ).sort(
-            (ele1, ele2) => {
-                if (ele1.$$createAt$$ === 1) {
-                    return -1;
-                }
-                else if (ele2.$$createAt$$ === 1) {
-                    return -1;
-                }
-                const idx1 = this.ids!.indexOf(ele1.id!);
-                const idx2 = this.ids!.indexOf(ele2.id!);
-                return idx1 - idx2;
-            }
-        );
-        if (this.aggr) {
-            // 如果有聚合查询的结果，这里按理不应该有aggregate和create同时出现，但也以防万一
-            this.aggr.forEach(
-                (ele, idx) => {
-                    const id = this.ids![idx];
-                    assert(id);
-                    const row = r2.find(
-                        ele => ele.id === id
-                    );
-                    assert(id);
-                    merge(row, ele);
+
+            const r2 = result.filter(
+                ele => ele.$$createAt$$ === 1 || (this.ids?.includes(ele.id!))
+            ).sort(
+                (ele1, ele2) => {
+                    if (ele1.$$createAt$$ === 1) {
+                        return -1;
+                    }
+                    else if (ele2.$$createAt$$ === 1) {
+                        return -1;
+                    }
+                    const idx1 = this.ids!.indexOf(ele1.id!);
+                    const idx2 = this.ids!.indexOf(ele2.id!);
+                    return idx1 - idx2;
                 }
             );
-        }
+            if (this.aggr) {
+                // 如果有聚合查询的结果，这里按理不应该有aggregate和create同时出现，但也以防万一
+                this.aggr.forEach(
+                    (ele, idx) => {
+                        const id = this.ids![idx];
+                        assert(id);
+                        const row = r2.find(
+                            ele => ele.id === id
+                        );
+                        assert(id);
+                        merge(row, ele);
+                    }
+                );
+            }
 
-        return r2;
+            return r2;
+        }
+        return [];
         /* const finalIds = result.filter(
             ele => ele.$$createAt$$ === 1
         ).map(ele => ele.id).concat(this.ids);
@@ -756,7 +607,7 @@ class ListNode<
                 id: { $in: finalIds },
             },
             sorter,
-        }, context, this.isLoading()); */
+        }, this.isLoading()); */
     }
 
     addItem(
@@ -848,7 +699,7 @@ class ListNode<
         if (this.updates[id]) {
             const { operation } = this.updates[id];
             const { data: dataOrigin } = operation;
-            merge(dataOrigin, data);
+            Object.assign(dataOrigin, data);
             if (action && operation.action !== action) {
                 assert(operation.action === 'update');
                 operation.action = action;
@@ -959,8 +810,8 @@ class ListNode<
         return operations;
     }
 
-    getProjection(context?: FrontCxt) {
-        const projection = super.getProjection(context);
+    getProjection() {
+        const projection = super.getProjection();
         // List必须自主决定Projection
         /* if (this.children.length > 0) {
             const subProjection = await this.children[0].getProjection();
@@ -969,10 +820,10 @@ class ListNode<
         return projection;
     }
 
-    private constructFilters(context?: FrontCxt, withParent?: boolean, ignoreUnapplied?: true) {
+    private constructFilters(withParent?: boolean, ignoreNewParent?: boolean, ignoreUnapplied?: true) {
         const { filters: ownFilters } = this;
         const filters = ownFilters.filter(
-            ele => !ignoreUnapplied || ele.applied
+            ele => !ignoreUnapplied || ele.applied === true || ele.applied === undefined            // 如果是undefined，说明不可以移除（构造时就存在），也得返回
         ).map((ele) => {
             const { filter } = ele;
             if (typeof filter === 'function') {
@@ -983,7 +834,7 @@ class ListNode<
 
         if (withParent && this.parent) {
             if (this.parent instanceof SingleNode) {
-                const filterOfParent = this.parent.getParentFilter<T>(this, context);
+                const filterOfParent = this.parent.getParentFilter<T>(this, ignoreNewParent);
                 if (filterOfParent) {
                     filters.push(filterOfParent as any);
                 } else {
@@ -993,12 +844,13 @@ class ListNode<
             }
         }
 
-        return filters;
+        // 返回的filter在上层做check的时候可能被改造掉
+        return cloneDeep(filters);
     }
 
-    constructSelection(withParent?: true, context?: FrontCxt, ignoreUnapplied?: true) {
+    constructSelection(withParent?: true, ignoreNewParent?: boolean, ignoreUnapplied?: true) {
         const { sorters } = this;
-        const data = this.getProjection(context);
+        const data = this.getProjection();
         assert(data, '取数据时找不到projection信息');
         const sorterArr = sorters.filter(
             ele => !ignoreUnapplied || ele.applied
@@ -1011,10 +863,10 @@ class ListNode<
         })
             .filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
 
-        const filters = this.constructFilters(context, withParent, ignoreUnapplied);
+        const filters = this.constructFilters(withParent, ignoreNewParent, ignoreUnapplied);
 
         const filters2 = filters?.filter((ele) => !!ele);
-        const filter = filters2 ? combineFilters<ED, T>(filters2) : undefined;
+        const filter = filters2 ? combineFilters<ED, T>(this.entity, this.schema, filters2) : undefined;
         return {
             data,
             filter,
@@ -1024,16 +876,17 @@ class ListNode<
 
     async refresh(pageNumber?: number, getCount?: true, append?: boolean) {
         const { entity, pagination } = this;
-        const { currentPage, pageSize } = pagination;
+        const { currentPage, pageSize, randomRange } = pagination;
         const currentPage3 =
             typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
+        assert(!randomRange || !currentPage3, 'list在访问数据时，如果设置了randomRange，则不应再有pageNumber');
         const {
             data: projection,
             filter,
             sorter,
-        } = this.constructSelection(true);
-        // 若不存在有效的过滤条件（若有父结点但却为空时），则不能刷新
-        if (filter && projection) {
+        } = this.constructSelection(true, true);
+        // 若不存在有效的过滤条件（若有父结点但却为空时，说明父结点是一个create动作，不用刷新），则不能刷新
+        if ((!this.getParent() || filter) && projection) {
             try {
                 this.setLoading(true);
                 if (append) {
@@ -1048,6 +901,7 @@ class ListNode<
                         sorter,
                         indexFrom: currentPage3 * pageSize,
                         count: pageSize,
+                        randomRange,
                     },
                     undefined,
                     getCount,
@@ -1072,16 +926,21 @@ class ListNode<
                         } else {
                             this.aggr = aggr;
                         }
-
                     }
                 );
+                this.publish();
             } catch (err) {
                 this.setLoading(false);
                 if (append) {
                     this.loadingMore = false;
                 }
+                this.publish();
                 throw err;
             }
+        }
+        else {
+            // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
+            this.publish();
         }
     }
 
@@ -1125,10 +984,10 @@ class ListNode<
         }
     }
 
-    // 查看这个list上所有数据必须遵守的等值限制
+    // 查看这个list上所有数据必须遵守的限制
     getIntrinsticFilters() {
-        const filters = this.constructFilters();
-        return combineFilters(filters || []);
+        const filters = this.constructFilters(undefined, true, true);
+        return combineFilters(this.entity, this.schema, filters || []);
     }
 }
 
@@ -1142,28 +1001,31 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     private children: {
         [K: string]: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     };
+    private filters?: NamedFilterItem<ED, T>[];
     private operation?: {
         beforeExecute?: () => Promise<void>;
         afterExecute?: () => Promise<void>;
         operation: ED[T]['CreateSingle'] | ED[T]['Update'] | ED[T]['Remove'];
     };
 
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, authDict: AuthDefDict<ED>,
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
         parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
         path?: string,
         id?: string,
+        filters?: NamedFilterItem<ED, T>[],
         actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]),
         cascadeActions?: () => {
             [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
         }) {
-        super(entity, schema, cache, authDict, projection, parent, path, actions, cascadeActions);
+        super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
+        this.filters = filters;
 
         if (!id) {
             // 不传id先假设是创建动作
             this.create({});
-            this.id = this.operation!.operation.data.id;
+            // this.id = this.operation!.operation.data.id;
         }
         else {
             this.id = id;
@@ -1219,20 +1081,32 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     setId(id: string) {
         if (id !== this.id) {
-            this.id = id;
+            // 如果本身是create， 这里无视就行（因为框架原因会调用一次）
+            if (this.operation?.operation.action === 'create') {
+                if (this.operation.operation.data.id === id) {
+                    return;
+                }
+            }
             assert(!this.dirty, 'setId时结点是dirty，在setId之前应当处理掉原有的update');
+            this.id = id;
             this.publish();
         }
     }
 
     unsetId() {
-        this.id = undefined;
-        this.publish();
+        if (this.id) {
+            this.id = undefined;
+            this.publish();
+        }
     }
 
-    // 最好用getFreshValue取值
     getId() {
-        return this.id;
+        if (this.id) {
+            return this.id;
+        }
+        if (this.operation && this.operation.operation.action === 'create') {
+            return this.operation.operation.data.id;
+        }
     }
 
     getChildren() {
@@ -1248,16 +1122,16 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         unset(this.children, path);
     }
 
-    getFreshValue(context?: FrontCxt): Partial<ED[T]['Schema']> | undefined {
-        const projection = this.getProjection(context, false);
-        const { id } = this;
+    getFreshValue(): Partial<ED[T]['Schema']> | undefined {
+        const projection = this.getProjection(false);
+        const id = this.getId();
         if (projection) {
             const result = this.cache.get(this.entity, {
                 data: projection,
                 filter: {
                     id,
                 },
-            }, context, this.isLoading());
+            }, true);
             if (this.aggr) {
                 merge(result[0], this.aggr);
             }
@@ -1300,30 +1174,44 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             beforeExecute,
             afterExecute,
         };
-        this.id = id;
         this.setDirty();
     }
 
     update(data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
         if (!this.operation) {
-            // 还是有可能是create
-            const operation: ED[T]['Update'] = {
-                id: generateNewId(),
-                action: action || 'update',
-                data,
-            };
             if (this.id) {
+                const operation: ED[T]['Update'] = {
+                    id: generateNewId(),
+                    action: action || 'update',
+                    data,
+                };
                 Object.assign(operation, {
                     filter: {
                         id: this.id,
                     },
                 });
+                this.operation = {
+                    operation,
+                    beforeExecute,
+                    afterExecute,
+                };
             }
-            this.operation = {
-                operation,
-                beforeExecute,
-                afterExecute,
-            };
+            else {
+                // 有可能是create，上层不考虑两者的区别
+                assert(!action);
+                const operation: ED[T]['Update'] = {
+                    id: generateNewId(),
+                    action: 'create',
+                    data: Object.assign({}, data, {
+                        id: generateNewId(),
+                    }),
+                };
+                this.operation = {
+                    operation,
+                    beforeExecute,
+                    afterExecute,
+                };
+            }
         }
         else {
             const { operation } = this.operation;
@@ -1353,6 +1241,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     remove(beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+        assert(this.id);
         const operation: ED[T]['Remove'] = {
             id: generateNewId(),
             action: 'remove',
@@ -1422,17 +1311,17 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
     }
 
-    getProjection(context?: FrontCxt, withDecendants?: boolean) {
+    getProjection(withDecendants?: boolean) {
         if (this.parent && this.parent instanceof ListNode) {
-            return this.parent.getProjection(context);
+            return this.parent.getProjection();
         }
-        const projection = super.getProjection(context);
+        const projection = super.getProjection();
         if (projection && withDecendants) {
             for (const k in this.children) {
                 if (k.indexOf(':') === -1) {
                     const rel = this.judgeRelation(k);
                     if (rel === 2) {
-                        const subProjection = this.children[k].getProjection(context, true);
+                        const subProjection = this.children[k].getProjection(true);
                         Object.assign(projection, {
                             entity: 1,
                             entityId: 1,
@@ -1440,7 +1329,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                         });
                     }
                     else if (typeof rel === 'string') {
-                        const subProjection = this.children[k].getProjection(context, true);
+                        const subProjection = this.children[k].getProjection(true);
                         Object.assign(projection, {
                             [`${k}Id`]: 1,
                             [k]: subProjection,
@@ -1469,14 +1358,8 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             this.publish();
             return;
         }
-
-        // 如果是新建，也不用refresh
-        if (this.operation?.operation.action === 'create') {
-            return;
-        }
-
         // SingleNode如果是非根结点，其id应该在第一次refresh的时候来确定        
-        const projection = this.getProjection(undefined, true);
+        const projection = this.getProjection(true);
         const filter = this.getFilter();
         if (projection && filter) {
             this.setLoading(true);
@@ -1487,23 +1370,38 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     filter,
                 }, undefined, undefined, ({ aggr }) => {
                     // 刷新后所有的更新都应当被丢弃（子层上可能会自动建立了this.create动作） 这里可能会有问题 by Xc 20230329
+                    if (this.schema[this.entity].toModi) {
+                        // 对于modi对象，在此缓存modiIds
+                        const rows = this.cache.get('modi', {
+                            data: {
+                                id: 1,
+                            },
+                            filter: {
+                                entity: this.entity as string,
+                                entityId: this.id,
+                                iState: 'active',
+                            }
+                        });
+                        if (rows.length > 0) {
+                            this.modiIds = rows.map(ele => ele.id!);
+                        }
+                    }
                     this.aggr = aggr && aggr[0];
                     this.setFiltersAndSortedApplied();
                     this.setLoading(false);
                     //this.clean();
                 });
-                // 对于modi对象，在此缓存modiIds
-                if (this.schema[this.entity].toModi && value) {
-                    const { modi$entity } = value;
-                    this.modiIds = (modi$entity as Array<BaseEntityDict['modi']['OpSchema']>).map(ele => ele.id);
-                    this.publish();
-                }
-
+                this.publish();
             }
             catch (err) {
                 this.setLoading(false);
+                this.publish();
                 throw err;
             }
+        }
+        else {
+            // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
+            this.publish();
         }
     }
 
@@ -1519,10 +1417,26 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
     }
 
-    getFilter(): ED[T]['Selection']['filter'] | undefined {
-        return {
+    private getFilter(): ED[T]['Selection']['filter'] | undefined {
+        // 如果是新建，等于没有filter
+        if (this.operation?.operation.action === 'create') {
+            return;
+        }
+
+        // singleNode的filter可以优化权限的判断范围
+        let filter: ED[T]['Selection']['filter'] = {
             id: this.id,
         };
+        if (this.filters) {
+            filter = combineFilters(this.entity, this.schema, this.filters.map(
+                ele => typeof ele.filter === 'function' ? ele.filter() : ele.filter
+            ).concat(filter));
+        }
+        return filter;
+    }
+
+    getIntrinsticFilters() {
+        return this.getFilter();
     }
 
     /**
@@ -1531,9 +1445,12 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
      * @param disableOperation 
      * @returns 
      */
-    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, context?: FrontCxt): ED[T2]['Selection']['filter'] | undefined {
-        const value = this.getFreshValue(context);
+    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, ignoreNewParent?: boolean): ED[T2]['Selection']['filter'] | undefined {
+        const value = this.getFreshValue();
 
+        if (value && value.$$createAt$$ === 1 && ignoreNewParent) {
+            return;
+        }
         for (const key in this.children) {
             if (childNode === this.children[key]) {
                 const rel = this.judgeRelation(key);
@@ -1784,6 +1701,7 @@ class VirtualNode<
         for (const ele in this.children) {
             this.children[ele].clean();
         }
+        this.publish();
     }
     checkIfClean() {
         for (const k in this.children) {
@@ -1835,25 +1753,25 @@ export class RunningTree<
 > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
-    private authDict: AuthDefDict<ED>;
     private root: Record<
         string,
         | SingleNode<ED, keyof ED, Cxt, FrontCxt, AD>
         | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>
         | VirtualNode<ED, Cxt, FrontCxt, AD>
     >;
+    private relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>;      // todo 用这个来帮助selection加上要取的权限相关的数据
 
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
         schema: StorageSchema<ED>,
-        authDict: AuthDefDict<ED>
+        relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
     ) {
         super();
         // this.aspectWrapper = aspectWrapper;
         this.cache = cache;
         this.schema = schema;
+        this.relationAuth = relationAuth;
         this.root = {};
-        this.authDict = authDict;
     }
 
     createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>) {
@@ -1925,7 +1843,7 @@ export class RunningTree<
                     entity,
                     this.schema!,
                     this.cache,
-                    this.authDict,
+                    this.relationAuth,
                     projection,
                     parentNode,
                     path,
@@ -1940,11 +1858,12 @@ export class RunningTree<
                     entity,
                     this.schema!,
                     this.cache,
-                    this.authDict,
+                    this.relationAuth,
                     projection,
                     parentNode as VirtualNode<ED, Cxt, FrontCxt, AD>, // 过编译
                     path,
                     id,
+                    filters,
                     actions,
                     cascadeActions
                 );
@@ -1959,6 +1878,43 @@ export class RunningTree<
         }
 
         return node;
+    }
+
+    private checkSingleNodeIsModiNode(node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD>) {
+        const id = node.getId();
+        if (id) {
+            const modies = this.cache.get('modi', {
+                data: {
+                    id: 1,
+                },
+                filter: {
+                    targetEntity: node.getEntity() as string,
+                    action: 'create',
+                    data: {
+                        id,
+                    },
+                    iState: 'active',
+                }
+            });
+            return modies.length > 0;
+        }
+        return false;
+    }
+
+    checkIsModiNode(path: string) {
+        if (!path.includes(MODI_NEXT_PATH_SUFFIX)) {
+            return false;
+        }
+        const node = this.findNode(path);
+        if (node instanceof SingleNode) {
+            return this.checkSingleNodeIsModiNode(node);
+        }
+        else {
+            assert(node instanceof ListNode);
+            const parent = node.getParent();
+            assert(parent instanceof SingleNode);
+            return this.checkSingleNodeIsModiNode(parent);
+        }
     }
 
     private findNode(path: string) {
@@ -2000,22 +1956,22 @@ export class RunningTree<
         const node = this.findNode(path);
         const paths = path.split('.');
         const root = this.root[paths[0]];
-        const includeModi = path.includes(':next');
+        const includeModi = path.includes(MODI_NEXT_PATH_SUFFIX);
         if (node) {
-            const context = this.cache.begin();
+            this.cache.begin();
             assert(node instanceof ListNode || node instanceof SingleNode);
             if (includeModi) {
                 const opers2 = node.getActiveModiOperations();
                 if (opers2) {
-                    this.cache.redoOperation(opers2, context);
+                    this.cache.redoOperation(opers2);
                 }
             }
             const opers = root?.composeOperations();
             if (opers) {
-                this.cache.redoOperation(opers, context);
+                this.cache.redoOperation(opers);
             }
-            const value = node.getFreshValue(context);
-            context.rollback();
+            const value = node.getFreshValue();
+            this.cache.rollback();
             return value;
         }
     }
@@ -2105,6 +2061,14 @@ export class RunningTree<
         node.remove(beforeExecute, afterExecute);
     }
 
+    isCreation(path: string) {
+        const node = this.findNode(path);
+        assert(node instanceof SingleNode);
+        const oper = node.composeOperations();
+
+        return !!(oper && oper[0].operation.action === 'create');
+    }
+
     isLoading(path: string) {
         const node = this.findNode(path);
         return node?.isLoading();
@@ -2124,6 +2088,9 @@ export class RunningTree<
     }
 
     async refresh(path: string) {
+        /* if (path.includes(MODI_NEXT_PATH_SUFFIX)) {
+            return;
+        } */
         const node = this.findNode(path);
         if (node instanceof ListNode) {
             await node.refresh(1, true);
@@ -2285,7 +2252,7 @@ export class RunningTree<
 
     getIntrinsticFilters(path: string) {
         const node = this.findNode(path);
-        assert(node instanceof ListNode);
+        assert(node instanceof ListNode || node instanceof SingleNode);
         return node.getIntrinsticFilters();
     }
 
@@ -2299,8 +2266,8 @@ export class RunningTree<
     }
 
     getOperations(path: string) {
-        const node = this.findNode(path)!;
-        const operations = node.composeOperations();
+        const node = this.findNode(path);
+        const operations = node?.composeOperations();
         return operations;
     }
 

@@ -119,7 +119,7 @@ export default OakComponent({
             }
                 else {
                 if (['update', 'create', 'detail', 'remove'].includes(actionItem)) {
-                    return this.t(`common:action.${actionItem}`)
+                    return this.t(`common::action.${actionItem}`)
                 }
                 else {
                     return this.t(`${entity}:action.${actionItem}`)

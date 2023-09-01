@@ -36,10 +36,10 @@ export type ColumnProps<ED extends BaseEntityDict & EntityDict, T extends keyof 
             label: string;
             value: string;
         }>;
-        transformInOption: (
+        transformInOption?: (
             option: string | number | Record<string, any>
         ) => void;
-        transformOutOption: (
+        transformOutOption?: (
             option: string | number | Record<string, any>
         ) => void;
         exclude?: string | string[]; //排除某些值，比如状态，某些页面只显示特有的值

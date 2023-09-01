@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Tag, Descriptions, Image } from 'antd';
+import { Tag, Space, Image, Ellipsis } from 'antd-mobile';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import styles from './web.module.less';
+import styles from './mobile.module.less';
 import {
     DataType,
     DataTypeParams,
 } from 'oak-domain/lib/types/schema/DataTypes';
-import { AttrRender } from '../../types/AbstractComponent';
-
+import { AttrRender, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
+import dayjs from 'dayjs';
 // type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+import { getLabel, getType, getValue, getWidth } from '../../utils/usefulFn';
 
 export type ColSpanType = 1 | 2 | 3 | 4;
 type ColumnMapType = {
@@ -24,28 +25,46 @@ type ColumnMapType = {
     xs: ColSpanType;
 };
 
-const DEFAULT_COLUMN_MAP: ColumnMapType = {
-    xxl: 4,
-    xl: 4,
-    lg: 4,
-    md: 3,
-    sm: 2,
-    xs: 1,
-};
 
-// function getColumn(column: ColSpanType | ColumnMapType, width: Width) {
-//     if (typeof column === 'number') {
-//         return column;
-//     }
-
-//     if (typeof column === 'object') {
-//         if (column[width] !== undefined) {
-//             return column[width] || DEFAULT_COLUMN_MAP[width];
-//         }
-//     }
-
-//     return 3;
-// }
+function RenderRow(props: { label: string; value: any; type: AttrRender['type'] }) {
+    const { type, label, value } = props;
+    if (type === 'image') {
+        if (value instanceof Array) {
+            return (
+                <div className={styles.renderRow}>
+                    <div className={styles.renderLabel}>
+                        {label}
+                    </div>
+                    <Space wrap>
+                        {value.map((ele) => (
+                            <Image width={70} height={70} src={ele} fit="contain" />
+                        ))}
+                    </Space>
+                </div>
+            )
+        }
+        else {
+            return (
+                <div className={styles.renderRow}>
+                    <div className={styles.renderLabel}>
+                        {label}
+                    </div>
+                    <Space wrap>
+                        <Image width={70} height={70} src={value} fit="contain" />
+                    </Space>
+                </div>
+            )
+        }
+    }
+    return (
+        <div className={styles.renderRow}>
+            <div className={styles.renderLabel}>
+                {label}
+            </div>
+            <div className={styles.renderValue}>{value ? String(value) : '--'}</div>
+        </div>
+    )
+}
 
 export default function Render(
     props: WebComponentProps<
@@ -54,12 +73,16 @@ export default function Render(
         false,
         {
             entity: string;
-            // data: any[];
+            title: string;
+            bordered: boolean;
+            layout: 'horizontal' | 'vertical'
+            data: any;
             handleClick?: (id: string, action: string) => void;
             colorDict: ColorDict<EntityDict & BaseEntityDict>;
             dataSchema: StorageSchema<EntityDict>;
             column: ColumnMapType;
             renderData: AttrRender[];
+            judgeAttributes: OakAbsAttrJudgeDef[];
         },
         {}
     >
@@ -67,70 +90,34 @@ export default function Render(
     const { methods, data: oakData } = props;
     const { t } = methods;
     const {
-        entity,
-        handleClick,
-        colorDict,
-        dataSchema,
-        column = DEFAULT_COLUMN_MAP,
+        title,
         renderData,
+        entity,
+        judgeAttributes,
+        data,
     } = oakData;
-
-    const data = renderData?.map((ele) => {
-        const item = {
-            label: ele.label,
-            span: 1,
-            value: ele.value || '未填写',
-            attr: ele.attr,
-        };
-        // 类型如果是日期占两格，文本类型占4格
-        // if (ele?.type === 'datetime') {
-        //     Object.assign(item, { span: 2 });
-        // }
-        if (ele?.type === 'text') {
-            Object.assign(item, { span: 4 });
-        }
-        //类型如果是枚举，用tag
-        if (ele?.type === 'enum') {
-            Object.assign(item, {
-                value: (
-                    <Tag
-                        color={
-                            colorDict![entity]![ele.attr]![String(ele.value)]
-                        }
-                    >
-                        {/* {ele.value} */}
-                        {t(`${entity}:v.${ele.attr}.${ele.value}`)}
-                    </Tag>
-                ),
-            });
-        }
-        if (ele?.type === 'img') {
-            Object.assign(item, {
-                value: (
-                    <div>
-                        {ele.value?.map((ele1: string | undefined) => (
-                            <Image
-                                src={ele1}
-                                width={120}
-                                height={120}
-                                className={styles.img}
-                            />
-                        ))}
-                    </div>
-                ),
-                span: 4,
-            });
-        }
-        return Object.assign(item);
-    });
-
     return (
-        <Descriptions column={column} bordered>
-            {data?.map((ele) => (
-                <Descriptions.Item label={t(ele.label)} span={ele.span || 1}>
-                    {ele.value}
-                </Descriptions.Item>
-            ))}
-        </Descriptions>
+        <div className={styles.panel}>
+            {title && (
+                <div className={styles.title}>
+                    {title}
+                </div>
+            )}
+            <div className={styles.panel_content}>
+                <Space direction="vertical" style={{'--gap': '10px'}}>
+                    {judgeAttributes && judgeAttributes.map((ele) => {
+                        let renderValue = getValue(data, ele.path, ele.entity, ele.attr, ele.attrType, t);
+                        let renderLabel = getLabel(ele.attribute, ele.entity, ele.attr, t);
+                        const renderType = getType(ele.attribute, ele.attrType);
+                        if ([null, '', undefined].includes(renderValue)) {
+                            renderValue = t('not_filled_in');
+                        }
+                        return (
+                            <RenderRow label={renderLabel} value={renderValue} type={renderType!} />
+                        )
+                    })}
+                </Space>
+            </div>
+        </div>
     );
 }

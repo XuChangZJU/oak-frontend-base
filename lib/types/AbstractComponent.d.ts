@@ -1,6 +1,7 @@
 /// <reference types="react" />
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { ButtonProps } from 'antd';
 export declare type RenderWidth = 1 | 2 | 3 | 4;
 export declare type OakActionBtnProps = {
     label: string;
@@ -24,12 +25,19 @@ export declare type OakAbsNativeAttrDef = {
 export declare type OakAbsDerivedAttrDef = {
     path: string;
     label: string;
-    value?: string;
-    width?: RenderWidth;
-    type?: ('img' | 'file' | 'avatar' | 'text') | DataType;
-    render?: (row: any) => React.ReactNode | undefined;
+    width?: number;
+    span?: number;
+    type?: 'image' | 'link' | DataType | 'ref';
+    linkUrl?: string;
 };
 export declare type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
+export declare type OakAbsAttrJudgeDef = {
+    path: string;
+    entity: keyof ED;
+    attr: string;
+    attribute: OakAbsAttrDef;
+    attrType: DataType | 'ref' | undefined;
+};
 export declare type CardDef = {
     title: string | React.ReactNode;
     state?: string | React.ReactNode;
@@ -85,9 +93,9 @@ import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes'
 export declare type AttrRender = {
     label: string;
     value: any;
-    type: DataType | ('img' | 'file' | 'avatar' | 'ref');
+    type: DataType | ('image' | 'link' | 'ref');
     color?: string;
-    width?: RenderWidth;
+    span?: RenderWidth;
     attr: string;
 };
 export interface OakAbsNativeAttrUpsertRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED, A extends keyof ED[T]['OpSchema']> extends Omit<OakAbsNativeAttrUpsertDef<ED, T, A>, 'type'> {
@@ -119,3 +127,20 @@ export declare type CascadeActionProps = {
     action: string;
 };
 export declare type onActionFnDef = (row: any, action: string, cascadeAction?: CascadeActionProps) => void;
+export declare type ListButtonProps = {
+    label: string;
+    show?: boolean;
+    type?: ButtonProps['type'];
+    icon?: React.ReactNode;
+    onClick: () => void;
+};
+declare type ColSpanType = 1 | 2 | 3 | 4;
+export declare type ColumnMapType = {
+    xxl: ColSpanType;
+    xl: ColSpanType;
+    lg: ColSpanType;
+    md: ColSpanType;
+    sm: ColSpanType;
+    xs: ColSpanType;
+};
+export {};

@@ -18,6 +18,7 @@ import { OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import Picker from '../picker';
 import { combineFilters } from 'oak-domain/lib/store/filter';
+import { StorageSchema } from 'oak-domain/lib/types';
 
 type ED = EntityDict & BaseEntityDict;
 
@@ -34,6 +35,7 @@ export default function render(
             data?: { id: string; title: string }[];
             pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
             onChange: (value: string[]) => void;
+            schema: StorageSchema<EntityDict & BaseEntityDict>;
         }
     >
 ) {
@@ -45,6 +47,7 @@ export default function render(
         onChange,
         entityId,
         entityIds,
+        schema,
     } = props.data;
     const { t } = props.methods;
     const { mode } = pickerRender;
@@ -117,7 +120,6 @@ export default function render(
                             value={renderValue}
                             clearable={!required}
                             onClick={async () => {
-                                console.log(1111111);
                                 if (getDynamicSelectors) {
                                     // todo 这段代码没测过
                                     const {
@@ -127,7 +129,7 @@ export default function render(
                                     } = await getDynamicSelectors();
                                     if (dynamicFilter2 || filter) {
                                         setDynamicFilter(
-                                            combineFilters([
+                                            combineFilters(entity, schema, [
                                                 dynamicFilter2,
                                                 filter,
                                             ])
@@ -146,7 +148,7 @@ export default function render(
                                 } else {
                                     if (filter) {
                                         setDynamicFilter(
-                                            combineFilters([filter])
+                                            filter,
                                         );
                                     }
                                     if (sorter) {

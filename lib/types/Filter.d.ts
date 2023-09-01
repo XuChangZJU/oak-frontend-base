@@ -19,8 +19,8 @@ export declare type ColumnProps<ED extends BaseEntityDict & EntityDict, T extend
             label: string;
             value: string;
         }>;
-        transformInOption: (option: string | number | Record<string, any>) => void;
-        transformOutOption: (option: string | number | Record<string, any>) => void;
+        transformInOption?: (option: string | number | Record<string, any>) => void;
+        transformOutOption?: (option: string | number | Record<string, any>) => void;
         exclude?: string | string[];
     };
     dateProps?: {

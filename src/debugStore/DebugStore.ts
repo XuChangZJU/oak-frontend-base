@@ -1,10 +1,11 @@
-import { AggregationResult, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
+import { AggregationResult, AuthCascadePath, AuthDeduceRelationMap, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
 import { TreeStore, TreeStoreOperateOption, TreeStoreSelectOption } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { AsyncContext, AsyncRowStore } from "oak-domain/lib/store/AsyncRowStore";
 import assert from 'assert';
+import { RelationAuth } from "oak-domain/lib/store/RelationAuth";
 
 interface DebugStoreOperateOption extends TreeStoreOperateOption {
     noLock?: true;
@@ -16,10 +17,27 @@ interface DebugStoreSelectOption extends TreeStoreSelectOption {
 
 export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>> extends TreeStore<ED> implements AsyncRowStore<ED, Cxt> {
     private executor: TriggerExecutor<ED>;
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>) {
+    private relationAuth: RelationAuth<ED>;
+
+    constructor(
+        storageSchema: StorageSchema<ED>,
+        contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>,
+        actionCascadeGraph: AuthCascadePath<ED>[],
+        relationCascadeGraph: AuthCascadePath<ED>[],
+        authDeduceRelationMap: AuthDeduceRelationMap<ED>,
+        selectFreeEntities?: (keyof ED)[],
+        createFreeEntities?:  (keyof ED)[],
+        updateFreeEntities?: (keyof ED)[]
+    ) {
         super(storageSchema);
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
+        this.relationAuth = new RelationAuth(storageSchema, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);        
     }
+
+    async exec(script: string, txnId?: string) {
+        throw new Error('debugStore dont support exec script directly');
+    }
+
     aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]["Aggregation"], context: Cxt, option: OP): Promise<AggregationResult<ED[T]["Schema"]>> {
         return this.aggregateAsync(entity, aggregation, context, option);
     }
@@ -33,12 +51,13 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         return super.rollbackAsync(txnId);
     }
 
-    protected async cascadeUpdateAsync<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: AsyncContext<ED>, option: OP) {        
-        if (!option.blockTrigger) {
+    protected async cascadeUpdateAsync<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: AsyncContext<ED>, option: OP) {
+        // 如果是在modi处理过程中，所有的trigger也可以延时到apply时再处理（这时候因为modi中的数据并不实际存在，处理会有问题）
+        if (!option.blockTrigger && !option.modiParentEntity) {
             await this.executor.preOperation(entity, operation, context, option);
         }
         const result = await super.cascadeUpdateAsync(entity, operation, context, option);
-        if (!option.blockTrigger) {
+        if (!option.blockTrigger && !option.modiParentEntity) {
             await this.executor.postOperation(entity, operation, context, option);
         }
         return result;
@@ -51,6 +70,11 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         option: OP
     ) {
         assert(context.getCurrentTxnId());
+        /**
+         * 这里似乎还有点问题，如果在后续的checker里增加了cascadeUpdate，是无法在一开始检查权限的
+         * 后台的DbStore也一样          by Xc 20230801
+         */
+        await this.relationAuth.checkRelationAsync(entity, operation, context);
         return super.operateAsync(entity, operation, context, option);
     }
 
@@ -68,6 +92,9 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         // select的trigger应加在根结点的动作之前
         if (!option.blockTrigger) {
             await this.executor.preOperation(entity, selection as ED[T]['Operation'], context, option);
+        }
+        if (!option.dontCollect) {
+            await this.relationAuth.checkRelationAsync(entity, selection, context);
         }
         const result = await super.selectAsync(entity, selection, context, option);
 

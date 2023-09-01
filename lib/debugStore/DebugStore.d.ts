@@ -1,4 +1,4 @@
-import { AggregationResult, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
+import { AggregationResult, AuthCascadePath, AuthDeduceRelationMap, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
 import { TreeStore, TreeStoreOperateOption, TreeStoreSelectOption } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -11,7 +11,9 @@ interface DebugStoreSelectOption extends TreeStoreSelectOption {
 }
 export declare class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>> extends TreeStore<ED> implements AsyncRowStore<ED, Cxt> {
     private executor;
-    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>);
+    private relationAuth;
+    constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>, actionCascadeGraph: AuthCascadePath<ED>[], relationCascadeGraph: AuthCascadePath<ED>[], authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities?: (keyof ED)[], createFreeEntities?: (keyof ED)[], updateFreeEntities?: (keyof ED)[]);
+    exec(script: string, txnId?: string): Promise<void>;
     aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]["Aggregation"], context: Cxt, option: OP): Promise<AggregationResult<ED[T]["Schema"]>>;
     begin(option?: TxnOption): Promise<string>;
     commit(txnId: string): Promise<void>;

@@ -115,7 +115,6 @@ export default function Location(props: LocationProps) {
                                     <div
                                         key={poi.id}
                                         onClick={() => {
-                                            console.log(poi);
                                             setCurrentPoi(
                                                 poi
                                             );

@@ -7,12 +7,16 @@ import {
     ED,
     OakAbsAttrDef,
     OakAbsAttrUpsertDef,
+    ColumnMapType,
+    OakAbsAttrJudgeDef
 } from '../../types/AbstractComponent';
-import { makeDataTransformer } from '../../utils/usefulFn';
+import { makeDataTransformer, translateAttributes } from '../../utils/usefulFn';
 import { ReactComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { Breakpoint } from 'antd';
+import assert from 'assert';
 type AttrRender = {
     label: string;
     value: any;
@@ -21,33 +25,20 @@ type AttrRender = {
     width?: 1 | 2 | 3 | 4;
     ref?: string;
 };
-export type ColSpanType = 1 | 2 | 3 | 4;
-type ColumnMapType = {
-    xxl: ColSpanType;
-    xl: ColSpanType;
-    lg: ColSpanType;
-    md: ColSpanType;
-    sm: ColSpanType;
-    xs: ColSpanType;
-};
-const DEFAULT_COLUMN_MAP: ColumnMapType = {
-    xxl: 4,
-    xl: 4,
-    lg: 4,
-    md: 3,
-    sm: 2,
-    xs: 1,
-};
+
 export default OakComponent({
     isList: false,
     properties: {
         entity: '' as keyof ED,
+        title: '',
+        bordered: false,
+        layout: 'horizontal' as 'horizontal' | 'vertical',
         attributes: [] as OakAbsAttrDef[],
         data: {} as ED[keyof ED]['Schema'],
-        column: DEFAULT_COLUMN_MAP,
+        column: 3,
     },
     formData() {
-        const { data } = this.props;
+        const { data, attributes } = this.props;
         const { transformer } = this.state;
         const renderData = transformer(data!);
         const colorDict = this.features.style.getColorDict();
@@ -71,26 +62,31 @@ export default OakComponent({
     },
     data: {
         transformer: (() => []) as DataTransformer,
+        judgeAttributes: [] as OakAbsAttrJudgeDef[],
     },
     lifetimes: {
         ready() {
             const { attributes, entity } = this.props;
             const schema = this.features.cache.getSchema();
+            assert(attributes);
+            const judgeAttributes = translateAttributes(schema, entity!, attributes);
+            const ttt = this.t.bind(this);
             const transformer = makeDataTransformer(
                 schema,
                 entity!,
-                attributes!
-                // (k, params) => this.t(k, params)
+                attributes!,
+                ttt,
             );
             this.setState({
                 transformer,
+                judgeAttributes,
             });
         },
     },
     methods: {
         decodeTitle(entity: string, attr: string) {
             if (attr === ('$$createAt$$' || '$$updateAt$$')) {
-                return this.t(`common:${attr}`);
+                return this.t(`common::${attr}`);
             }
             return this.t(`${entity}:attr.${attr}`);
         },
@@ -111,10 +107,13 @@ export default OakComponent({
         T2,
         false,
         {
-            column: ColumnMapType;
+            column?: number | Record<Breakpoint, number>;
             entity: T2;
             attributes: OakAbsAttrDef[];
             data: Partial<ED2[T2]['Schema']>;
+            title?: string;
+            bordered?: boolean;
+            layout?: 'horizontal' | 'vertical',
         }
     >
 ) => React.ReactElement;

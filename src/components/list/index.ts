@@ -1,5 +1,5 @@
-import { CardDef, ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
-import { analyzeAttrMobileForCard } from '../../utils/usefulFn';
+import { CardDef, ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
+import { analyzeAttrMobileForCard, translateAttributes } from '../../utils/usefulFn';
 import assert from 'assert';
 import { TableProps, PaginationProps } from 'antd';
 import { RowWithActions, ReactComponentProps } from '../../types/Page';
@@ -12,7 +12,6 @@ export default OakComponent({
         onAction: (() => undefined) as Function,
         disabledOp: false,
         attributes: [] as OakAbsAttrDef[],
-        attributesMb: {} as CardDef,
         data: [] as RowWithActions<ED, keyof ED>[],
         loading: false,
         tablePagination: {} as TableProps<
@@ -27,7 +26,7 @@ export default OakComponent({
                 info?: { type: 'single' | 'multiple' | 'none' }
             ) => void;
         },
-        scroll: {} as TableProps<ED[keyof ED]['Schema'][]>['scroll'],
+        hideHeader: false,
     },
     formData({ props }) {
         const { converter } = this.state;
@@ -42,6 +41,7 @@ export default OakComponent({
     },
     data: {
         converter: (data: any) => <any>[],
+        judgeAttributes: [] as OakAbsAttrJudgeDef[],
     },
     listeners: {
         data() {
@@ -51,27 +51,25 @@ export default OakComponent({
     lifetimes: {
         async ready() {
             // 因为部分i18json数据请求较慢，会导致converter，columnDef解析出错
-            const { attributes, entity, data, attributesMb } = this.props;
+            const { attributes, entity, data } = this.props;
             const schema = this.features.cache.getSchema();
             const colorDict = this.features.style.getColorDict();
             assert(!!data, 'data不能为空');
             assert(!!entity, 'list属性entity不能为空');
-            if (attributesMb) {
-                const converter = analyzeAttrMobileForCard(
-                    schema,
-                    entity,
-                    (k, params) => this.t(k, params),
-                    attributesMb as CardDef,
-                    colorDict
-                );
-                this.setState({
-                    converter,
-                    colorDict,
-                });
-            }
+            // assert(attributes?.length, 'attributes不能为空');
+            const ttt = this.t.bind(this);
+            const converter = analyzeAttrMobileForCard(
+                schema,
+                entity,
+                ttt,
+                attributes!,
+            );
+            const judgeAttributes = translateAttributes(schema, entity, attributes!);
             this.setState({
+                converter,
                 schema,
                 colorDict,
+                judgeAttributes,
             });
         },
     },
@@ -87,7 +85,7 @@ export default OakComponent({
             });
         },
     },
-}) as <ED2 extends ED, T2 extends keyof ED2, T3 extends keyof ED = keyof ED>(
+}) as <ED2 extends ED, T2 extends keyof ED2>(
     props: ReactComponentProps<
         ED2,
         T2,
@@ -98,7 +96,6 @@ export default OakComponent({
             onAction: onActionFnDef;
             disabledOp: boolean;
             attributes: OakAbsAttrDef[];
-            attributesMb: CardDef;
             data: RowWithActions<ED2, T2>[];
             loading: boolean;
             tablePagination?: TableProps<
@@ -113,7 +110,7 @@ export default OakComponent({
                     info?: { type: 'single' | 'multiple' | 'none' }
                 ) => void;
             };
-            scroll?: TableProps<ED2[T2]['Schema'][]>['scroll'];
+            hideHeader: boolean;
         }
     >
 ) => React.ReactElement;

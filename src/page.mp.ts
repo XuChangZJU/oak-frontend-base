@@ -22,7 +22,6 @@ import {
 } from './page.common';
 import { MessageProps } from './types/Message';
 import { NotificationProps } from './types/Notification';
-import { CURRENT_LOCALE_DATA, CURRENT_LOCALE_KEY, getI18nInstanceWechatMp } from './platforms/wechatMp/i18n';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { cloneDeep } from 'oak-domain/lib/utils/lodash';
@@ -72,6 +71,7 @@ const oakBehavior = Behavior<
                 callback?: () => void
             ) => void;
             onLoad: (query: Record<string, any>) => Promise<void>;
+            loadMissedLocales: (key: string) => void;
         },
     {
         prevState: Record<string, any>;
@@ -97,6 +97,7 @@ const oakBehavior = Behavior<
             FDD;
         subscribed: Array<() => void>;
         oakOption: OakComponentOption<
+            boolean,
             EDD,
             keyof EDD,
             Cxt,
@@ -104,7 +105,6 @@ const oakBehavior = Behavior<
             ADD,
             FDD,
             Record<string, any>,
-            boolean,
             Record<string, any>,
             Record<string, any>,
             Record<string, Function>
@@ -118,17 +118,7 @@ const oakBehavior = Behavior<
             });
         },
         t(key: string, params?: object) {
-            //  common: {
-            //        GREETING: 'Hello {{name}}, nice to see you.',
-            //   },
-            // t('common:GREETING', {name: "John Doe" })
-            const i18nInstance = getI18nInstanceWechatMp();
-            if (!i18nInstance) {
-                throw new Error(
-                    '[i18n] ensure run initI18nWechatMp() in app.js before using I18n library'
-                );
-            }
-            return i18nInstance.getString(key, params);
+            return this.features.locales.t(key, params);
         },
 
         resolveInput(input: WechatMiniprogram.CustomEvent, keys) {
@@ -304,8 +294,12 @@ const oakBehavior = Behavior<
             return this.features.runningTree.clean(path2);
         },
 
-        execute(action, messageProps?: boolean | MessageProps) {
-            return execute.call(this as any, action, undefined, messageProps);
+        isDirty(path) {
+            return this.features.runningTree.isDirty(path || this.state.oakFullpath);
+        },
+
+        execute(action, messageProps, path) {
+            return execute.call(this as any, action, path, messageProps);
         },
 
         getFreshValue(path?: string) {
@@ -316,6 +310,22 @@ const oakBehavior = Behavior<
         },
 
         checkOperation(entity, action, data, filter, checkerTypes) {
+            if (checkerTypes?.includes('relation')) {
+                return this.features.relationAuth.checkRelation(
+                    entity,
+                    {
+                        action,
+                        data,
+                        filter,
+                    } as Omit<EDD[keyof EDD]['Operation'], 'id'>
+                ) && this.features.cache.checkOperation(
+                    entity,
+                    action,
+                    data,
+                    filter,
+                    checkerTypes
+                )
+            }
             return this.features.cache.checkOperation(
                 entity,
                 action,
@@ -625,12 +635,24 @@ const oakBehavior = Behavior<
                 afterExecute
             );
         },
+
+        isCreation(path) {
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            return this.features.runningTree.isCreation(path2);
+        },
+
         async aggregate(aggregation) {
             return await this.features.cache.aggregate(
                 this.state.oakEntity,
                 aggregation
             );
         },
+
+        loadMissedLocales(key: string) {
+            this.features.locales.loadMissedLocale(key);
+        }
     },
     observers: {
         oakPath(data) {
@@ -809,6 +831,7 @@ function translatePropertiesToPropertyDefinitions(properties?: DataOption) {
 }
 
 export function createComponent<
+    IsList extends boolean,
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends AsyncContext<ED>,
@@ -816,12 +839,12 @@ export function createComponent<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>,
     FormedData extends Record<string, any>,
-    IsList extends boolean,
     TData extends DataOption = {},
     TProperty extends DataOption = {},
     TMethod extends Record<string, Function> = {}
 >(
     option: OakComponentOption<
+        IsList,
         ED,
         T,
         Cxt,
@@ -829,7 +852,6 @@ export function createComponent<
         AD,
         FD,
         FormedData,
-        IsList,
         TData,
         TProperty,
         TMethod
@@ -877,6 +899,7 @@ export function createComponent<
             FD;
             subscribed: Array<() => void>;
             oakOption: OakComponentOption<
+                IsList,
                 ED,
                 T,
                 Cxt,
@@ -884,7 +907,6 @@ export function createComponent<
                 AD,
                 FD,
                 FormedData,
-                IsList,
                 TData,
                 TProperty,
                 TMethod
@@ -940,13 +962,10 @@ export function createComponent<
                 created && created.call(this);
             },
             attached() {
-                const i18nInstance = getI18nInstanceWechatMp();
-                if (i18nInstance) {
-                    (this as any).setState({
-                        [CURRENT_LOCALE_KEY]: i18nInstance.currentLocale,
-                        [CURRENT_LOCALE_DATA]: i18nInstance.translations,
-                    });
-                }
+                this.subscribed.push(
+                    features.locales.subscribe(() => this.reRender())
+                );
+                
                 if (option.entity) {
                     this.subscribed.push(
                         features.cache.subscribe(() => this.reRender())
@@ -954,11 +973,36 @@ export function createComponent<
                 }
                 if (option.features) {
                     option.features.forEach(
-                        ele => this.subscribed.push(
-                            features[ele].subscribe(
-                                () => this.reRender()
-                            )
-                        )
+                        ele => {
+                            if (typeof ele === 'string') {
+                                this.subscribed.push(
+                                    features[ele].subscribe(
+                                        () => this.reRender()
+                                    )
+                                );
+                            }
+                            else {
+                                assert(typeof ele === 'object');
+                                const { feature, behavior } = ele;
+                                this.subscribed.push(
+                                    features[feature].subscribe(
+                                        () => {
+                                            switch(behavior) {
+                                                case 'reRender': {
+                                                    this.reRender();
+                                                    return;
+                                                }
+                                                default: {
+                                                    assert(behavior === 'refresh');
+                                                    this.refresh();
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                    )
+                                );
+                            }
+                        }
                     );
                 }
                 attached && attached.call(this);

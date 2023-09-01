@@ -2,6 +2,7 @@ export interface Pagination {
     currentPage: number;
     pageSize: number;
     append?: boolean;
-    more: boolean;
+    more?: boolean;
     total?: number;
-};;
+    randomRange?: number;    
+};

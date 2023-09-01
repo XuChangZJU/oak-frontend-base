@@ -10,7 +10,6 @@ async function locateWeb(): Promise<{ latitude: number, longitude: number }> {
             (resolve, reject) => {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
-                        console.log(position);
                         resolve(position.coords as { latitude: number, longitude: number });
                     },
                     (err) => {

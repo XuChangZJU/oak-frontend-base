@@ -20,7 +20,9 @@ import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { MessageProps } from './types/Message';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
-import { addFilterSegment, combineFilters } from 'oak-domain/lib/store/filter';
+import { combineFilters } from 'oak-domain/lib/store/filter';
+import { MODI_NEXT_PATH_SUFFIX } from './features/runningTree';
+import { generateNewId } from 'oak-domain/lib/utils/uuid';
 
 export async function onPathSet<
     ED extends EntityDict & BaseEntityDict,
@@ -28,7 +30,7 @@ export async function onPathSet<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>>(
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
-        option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>) {
+        option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>) {
     const { props, state } = this;
     const { oakPath, oakProjection, oakFilters, oakSorters, oakId } = props as ComponentProps<ED, T, true, {}>;
     const { entity, path, projection, isList, filters, sorters, pagination } = option;
@@ -121,6 +123,12 @@ export async function onPathSet<
             }
         );
 
+        if ((projection || oakProjection) && !features.runningTree.checkIsModiNode(oakPath2)) {
+            this.refresh();
+        }
+        else {
+            this.reRender();
+        }
     }
     else {
         // 创建virtualNode
@@ -144,11 +152,6 @@ export async function onPathSet<
                 }, () => resolve(0));
             }
         );
-    }
-    if (entity && projection || oakProjection) {
-        this.refresh();
-    }
-    else {
         this.reRender();
     }
 }
@@ -160,12 +163,16 @@ function checkActionsAndCascadeEntities<
     FrontCxt extends SyncContext<ED>>(
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
         rows: Partial<ED[keyof ED]['Schema']> | Partial<ED[keyof ED]['Schema']>[],
-        option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>
+        option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>
     ) {
     const checkTypes = ['relation', 'row', 'logical', 'logicalRelation'] as CheckerType[];
     const actions = this.props.oakActions ? JSON.parse(this.props.oakActions) as ED[T]['Action'][] : (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
     const legalActions = [] as ActionDef<ED, T>[];
+
+    // 这里向服务器请求相应的actionAuth，cache层会对请求加以优化，避免反复过频的不必要取数据
+    const destEntities: (keyof ED)[] = [];
     if (actions) {
+        destEntities.push(this.state.oakEntity);
         // todo 这里actions整体进行测试的性能应该要高于一个个去测试
         for (const action of actions as ActionDef<ED, T>[]) {
             if (rows instanceof Array) {
@@ -173,7 +180,7 @@ function checkActionsAndCascadeEntities<
                 const filter = this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath!);
                 if (action === 'create' || typeof action === 'object' && action.action === 'create') {
                     // 创建对象的判定不落在具体行上，但要考虑list上外键相关属性的限制
-                    const data = typeof action === 'object' && cloneDeep(action.data);
+                    const data = typeof action === 'object' && Object.assign(cloneDeep(action.data) || {}, { id: generateNewId() });
                     if (this.checkOperation(this.state.oakEntity, 'create', data as any, filter, checkTypes)) {
                         legalActions.push(action);
                     }
@@ -182,7 +189,7 @@ function checkActionsAndCascadeEntities<
                     const a2 = typeof action === 'object' ? action.action : action;
                     // 先尝试整体测试是否通过，再测试每一行
                     // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
-                    if (this.checkOperation(this.state.oakEntity, a2, undefined, filter, checkTypes)) {
+                    if (filter && this.checkOperation(this.state.oakEntity, a2, undefined, filter, checkTypes)) {
                         rows.forEach(
                             (row) => {
                                 if (row['#oakLegalActions']) {
@@ -217,19 +224,39 @@ function checkActionsAndCascadeEntities<
             }
             else {
                 assert(!option.isList);
-                assert(!(action === 'create' || typeof action === 'object' && action.action === 'create'), 'create的action只应该定义在list页面上');
-                const { id } = rows;
-                const a2 = typeof action === 'object' ? action.action : action;
-                const data = typeof action === 'object' ? action.data : undefined;
-                if (this.checkOperation(this.state.oakEntity, a2, data as any, { id }, checkTypes)) {
-                    legalActions.push(action);
-                    if (rows['#oakLegalActions']) {
-                        rows['#oakLegalActions'].push(action);
+                if (action === 'create' || typeof action === 'object' && action.action === 'create') {
+                    // 如果是create，根据updateData来判定。create动作应该是自动创建行的并将$$createAt$$置为1
+                    if (rows.$$createAt$$ === 1) {
+                        const [{ operation }] = this.features.runningTree.getOperations(this.state.oakFullpath!)!;
+
+                        if (this.checkOperation(this.state.oakEntity, 'create', operation.data as ED[T]['Update']['data'], undefined, checkTypes)) {
+                            legalActions.push(action);
+                            if (rows['#oakLegalActions']) {
+                                rows['#oakLegalActions'].push(action);
+                            }
+                            else {
+                                Object.assign(rows, {
+                                    '#oakLegalActions': [action],
+                                });
+                            }
+                        }
                     }
-                    else {
-                        Object.assign(rows, {
-                            '#oakLegalActions': [action],
-                        });
+                }
+                else {
+                    const a2 = typeof action === 'object' ? action.action : action;
+                    const data = typeof action === 'object' ? action.data : undefined;
+
+                    const filter = this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath!);
+                    if (filter && this.checkOperation(this.state.oakEntity, a2, data as any, filter, checkTypes)) {
+                        legalActions.push(action);
+                        if (rows['#oakLegalActions']) {
+                            rows['#oakLegalActions'].push(action);
+                        }
+                        else {
+                            Object.assign(rows, {
+                                '#oakLegalActions': [action],
+                            });
+                        }
                     }
                 }
             }
@@ -262,14 +289,16 @@ function checkActionsAndCascadeEntities<
             if (cascadeActions) {
                 const rel = judgeRelation(this.features.cache.getSchema()!, this.state.oakEntity, e);
                 assert(rel instanceof Array, `${this.state.oakFullpath}上所定义的cascadeAction中的键值${e}不是一对多映射`);
+                destEntities.push(rel[0]);
                 for (const action of cascadeActions as ActionDef<ED, T>[]) {
                     if (rows instanceof Array) {
                         if (action === 'create' || typeof action === 'object' && action.action === 'create') {
                             rows.forEach(
                                 (row) => {
                                     const intrinsticData = rel[1] ? {
+                                        id: generateNewId(),
                                         [rel[1]]: row.id,
-                                    } : { entity: this.state.oakEntity, entityId: row.id };
+                                    } : { id: generateNewId(), entity: this.state.oakEntity, entityId: row.id };
                                     if (typeof action === 'object') {
                                         Object.assign(intrinsticData, action.data);
                                     }
@@ -287,7 +316,7 @@ function checkActionsAndCascadeEntities<
                             } : {
                                 [this.state.oakEntity]: this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath!),
                             };
-                            const filter2 = combineFilters([filter, intrinsticFilter]);
+                            const filter2 = combineFilters(rel[0], this.features.cache.getSchema(), [filter, intrinsticFilter]);
 
                             // 先尝试整体测试是否通过，再测试每一行
                             // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
@@ -317,8 +346,9 @@ function checkActionsAndCascadeEntities<
                     else {
                         if (action === 'create' || typeof action === 'object' && action.action === 'create') {
                             const intrinsticData = rel[1] ? {
+                                id: generateNewId(),
                                 [rel[1]]: rows.id,
-                            } : { entity: this.state.oakEntity, entityId: rows.id };
+                            } : { id: generateNewId(), entity: this.state.oakEntity, entityId: rows.id };
                             if (typeof action === 'object') {
                                 Object.assign(intrinsticData, action.data);
                             }
@@ -332,7 +362,7 @@ function checkActionsAndCascadeEntities<
                             const intrinsticFilter = rel[1] ? {
                                 [rel[1]]: rows.id,
                             } : { entity: this.state.oakEntity, entityId: rows.id };
-                            const filter2 = combineFilters([filter, intrinsticFilter]);
+                            const filter2 = combineFilters(rel[0], this.features.cache.getSchema(), [filter, intrinsticFilter]);
 
                             // 先尝试整体测试是否通过，再测试每一行
                             // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
@@ -344,7 +374,24 @@ function checkActionsAndCascadeEntities<
                 }
             }
         }
+    }
 
+    if (destEntities.length > 0) {
+        // 权限判断需要actionAuth的数据，这里向cache请求时，会根据keepFresh规则进行一定程度的优化。
+        this.features.cache.refresh('actionAuth', {
+            data: {
+                id: 1,
+                relationId: 1,
+                paths: 1,
+                destEntity: 1,
+                deActions: 1,
+            },
+            filter: {
+                destEntity: {
+                    $in: destEntities as string[],
+                }
+            }
+        });
     }
 
     return legalActions;
@@ -356,10 +403,12 @@ export function reRender<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>>(
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
-        option: OakComponentOption<ED, T, Cxt, FrontCxt, any, any, any, any, {}, {}, {}>,
+        option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>,
         extra?: Record<string, any>) {
     const { features } = this;
     const { formData } = option;
+
+    const localeState = features.locales.getState();
     if (this.state.oakEntity && this.state.oakFullpath) {
         const rows = this.features.runningTree.getFreshValue(
             this.state.oakFullpath
@@ -375,26 +424,37 @@ export function reRender<
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
         const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
 
+        let data: Record<string, any> = {};
         if (rows) {
-            const oakLegalActions = checkActionsAndCascadeEntities.call(this as any, rows, option as any);
-            const data: Record<string, any> = formData
+            const oakLegalActions = checkActionsAndCascadeEntities.call(
+                this as any,
+                rows,
+                option as any
+            );
+            data = formData
                 ? formData.call(this, {
-                    data: rows as RowWithActions<ED, T>,
-                    features,
-                    props: this.props,
-                    legalActions: oakLegalActions,
-                })
+                      data: rows as RowWithActions<ED, T>,
+                      features,
+                      props: this.props,
+                      legalActions: oakLegalActions,
+                  })
                 : {};
 
             Object.assign(data, {
                 oakLegalActions,
+                oakLocales: localeState.dataset,
+                oakLocalesVersion: localeState.version,
+                oakLng: localeState.lng,
+                oakDefaultLng: localeState.defaultLng,
             });
 
             if (option.isList) {
                 // 因为oakFilters和props里的oakFilters同名，这里只能先注掉，好像还没有组件用过
                 // const oakFilters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getFilters();
                 // const oakSorters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getSorters();
-                const oakPagination = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getPagination();
+                const oakPagination = (
+                    this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>
+                ).getPagination();
                 Object.assign(data, {
                     // oakFilters,
                     // oakSorters,
@@ -409,21 +469,21 @@ export function reRender<
                     });
                 }
             }
-            Object.assign(data, {
-                oakExecutable,
-                oakDirty,
-                oakLoading,
-                oakLoadingMore,
-                oakExecuting,
-                oakPullDownRefreshLoading,
-            });
-
-            if (extra) {
-                Object.assign(data, extra);
-            }
-
-            this.setState(data);
         }
+        Object.assign(data, {
+            oakExecutable,
+            oakDirty,
+            oakLoading,
+            oakLoadingMore,
+            oakExecuting,
+            oakPullDownRefreshLoading,
+        });
+
+        if (extra) {
+            Object.assign(data, extra);
+        }
+
+        this.setState(data);
     } else {
         const data: Record<string, any> = formData
             ? formData.call(this, {
@@ -451,7 +511,11 @@ export function reRender<
             });
         }
 
-        Object.assign({
+        Object.assign(data, {
+            oakLocales: localeState.dataset,
+            oakLocalesVersion: localeState.version,
+            oakLng: localeState.lng,
+            oakDefaultLng: localeState.defaultLng,
             __time: Date.now(),
         });         // 有些环境下如果传空值不触发判断
         this.setState(data);
@@ -466,14 +530,7 @@ export async function refresh<
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>
     ) {
     if (this.state.oakFullpath) {
-        try {
-            await this.features.runningTree.refresh(this.state.oakFullpath);
-        } catch (err) {
-            this.setMessage({
-                type: 'error',
-                content: (err as Error).message,
-            });
-        }
+        await this.features.runningTree.refresh(this.state.oakFullpath);
     }
 }
 
@@ -512,9 +569,7 @@ export async function execute<
         oakFocused: undefined,
     }); */
 
-    const fullpath = path
-        ? `${this.state.oakFullpath}.${path}`
-        : this.state.oakFullpath;
+    const fullpath = path ? path : this.state.oakFullpath;
     const { message } = await this.features.runningTree.execute(fullpath, action);
     if (messageProps !== false) {
         const messageData: MessageProps = {

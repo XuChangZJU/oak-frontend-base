@@ -4,7 +4,7 @@ import { WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef, ColumnDefProps, AttrRender, onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
+import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
 export default function Render(props: WebComponentProps<EntityDict & BaseEntityDict, keyof EntityDict, false, {
     width: 'xl' | 'lg' | 'md' | 'sm' | 'xs';
     loading: boolean;
@@ -12,15 +12,13 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
     entity: string;
     schema: StorageSchema<EntityDict & BaseEntityDict>;
     attributes: OakAbsAttrDef[];
-    columns: ColumnDefProps[];
-    mobileData: AttrRender[];
     data: any[];
     disabledOp: boolean;
     colorDict: ColorDict<EntityDict & BaseEntityDict>;
-    handleClick?: (id: string, action: string) => void;
     tablePagination?: TableProps<any[]>['pagination'];
     onAction?: onActionFnDef;
     rowSelection?: TableProps<any[]>['rowSelection'];
-    scroll?: TableProps<any[]>['scroll'];
     i18n: any;
+    hideHeader?: boolean;
+    judgeAttributes: OakAbsAttrJudgeDef[];
 }, {}>): import("react/jsx-runtime").JSX.Element;

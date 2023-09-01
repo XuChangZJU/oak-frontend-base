@@ -8,20 +8,9 @@
     <block wx:if="{{mobileData && mobileData.length}}">
         <view class="list-container">
             <view class="card" wx:for="{{mobileData}}" wx:key="index">
-                <view class="title-view">
-                    <view class="title">
-                        {{item.title}}
-                    </view>
-                    <view class="state-view">
-                        <view class="badge {{item.state.color}}"></view>
-                        <view>
-                            {{item.state.value}}
-                        </view>
-                    </view>
-                </view>
-                <block wx:if="{{item.rows && item.rows.length > 0}}">
+                <block wx:if="{{item.data && item.data.length > 0}}">
                     <view class="card-content">
-                        <block wx:for="{{item.rows}}" wx:for-item="row" wx:key="index">
+                        <block wx:for="{{item.data}}" wx:for-item="row" wx:key="index">
                             <view class="text-view">
                                 <text class="label">{{row.label}}</text>
                                 <text>{{row.value}}</text>

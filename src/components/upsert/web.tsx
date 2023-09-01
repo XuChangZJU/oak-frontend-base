@@ -241,7 +241,7 @@ function makeAttrInput<T extends keyof ED>(
                                     setSl(false);
                                 }}
                             >
-                                {t('common:action.confirm')}
+                                {t('common::action.confirm')}
                             </Button>
                             <Button
                                 block
@@ -250,7 +250,7 @@ function makeAttrInput<T extends keyof ED>(
                                     setSl(false);
                                 }}
                             >
-                                {t('common:action.cancel')}
+                                {t('common::action.cancel')}
                             </Button>
                         </Grid>
                     </Popup>

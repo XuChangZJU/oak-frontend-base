@@ -4,22 +4,19 @@ import {
     Checker,
     StorageSchema,
     Connector,
-    AuthDefDict,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { ColorDict } from 'oak-domain/lib/types/Style';
+import { EntityDict, OpRecord, SubDataDef } from 'oak-domain/lib/types/Entity';
 
-
-import { initialize as initBasicFeatures } from './features';
-import { ActionDictOfEntityDict } from 'oak-domain/lib/types/Action';
-import { analyzeActionDefDict } from 'oak-domain/lib/store/actionDef';
+import { initializeStep1 as initBasicFeaturesStep1, initializeStep2 as initBasicFeaturesStep2 } from './features';
+import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
-import { createDynamicCheckers } from 'oak-domain/lib/checkers';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { InitializeOptions } from './types/Initialize';
 
+import SubScriber from './utils/subscriber';
 /**
  * @param storageSchema
  * @param createFeatures
@@ -42,25 +39,22 @@ export function initialize<
     storageSchema: StorageSchema<ED>,
     frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
     connector: Connector<ED, Cxt, FrontCxt>,
-    checkers?: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
-    actionDict?: ActionDictOfEntityDict<ED>,
-    authDict?: AuthDefDict<ED>,
-    relationDict?: {
-        [K in keyof ED]?: {
-            [R in NonNullable<ED[K]['Relation']>]?: ED[K]['Relation'][];
-        }
-    },
-    colorDict?: ColorDict<ED>,
+    checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
+    option: InitializeOptions<ED>
 ) {
-    const checkers2 = (checkers || []).concat(createDynamicCheckers<ED, Cxt | FrontCxt>(storageSchema, authDict));
+    const {  actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, actionDict, 
+        selectFreeEntities, createFreeEntities, updateFreeEntities, colorDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
 
-    const cacheStore = new CacheStore(
-        storageSchema,
-    );
-    
+
+    const { checkers: intCheckers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict);
+    const checkers2 = checkers.concat(intCheckers);
+
+    const features1 = initBasicFeaturesStep1();
+
+    const subscriber = new SubScriber<ED>(connector.getSubscribeRouter());
     const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
         exec: async (name, params) => {
-            const context = frontendContextBuilder()(cacheStore);
+            const context = features2.cache.buildContext();
             const { result, opRecords, message } = await connector.callAspect(name as string, params, context);
             return {
                 result,
@@ -68,27 +62,34 @@ export function initialize<
                 message,
             };
         },
+        sub: function (data: SubDataDef<ED, keyof ED>[], callback: (records: OpRecord<ED>[], ids: string[]) => void): Promise<void> {
+            return subscriber.sub(data, callback);
+        },
+        unsub: function (ids: string[]): Promise<void> {
+            return subscriber.unsub(ids);
+        },
     };
 
-    const features = initBasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>(
+    const features2 = initBasicFeaturesStep2<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>(
+        features1,
         wrapper, 
         storageSchema, 
-        () => frontendContextBuilder()(cacheStore), 
-        cacheStore, 
-        relationDict || {}, 
-        authDict || {}, 
-        colorDict || {},
-        (url, headers) => connector.makeBridgeUrl(url, headers));
+        frontendContextBuilder, 
+        checkers2,
+        actionCascadePathGraph,
+        relationCascadePathGraph,
+        authDeduceRelationMap,
+        colorDict,
+        () => '请查看数据库中的数据',
+        (url, headers) => connector.makeBridgeUrl(url, headers),
+        selectFreeEntities,
+        createFreeEntities,
+        updateFreeEntities,
+        cacheSavedEntities,
+        cacheKeepFreshPeriod
+    );
 
-    checkers2.forEach((checker) => cacheStore.registerChecker(checker as Checker<ED, keyof ED, SyncContext<ED>>));
-    if (actionDict) {
-        const { checkers: adCheckers } = analyzeActionDefDict(
-            storageSchema,
-            actionDict
-        );
-        adCheckers.forEach((checker) => cacheStore.registerChecker(checker));
-    }
-
+    const features = Object.assign(features1, features2);
     return {
         features,
     };

@@ -43,13 +43,14 @@ abstract class OakComponentBase<
     TData extends DataOption,
     TProperty extends DataOption,
     TMethod extends MethodOption
-> extends React.PureComponent<
+    > extends React.PureComponent<
     ComponentProps<ED, T, IsList, TProperty>,
     ComponentData<ED, T, FormedData, TData>
-> {
+    > {
     abstract features: FD &
         BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     abstract oakOption: OakComponentOption<
+        IsList,
         ED,
         T,
         Cxt,
@@ -57,7 +58,6 @@ abstract class OakComponentBase<
         AD,
         FD,
         FormedData,
-        IsList,
         TData,
         TProperty,
         TMethod
@@ -347,6 +347,13 @@ abstract class OakComponentBase<
         this.features.runningTree.remove(path2, beforeExecute, afterExecute);
     }
 
+    isCreation(path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        return this.features.runningTree.isCreation(path2);
+    }
+
     clean(path?: string) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
@@ -355,12 +362,15 @@ abstract class OakComponentBase<
     }
 
     t(key: string, params?: object) {
-        // t是i18n注入的
-        return (this.props.t as Function)(key, params);
+        return this.features.locales.t(key, params);
     }
 
-    execute(action?: ED[T]['Action'], messageProps?: boolean | MessageProps) {
-        return execute.call(this as any, action, undefined, messageProps);
+    execute(action?: ED[T]['Action'], messageProps?: boolean | MessageProps, path?: string) {
+        return execute.call(this as any, action, path, messageProps);
+    }
+
+    isDirty(path?: string) {
+        return this.features.runningTree.isDirty(path || this.state.oakFullpath);
     }
 
     getFreshValue(path?: string) {
@@ -377,6 +387,22 @@ abstract class OakComponentBase<
         filter?: ED[T]['Update']['filter'],
         checkerTypes?: CheckerType[]
     ) {
+        if (checkerTypes?.includes('relation')) {
+            return this.features.relationAuth.checkRelation(
+                entity,
+                {
+                    action,
+                    data,
+                    filter,
+                } as Omit<ED[keyof ED]['Operation'], 'id'>
+            ) && this.features.cache.checkOperation(
+                entity,
+                action,
+                data,
+                filter,
+                checkerTypes
+            )
+        }
         return this.features.cache.checkOperation(
             entity,
             action,
@@ -654,6 +680,7 @@ function translateListeners(listeners?: Record<string, (prev: Record<string, any
 const DEFAULT_REACH_BOTTOM_DISTANCE = 50;
 
 export function createComponent<
+    IsList extends boolean,
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends AsyncContext<ED>,
@@ -661,12 +688,12 @@ export function createComponent<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>,
     FormedData extends Record<string, any>,
-    IsList extends boolean,
     TData extends Record<string, any> = {},
     TProperty extends DataOption = {},
     TMethod extends Record<string, Function> = {}
 >(
     option: OakComponentOption<
+        IsList,
         ED,
         T,
         Cxt,
@@ -674,7 +701,6 @@ export function createComponent<
         AD,
         FD,
         FormedData,
-        IsList,
         TData,
         TProperty,
         TMethod
@@ -684,6 +710,7 @@ export function createComponent<
     const {
         data, methods, lifetimes, getRender, path, listeners
     } = option as OakComponentOption<
+        IsList,
         ED,
         T,
         Cxt,
@@ -691,7 +718,6 @@ export function createComponent<
         AD,
         FD,
         FormedData,
-        IsList,
         TData,
         TProperty,
         TMethod
@@ -707,6 +733,7 @@ export function createComponent<
         subscribed: Array<() => void> = [];
         methodProps: Record<string, Function>;
         defaultProperties: Record<string, any>;
+        unmounted: boolean = false;
 
         constructor(props: ComponentProps<ED, T, IsList, TProperty>) {
             super(props);
@@ -717,10 +744,12 @@ export function createComponent<
                 t: (key: string, params?: object) => this.t(key, params),
                 execute: (
                     action?: ED[T]['Action'],
-                    messageProps?: boolean | MessageProps
+                    messageProps?: boolean | MessageProps,
+                    path?: string
                 ) => {
-                    return this.execute(action, messageProps);
+                    return this.execute(action, messageProps, path);
                 },
+                isDirty: (path?: string) => this.isDirty(path),
                 aggregate: (aggregation: ED[T]['Aggregation']) => {
                     return this.features.cache.aggregate(this.state.oakEntity, aggregation);
                 },
@@ -820,6 +849,12 @@ export function createComponent<
                 },
                 resetItem: (id: string, path?: string) => {
                     return this.resetItem(id, path);
+                },
+                setId: (id: string) => {
+                    return this.setId(id);
+                },
+                unsetId: () => {
+                    return this.unsetId();
                 }
             } as Record<WebComponentListMethodNames, Function>);
 
@@ -839,6 +874,9 @@ export function createComponent<
                 remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
                     return this.remove(beforeExecute, afterExecute, path);
                 },
+                isCreation: (path?: string) => {
+                    return this.isCreation(path);
+                }
             } as Record<WebComponentSingleMethodNames, Function>);
 
             if (methods) {
@@ -918,6 +956,9 @@ export function createComponent<
 
         async componentDidMount() {
             this.registerPageScroll();
+            this.subscribed.push(
+                features.locales.subscribe(() => this.reRender())
+            );
             if (option.entity) {
                 this.subscribed.push(
                     features.cache.subscribe(() => this.reRender())
@@ -925,25 +966,60 @@ export function createComponent<
             }
             lifetimes?.attached && lifetimes.attached.call(this);
             const { oakPath } = this.props;
-            if (oakPath || this.iAmThePage() && path) {
-                await this.onPathSet();
-                lifetimes?.ready && lifetimes.ready.call(this);
-                lifetimes?.show && lifetimes.show.call(this);
-            }
-            else {
-                if (!option.entity) {
+            if (option.entity) {
+                if (oakPath || this.iAmThePage() && path) {
+                    await this.onPathSet();
+                    if (this.unmounted) {
+                        return;
+                    }
                     lifetimes?.ready && lifetimes.ready.call(this);
                     lifetimes?.show && lifetimes.show.call(this);
                 }
+            }
+            else {
+                // 无entity的结点此时直接调ready生命周期
+                if (oakPath || this.iAmThePage() && path) {
+                    await this.onPathSet();
+                    if (this.unmounted) {
+                        return;
+                    }
+                }
+                lifetimes?.ready && lifetimes.ready.call(this);
+                lifetimes?.show && lifetimes.show.call(this);
                 this.reRender();
             }
             if (option.features) {
                 option.features.forEach(
-                    ele => this.subscribed.push(
-                        features[ele].subscribe(
-                            () => this.reRender()
-                        )
-                    )
+                    ele => {
+                        if (typeof ele === 'string') {
+                            this.subscribed.push(
+                                features[ele].subscribe(
+                                    () => this.reRender()
+                                )
+                            );
+                        }
+                        else {
+                            assert(typeof ele === 'object');
+                            const { feature, behavior } = ele;
+                            this.subscribed.push(
+                                features[feature].subscribe(
+                                    () => {
+                                        switch (behavior) {
+                                            case 'reRender': {
+                                                this.reRender();
+                                                return;
+                                            }
+                                            default: {
+                                                assert(behavior === 'refresh');
+                                                this.refresh();
+                                                return;
+                                            }
+                                        }
+                                    }
+                                )
+                            );
+                        }
+                    }
                 );
             }
         }
@@ -955,16 +1031,21 @@ export function createComponent<
             this.unregisterPageScroll();
             this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && destroyNode.call(this as any);
             lifetimes?.detached && lifetimes.detached.call(this);
+            this.unmounted = true;
         }
 
         async componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>) {
             if (prevProps.oakPath !== this.props.oakPath) {
+                // oakPath如果是用变量初始化，在这里再执行onPathSet，如果有entity的结点在此执行ready
                 assert(this.props.oakPath);
-                features.runningTree.subscribeNode
-                this.subscribed
                 await this.onPathSet();
-                lifetimes?.ready && lifetimes.ready.call(this);
-                // lifetimes?.show && lifetimes.show.call(this);
+                if (this.unmounted) {
+                    return;
+                }
+                if (option.entity) {
+                    lifetimes?.ready && lifetimes.ready.call(this);
+                    lifetimes?.show && lifetimes.show.call(this);
+                }
             }
             if (this.props.oakId !== prevProps.oakId) {
                 assert(this.props.oakId);       // 好像不可能把已有的id设空的界面需求吧
@@ -1003,32 +1084,29 @@ export function createComponent<
             const Render = getRender.call(this);
 
             if (this.supportPullDownRefresh()) {
-                const Child = React.cloneElement(
+                return (
                     <PullToRefresh
                         onRefresh={async () => {
                             (this as any).pullDownRefresh = true;
                             await this.refresh();
-                            (this as any).pullDownRefresh = true;
+                            (this as any).pullDownRefresh = false;
                         }}
                         refreshing={oakPullDownRefreshLoading}
                         distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}
                         indicator={{
-                            activate: this.t('common:ptrActivate'),
-                            deactivate: this.t('common:ptrDeactivate'),
-                            release: this.t('common:ptrRelease'),
-                            finish: this.t('common:ptrFinish'),
+                            activate: this.t('common::ptrActivate', { '#oakModule': 'oak-frontend-base' }),
+                            deactivate: this.t('common::ptrDeactivate', { '#oakModule': 'oak-frontend-base' }),
+                            release: this.t('common::ptrRelease', { '#oakModule': 'oak-frontend-base' }),
+                            finish: this.t('common::ptrFinish', { '#oakModule': 'oak-frontend-base' }),
                         }}
-                    />,
-                    {
-                        getScrollContainer: () => document.body,
-                    },
-                    <Render methods={this.methodProps} data={{
-                        ...this.defaultProperties,
-                        ...this.state,
-                        ...this.props,
-                    }} />
+                    >
+                        <Render methods={this.methodProps} data={{
+                            ...this.defaultProperties,
+                            ...this.state,
+                            ...this.props,
+                        }} />
+                    </PullToRefresh>
                 );
-                return Child;
             }
             return <Render methods={this.methodProps} data={{
                 ...this.defaultProperties,
