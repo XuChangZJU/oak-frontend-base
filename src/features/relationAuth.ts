@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, AuthCascadePath, AuthDeduceRelationMap, OakUserException } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, AuthCascadePath, AuthDeduceRelationMap, OakUserException, OakRowUnexistedException } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -241,6 +241,12 @@ export class RelationAuth<
         }
         catch (err) {
             this.cache.rollback();
+            if (err instanceof OakRowUnexistedException) {
+                // 发现缓存中缺失项的话要协助获取
+                const missedRows = err.getRows();
+                this.cache.fetchRows(missedRows);
+                return false;
+            }
             if (!(err instanceof OakUserException)) {
                 throw err;
             }

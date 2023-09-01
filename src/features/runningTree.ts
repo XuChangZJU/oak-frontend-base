@@ -328,7 +328,7 @@ class ListNode<
                     },
                     filter,
                     sorter,
-                });
+                }, true);
                 this.ids = result.map((ele) => ele.id) as unknown as string[];
             }
         }
@@ -562,7 +562,7 @@ class ListNode<
             const result = this.cache.get(this.entity, {
                 data,
                 filter: filter2,
-            }, this.isLoading());
+            }, true);
 
 
             const r2 = result.filter(
@@ -1131,7 +1131,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 filter: {
                     id,
                 },
-            }, this.isLoading());
+            }, true);
             if (this.aggr) {
                 merge(result[0], this.aggr);
             }

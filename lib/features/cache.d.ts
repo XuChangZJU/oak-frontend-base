@@ -77,6 +77,19 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
     }>): void;
+    fetchRows(missedRows: Array<{
+        entity: keyof ED;
+        selection: ED[keyof ED]['Selection'];
+    }>): void;
+    /**
+     * getById可以处理当本行不在缓存中的自动取
+     * @attention 这里如果访问了一个id不存在的行（被删除？），可能会陷入无限循环。如果遇到了再处理
+     * @param entity
+     * @param data
+     * @param id
+     * @param allowMiss
+     */
+    getById<T extends keyof ED>(entity: T, data: ED[T]['Selection']['data'], id: string, allowMiss?: boolean): Partial<ED[T]['Schema']> | undefined;
     private getInner;
     get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], allowMiss?: boolean): Partial<ED[T]["Schema"]>[];
     judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | string[] | 2;

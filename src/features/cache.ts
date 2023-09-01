@@ -32,7 +32,7 @@ export class Cache<
         (opRecords: OpRecord<ED>[]) => void
     >;
     private contextBuilder?: () => FrontCxt;
-    private refreshing = false;
+    private refreshing = 0;
     private savedEntities: (keyof ED)[];
     private keepFreshPeriod: number;
     private localStorage: LocalStorage;
@@ -119,13 +119,14 @@ export class Cache<
         dontPublish?: true,
     ) {
         try {
+            this.refreshing ++;
             const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
-            this.refreshing = false;
             if (opRecords) {
                 this.sync(opRecords);
             }
+            this.refreshing --;
             callback && callback(result, opRecords);
-            if (opRecords && !dontPublish) {
+            if (opRecords && opRecords.length > 0 && !dontPublish) {
                 this.publish();
             }
             return {
@@ -135,6 +136,7 @@ export class Cache<
         }
         catch (e) {
             // 如果是数据不一致错误，这里可以让用户知道
+            this.refreshing --;
             if (e instanceof OakException) {
                 const { opRecord } = e;
                 if (opRecord) {
@@ -375,7 +377,6 @@ export class Cache<
             undoSetRefreshRecord = this.addRefreshRecord(entity, key, now);
         }
 
-        this.refreshing = true;
         try {
             const { result: { ids, count, aggr } } = await this.exec('select', {
                 entity,
@@ -407,7 +408,6 @@ export class Cache<
             };
         }
         catch(err) {
-            this.refreshing = false;            
             undoSetRefreshRecord && undoSetRefreshRecord();
 
             throw err;
@@ -434,7 +434,6 @@ export class Cache<
         option?: OP,
         callback?: (result: Awaited<ReturnType<AD['operate']>>) => void,
     ) {
-        this.refreshing = true;
         const result = await this.exec('operate', {
             entity,
             operation,
@@ -543,6 +542,58 @@ export class Cache<
         return;
     }
 
+    fetchRows(missedRows: Array<{ entity: keyof ED, selection: ED[keyof ED]['Selection']}>) {
+        if (!this.refreshing) {
+            if (process.env.NODE_ENV === 'development') {
+                console.warn('缓存被动去获取数据，请查看页面行为并加以优化', missedRows);
+            }
+            this.exec('fetchRows', missedRows, async (result, opRecords) => {
+                // missedRows理论上一定要取到，不能为空集。否则就是程序员有遗漏
+                for (const record of opRecords!) {
+                    const { d } = record as SelectOpResult<ED>;
+                    assert(Object.keys(d).length > 0, '在通过fetchRow取不一致数据时返回了空数据，请拿该程序员祭天。');
+                    for (const mr of missedRows) {
+                        assert(Object.keys(d![mr.entity]!).length > 0, `在通过fetchRow取不一致数据时返回了空数据，请拿该程序员祭天。entity是${mr.entity as string}`);
+                    }
+                }
+            })
+        }
+    }
+
+    /**
+     * getById可以处理当本行不在缓存中的自动取
+     * @attention 这里如果访问了一个id不存在的行（被删除？），可能会陷入无限循环。如果遇到了再处理
+     * @param entity 
+     * @param data 
+     * @param id 
+     * @param allowMiss 
+     */
+    getById<T extends keyof ED>(
+        entity: T,
+        data: ED[T]['Selection']['data'],
+        id: string,
+        allowMiss?: boolean
+    ): Partial<ED[T]['Schema']> | undefined {
+        const result = this.getInner(entity, {
+            data, 
+            filter: {
+                id,
+            },
+        }, allowMiss);
+        if (result.length === 0 && !allowMiss) {
+            this.fetchRows([{
+                entity,
+                selection: {
+                    data, 
+                    filter: {
+                        id,
+                    },
+                }
+            }]);
+        }
+        return result[0];
+    }
+
     private getInner<T extends keyof ED>(
         entity: T,
         selection: ED[T]['Selection'],
@@ -571,19 +622,8 @@ export class Cache<
                 this.rollback();
             }
             if (err instanceof OakRowUnexistedException) {
-                if (!this.refreshing && !allowMiss) {
-                    const missedRows = err.getRows();
-                    this.refreshing = true;
-                    this.exec('fetchRows', missedRows, async (result, opRecords) => {
-                        // missedRows理论上一定要取到，不能为空集。否则就是程序员有遗漏
-                        for (const record of opRecords!) {
-                            const { d } = record as SelectOpResult<ED>;
-                            assert(Object.keys(d).length > 0, '在通过fetchRow取不一致数据时返回了空数据，请拿该程序员祭天。');
-                            for (const mr of missedRows) {
-                                assert(Object.keys(d![mr.entity]!).length > 0, `在通过fetchRow取不一致数据时返回了空数据，请拿该程序员祭天。entity是${mr.entity}`);
-                            }
-                        }
-                    })
+                if (!allowMiss) {
+                    this.fetchRows(err.getRows());
                 }
                 return [];
             } else {
