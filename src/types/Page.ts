@@ -1,4 +1,4 @@
-import { Aspect, EntityDict, CheckerType, AggregationResult } from "oak-domain/lib/types";
+import { Aspect, EntityDict, CheckerType, AggregationResult, SubDataDef, OpRecord } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
@@ -327,10 +327,11 @@ export type OakCommonComponentMethods<
     T extends keyof ED
     > = {
         setDisablePulldownRefresh: (able: boolean) => void;
-        sub: (type: string, callback: Function) => void;
-        unsub: (type: string, callback: Function) => void;
-        pub: (type: string, options?: any) => void;
-        unsubAll: (type: string) => void;
+        subEvent: (type: string, callback: Function) => void;
+        unsubEvent: (type: string, callback: Function) => void;
+        pubEvent: (type: string, options?: any) => void;
+        unsubAllEvents: (type: string) => void;
+
         save: (key: string, item: any) => void;
         load: (key: string) => any;
         clear: () => void;
@@ -394,6 +395,8 @@ export type OakCommonComponentMethods<
         aggregate: (
             aggregation: ED[T]['Aggregation']
         ) => Promise<AggregationResult<ED[T]['Schema']>>;
+        subData: (data: SubDataDef<ED, keyof ED>[], callback?: (records: OpRecord<ED>[], ids: string[]) => void) => Promise<void>;
+        unSubData: (ids: string[]) => Promise<void>;
     };
 
 export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {

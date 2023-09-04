@@ -32,6 +32,7 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
         style: import("./features/style").Style<ED>;
         geo: import("./features/geo").Geo<ED, Cxt, CommonAspectDict<ED, Cxt> & AD>;
         contextMenuFactory: import("./features/contextMenuFactory").ContextMenuFactory<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
+        subscriber: import("./features/subscriber").SubScriber<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
     } & {
         location: import("./features/location").Location;
         environment: import("./features/environment").Environment;

@@ -4,7 +4,7 @@ import React from 'react';
 import { withRouter, PullToRefresh } from './platforms/web';
 import { get } from 'oak-domain/lib/utils/lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { Action, Aspect, CheckerType, EntityDict } from 'oak-domain/lib/types';
+import { Action, Aspect, CheckerType, EntityDict, OpRecord, SubDataDef } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
@@ -79,19 +79,19 @@ abstract class OakComponentBase<
         options?: WechatMiniprogram.Component.TriggerEventOption
     ) { }
 
-    sub(type: string, callback: Function) {
+    subEvent(type: string, callback: Function) {
         this.features.eventBus.sub(type, callback);
     }
 
-    unsub(type: string, callback: Function) {
+    unsubEvent(type: string, callback: Function) {
         this.features.eventBus.unsub(type, callback);
     }
 
-    pub(type: string, options?: any) {
+    pubEvent(type: string, options?: any) {
         this.features.eventBus.pub(type, options);
     }
 
-    unsubAll(type: string) {
+    unsubAllEvents(type: string) {
         this.features.eventBus.unsubAll(type);
     }
 
@@ -635,6 +635,14 @@ abstract class OakComponentBase<
                 : this.state.oakFullpath;
             this.features.runningTree.setCurrentPage(path2, currentPage);
         }
+    }
+
+    subData(data: SubDataDef<ED, keyof ED>[], callback?: (records: OpRecord<ED>[], ids: string[]) => void) {
+        return this.features.subscriber.sub(data, callback);
+    }
+
+    unSubData(ids: string[]) {
+        return this.features.subscriber.unsub(ids);
     }
 }
 

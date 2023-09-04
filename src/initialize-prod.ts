@@ -16,7 +16,6 @@ import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { InitializeOptions } from './types/Initialize';
 
-import SubScriber from './utils/subscriber';
 /**
  * @param storageSchema
  * @param createFeatures
@@ -38,7 +37,7 @@ export function initialize<
 >(
     storageSchema: StorageSchema<ED>,
     frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
-    connector: Connector<ED, Cxt, FrontCxt>,
+    connector: Connector<ED, FrontCxt>,
     checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     option: InitializeOptions<ED>
 ) {
@@ -51,7 +50,6 @@ export function initialize<
 
     const features1 = initBasicFeaturesStep1();
 
-    const subscriber = new SubScriber<ED>(connector.getSubscribeRouter());
     const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
         exec: async (name, params) => {
             const context = features2.cache.buildContext();
@@ -61,12 +59,6 @@ export function initialize<
                 opRecords,
                 message,
             };
-        },
-        sub: function (data: SubDataDef<ED, keyof ED>[], callback: (records: OpRecord<ED>[], ids: string[]) => void): Promise<void> {
-            return subscriber.sub(data, callback);
-        },
-        unsub: function (ids: string[]): Promise<void> {
-            return subscriber.unsub(ids);
         },
     };
 
@@ -81,6 +73,7 @@ export function initialize<
         authDeduceRelationMap,
         colorDict,
         () => '请查看数据库中的数据',
+        () => connector.getSubscribePoint(),
         (url, headers) => connector.makeBridgeUrl(url, headers),
         selectFreeEntities,
         createFreeEntities,
