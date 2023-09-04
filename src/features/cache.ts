@@ -642,15 +642,4 @@ export class Cache<
     buildContext() {
         return this.contextBuilder!();
     }
-
-    sub(data: Array<SubDataDef<ED, keyof ED>>, callback: (records: OpRecord<ED>[], ids: string[]) => void) {
-        return this.aspectWrapper.sub(data, (records, ids) => {
-            this.sync(records),
-            callback(records, ids);
-        });
-    }
-
-    unsub(ids: string[]) {
-        return this.aspectWrapper.unsub(ids);
-    }
 }

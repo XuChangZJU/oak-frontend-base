@@ -127,6 +127,7 @@ export function initialize<
         authDeduceRelationMap,
         colorDict,
         () => debugStore.getCurrentData(),
+        async () => ({ url: '', path: '' }),
         undefined,
         selectFreeEntities,
         createFreeEntities,

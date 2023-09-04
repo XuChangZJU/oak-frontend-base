@@ -7,7 +7,6 @@ import { pull, omit } from 'oak-domain/lib/utils/lodash';
 import { Cache } from './cache';
 import { SyncContext } from "oak-domain/lib/store/SyncRowStore";
 import io, { Socket } from '../utils/socket.io/socket.io';
-import { OakSubscriberConnectError } from "../types/Exception";
 import { Feature } from "../types/Feature";
 
 type SubscribeEvent = 'connect' | 'disconnect';
@@ -71,7 +70,7 @@ export class SubScriber<
     private async connect() {
         let optionInited = false;
         if (!this.socket)  {
-            this.initSocketOption();
+            await this.initSocketOption();
             optionInited = true;
         }
 
@@ -113,19 +112,23 @@ export class SubScriber<
                         }
                     });
                 }
-            }
-        )
-    }
 
-    async sub(data: SubDataDef<ED, keyof ED>[], callback: (records: OpRecord<ED>[], ids: string[]) => void) {
-        const ids = data.map(ele => ele.id);
-
-        ids.forEach(
-            (id) => {
-                assert(!this.callbackMap[id], `[subscriber]注册回调的id${id}发生重复`);
-                this.callbackMap[id] = callback;
+                socket.connect();
             }
         );
+    }
+
+    async sub(data: SubDataDef<ED, keyof ED>[], callback?: (records: OpRecord<ED>[], ids: string[]) => void) {
+        const ids = data.map(ele => ele.id);
+
+        if (callback) {
+            ids.forEach(
+                (id) => {
+                    assert(!this.callbackMap[id], `[subscriber]注册回调的id${id}发生重复`);
+                    this.callbackMap[id] = callback;
+                }
+            );
+        }
 
         if (this.socketState === 'unconnected') {
             this.connect();

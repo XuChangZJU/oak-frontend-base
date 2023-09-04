@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, StorageSchema, Checker, SubDataDef } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, StorageSchema, Checker } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -88,7 +88,5 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     commit(): void;
     rollback(): void;
     buildContext(): FrontCxt;
-    sub(data: Array<SubDataDef<ED, keyof ED>>, callback: (records: OpRecord<ED>[], ids: string[]) => void): Promise<void>;
-    unsub(ids: string[]): Promise<void>;
 }
 export {};

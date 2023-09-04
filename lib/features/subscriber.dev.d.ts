@@ -7,11 +7,6 @@ import { SyncContext } from "oak-domain/lib/store/SyncRowStore";
 import { Feature } from "../types/Feature";
 declare type SubscribeEvent = 'connect' | 'disconnect';
 export declare class SubScriber<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends Feature {
-    private cache;
-    private getSubscribePointFn;
-    private callbackMap;
-    private socket?;
-    private socketState;
     private eventCallbackMap;
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, getSubscribePointFn: () => Promise<{
         url: string;
@@ -19,11 +14,7 @@ export declare class SubScriber<ED extends EntityDict & BaseEntityDict, Cxt exte
     }>);
     on(event: SubscribeEvent, callback: () => void): void;
     off(event: SubscribeEvent, callback: () => void): void;
-    private emit;
-    private initSocketOption;
-    private login;
-    private connect;
-    sub(data: SubDataDef<ED, keyof ED>[], callback?: (records: OpRecord<ED>[], ids: string[]) => void): Promise<void>;
+    sub(data: SubDataDef<ED, keyof ED>[], callback: (records: OpRecord<ED>[], ids: string[]) => void): Promise<void>;
     unsub(ids: string[]): Promise<void>;
 }
 export {};

@@ -227,19 +227,19 @@ const oakBehavior = Behavior<
             }
         },
 
-        sub(type: string, callback: Function) {
+        subEvent(type: string, callback: Function) {
             this.features.eventBus.sub(type, callback);
         },
 
-        unsub(type: string, callback: Function) {
+        unsubEvent(type: string, callback: Function) {
             this.features.eventBus.unsub(type, callback);
         },
 
-        pub(type: string, option?: any) {
+        pubEvent(type: string, option?: any) {
             this.features.eventBus.pub(type, option);
         },
 
-        unsubAll(type: string) {
+        unsubAllEvents(type: string) {
             this.features.eventBus.unsubAll(type);
         },
 
@@ -652,6 +652,14 @@ const oakBehavior = Behavior<
 
         loadMissedLocales(key: string) {
             this.features.locales.loadMissedLocale(key);
+        },
+
+        subData(data, callback) {
+            return this.features.subscriber.sub(data, callback);
+        },
+
+        unSubData(ids) {
+            return this.features.subscriber.unsub(ids);
         }
     },
     observers: {

@@ -19,7 +19,7 @@ import { InitializeOptions } from './types/Initialize';
  * @param actionDict
  * @returns
  */
-export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(storageSchema: StorageSchema<ED>, frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt, connector: Connector<ED, Cxt, FrontCxt>, checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>, option: InitializeOptions<ED>): {
+export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>>(storageSchema: StorageSchema<ED>, frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt, connector: Connector<ED, FrontCxt>, checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>, option: InitializeOptions<ED>): {
     features: {
         location: import("./features/location").Location;
         environment: import("./features/environment").Environment;
@@ -37,5 +37,6 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
         style: import("./features/style").Style<ED>;
         geo: import("./features/geo").Geo<ED, Cxt, CommonAspectDict<ED, Cxt> & AD>;
         contextMenuFactory: import("./features/contextMenuFactory").ContextMenuFactory<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
+        subscriber: import("./features/subscriber").SubScriber<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
     };
 };

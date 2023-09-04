@@ -37,7 +37,7 @@ export function initialize<
 >(
     storageSchema: StorageSchema<ED>,
     frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
-    connector: Connector<ED, Cxt, FrontCxt>,
+    connector: Connector<ED, FrontCxt>,
     checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     option: InitializeOptions<ED>
 ) {
@@ -73,6 +73,7 @@ export function initialize<
         authDeduceRelationMap,
         colorDict,
         () => '请查看数据库中的数据',
+        () => connector.getSubscribePoint(),
         (url, headers) => connector.makeBridgeUrl(url, headers),
         selectFreeEntities,
         createFreeEntities,
