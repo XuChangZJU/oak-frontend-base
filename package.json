@@ -16,6 +16,7 @@
         "antd": "^5.8.2",
         "antd-mobile": "^5.28.1",
         "antd-mobile-icons": "^0.3.0",
+        "dayjs": "^1.11.5",
         "debounce": "^1.2.1",
         "echarts": "^5.4.2",
         "echarts-for-react": "^3.0.2",
