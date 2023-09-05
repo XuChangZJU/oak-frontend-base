@@ -1,4 +1,4 @@
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { StorageSchema, Attribute } from 'oak-domain/lib/types';
@@ -66,10 +66,10 @@ export function resolvePath<ED extends EntityDict & BaseEntityDict>(
     entity: keyof ED,
     path: string
 ): {
-    entity: keyof ED,
-    attr: string,
-    attrType: DataType | 'ref' | undefined,
-    attribute: Attribute | undefined,
+    entity: keyof ED;
+    attr: string;
+    attrType: DataType | 'ref' | undefined;
+    attribute: Attribute | undefined;
 } {
     assert(!path.includes('['), '数组索引不需要携带[],请使用arr.0.value');
     const attrs = path.split('.');
@@ -88,13 +88,14 @@ export function resolvePath<ED extends EntityDict & BaseEntityDict>(
         try {
             const relation = judgeRelation(dataSchema, _entity, attr);
             if (relation === 1) {
-                const attributes = getAttributes(dataSchema[_entity].attributes);
+                const attributes = getAttributes(
+                    dataSchema[_entity].attributes
+                );
                 attribute = attributes[attr];
                 attrType = attribute.type;
                 if (attr === 'id') {
-                   attrType = 'ref';
-                }
-                else {
+                    attrType = 'ref';
+                } else {
                     if (attrType === 'ref') {
                         attr = attribute.ref as string;
                     }
@@ -109,15 +110,14 @@ export function resolvePath<ED extends EntityDict & BaseEntityDict>(
                 _entity = relation as keyof ED;
             }
             idx++;
-        }
-        catch (err) {
+        } catch (err) {
             console.log(`存在非schema属性${path}`);
             return {
                 entity: 'notExist',
                 attr: path,
                 attrType: undefined,
                 attribute,
-            }
+            };
         }
     }
     return {
@@ -133,15 +133,18 @@ function isAttrbuteType(attribute: OakAbsAttrDef): OakAbsDerivedAttrDef {
     return attribute as OakAbsDerivedAttrDef;
 }
 
-export function getLinkUrl(attribute: OakAbsAttrDef, props: Record<string, string>): string {
+export function getLinkUrl(
+    attribute: OakAbsAttrDef,
+    props: Record<string, string>
+): string {
     if (typeof attribute === 'string') {
         return '';
     }
     let href = attribute.linkUrl || '';
     const searchParams: string[] = [];
     Object.keys(props).forEach((ele) => {
-        searchParams.push(`${ele}=${props[ele]}`)
-    })
+        searchParams.push(`${ele}=${props[ele]}`);
+    });
     if (!href.includes('?')) {
         href += '?';
     }
@@ -181,7 +184,7 @@ export function getLabel<ED extends EntityDict & BaseEntityDict>(
 // 目前width属性可以是undefined，只有特殊type或用户自定义才有值，这样其余attr属性可以自适应
 export function getWidth(
     attribute: OakAbsAttrDef,
-    attrType: DataType | 'ref' | undefined,
+    attrType: DataType | 'ref' | undefined
 ) {
     let width;
     if (attrType === 'enum') {
@@ -191,7 +194,7 @@ export function getWidth(
         width = isAttrbuteType(attribute).width;
     }
     if (isAttrbuteType(attribute).span) {
-        width = tableWidthMap[isAttrbuteType(attribute).span!]
+        width = tableWidthMap[isAttrbuteType(attribute).span!];
     }
     return width;
 }
@@ -225,17 +228,26 @@ export function getValue<ED extends EntityDict & BaseEntityDict>(
 }
 
 export function getAlign(attrType: DataType): 'left' | 'right' | 'center' {
-    const rightType: DataType[] = ['float', 'int', 'bigint', 'decimal', 'money'];
+    const rightType: DataType[] = [
+        'float',
+        'int',
+        'bigint',
+        'decimal',
+        'money',
+    ];
     if (rightType.includes(attrType)) {
-        return 'right'
+        return 'right';
     }
-    return 'left'
+    return 'left';
 }
 
-export function getType(attribute: OakAbsAttrDef, attrType: OakAbsDerivedAttrDef['type']) {
+export function getType(
+    attribute: OakAbsAttrDef,
+    attrType: OakAbsDerivedAttrDef['type']
+) {
     let type = attrType;
     if (isAttrbuteType(attribute).type) {
-        type =  isAttrbuteType(attribute).type;
+        type = isAttrbuteType(attribute).type;
     }
     return type;
 }
@@ -309,11 +321,7 @@ export function analyzeDataUpsertTransformer<
     let geoDef: OakAbsGeoAttrUpsertDef | undefined = undefined;
     const makeNativeFixedPart = (
         attr: string,
-        def?: OakAbsNativeAttrUpsertDef<
-            ED,
-            T,
-            keyof ED[T]['OpSchema']
-        >
+        def?: OakAbsNativeAttrUpsertDef<ED, T, keyof ED[T]['OpSchema']>
     ) => {
         const attrDef = dataSchema[entity].attributes[attr]; // upsert应该不会涉及createAt这些内置属性
         const {
@@ -423,14 +431,12 @@ type CoverData = {
         type: OakAbsDerivedAttrDef['type'];
     }[];
     record: EntityDict[keyof EntityDict];
-}[]
+}[];
 
-export function translateAttributes<
-    ED extends EntityDict & BaseEntityDict
->(
+export function translateAttributes<ED extends EntityDict & BaseEntityDict>(
     dataSchema: StorageSchema<ED>,
     entity: keyof ED,
-    attributes: OakAbsAttrDef[],
+    attributes: OakAbsAttrDef[]
 ): OakAbsAttrJudgeDef[] {
     const judgeAttributes: OakAbsAttrJudgeDef[] = attributes.map((ele) => {
         const path = getPath(ele);
@@ -445,8 +451,8 @@ export function translateAttributes<
             attr,
             attribute: ele,
             entity: entityI8n as string,
-        }
-    })
+        };
+    });
     return judgeAttributes;
 }
 
@@ -456,7 +462,7 @@ export function analyzeAttrMobileForCard<
     dataSchema: StorageSchema<ED>,
     entity: keyof ED,
     t: (k: string, params?: object) => string,
-    attributes: OakAbsAttrDef[],
+    attributes: OakAbsAttrDef[]
 ): (data: any[]) => CoverData {
     return (data: any[]) => {
         // 遍历用户传入的数据源
@@ -469,14 +475,7 @@ export function analyzeAttrMobileForCard<
                     entity: entityI8n,
                 } = resolvePath(dataSchema, entity, path);
                 const label = getLabel(attribute, entityI8n, attr, t);
-                const value = getValue(
-                    row,
-                    path,
-                    entityI8n,
-                    attr,
-                    attrType,
-                    t
-                );
+                const value = getValue(row, path, entityI8n, attr, attrType, t);
                 const type = getType(attribute, attrType);
                 return {
                     label,

@@ -1,6 +1,6 @@
 import { ED } from '../../types/AbstractComponent';
 import { ColumnProps } from '../../types/Filter';
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { getFilterName } from '../filter2/utils';
 import { RowWithActions, ReactComponentProps } from '../../types/Page';
 

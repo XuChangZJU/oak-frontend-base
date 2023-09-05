@@ -6,7 +6,8 @@
         "name": "XuChang"
     },
     "files": [
-        "lib/**/*"
+        "lib/**/*",
+        "es/**/*"
     ],
     "dependencies": {
         "@ant-design/cssinjs": "^1.6.1",
@@ -28,6 +29,7 @@
         "oak-domain": "file:../oak-domain",
         "oak-memory-tree-store": "file:../oak-memory-tree-store",
         "ol": "^7.3.0",
+        "react-responsive": "^9.0.2",
         "react-scripts": "^5.0.1",
         "rmc-pull-to-refresh": "^1.0.13",
         "socket.io-client": "^4.7.2",
@@ -38,7 +40,6 @@
     "peerDependencies": {
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
-        "react-responsive": "^9.0.0-beta.10",
         "react-router-dom": "^6.3.0"
     },
     "devDependencies": {
@@ -71,17 +72,21 @@
     },
     "scripts": {
         "clean": "rimraf lib/*",
-        "copy-json": "copyfiles -u 1 src/**/*.json lib/",
-        "copy-js": "copyfiles -u 1 src/**/*.js lib/",
-        "copy-svg": "copyfiles -u 1 src/**/*.svg lib/ & copyfiles -u 1 src/**/*.png lib/",
-        "copy-less": "copyfiles -u 1 src/**/*.less lib/ & copyfiles -u 1 src/**/*.wxss lib/",
-        "copy-wxs": "copyfiles -u 1 src/**/*.wxs lib/",
-        "copy-xml": "copyfiles -u 1 src/**/*.xml lib/",
-        "copy-wxml": "copyfiles -u 1 src/**/*.wxml lib/",
-        "build": "tsc && npm run copy-js && npm run copy-less && npm run copy-wxs && npm run copy-svg && npm run copy-xml && npm run copy-wxml && npm run copy-json",
+        "copy-json": "copyfiles -u 1 src/**/*.json lib/ & copyfiles -u 1 src/**/*.json es/",
+        "copy-js": "copyfiles -u 1 src/**/*.js lib/ & copyfiles -u 1 src/**/*.js es/",
+        "copy-svg": "copyfiles -u 1 src/**/*.svg lib/ & copyfiles -u 1 src/**/*.png lib/ & copyfiles -u 1 src/**/*.svg es/ & copyfiles -u 1 src/**/*.png es/",
+        "copy-less": "copyfiles -u 1 src/**/*.less lib/ & copyfiles -u 1 src/**/*.wxss lib/ & copyfiles -u 1 src/**/*.css lib/ & copyfiles -u 1 src/**/*.less es/ & copyfiles -u 1 src/**/*.wxss es/ & copyfiles -u 1 src/**/*.css es/",
+        "copy-wxs": "copyfiles -u 1 src/**/*.wxs lib/ & copyfiles -u 1 src/**/*.wxs es/",
+        "copy-xml": "copyfiles -u 1 src/**/*.xml lib/ & copyfiles -u 1 src/**/*.xml es/",
+        "copy-wxml": "copyfiles -u 1 src/**/*.wxml lib/ & copyfiles -u 1 src/**/*.wxml es/",
+        "build": "tsc -p tsconfig.json && npm run copy-js && npm run copy-less && npm run copy-wxs && npm run copy-svg && npm run copy-xml && npm run copy-wxml && npm run copy-json",
+        "build-es": "tsc -p tsconfig.es.json && npm run copy-js && npm run copy-less && npm run copy-wxs && npm run copy-svg && npm run copy-xml && npm run copy-wxml && npm run copy-json",
         "test": "ts-node ./test/test.ts",
         "prepare": "rimraf node_modules/react & rimraf node_modules/react-dom & rimraf node_modules/react-router & rimraf node_modules/react-router-dom",
         "remove-antd": "rimraf node_modules/antd & rimraf node_modules/antd-mobile & rimraf node_modules/@ant-design & rimraf node_modules/antd-mobile-icons & rimraf node_modules/antd-mobile-v5-count"
     },
-    "main": "lib/index"
+    "main": "lib/index",
+    "module": "es/index",
+    "types": "es/index.d.ts",
+    "typings": "es/index.d.ts"
 }

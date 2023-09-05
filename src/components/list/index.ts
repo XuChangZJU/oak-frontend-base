@@ -1,6 +1,6 @@
 import { CardDef, ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
 import { analyzeAttrMobileForCard, translateAttributes } from '../../utils/usefulFn';
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { TableProps, PaginationProps } from 'antd';
 import { RowWithActions, ReactComponentProps } from '../../types/Page';
 

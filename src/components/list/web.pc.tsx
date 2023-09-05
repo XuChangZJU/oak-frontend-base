@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Table, Tag, TableProps, PaginationProps, Space, Button, Avatar } from 'antd';
 import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { get } from 'oak-domain/lib/utils/lodash';
 import ActionBtn from '../actionBtn';
 import { EntityDict } from 'oak-domain/lib/types/Entity';

@@ -4,7 +4,7 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useWidth } from './../responsive';
 
 import URL from 'url';
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 
 type Location = { state: Record<string, any>; search: string };
 

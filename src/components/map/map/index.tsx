@@ -1,4 +1,4 @@
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import React, { useEffect, useState } from 'react';
 import OlMap from 'ol/Map';
 import Feature from 'ol/Feature';
@@ -22,7 +22,7 @@ const prefix = Math.ceil(Math.random() * 1000);
 
 type MapProps = {
     id?: string;
-    center?: [number, number],
+    center?: [number, number];
     zoom?: number;
     unzoomable?: boolean;
     undragable?: boolean;
@@ -30,17 +30,16 @@ type MapProps = {
     style?: object;
     autoLocate?: boolean;
     markers?: Array<[number, number]>;
-}
+};
 
-const DEFAULT_CENTER = [120.123, 30.259];     // 浙大玉泉
+const DEFAULT_CENTER = [120.123, 30.259]; // 浙大玉泉
 const DEFAULT_ZOOM = 15;
 
 export default function Map(props: MapProps) {
     const { id } = props;
     const [map, setMap] = useState<OlMap>();
 
-
-    useEffect(() => {        
+    useEffect(() => {
         const map2 = new OlMap({
             target: `map-${id || prefix}`,
             layers: [
@@ -52,7 +51,7 @@ export default function Map(props: MapProps) {
                 }),
                 new VectorLayer({
                     source: new VectorSource(),
-                })
+                }),
             ],
             view: new View({
                 center: fromLonLat(props.center || DEFAULT_CENTER),
@@ -62,31 +61,25 @@ export default function Map(props: MapProps) {
             }),
             controls: props.unzoomable ? [] : undefined,
         });
-        
+
         if (props.undragable) {
-            map2.getInteractions().forEach(
-                (ele) => {
-                    if (ele instanceof DragPan) {
-                        ele.setActive(false);
-                    }
+            map2.getInteractions().forEach((ele) => {
+                if (ele instanceof DragPan) {
+                    ele.setActive(false);
                 }
-            );
+            });
         }
         if (props.disableWheelZoom) {
-            map2.getInteractions().forEach(
-                (ele) => {
-                    if (ele instanceof MouseWheelZoom) {
-                        ele.setActive(false);
-                    }
+            map2.getInteractions().forEach((ele) => {
+                if (ele instanceof MouseWheelZoom) {
+                    ele.setActive(false);
                 }
-            )
+            });
         }
         if (props.autoLocate) {
-            locate().then(
-                ({ latitude, longitude }) => {
-                    map2.getView().setCenter(fromLonLat([longitude, latitude]));
-                }
-            );
+            locate().then(({ latitude, longitude }) => {
+                map2.getView().setCenter(fromLonLat([longitude, latitude]));
+            });
         }
         setMap(map2);
     }, []);
@@ -102,8 +95,7 @@ export default function Map(props: MapProps) {
                         duration: 500,
                     });
                 }
-            }
-            else {
+            } else {
                 map.getView().setCenter(fromLonLat(props.center));
             }
         }
@@ -112,16 +104,15 @@ export default function Map(props: MapProps) {
     useEffect(() => {
         // marker好像没有效果，以后再调
         if (props.markers && map) {
-            const markerLayer = map.getAllLayers().find(
-                ele => ele instanceof VectorLayer
-            );
+            const markerLayer = map
+                .getAllLayers()
+                .find((ele) => ele instanceof VectorLayer);
             assert(markerLayer && markerLayer instanceof VectorLayer);
             let feature = markerLayer.getSource()!.getFeatureById('markers');
             if (feature) {
                 // feature.setGeometry(new MultiPoint(props.markers.map(ele => fromLonLat(ele))));
                 feature.setGeometry(new Point(fromLonLat(props.markers[0])));
-            }
-            else {
+            } else {
                 // feature = new Feature(new MultiPoint(props.markers.map(ele => fromLonLat(ele))));
                 feature = new Feature(new Point(fromLonLat(props.markers[0])));
                 feature.setStyle(
@@ -132,12 +123,12 @@ export default function Map(props: MapProps) {
                                 color: 'red',
                             }),
                             // 圆形半径
-                            radius: 10
+                            radius: 10,
                         }),
                         // 填充样式
                         fill: new Fill({
                             color: 'red',
-                        })
+                        }),
                     })
                 );
                 feature.setId('markers');
@@ -147,6 +138,11 @@ export default function Map(props: MapProps) {
         }
     }, [props.markers]);
 
-    return <div id={`map-${id || prefix}`} className={Styles.map} style={props.style} />;
-};
-
+    return (
+        <div
+            id={`map-${id || prefix}`}
+            className={Styles.map}
+            style={props.style}
+        />
+    );
+}

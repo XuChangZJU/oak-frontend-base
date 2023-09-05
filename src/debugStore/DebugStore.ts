@@ -4,7 +4,7 @@ import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { AsyncContext, AsyncRowStore } from "oak-domain/lib/store/AsyncRowStore";
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { RelationAuth } from "oak-domain/lib/store/RelationAuth";
 
 interface DebugStoreOperateOption extends TreeStoreOperateOption {

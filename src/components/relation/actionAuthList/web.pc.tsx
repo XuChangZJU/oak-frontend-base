@@ -5,7 +5,7 @@ const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 
 type ED = EntityDict & BaseEntityDict;
 type TableData = {

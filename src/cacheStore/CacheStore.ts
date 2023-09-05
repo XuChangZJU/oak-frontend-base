@@ -4,7 +4,7 @@ import { readOnlyActions } from 'oak-domain/lib/actions/action';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Checker, CheckerType, Trigger, TxnOption } from 'oak-domain/lib/types';
 import { TreeStore, TreeStoreOperateOption } from 'oak-memory-tree-store';
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { SyncContext, SyncRowStore } from 'oak-domain/lib/store/SyncRowStore';
 import SyncTriggerExecutor from './SyncTriggerExecutor';
 

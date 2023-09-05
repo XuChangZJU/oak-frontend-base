@@ -1,5 +1,5 @@
 // 简化版的对checker的同步检查
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Checker, CheckerType, SelectOption, OperateOption, CHECKER_PRIORITY_MAP, 

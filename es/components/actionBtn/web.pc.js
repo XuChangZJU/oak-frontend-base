@@ -1,0 +1,28 @@
+import { jsx as _jsx, Fragment as _Fragment } from "react/jsx-runtime";
+import { useEffect } from 'react';
+import { Space, Button, Modal, } from 'antd';
+import Style from './web.module.less';
+const { confirm } = Modal;
+function ItemComponent(props) {
+    const { label, type, onClick } = props;
+    if (type === 'button') {
+        return (_jsx(Button, { onClick: () => onClick(), children: label }));
+    }
+    return _jsx("a", { onClick: (e) => {
+            onClick();
+            e.stopPropagation();
+            return false;
+        }, children: label });
+}
+export default function Render(props) {
+    const { methods, data } = props;
+    const { t, makeItems } = methods;
+    const { schema, actions, onAction, entity, cascadeActions, items, i18n, } = data;
+    const zhCNKeys = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
+    useEffect(() => {
+        makeItems();
+    }, [zhCNKeys, actions, cascadeActions]);
+    return (_jsx("div", { className: Style.panelContainer, children: _jsx(Space, { align: 'center', style: { width: '100%' }, children: _jsx(Space, { align: 'center', size: 12, children: _jsx(_Fragment, { children: items?.map((ele, index) => {
+                        return (_jsx(ItemComponent, { label: ele.label, type: "a", onClick: ele.onClick }));
+                    }) }) }) }) }));
+}

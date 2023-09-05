@@ -1,4 +1,4 @@
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import URL from 'url';
 import { Feature } from '../types/Feature';
 import { OakNavigateToParameters } from '../types/Page';
@@ -8,7 +8,7 @@ import { EntityDict } from 'oak-domain/lib/types';
 type Location = {
     pathname: string;
     state: unknown;
-    key: string
+    key: string;
 };
 
 export class Navigator extends Feature {
@@ -148,7 +148,10 @@ export class Navigator extends Feature {
         ED extends EntityDict & BaseEntityDict,
         T2 extends keyof ED
     >(
-        options: { url: string; isTabBar?: boolean } & OakNavigateToParameters<ED, T2>,
+        options: { url: string; isTabBar?: boolean } & OakNavigateToParameters<
+            ED,
+            T2
+        >,
         state?: Record<string, any>
     ) {
         const pages = getCurrentPages();

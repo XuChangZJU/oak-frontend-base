@@ -7,9 +7,8 @@ import { Cache } from './cache';
 import { LocalStorage } from './localStorage';
 import { Environment } from './environment';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { I18n, Scope, TranslateOptions } from 'i18n-js';
-import { uniq } from 'oak-domain/lib/utils/lodash';
 
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 

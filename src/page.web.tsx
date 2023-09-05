@@ -1,5 +1,5 @@
 /// <reference path="../node_modules/@types/wechat-miniprogram/index.d.ts" />
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import React from 'react';
 import { withRouter, PullToRefresh } from './platforms/web';
 import { get } from 'oak-domain/lib/utils/lodash';

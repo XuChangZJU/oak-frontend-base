@@ -1,5 +1,5 @@
 /// <reference path="../node_modules/@types/wechat-miniprogram/index.d.ts" />
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Aspect, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';

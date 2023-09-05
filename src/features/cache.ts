@@ -7,7 +7,7 @@ import { CacheStore } from '../cacheStore/CacheStore';
 import { OakRowUnexistedException, OakRowInconsistencyException, OakException, OakUserException } from 'oak-domain/lib/types/Exception';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
 import { LocalStorage } from './localStorage';
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';

@@ -68,7 +68,8 @@
   },
   "types": [
     "node",
-    "miniprogram-api-typings"
+    "miniprogram-api-typings",
+    "react"
   ],
   "include": [
     "src/**/*.ts",

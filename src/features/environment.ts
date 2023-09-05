@@ -1,7 +1,7 @@
 import { Feature } from "../types/Feature";
 import { WebEnv, WechatMpEnv } from 'oak-domain/lib/types/Environment';
 import { getEnv } from '../utils/env/env';
-import assert from 'assert';
+import { assert } from 'oak-domain/lib/utils/assert';
 import { OakEnvInitializedFailure } from "../types/Exception";
 
 export class Environment extends Feature {

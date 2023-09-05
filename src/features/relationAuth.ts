@@ -6,7 +6,6 @@ import { union, pull, unset } from 'oak-domain/lib/utils/lodash';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { RelationAuth as BaseRelationAuth } from 'oak-domain/lib/store/RelationAuth';
-import assert from 'assert';
 import { Cache } from './cache';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
 
