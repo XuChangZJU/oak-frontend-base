@@ -1590,20 +1590,26 @@ export class RunningTree extends Feature {
         const includeModi = path.includes(MODI_NEXT_PATH_SUFFIX);
         if (node) {
             this.cache.begin();
-            assert(node instanceof ListNode || node instanceof SingleNode);
-            if (includeModi) {
-                const opers2 = node.getActiveModiOperations();
-                if (opers2) {
-                    this.cache.redoOperation(opers2);
+            try {
+                assert(node instanceof ListNode || node instanceof SingleNode);
+                if (includeModi) {
+                    const opers2 = node.getActiveModiOperations();
+                    if (opers2) {
+                        this.cache.redoOperation(opers2);
+                    }
                 }
+                const opers = root?.composeOperations();
+                if (opers) {
+                    this.cache.redoOperation(opers);
+                }
+                const value = node.getFreshValue();
+                this.cache.rollback();
+                return value;
             }
-            const opers = root?.composeOperations();
-            if (opers) {
-                this.cache.redoOperation(opers);
+            catch (err) {
+                this.cache.rollback();
+                throw err;
             }
-            const value = node.getFreshValue();
-            this.cache.rollback();
-            return value;
         }
     }
     isDirty(path) {

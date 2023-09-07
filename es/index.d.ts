@@ -9,6 +9,7 @@ export * from './types/Initialize';
 export * from './types/Filter';
 export * from './types/AbstractComponent';
 export * from './types/Upload';
+export * from './types/Exception';
 export * from './utils/upload';
 export { CacheStore } from './cacheStore/CacheStore';
 export { default as SyncTriggerExecutor } from './cacheStore/SyncTriggerExecutor';

@@ -1,6 +1,6 @@
 /// <reference types="react" />
 import { Item } from './types';
-declare const _default: (props: import("../..").ReactComponentProps<import("oak-domain/lib/types").EntityDict & import("oak-domain/lib/base-app-domain").EntityDict, string | number, false, {
+declare const _default: (props: import("../..").ReactComponentProps<import("oak-domain").EntityDict & import("oak-domain").BaseEntityDict, string | number, false, {
     entity: string | number;
     items: Item[];
     mode: "cell" | "table-cell";

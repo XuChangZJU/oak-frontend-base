@@ -1,7 +1,7 @@
-import assert from "assert";
+import { assert } from 'oak-domain/lib/utils/assert';
 import { pull, omit } from 'oak-domain/lib/utils/lodash';
 import io from '../utils/socket.io/socket.io';
-import { Feature } from "../types/Feature";
+import { Feature } from '../types/Feature';
 export class SubScriber extends Feature {
     cache;
     getSubscribePointFn;
@@ -24,7 +24,7 @@ export class SubScriber extends Feature {
         pull(this.eventCallbackMap[event], callback);
     }
     emit(event) {
-        this.eventCallbackMap[event].forEach(ele => ele());
+        this.eventCallbackMap[event].forEach((ele) => ele());
     }
     async initSocketOption() {
         const { url, path } = await this.getSubscribePointFn();
@@ -33,8 +33,7 @@ export class SubScriber extends Feature {
         });
         this.socket = socket;
     }
-    async login() {
-    }
+    async login() { }
     async connect() {
         let optionInited = false;
         if (!this.socket) {
@@ -80,7 +79,7 @@ export class SubScriber extends Feature {
         });
     }
     async sub(data, callback) {
-        const ids = data.map(ele => ele.id);
+        const ids = data.map((ele) => ele.id);
         if (callback) {
             ids.forEach((id) => {
                 assert(!this.callbackMap[id], `[subscriber]注册回调的id${id}发生重复`);
