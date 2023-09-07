@@ -1,5 +1,5 @@
 import { pull } from 'oak-domain/lib/utils/lodash';
-import { Feature } from "../types/Feature";
+import { Feature } from '../types/Feature';
 export class SubScriber extends Feature {
     eventCallbackMap = {
         connect: [],
@@ -17,6 +17,5 @@ export class SubScriber extends Feature {
     async sub(data, callback) {
         console.log('data subscribe 在dev模式下不起作用');
     }
-    async unsub(ids) {
-    }
+    async unsub(ids) { }
 }

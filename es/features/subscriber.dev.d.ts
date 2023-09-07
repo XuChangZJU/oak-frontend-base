@@ -3,8 +3,8 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { Cache } from './cache';
-import { SyncContext } from "oak-domain/lib/store/SyncRowStore";
-import { Feature } from "../types/Feature";
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { Feature } from '../types/Feature';
 declare type SubscribeEvent = 'connect' | 'disconnect';
 export declare class SubScriber<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends Feature {
     private eventCallbackMap;
