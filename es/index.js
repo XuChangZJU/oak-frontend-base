@@ -1,5 +1,5 @@
-export * from './features/cache';
-export * from './features/localStorage';
+export { Cache } from './features/cache';
+export { LocalStorage } from './features/localStorage';
 export * from './types/Feature';
 export * from './types/Notification';
 export * from './types/Message';
