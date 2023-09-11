@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+// TODO 应该是要antd-mobile组件
 import { FloatButton } from 'antd';
-import { WebComponentProps } from '../../../types/Page';
 
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { Checkbox } from 'antd-mobile';
 import { ListButtonProps } from '../../../types/AbstractComponent';
+import { WebComponentProps } from '../../../types/Page';
 
 import {
     BarsOutlined,
