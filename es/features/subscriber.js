@@ -5,7 +5,9 @@ import { Feature } from '../types/Feature';
 export class SubScriber extends Feature {
     cache;
     getSubscribePointFn;
-    callbackMap = {};
+    subDataMap = {};
+    url;
+    path;
     socket;
     socketState = 'unconnected';
     eventCallbackMap = {
@@ -26,27 +28,33 @@ export class SubScriber extends Feature {
     emit(event) {
         this.eventCallbackMap[event].forEach((ele) => ele());
     }
-    async initSocketOption() {
+    async initSocketPoint() {
         const { url, path } = await this.getSubscribePointFn();
-        const socket = io(url, {
-            path,
-        });
-        this.socket = socket;
+        this.url = url;
+        this.path = path;
     }
-    async login() { }
     async connect() {
         let optionInited = false;
-        if (!this.socket) {
-            await this.initSocketOption();
+        if (!this.url) {
+            await this.initSocketPoint();
             optionInited = true;
         }
+        const url = this.url;
+        const path = this.path;
+        const context = this.cache.begin();
+        context.commit();
+        this.socket = io(url, {
+            path,
+            extraHeaders: {
+                'oak-cxt': context.toString(),
+            },
+        });
         const socket = this.socket;
         return new Promise((resolve, reject) => {
             /**
              * https://socket.io/zh-CN/docs/v4/client-socket-instance/
              */
             socket.on('connect', async () => {
-                // 验证身份
                 this.socketState = 'connected';
                 this.emit('connect');
                 socket.off('connect');
@@ -54,11 +62,17 @@ export class SubScriber extends Feature {
                     this.socketState = 'unconnected';
                     this.emit('disconnect');
                     socket.removeAllListeners();
-                    if (Object.keys(this.callbackMap).length > 0) {
+                    if (Object.keys(this.subDataMap).length > 0) {
                         this.connect();
                     }
                 });
-                await this.login();
+                if (Object.keys(this.subDataMap).length > 0) {
+                    socket.emit('sub', this.subDataMap, (success) => {
+                    });
+                }
+                else {
+                    socket.disconnect();
+                }
                 resolve(undefined);
             });
             if (!optionInited) {
@@ -69,7 +83,7 @@ export class SubScriber extends Feature {
                         // 可能socket地址改变了，刷新重连
                         socket.removeAllListeners();
                         socket.disconnect();
-                        this.socket = undefined;
+                        this.url = undefined;
                         await this.connect();
                         resolve(undefined);
                     }
@@ -79,13 +93,15 @@ export class SubScriber extends Feature {
         });
     }
     async sub(data, callback) {
-        const ids = data.map((ele) => ele.id);
-        if (callback) {
-            ids.forEach((id) => {
-                assert(!this.callbackMap[id], `[subscriber]注册回调的id${id}发生重复`);
-                this.callbackMap[id] = callback;
-            });
-        }
+        data.forEach(({ entity, id, filter }) => {
+            assert(!this.subDataMap[id], `[subscriber]注册回调的id${id}发生重复`);
+            this.subDataMap[id] = {
+                callback,
+                entity,
+                id,
+                filter,
+            };
+        });
         if (this.socketState === 'unconnected') {
             this.connect();
         }
@@ -94,12 +110,12 @@ export class SubScriber extends Feature {
         }
     }
     async unsub(ids) {
-        ids.forEach((id) => omit(this.callbackMap, id));
+        ids.forEach((id) => omit(this.subDataMap, id));
         if (this.socketState === 'connected') {
             this.socket.emit('unsub', ids);
         }
         if (this.socketState !== 'unconnected') {
-            if (Object.keys(this.callbackMap).length === 0) {
+            if (Object.keys(this.subDataMap).length === 0) {
                 this.socket.disconnect();
                 this.socket.removeAllListeners();
                 this.socketState = 'unconnected';

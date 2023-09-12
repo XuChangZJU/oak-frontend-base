@@ -126,7 +126,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     refresh(pageNumber?: number, getCount?: true, append?: boolean): Promise<void>;
     loadMore(): Promise<void>;
     setCurrentPage(currentPage: number, append?: boolean): void;
-    clean(): void;
+    clean(preserveAfterExecute?: true): void;
     getChildOperation(child: SingleNode<ED, T, Cxt, FrontCxt, AD>): ED[T]["CreateSingle"] | ED[T]["Update"] | ED[T]["Remove"] | undefined;
     getIntrinsticFilters(): ED[T]["Selection"]["filter"] | undefined;
 }
@@ -164,7 +164,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     }> | undefined;
     getProjection(withDecendants?: boolean): ED[T]["Selection"]["data"] | undefined;
     refresh(): Promise<void>;
-    clean(): void;
+    clean(preserveAfterExecute?: true): void;
     private getFilter;
     getIntrinsticFilters(): ED[T]["Selection"]["filter"] | undefined;
     /**
@@ -200,7 +200,7 @@ declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends As
     isLoading(): boolean;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
-    clean(): void;
+    clean(preserveAfterExecute?: true): void;
     checkIfClean(): void;
 }
 export declare type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {

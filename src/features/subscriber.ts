@@ -22,11 +22,17 @@ export class SubScriber<
         url: string;
         path: string;
     }>;
-    private callbackMap: Record<
+    private subDataMap: Record<
         string,
-        (records: OpRecord<ED>[], ids: string[]) => void
+        {
+            callback?: (records: OpRecord<ED>[], ids: string[]) => void,
+        } & SubDataDef<ED, keyof ED>
     > = {};
+    
+    private url?: string;
+    private path?: string;
     private socket?: Socket;
+
     private socketState: 'connecting' | 'connected' | 'unconnected' =
         'unconnected';
 
@@ -59,44 +65,58 @@ export class SubScriber<
         this.eventCallbackMap[event].forEach((ele) => ele());
     }
 
-    private async initSocketOption() {
+    private async initSocketPoint() {
         const { url, path } = await this.getSubscribePointFn();
-
-        const socket = io(url, {
-            path,
-        });
-        this.socket = socket;
+        this.url = url;
+        this.path = path;
     }
-
-    private async login() {}
 
     private async connect() {
         let optionInited = false;
-        if (!this.socket) {
-            await this.initSocketOption();
+        if (!this.url) {
+            await this.initSocketPoint();
             optionInited = true;
         }
 
+        const url = this.url!;
+        const path = this.path!;
+        const context = this.cache.begin();
+        context.commit();
+        
+        this.socket = io(url, {
+            path,
+            extraHeaders: {
+                'oak-cxt': context.toString(),
+            },
+        });
         const socket = this.socket!;
         return new Promise((resolve, reject) => {
             /**
              * https://socket.io/zh-CN/docs/v4/client-socket-instance/
              */
             socket.on('connect', async () => {
-                // 验证身份
                 this.socketState = 'connected';
                 this.emit('connect');
                 socket.off('connect');
+
                 socket.on('disconnect', () => {
                     this.socketState = 'unconnected';
                     this.emit('disconnect');
                     socket.removeAllListeners();
 
-                    if (Object.keys(this.callbackMap).length > 0) {
+                    if (Object.keys(this.subDataMap).length > 0) {
                         this.connect();
                     }
                 });
-                await this.login();
+
+                if (Object.keys(this.subDataMap).length > 0) {
+                    socket.emit('sub', this.subDataMap, (success: boolean) => {
+
+                    });
+                }
+                else {
+                    socket.disconnect();
+                }
                 resolve(undefined);
             });
 
@@ -108,7 +128,7 @@ export class SubScriber<
                         // 可能socket地址改变了，刷新重连
                         socket.removeAllListeners();
                         socket.disconnect();
-                        this.socket = undefined;
+                        this.url = undefined;
                         await this.connect();
                         resolve(undefined);
                     }
@@ -123,17 +143,19 @@ export class SubScriber<
         data: SubDataDef<ED, keyof ED>[],
         callback?: (records: OpRecord<ED>[], ids: string[]) => void
     ) {
-        const ids = data.map((ele) => ele.id);
 
-        if (callback) {
-            ids.forEach((id) => {
-                assert(
-                    !this.callbackMap[id],
-                    `[subscriber]注册回调的id${id}发生重复`
-                );
-                this.callbackMap[id] = callback;
-            });
-        }
+        data.forEach(({ entity, id, filter }) => {
+            assert(
+                !this.subDataMap[id],
+                `[subscriber]注册回调的id${id}发生重复`
+            );
+            this.subDataMap[id] = {
+                callback,
+                entity,
+                id,
+                filter,
+            };
+        });
 
         if (this.socketState === 'unconnected') {
             this.connect();
@@ -143,14 +165,14 @@ export class SubScriber<
     }
 
     async unsub(ids: string[]) {
-        ids.forEach((id) => omit(this.callbackMap, id));
+        ids.forEach((id) => omit(this.subDataMap, id));
 
         if (this.socketState === 'connected') {
             this.socket!.emit('unsub', ids);
         }
 
         if (this.socketState !== 'unconnected') {
-            if (Object.keys(this.callbackMap).length === 0) {
+            if (Object.keys(this.subDataMap).length === 0) {
                 this.socket!.disconnect();
                 this.socket!.removeAllListeners();
                 this.socketState = 'unconnected';
