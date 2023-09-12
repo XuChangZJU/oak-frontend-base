@@ -158,6 +158,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     update(data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     remove(beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
+    setDirty(): void;
     composeOperations(): Array<{
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];

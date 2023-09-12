@@ -760,9 +760,6 @@ class ListNode extends Node {
     }
     clean(preserveAfterExecute) {
         if (this.dirty) {
-            for (const k in this.children) {
-                this.children[k].clean(preserveAfterExecute);
-            }
             const originUpdates = this.updates;
             this.updates = {};
             if (preserveAfterExecute) {
@@ -774,10 +771,16 @@ class ListNode extends Node {
                     }
                 }
             }
+            for (const k in this.children) {
+                this.children[k].clean(preserveAfterExecute);
+            }
             if (!preserveAfterExecute) {
                 this.dirty = undefined;
             }
-            this.publish();
+            else {
+                // preserveAfterExecute一定发生在execute，后面的cache会publish
+                this.publish();
+            }
         }
     }
     getChildOperation(child) {
@@ -1027,51 +1030,64 @@ class SingleNode extends Node {
         };
         this.setDirty();
     }
-    composeOperations() {
-        if (this.dirty) {
-            const operation = this.operation ? cloneDeep(this.operation.operation) : {
-                id: generateNewId(),
-                action: 'update',
-                data: {},
-                filter: {
-                    id: this.id,
+    setDirty() {
+        if (!this.dirty) {
+            // 这种情况是下面的子结点setDirty引起的连锁设置
+            assert(this.id);
+            this.operation = {
+                operation: {
+                    id: generateNewId(),
+                    action: 'update',
+                    data: {},
+                    filter: {
+                        id: this.id,
+                    }
                 }
             };
-            assert(operation);
-            for (const ele in this.children) {
-                const ele2 = ele.includes(':') ? ele.slice(0, ele.indexOf(':')) : ele;
-                const child = this.children[ele];
-                const childOperations = child.composeOperations();
-                if (childOperations) {
-                    if (child instanceof SingleNode) {
-                        assert(childOperations.length === 1);
-                        if (!operation.data[ele2]) {
-                            Object.assign(operation.data, {
-                                [ele2]: childOperations[0].operation,
-                            });
+        }
+        super.setDirty();
+    }
+    composeOperations() {
+        if (this.dirty) {
+            const operation = this.operation?.operation && cloneDeep(this.operation.operation);
+            if (operation) {
+                for (const ele in this.children) {
+                    const ele2 = ele.includes(':') ? ele.slice(0, ele.indexOf(':')) : ele;
+                    const child = this.children[ele];
+                    const childOperations = child.composeOperations();
+                    if (childOperations) {
+                        if (child instanceof SingleNode) {
+                            assert(childOperations.length === 1);
+                            if (!operation.data[ele2]) {
+                                Object.assign(operation.data, {
+                                    [ele2]: childOperations[0].operation,
+                                });
+                            }
+                            else {
+                                // 目前应该只允许一种情况，就是父create，子update
+                                assert(operation.data[ele2].action === 'create' && childOperations[0].operation.action === 'update');
+                                Object.assign(operation.data[ele2].data, childOperations[0].operation.data);
+                            }
                         }
                         else {
-                            // 目前应该只允许一种情况，就是父create，子update
-                            assert(operation.data[ele2].action === 'create' && childOperations[0].operation.action === 'update');
-                            Object.assign(operation.data[ele2].data, childOperations[0].operation.data);
-                        }
-                    }
-                    else {
-                        assert(child instanceof ListNode);
-                        const childOpers = childOperations.map(ele => ele.operation);
-                        if (!operation.data[ele2]) {
-                            operation.data[ele2] = childOpers;
-                        }
-                        else {
-                            operation.data[ele2].push(...childOpers);
+                            assert(child instanceof ListNode);
+                            const childOpers = childOperations.map(ele => ele.operation);
+                            if (childOpers.length > 0) {
+                                if (!operation.data[ele2]) {
+                                    operation.data[ele2] = childOpers;
+                                }
+                                else {
+                                    operation.data[ele2].push(...childOpers);
+                                }
+                            }
                         }
                     }
                 }
+                return [{
+                        entity: this.entity,
+                        operation,
+                    }];
             }
-            return [{
-                    entity: this.entity,
-                    operation,
-                }];
         }
     }
     getProjection(withDecendants) {
@@ -1168,19 +1184,21 @@ class SingleNode extends Node {
     }
     clean(preserveAfterExecute) {
         if (this.dirty) {
-            for (const child in this.children) {
-                this.children[child].clean(preserveAfterExecute);
-            }
             if (preserveAfterExecute && this.operation?.afterExecute) {
                 this.operation.operation = undefined;
             }
             else {
                 this.operation = undefined;
             }
+            for (const child in this.children) {
+                this.children[child].clean(preserveAfterExecute);
+            }
             if (!preserveAfterExecute) {
                 this.dirty = undefined;
             }
-            this.publish();
+            else {
+                this.publish();
+            }
         }
     }
     getFilter() {
@@ -1446,7 +1464,9 @@ class VirtualNode extends Feature {
         if (!preserveAfterExecute) {
             this.dirty = false;
         }
-        this.publish();
+        else {
+            this.publish();
+        }
     }
     checkIfClean() {
         for (const k in this.children) {
