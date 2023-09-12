@@ -48,16 +48,16 @@ export default function render(
     return (
         <Space direction="vertical" style={{ width: '100%' }}>
             <Space>
-                <Text style={{fontSize: 16}}>授权</Text>
+                <Text style={{ fontSize: 16 }}>授权</Text>
             </Space>
             <Table
-                rowKey={"relationId"}
+                rowKey={'relationId'}
                 dataSource={datasource}
                 columns={[
                     {
                         width: 200,
                         dataIndex: 'relation',
-                        title: '角色'
+                        title: '角色',
                     },
                     {
                         dataIndex: 'actions',
@@ -66,10 +66,18 @@ export default function render(
                             const options = value.map((ele) => ({
                                 label: ele,
                                 value: ele,
-                            }))
-                            const actionAuth = rows.filter((ele) => ele.relationId === row.relationId)
-                                .sort((a, b) => b.deActions.length - a.deActions.length)?.[0];
-                            const defaultValue = actionAuth ? actionAuth.deActions : [];
+                            }));
+                            const actionAuth = rows
+                                .filter(
+                                    (ele) => ele.relationId === row.relationId
+                                )
+                                .sort(
+                                    (a, b) =>
+                                        b.deActions.length - a.deActions.length
+                                )?.[0];
+                            const defaultValue = actionAuth
+                                ? actionAuth.deActions
+                                : [];
                             return (
                                 <Checkbox.Group
                                     style={{
@@ -80,33 +88,49 @@ export default function render(
                                     options={options}
                                     defaultValue={defaultValue}
                                     onChange={(checkedArr) => {
-                                        const path2 = path.replaceAll('(user)', '');
+                                        const path2 = path.replaceAll(
+                                            '(user)',
+                                            ''
+                                        );
                                         if (!actionAuth) {
                                             methods.addItem({
-                                                relationId: row.relationId || '',
+                                                relationId:
+                                                    row.relationId || '',
                                                 paths: [path2],
-                                                deActions: checkedArr as string[],
+                                                deActions:
+                                                    checkedArr as string[],
                                                 destEntity: entity as string,
-                                            })
-                                        }
-                                        else {
-                                            methods.updateItem({
-                                                deActions: checkedArr as string[],
-                                            }, actionAuth.id)
+                                            });
+                                        } else {
+                                            methods.updateItem(
+                                                {
+                                                    deActions:
+                                                        checkedArr as string[],
+                                                },
+                                                actionAuth.id
+                                            );
                                         }
                                         if (!checkedArr.length && actionAuth) {
                                             methods.removeItem(actionAuth.id);
                                         }
                                     }}
                                 />
-                            )
-                        }
-                    }
+                            );
+                        },
+                    },
                 ]}
                 pagination={false}
             ></Table>
-            <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', padding: 8 }}>
+            <div
+                style={{
+                    display: 'flex',
+                    width: '100%',
+                    justifyContent: 'flex-end',
+                    padding: 8,
+                }}
+            >
                 <Button
+                    disabled={!path}
                     type="primary"
                     onClick={() => {
                         methods.execute();
