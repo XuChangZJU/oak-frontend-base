@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Space, Button, Avatar } from 'antd';
+import React from 'react';
+import { Space, Button } from 'antd';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../../types/Page';
 import { ListButtonProps } from '../../../types/AbstractComponent';

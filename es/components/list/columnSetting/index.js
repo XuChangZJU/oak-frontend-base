@@ -1,19 +1,19 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useContext, useEffect, useState } from 'react';
 import { SettingOutlined, VerticalAlignBottomOutlined, VerticalAlignTopOutlined, } from '@ant-design/icons';
 import { Popover, Space, Tooltip, Tree, Button } from 'antd';
-import { useContext, useEffect, useState } from 'react';
 import Style from './index.module.less';
 import { TableContext } from '../../listPro/index';
 import { getPath, getLabel } from '../../../utils/usefulFn';
 import { useFeatures } from '../../../platforms/web';
 function ListItem(props) {
     const features = useFeatures();
-    const { title, onSelect, showToBottom, showToTop, onMoveTop, onMoveBottom } = props;
-    return (_jsxs("div", { className: Style.listItemView, onClick: onSelect, children: [_jsx("div", { className: Style.listItemTitle, children: title }), _jsxs("div", { className: Style.listIconView, children: [_jsx(Tooltip, { title: features.locales.t("leftPin"), children: showToTop && (_jsx("div", { className: Style.listIcon, onClick: (e) => {
+    const { title, onSelect, showToBottom, showToTop, onMoveTop, onMoveBottom, } = props;
+    return (_jsxs("div", { className: Style.listItemView, onClick: onSelect, children: [_jsx("div", { className: Style.listItemTitle, children: title }), _jsxs("div", { className: Style.listIconView, children: [_jsx(Tooltip, { title: features.locales.t('leftPin'), children: showToTop && (_jsx("div", { className: Style.listIcon, onClick: (e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 onMoveTop();
-                            }, children: _jsx(VerticalAlignTopOutlined, {}) })) }), _jsx(Tooltip, { title: features.locales.t("rightPin"), children: showToBottom && (_jsx("div", { className: Style.listIcon, onClick: (e) => {
+                            }, children: _jsx(VerticalAlignTopOutlined, {}) })) }), _jsx(Tooltip, { title: features.locales.t('rightPin'), children: showToBottom && (_jsx("div", { className: Style.listIcon, onClick: (e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 onMoveBottom();
@@ -73,11 +73,13 @@ function ColumnSetting() {
             const dropKey = info.node.key;
             const dragKey = info.dragNode.key;
             const { dropPosition, dropToGap } = info;
-            const position = dropPosition === -1 || !dropToGap ? dropPosition + 1 : dropPosition;
+            const position = dropPosition === -1 || !dropToGap
+                ? dropPosition + 1
+                : dropPosition;
             move(dragKey, dropKey, position);
         }, blockNode: true, onCheck: (checkedKeys, e) => {
             onCheck(e.node);
-        }, titleRender: (node) => (_jsx(ListItem, { title: node.title, nodeKey: node.key, showToTop: node.keyIndex !== 0, showToBottom: node.keyIndex !== (treeData.length - 1), onSelect: () => onCheck(node), onMoveTop: () => move(node.key, treeData[0].key, 0), onMoveBottom: () => move(node.key, treeData[treeData.length - 1].key, treeData.length + 1) })), checkedKeys: checkedKeys, showLine: false, treeData: treeData }));
-    return (_jsx(Popover, { arrow: false, title: _jsxs("div", { className: Style.titleView, children: [_jsx("strong", { children: features.locales.t('columnSetting') }), _jsx(Button, { type: 'link', onClick: onReset, children: features.locales.t('common::reset') })] }), trigger: "click", placement: "bottomRight", content: _jsx(Space, { children: listDom }), children: _jsx(Tooltip, { title: features.locales.t('columnSetting'), children: _jsx("div", { className: Style.iconBox, children: _jsx(SettingOutlined, {}) }) }) }));
+        }, titleRender: (node) => (_jsx(ListItem, { title: node.title, nodeKey: node.key, showToTop: node.keyIndex !== 0, showToBottom: node.keyIndex !== treeData.length - 1, onSelect: () => onCheck(node), onMoveTop: () => move(node.key, treeData[0].key, 0), onMoveBottom: () => move(node.key, treeData[treeData.length - 1].key, treeData.length + 1) })), checkedKeys: checkedKeys, showLine: false, treeData: treeData }));
+    return (_jsx(Popover, { arrow: false, title: _jsxs("div", { className: Style.titleView, children: [_jsx("strong", { children: features.locales.t('columnSetting') }), _jsx(Button, { type: "link", onClick: onReset, children: features.locales.t('common::reset') })] }), trigger: "click", placement: "bottomRight", content: _jsx(Space, { children: listDom }), children: _jsx(Tooltip, { title: features.locales.t('columnSetting'), children: _jsx("div", { className: Style.iconBox, children: _jsx(SettingOutlined, {}) }) }) }));
 }
 export default ColumnSetting;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Space, Tag, Tooltip, Typography } from 'antd';
 import ImgBox from '../../imgBox';
 import { EntityDict } from 'oak-domain/lib/types/Entity';

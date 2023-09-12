@@ -1,15 +1,13 @@
-import { Space, Tooltip, ButtonProps} from 'antd';
-import React, { useContext,  } from 'react';
-import Style from './index.module.less';
+import React from 'react';
+import { Space, Tooltip, ButtonProps } from 'antd';
 import {
  ReloadOutlined
 } from '@ant-design/icons';
 import ButtonGroup from '../buttonGroup';
 import ColumnSetting from '../columnSetting';
-import { TableContext } from '../../listPro';
 import { useFeatures } from '../../../platforms/web';
 import { Locales } from '../../../features/locales';
-
+import Style from './index.module.less';
 
 type buttonProps = {
     label: string;
@@ -26,7 +24,7 @@ type ToolBarProps = {
 function ToolBar(props: ToolBarProps) {
     const { title, buttonGroup, reload } = props;
     const features = useFeatures<{ locales: Locales<any, any, any, any> }>();
-    const { tableAttributes, setTableAttributes } = useContext(TableContext);
+
     return (
         <div className={Style.toolbarContainer}>
             <div className={Style.title}>
