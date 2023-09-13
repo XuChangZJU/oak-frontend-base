@@ -5,6 +5,7 @@ import { CommonAspectDict } from 'oak-common-aspect';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { pull, omit } from 'oak-domain/lib/utils/lodash';
 import { Cache } from './cache';
+import { Message } from './message';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import io, { Socket } from '../utils/socket.io/socket.io';
 import { Feature } from '../types/Feature';
@@ -18,6 +19,7 @@ export class SubScriber<
     AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>
 > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
+    private message: Message;
     private getSubscribePointFn: () => Promise<{
         url: string;
         path: string;
@@ -43,6 +45,7 @@ export class SubScriber<
 
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
+        message: Message,
         getSubscribePointFn: () => Promise<{
             url: string;
             path: string;
@@ -50,6 +53,7 @@ export class SubScriber<
     ) {
         super();
         this.cache = cache;
+        this.message = message;
         this.getSubscribePointFn = getSubscribePointFn;
     }
 
@@ -110,8 +114,17 @@ export class SubScriber<
                 });
 
                 if (Object.keys(this.subDataMap).length > 0) {
-                    socket.emit('sub', this.subDataMap, (success: boolean) => {
-
+                    const data = Object.values(this.subDataMap).map(
+                        ele => omit(ele, 'callback')
+                    );
+                    socket.emit('sub', data, (result: string) => {
+                        if (result) {
+                            this.message.setMessage({
+                                type: 'error',
+                                title: 'sub data error',
+                                content: result,
+                            });
+                        }
                     });
                 }
                 else {
@@ -160,7 +173,15 @@ export class SubScriber<
         if (this.socketState === 'unconnected') {
             this.connect();
         } else if (this.socketState === 'connected') {
-            this.socket?.emit('sub', data);
+            this.socket!.emit('sub', data, (result: string) => {
+                if (result) {
+                    this.message.setMessage({
+                        type: 'error',
+                        title: 'sub data error',
+                        content: result,
+                    });
+                }
+            });
         }
     }
 
