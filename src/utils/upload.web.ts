@@ -2,7 +2,7 @@
 
 export class Upload {
     async uploadFile(
-        file: File,
+        file: File | string,
         name: string,
         uploadUrl: string,
         formData: Record<string, any>,
@@ -12,7 +12,7 @@ export class Upload {
         for (const key of Object.keys(formData)) {
             formData2.append(key, formData[key]);
         }
-        formData2.append(name || 'file', file);
+        formData2.append(name || 'file', file as File);
 
         const options = {
             body: formData2,

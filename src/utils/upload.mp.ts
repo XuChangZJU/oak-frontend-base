@@ -2,7 +2,7 @@ import { promisify } from './promisify';
 
 export class Upload {
     async uploadFile(
-        file: string,
+        file: string | File,
         name: string,
         uploadUrl: string,
         formData: Record<string, any>,
@@ -11,7 +11,7 @@ export class Upload {
         const wxUploadFile = promisify(wx.uploadFile);
         const result = await wxUploadFile({
             url: uploadUrl,
-            filePath: file!,
+            filePath: file as string,
             name: name || 'file',
             formData: formData,
         });
