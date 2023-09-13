@@ -8,7 +8,6 @@ export * from './types/Page';
 export * from './types/Initialize';
 export * from './types/Filter';
 export * from './types/AbstractComponent';
-export * from './types/Upload';
 export * from './types/Exception';
 export * from './types/Pagination';
 export * from './types/NamedCondition';
