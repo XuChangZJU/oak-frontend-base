@@ -1,15 +1,16 @@
 export class Upload {
-    async uploadFile(origin, file, uploadInfo) {
-        if (origin === 'qiniu') {
-            // 七牛上传
-            return this.uploadFileByQiniu(file, uploadInfo);
+    async uploadFile(name, uploadUrl, formData, autoInform, file) {
+        const formData2 = new FormData();
+        for (const key of Object.keys(formData)) {
+            formData2.append(key, formData[key]);
         }
-        else if (origin === 'aliyun') {
-            return this.uploadFileByAliyun(file, uploadInfo);
-        }
-        else {
-            throw new Error('Method not implemented.');
-        }
+        formData2.append(name || 'file', file);
+        const options = {
+            body: formData2,
+            method: 'POST',
+        };
+        const json = await (await fetch(uploadUrl, options)).json();
+        return json;
     }
     async uploadFileByQiniu(file, uploadInfo) {
         // 七牛上传

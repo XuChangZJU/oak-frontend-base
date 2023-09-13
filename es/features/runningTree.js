@@ -475,7 +475,7 @@ class ListNode extends Node {
             operation: {
                 id: generateNewId(),
                 action: 'create',
-                data: Object.assign(item, { id }),
+                data: item.id ? item : Object.assign(item, { id }),
             },
         };
         this.setDirty();
@@ -1031,7 +1031,7 @@ class SingleNode extends Node {
         this.setDirty();
     }
     setDirty() {
-        if (!this.dirty) {
+        if (!this.operation) {
             // 这种情况是下面的子结点setDirty引起的连锁设置
             assert(this.id);
             this.operation = {
