@@ -204,7 +204,7 @@ export declare type OakListComponentMethods<ED extends EntityDict & BaseEntityDi
     getPagination: (path?: string) => Pagination | undefined;
     setPageSize: (pageSize: number, path?: string) => void;
     setCurrentPage: (current: number, path?: string) => void;
-    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
+    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => string;
     removeItem: (id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
     updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
     recoverItem: (id: string, path?: string) => void;

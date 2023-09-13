@@ -123,7 +123,7 @@ class OakComponentBase extends React.PureComponent {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.addItem(this.state.oakFullpath, data, beforeExecute, afterExecute);
+        return this.features.runningTree.addItem(this.state.oakFullpath, data, beforeExecute, afterExecute);
     }
     removeItem(id, beforeExecute, afterExecute, path) {
         const path2 = path

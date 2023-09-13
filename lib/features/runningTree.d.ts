@@ -96,7 +96,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     removeNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(name: string, refresh: boolean): void;
     getFreshValue(): Array<Partial<ED[T]['Schema']>>;
-    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
+    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): string;
     removeItem(id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     recoverItem(id: string): void;
     resetItem(id: string): void;
@@ -233,7 +233,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     destroyNode(path: string): void;
     getFreshValue(path: string): Partial<ED[keyof ED]["Schema"]> | Partial<ED[keyof ED]["Schema"]>[] | undefined;
     isDirty(path: string): boolean;
-    addItem<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
+    addItem<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): string;
     removeItem(path: string, id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     updateItem<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
     recoverItem(path: string, id: string): void;

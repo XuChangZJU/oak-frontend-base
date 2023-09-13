@@ -6,12 +6,14 @@ import { useState } from 'react';
 import ActionAuthList from '../actionAuthList';
 export default function render(props) {
     const { methods, data } = props;
-    const { entity, entityDNode, entitySNode, oakFullpath, rows } = data;
+    const { entity, entityDNode, entitySNode, oakFullpath } = data;
     const { getNodes, checkSelectRelation } = methods;
     const [open, setOpen] = useState(false);
-    const [openTip, setOpenTip] = useState(false);
     const [breadcrumbItems, setBreadcrumbItems] = useState([]);
-    return (_jsxs(Space, { direction: "vertical", style: { width: '100%' }, children: [_jsx(Button, { onClick: () => setOpen(true), children: "\u8BBE\u7F6E" }), _jsx(Modal, { title: `权限设置`, open: open, destroyOnClose: true, footer: null, onCancel: () => setOpen(false), width: 900, children: _jsxs(Space, { direction: "vertical", style: { width: '100%', marginTop: 16 }, size: 16, children: [_jsxs(Space, { direction: "vertical", children: [_jsx(Text, { style: { fontSize: 16 }, children: "\u8DEF\u5F84" }), _jsx(Space, { style: { width: '100%' }, wrap: true, children: (breadcrumbItems && breadcrumbItems.length > 0) ? (_jsxs(_Fragment, { children: [_jsx(Breadcrumb, { items: breadcrumbItems.map((ele, index) => ({
+    return (_jsxs(Space, { direction: "vertical", style: { width: '100%' }, children: [_jsx(Button, { onClick: () => setOpen(true), children: "\u8BBE\u7F6E" }), _jsx(Modal, { title: `权限设置`, open: open, destroyOnClose: true, footer: null, onCancel: () => {
+                    setBreadcrumbItems([]);
+                    setOpen(false);
+                }, width: 900, children: _jsxs(Space, { direction: "vertical", style: { width: '100%', marginTop: 16 }, size: 16, children: [_jsxs(Space, { direction: "vertical", children: [_jsx(Text, { style: { fontSize: 16 }, children: "\u8DEF\u5F84" }), _jsx(Space, { style: { width: '100%' }, wrap: true, children: (breadcrumbItems && breadcrumbItems.length > 0) ? (_jsxs(_Fragment, { children: [_jsx(Breadcrumb, { items: breadcrumbItems.map((ele, index) => ({
                                                     title: (_jsx("a", { onClick: () => {
                                                             if (checkSelectRelation()) {
                                                                 return;
@@ -41,6 +43,7 @@ export default function render(props) {
                                                             setBreadcrumbItems(breadcrumbItems);
                                                             getNodes(ele);
                                                         }, children: ele }))) }) })] })] }) }), _jsx(ActionAuthList, { oakPath: "$actionAuthList-cpn", entity: entity, path: breadcrumbItems.join('.'), onClose: () => {
+                                setBreadcrumbItems([]);
                                 setOpen(false);
-                            } })] }) })] }));
+                            }, oakAutoUnmount: true })] }) })] }));
 }

@@ -15,11 +15,11 @@ export default function render(props) {
         }));
         setDatasource(tableRows);
     }, [relations]);
-    return (_jsxs(Space, { direction: "vertical", style: { width: '100%' }, children: [_jsx(Space, { children: _jsx(Text, { style: { fontSize: 16 }, children: "\u6388\u6743" }) }), _jsx(Table, { rowKey: "relationId", dataSource: datasource, columns: [
+    return (_jsxs(Space, { direction: "vertical", style: { width: '100%' }, children: [_jsx(Space, { children: _jsx(Text, { style: { fontSize: 16 }, children: "\u6388\u6743" }) }), _jsx(Table, { rowKey: 'relationId', dataSource: datasource, columns: [
                     {
                         width: 200,
                         dataIndex: 'relation',
-                        title: '角色'
+                        title: '角色',
                     },
                     {
                         dataIndex: 'actions',
@@ -29,9 +29,12 @@ export default function render(props) {
                                 label: ele,
                                 value: ele,
                             }));
-                            const actionAuth = rows.filter((ele) => ele.relationId === row.relationId)
+                            const actionAuth = rows
+                                .filter((ele) => ele.relationId === row.relationId)
                                 .sort((a, b) => b.deActions.length - a.deActions.length)?.[0];
-                            const defaultValue = actionAuth ? actionAuth.deActions : [];
+                            const defaultValue = actionAuth
+                                ? actionAuth.deActions
+                                : [];
                             return (_jsx(Checkbox.Group, { style: {
                                     width: '100%',
                                     display: 'flex',
@@ -55,9 +58,14 @@ export default function render(props) {
                                         methods.removeItem(actionAuth.id);
                                     }
                                 } }));
-                        }
-                    }
-                ], pagination: false }), _jsx("div", { style: { display: 'flex', width: '100%', justifyContent: 'flex-end', padding: 8 }, children: _jsx(Button, { type: "primary", onClick: () => {
+                        },
+                    },
+                ], pagination: false }), _jsx("div", { style: {
+                    display: 'flex',
+                    width: '100%',
+                    justifyContent: 'flex-end',
+                    padding: 8,
+                }, children: _jsx(Button, { disabled: !path, type: "primary", onClick: () => {
                         methods.execute();
                         onClose();
                     }, children: "\u4FDD\u5B58\u5E76\u5173\u95ED" }) })] }));

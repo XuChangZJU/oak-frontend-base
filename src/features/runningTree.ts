@@ -627,6 +627,7 @@ class ListNode<
             },
         };
         this.setDirty();
+        return id;
     }
 
     removeItem(

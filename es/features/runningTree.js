@@ -479,6 +479,7 @@ class ListNode extends Node {
             },
         };
         this.setDirty();
+        return id;
     }
     removeItem(id, beforeExecute, afterExecute) {
         if (this.updates[id] &&
