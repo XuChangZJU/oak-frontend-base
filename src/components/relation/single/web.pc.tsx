@@ -11,7 +11,6 @@ import ActionAuthList from '../actionAuthList';
 type ED = EntityDict & BaseEntityDict;
 
 export default function render(props: WebComponentProps<ED, keyof ED, false, {
-    rows: EntityDict['actionAuth']['Schema'][];
     entity: keyof ED;
     entityDNode: string[];
     entitySNode: string[];
@@ -20,10 +19,9 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
     checkSelectRelation: () => boolean;
 }>) {
     const { methods, data } = props;
-    const { entity, entityDNode, entitySNode, oakFullpath, rows } = data;
+    const { entity, entityDNode, entitySNode, oakFullpath } = data;
     const { getNodes, checkSelectRelation } = methods;
     const [open, setOpen] = useState(false);
-    const [openTip, setOpenTip] = useState(false);
     const [breadcrumbItems, setBreadcrumbItems] = useState<string[]>([])
     return (
         <Space direction="vertical" style={{width: '100%'}}>
@@ -33,7 +31,10 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                 open={open}
                 destroyOnClose={true}
                 footer={null}
-                onCancel={() => setOpen(false)}
+                onCancel={() => {
+                    setBreadcrumbItems([]);
+                    setOpen(false)
+                }}
                 width={900}
             >
                 <Space direction="vertical" style={{ width: '100%', marginTop: 16 }} size={16}>
@@ -141,8 +142,10 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                         entity={entity}
                         path={breadcrumbItems.join('.')}
                         onClose={() => {
+                            setBreadcrumbItems([]);
                             setOpen(false);
                         }}
+                        oakAutoUnmount={true}
                     />
                 </Space>
             </Modal>

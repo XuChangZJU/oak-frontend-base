@@ -10,8 +10,7 @@ export default OakComponent({
         entity: '' as keyof ED,
     },
     formData({ data: rows }) {
-        return {
-        };
+        return {};
     },
     data: {
         links: [] as {

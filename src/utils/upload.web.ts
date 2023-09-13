@@ -4,25 +4,27 @@ type UploadInfo = QiniuUploadInfo | AliyunUploadInfo;
 
 export class Upload {
     async uploadFile(
-        origin: 'qiniu' | 'aliyun' | 'unknown',
-        file: File,
-        uploadInfo: UploadInfo
-    ): Promise<{
-        url: string;
-        bucket: string;
-    }> {
-        if (origin === 'qiniu') {
-            // 七牛上传
-            return this.uploadFileByQiniu(file, uploadInfo as QiniuUploadInfo);
-        } else if (origin === 'aliyun') {
-            return this.uploadFileByAliyun(
-                file,
-                uploadInfo as AliyunUploadInfo
-            );
-        } else {
-            throw new Error('Method not implemented.');
+        name: string,
+        uploadUrl: string,
+        formData: Record<string, any>,
+        autoInform: boolean,
+        file: string | File,
+    ): Promise<any> {
+        const formData2 = new FormData();
+        for (const key of Object.keys(formData)) {
+            formData2.append(key, formData[key]);
         }
+        formData2.append(name || 'file', file);
+
+        const options = {
+            body: formData2,
+            method: 'POST',
+        };
+
+        const json = await (await fetch(uploadUrl, options)).json();
+        return json;
     }
+
 
     async uploadFileByQiniu(
         file: File,

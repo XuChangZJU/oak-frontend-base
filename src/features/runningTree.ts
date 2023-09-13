@@ -198,7 +198,7 @@ class ListNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Node<ED, T, Cxt, FrontCxt, AD> {
+> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     private updates: Record<
         string,
@@ -623,7 +623,7 @@ class ListNode<
             operation: {
                 id: generateNewId(),
                 action: 'create',
-                data: Object.assign(item, { id }),
+                data: item.id ? item : Object.assign(item, { id }),
             },
         };
         this.setDirty();
@@ -1285,7 +1285,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     setDirty(): void {
-        if (!this.dirty) {
+        if (!this.operation) {
             // 这种情况是下面的子结点setDirty引起的连锁设置
             assert(this.id);
             this.operation = {
@@ -1614,7 +1614,7 @@ class VirtualNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private dirty: boolean;
     private executing: boolean;
     private loading = false;
@@ -1805,7 +1805,7 @@ export class RunningTree<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
     private root: Record<

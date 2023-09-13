@@ -1,18 +1,42 @@
 import { promisify } from './promisify';
 export class Upload {
-    async uploadFile(origin, filePath, uploadInfo) {
-        // 小程序平台
-        if (origin === 'qiniu') {
-            // 七牛上传
-            return this.uploadFileByQiniu(filePath, uploadInfo);
+    async uploadFile(name, uploadUrl, formData, autoInform, file) {
+        const formData2 = new FormData();
+        for (const key of Object.keys(formData)) {
+            formData2.append(key, formData[key]);
         }
-        else if (origin === 'aliyun') {
-            return this.uploadFileByAliyun(filePath, uploadInfo);
-        }
-        else {
-            throw new Error('Method not implemented.');
-        }
+        formData2.append(name || 'file', file);
+        const options = {
+            body: formData2,
+            method: 'POST',
+        };
+        const json = await (await fetch(uploadUrl, options)).json();
+        return json;
     }
+    // async uploadFile(
+    //     origin: 'qiniu' | 'aliyun' | 'unknown',
+    //     filePath: string,
+    //     uploadInfo: UploadInfo
+    // ): Promise<{
+    //     url: string;
+    //     bucket: string;
+    // }> {
+    //     // 小程序平台
+    //     if (origin === 'qiniu') {
+    //         // 七牛上传
+    //         return this.uploadFileByQiniu(
+    //             filePath,
+    //             uploadInfo as QiniuUploadInfo
+    //         );
+    //     } else if (origin === 'aliyun') {
+    //         return this.uploadFileByAliyun(
+    //             filePath,
+    //             uploadInfo as AliyunUploadInfo
+    //         );
+    //     } else {
+    //         throw new Error('Method not implemented.');
+    //     }
+    // }
     async uploadFileByQiniu(filePath, uploadInfo) {
         // 七牛上传
         const { uploadHost, uploadToken, key, domain, bucket } = uploadInfo;

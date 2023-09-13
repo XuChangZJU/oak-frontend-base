@@ -1,10 +1,6 @@
 import { QiniuUploadInfo, AliyunUploadInfo } from '../types/Upload';
-declare type UploadInfo = QiniuUploadInfo | AliyunUploadInfo;
 export declare class Upload {
-    uploadFile(origin: 'qiniu' | 'aliyun' | 'unknown', filePath: string, uploadInfo: UploadInfo): Promise<{
-        url: string;
-        bucket: string;
-    }>;
+    uploadFile(name: string, uploadUrl: string, formData: Record<string, any>, autoInform: boolean, file: string | File): Promise<any>;
     uploadFileByQiniu(filePath: string, uploadInfo: QiniuUploadInfo): Promise<{
         url: string;
         bucket: string;
@@ -14,4 +10,3 @@ export declare class Upload {
         bucket: string;
     }>;
 }
-export {};
