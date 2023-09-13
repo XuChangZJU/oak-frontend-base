@@ -28,7 +28,7 @@ export function initializeStep2<
     ED extends EntityDict & BaseEntityDict,
     Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>>(
-        features: Pick<BasicFeatures<ED, Cxt, FrontCxt, AD>, 'localStorage' | 'environment'>,
+        features: Pick<BasicFeatures<ED, Cxt, FrontCxt, AD>, 'localStorage' | 'environment' | 'message'>,
         aspectWrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>,
         storageSchema: StorageSchema<ED>,
         frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
@@ -48,7 +48,7 @@ export function initializeStep2<
         updateFreeEntities?: (keyof ED)[],
         savedEntities?: (keyof ED)[],
         keepFreshPeriod?: number) {
-    const { localStorage, environment } = features;
+    const { localStorage, environment, message } = features;
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(storageSchema, aspectWrapper,
         frontendContextBuilder, checkers, getFullDataFn, localStorage, savedEntities, keepFreshPeriod);
     const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache,
@@ -59,7 +59,7 @@ export function initializeStep2<
     const style = new Style<ED>(colorDict);
     const locales = new Locales(cache, localStorage, environment, 'zh-CN', makeBridgeUrlFn);        // 临时性代码，应由上层传入
     const contextMenuFactory = new ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, relationAuth, actionCascadePathGraph);
-    const subscriber = new SubScriber(cache, getSubscribePointFn);
+    const subscriber = new SubScriber(cache, message, getSubscribePointFn);
     return {
         cache,
         relationAuth,
