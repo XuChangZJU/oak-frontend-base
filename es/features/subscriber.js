@@ -1,9 +1,10 @@
 import { assert } from 'oak-domain/lib/utils/assert';
-import { pull, omit } from 'oak-domain/lib/utils/lodash';
+import { pull, omit, unset } from 'oak-domain/lib/utils/lodash';
 import io from '../utils/socket.io/socket.io';
 import { Feature } from '../types/Feature';
 export class SubScriber extends Feature {
     cache;
+    message;
     getSubscribePointFn;
     subDataMap = {};
     url;
@@ -14,9 +15,10 @@ export class SubScriber extends Feature {
         connect: [],
         disconnect: [],
     };
-    constructor(cache, getSubscribePointFn) {
+    constructor(cache, message, getSubscribePointFn) {
         super();
         this.cache = cache;
+        this.message = message;
         this.getSubscribePointFn = getSubscribePointFn;
     }
     on(event, callback) {
@@ -42,7 +44,7 @@ export class SubScriber extends Feature {
         const url = this.url;
         const path = this.path;
         const context = this.cache.begin();
-        context.commit();
+        this.cache.commit();
         this.socket = io(url, {
             path,
             extraHeaders: {
@@ -67,13 +69,25 @@ export class SubScriber extends Feature {
                     }
                 });
                 if (Object.keys(this.subDataMap).length > 0) {
-                    socket.emit('sub', this.subDataMap, (success) => {
+                    const data = Object.values(this.subDataMap).map(ele => omit(ele, 'callback'));
+                    socket.emit('sub', data, (result) => {
+                        if (result) {
+                            this.message.setMessage({
+                                type: 'error',
+                                title: 'sub data error',
+                                content: result,
+                            });
+                            reject();
+                        }
+                        else {
+                            resolve(undefined);
+                        }
                     });
                 }
                 else {
+                    resolve(undefined);
                     socket.disconnect();
                 }
-                resolve(undefined);
             });
             if (!optionInited) {
                 let count = 0;
@@ -103,14 +117,28 @@ export class SubScriber extends Feature {
             };
         });
         if (this.socketState === 'unconnected') {
-            this.connect();
+            return this.connect();
         }
         else if (this.socketState === 'connected') {
-            this.socket?.emit('sub', data);
+            return new Promise((resolve, reject) => {
+                this.socket.emit('sub', data, (result) => {
+                    if (result) {
+                        this.message.setMessage({
+                            type: 'error',
+                            title: 'sub data error',
+                            content: result,
+                        });
+                        reject();
+                    }
+                    else {
+                        resolve(undefined);
+                    }
+                });
+            });
         }
     }
     async unsub(ids) {
-        ids.forEach((id) => omit(this.subDataMap, id));
+        ids.forEach((id) => unset(this.subDataMap, id));
         if (this.socketState === 'connected') {
             this.socket.emit('unsub', ids);
         }

@@ -3,7 +3,7 @@ import { EntityDict, Aspect, OpRecord, SubDataDef } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
-import { pull, omit } from 'oak-domain/lib/utils/lodash';
+import { pull, omit, unset } from 'oak-domain/lib/utils/lodash';
 import { Cache } from './cache';
 import { Message } from './message';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
@@ -75,7 +75,7 @@ export class SubScriber<
         this.path = path;
     }
 
-    private async connect() {
+    private async connect(): Promise<void> {
         let optionInited = false;
         if (!this.url) {
             await this.initSocketPoint();
@@ -85,7 +85,7 @@ export class SubScriber<
         const url = this.url!;
         const path = this.path!;
         const context = this.cache.begin();
-        context.commit();
+        this.cache.commit();
         
         this.socket = io(url, {
             path,
@@ -124,13 +124,17 @@ export class SubScriber<
                                 title: 'sub data error',
                                 content: result,
                             });
+                            reject();
+                        }
+                        else {
+                            resolve(undefined);
                         }
                     });
                 }
                 else {
+                    resolve(undefined);
                     socket.disconnect();
                 }
-                resolve(undefined);
             });
 
             if (!optionInited) {
@@ -155,8 +159,7 @@ export class SubScriber<
     async sub(
         data: SubDataDef<ED, keyof ED>[],
         callback?: (records: OpRecord<ED>[], ids: string[]) => void
-    ) {
-
+    ): Promise<void> {
         data.forEach(({ entity, id, filter }) => {
             assert(
                 !this.subDataMap[id],
@@ -171,22 +174,31 @@ export class SubScriber<
         });
 
         if (this.socketState === 'unconnected') {
-            this.connect();
-        } else if (this.socketState === 'connected') {
-            this.socket!.emit('sub', data, (result: string) => {
-                if (result) {
-                    this.message.setMessage({
-                        type: 'error',
-                        title: 'sub data error',
-                        content: result,
+            return this.connect();
+        } 
+        else if (this.socketState === 'connected') {
+            return new Promise(
+                (resolve, reject) => {
+                    this.socket!.emit('sub', data, (result: string) => {
+                        if (result) {
+                            this.message.setMessage({
+                                type: 'error',
+                                title: 'sub data error',
+                                content: result,
+                            });
+                            reject();
+                        }
+                        else {
+                            resolve(undefined);
+                        }
                     });
                 }
-            });
+            );
         }
     }
 
     async unsub(ids: string[]) {
-        ids.forEach((id) => omit(this.subDataMap, id));
+        ids.forEach((id) => unset(this.subDataMap, id));
 
         if (this.socketState === 'connected') {
             this.socket!.emit('unsub', ids);
