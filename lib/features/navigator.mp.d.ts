@@ -3,7 +3,7 @@ import { Feature } from '../types/Feature';
 import { OakNavigateToParameters } from '../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types';
-declare type Location = {
+type Location = {
     pathname: string;
     state: unknown;
     key: string;

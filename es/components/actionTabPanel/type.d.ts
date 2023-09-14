@@ -1,6 +1,6 @@
 /// <reference types="react" />
 import { ButtonProps } from 'antd';
-export declare type Item = {
+export type Item = {
     icon?: string;
     iconRender?: React.ReactNode;
     iconProps?: {
@@ -21,4 +21,4 @@ export declare type Item = {
     filter?: () => boolean;
     show?: boolean;
 };
-export declare type IMode = 'card' | 'text';
+export type IMode = 'card' | 'text';

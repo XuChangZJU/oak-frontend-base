@@ -55,12 +55,12 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         data: Partial<ED[T]["Schema"]>[];
         count: number | undefined;
     }>;
-    aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]['Aggregation'], option?: OP): Promise<import("oak-domain/lib/types").AggregationResult<ED[keyof ED]["Schema"]>>;
+    aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]['Aggregation'], option?: OP): Promise<ReturnType<AD["aggregate"]>>;
     operate<T extends keyof ED, OP extends OperateOption>(entity: T, operation: ED[T]['Operation'] | ED[T]['Operation'][], option?: OP, callback?: (result: Awaited<ReturnType<AD['operate']>>) => void): Promise<{
         result: Awaited<ReturnType<AD["operate"]>>;
         message: string | null | undefined;
     }>;
-    count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]['Selection'], 'filter'>, option?: OP, callback?: (result: Awaited<ReturnType<AD['count']>>) => void): Promise<number>;
+    count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]['Selection'], 'filter'>, option?: OP, callback?: (result: Awaited<ReturnType<AD['count']>>) => void): Promise<ReturnType<AD["count"]>>;
     private sync;
     /**
      * 前端缓存做operation只可能是测试权限，必然回滚

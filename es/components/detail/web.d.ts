@@ -4,8 +4,8 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { AttrRender, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
-export declare type ColSpanType = 1 | 2 | 3 | 4;
-declare type ColumnMapType = {
+export type ColSpanType = 1 | 2 | 3 | 4;
+type ColumnMapType = {
     xxl: ColSpanType;
     xl: ColSpanType;
     lg: ColSpanType;

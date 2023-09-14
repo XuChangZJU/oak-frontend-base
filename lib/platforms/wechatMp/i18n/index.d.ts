@@ -6,7 +6,7 @@ export interface CommonI18nInterface {
 export declare const enum Locale {
     default = "zh_CN"
 }
-export declare type Locales = {
+export type Locales = {
     translations: object;
     defaultLocale?: string;
     fallbackLocale?: string;
@@ -39,7 +39,7 @@ export declare function getI18nInstanceWechatMp(): I18nWechatMpRuntimeBase | nul
 export declare const CURRENT_LOCALE_KEY = "$_locale";
 export declare const LOCALE_CHANGE_HANDLER_NAME = "$_localeChange";
 export declare const CURRENT_LOCALE_DATA = "$_translations";
-export declare type I18nOptions = {
+export type I18nOptions = {
     translations?: Record<string, any>;
     defaultLocale?: string;
 };

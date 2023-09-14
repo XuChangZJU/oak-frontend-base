@@ -1,5 +1,5 @@
 import 'ol/ol.css';
-declare type MapProps = {
+type MapProps = {
     id?: string;
     center?: [number, number];
     zoom?: number;

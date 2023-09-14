@@ -4,7 +4,7 @@ import { ED } from '../../types/AbstractComponent';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { CascadeActionProps } from '../../types/AbstractComponent';
-declare type CascadeActionDef = {
+type CascadeActionDef = {
     [K in keyof EntityDict[keyof EntityDict]['Schema']]?: ActionDef<EntityDict & BaseEntityDict, keyof EntityDict>[];
 };
 export default function Render(props: WebComponentProps<ED, keyof EntityDict, false, {

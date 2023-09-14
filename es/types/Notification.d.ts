@@ -1,4 +1,4 @@
-export declare type NotificationProps = {
+export type NotificationProps = {
     title?: string;
     content?: string | any;
     type: 'info' | 'success' | 'warning' | 'error';

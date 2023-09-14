@@ -3,7 +3,7 @@ import { TableProps } from 'antd';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, ED, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
 import { RowWithActions } from '../../types/Page';
-declare type Props<ED2 extends ED, T extends keyof ED2> = {
+type Props<ED2 extends ED, T extends keyof ED2> = {
     title?: string;
     buttonGroup?: ListButtonProps[];
     onReload?: () => void;
@@ -23,7 +23,7 @@ declare type Props<ED2 extends ED, T extends keyof ED2> = {
         }) => void;
     };
 };
-export declare type TableAttributeType = {
+export type TableAttributeType = {
     attribute: OakAbsAttrJudgeDef;
     show: boolean;
 };

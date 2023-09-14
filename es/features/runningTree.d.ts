@@ -204,7 +204,7 @@ declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends As
     clean(preserveAfterExecute?: true): void;
     checkIfClean(): void;
 }
-export declare type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
+export type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     path: string;
     entity?: T;
     isList?: boolean;

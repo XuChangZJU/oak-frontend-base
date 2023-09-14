@@ -68,7 +68,7 @@
   },
   "types": [
     "node",
-    "miniprogram-api-typings",
+    "wechat-miniprogram",
     "react"
   ],
   "include": [

@@ -1,4 +1,4 @@
-declare type Props = {
+type Props = {
     items: Array<{
         title: string;
         href?: string;

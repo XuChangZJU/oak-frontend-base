@@ -1,8 +1,8 @@
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 import { ColSpanType, ColumnProps } from '../../types/Filter';
-declare type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
-declare type ColumnMapType = {
+type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+type ColumnMapType = {
     xxl: ColSpanType;
     xl: ColSpanType;
     lg: ColSpanType;

@@ -1,6 +1,6 @@
 import React from 'react';
 import './index.less';
-declare type PageHeaderProps = {
+type PageHeaderProps = {
     style?: React.CSSProperties;
     className?: string;
     title?: React.ReactNode;

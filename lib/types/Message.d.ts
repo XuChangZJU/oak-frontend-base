@@ -1,4 +1,4 @@
-export declare type MessageProps = {
+export type MessageProps = {
     title?: string;
     content?: string | any;
     type: 'info' | 'success' | 'warning' | 'error';

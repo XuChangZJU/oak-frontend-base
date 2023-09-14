@@ -1,4 +1,4 @@
-declare type Options = {
+type Options = {
     width?: number;
     height?: number;
     devicePixelRatio?: number;

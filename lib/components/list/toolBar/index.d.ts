@@ -1,10 +1,10 @@
 import { ButtonProps } from 'antd';
-declare type buttonProps = {
+type buttonProps = {
     label: string;
     type?: ButtonProps['type'];
     onClick: () => void;
 };
-declare type ToolBarProps = {
+type ToolBarProps = {
     title?: string;
     buttonGroup?: buttonProps[];
     reload: () => void;

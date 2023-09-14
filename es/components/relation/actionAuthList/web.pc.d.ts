@@ -1,8 +1,8 @@
 import { WebComponentProps } from '../../../types/Page';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-declare type ED = EntityDict & BaseEntityDict;
-declare type TableData = {
+type ED = EntityDict & BaseEntityDict;
+type TableData = {
     relationId: string;
     relation: string;
     actions: string[];

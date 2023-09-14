@@ -1,4 +1,4 @@
-declare type Props = {
+type Props = {
     mode?: 'select';
     selected?: boolean;
     src: string | undefined;

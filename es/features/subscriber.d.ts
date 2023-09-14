@@ -6,7 +6,7 @@ import { Cache } from './cache';
 import { Message } from './message';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { Feature } from '../types/Feature';
-declare type SubscribeEvent = 'connect' | 'disconnect';
+type SubscribeEvent = 'connect' | 'disconnect';
 export declare class SubScriber<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends Feature {
     private cache;
     private message;

@@ -1,4 +1,4 @@
-declare type LocationProps = {
+type LocationProps = {
     poiName?: string;
     coordinate?: [number, number];
     areaId?: string;
@@ -8,7 +8,7 @@ declare type LocationProps = {
         areaId: string;
     }) => void;
 };
-export declare type Poi = {
+export type Poi = {
     id: string;
     areaId: string;
     poiName: string;

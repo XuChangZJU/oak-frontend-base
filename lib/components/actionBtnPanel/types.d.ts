@@ -1,6 +1,6 @@
 /// <reference types="react" />
 import { ButtonProps } from 'antd';
-export declare type Item = {
+export type Item = {
     icon?: string | React.ReactNode;
     label?: string;
     action?: string;
