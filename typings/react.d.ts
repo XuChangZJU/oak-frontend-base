@@ -78,3 +78,16 @@ declare module '*.module.less' {
 	};
 	export default classes;
 }
+
+/**
+ * 微信标签申明
+ */
+declare namespace JSX {
+    interface IntrinsicElements extends JSX.IntrinsicElements {
+        'wx-open-launch-weapp': React.DetailedHTMLProps<
+            React.HTMLAttributes<HTMLElement>,
+            HTMLElement,
+            { appid: string }
+        >;
+    }
+}
