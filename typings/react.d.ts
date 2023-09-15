@@ -4,9 +4,10 @@
 
 declare namespace NodeJS {
 	interface ProcessEnv {
-		readonly NODE_ENV: 'development' | 'production' | 'test';
-		readonly PUBLIC_URL: string;
-	}
+        readonly NODE_ENV: 'development' | 'production' | 'test' | 'staging';
+        readonly PUBLIC_URL: string;
+        readonly OAK_PLATFORM: 'web' | 'wechatMp' | 'server';
+    }
 }
 
 declare module '*.avif' {
@@ -76,4 +77,17 @@ declare module '*.module.less' {
 		readonly [key: string]: string;
 	};
 	export default classes;
+}
+
+/**
+ * 微信标签申明
+ */
+declare namespace JSX {
+    interface IntrinsicElements extends JSX.IntrinsicElements {
+        'wx-open-launch-weapp': React.DetailedHTMLProps<
+            React.HTMLAttributes<HTMLElement>,
+            HTMLElement,
+            { appid: string }
+        >;
+    }
 }
