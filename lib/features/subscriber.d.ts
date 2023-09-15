@@ -6,7 +6,7 @@ import { Cache } from './cache';
 import { Message } from './message';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { Feature } from '../types/Feature';
-type SubscribeEvent = 'connect' | 'disconnect';
+type SubscribeEvent = 'connect' | 'disconnect' | 'data';
 export declare class SubScriber<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends Feature {
     private cache;
     private message;
@@ -21,7 +21,7 @@ export declare class SubScriber<ED extends EntityDict & BaseEntityDict, Cxt exte
         url: string;
         path: string;
     }>);
-    on(event: SubscribeEvent, callback: () => void): void;
+    on(event: SubscribeEvent, callback: (...data: any) => void): void;
     off(event: SubscribeEvent, callback: () => void): void;
     private emit;
     private initSocketPoint;

@@ -61,7 +61,8 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         message: string | null | undefined;
     }>;
     count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]['Selection'], 'filter'>, option?: OP, callback?: (result: Awaited<ReturnType<AD['count']>>) => void): Promise<ReturnType<AD["count"]>>;
-    private sync;
+    private syncInner;
+    sync(records: OpRecord<ED>[]): void;
     /**
      * 前端缓存做operation只可能是测试权限，必然回滚
      * @param entity

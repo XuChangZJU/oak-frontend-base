@@ -10,7 +10,7 @@ import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import io, { Socket } from '../utils/socket.io/socket.io';
 import { Feature } from '../types/Feature';
 
-type SubscribeEvent = 'connect' | 'disconnect';
+type SubscribeEvent = 'connect' | 'disconnect' | 'data';
 
 export class SubScriber<
     ED extends EntityDict & BaseEntityDict,
@@ -38,9 +38,10 @@ export class SubScriber<
     private socketState: 'connecting' | 'connected' | 'unconnected' =
         'unconnected';
 
-    private eventCallbackMap: Record<SubscribeEvent, Array<() => void>> = {
+    private eventCallbackMap: Record<SubscribeEvent, Array<(...data: any) => void>> = {
         connect: [],
         disconnect: [],
+        data: [],
     };
 
     constructor(
@@ -57,7 +58,7 @@ export class SubScriber<
         this.getSubscribePointFn = getSubscribePointFn;
     }
 
-    on(event: SubscribeEvent, callback: () => void) {
+    on(event: SubscribeEvent, callback: (...data: any) => void) {
         this.eventCallbackMap[event].push(callback);
     }
 
@@ -65,8 +66,8 @@ export class SubScriber<
         pull(this.eventCallbackMap[event], callback);
     }
 
-    private emit(event: SubscribeEvent) {
-        this.eventCallbackMap[event].forEach((ele) => ele());
+    private emit(event: SubscribeEvent, ...data: any) {
+        this.eventCallbackMap[event].forEach((ele) => ele(data));
     }
 
     private async initSocketPoint() {
@@ -111,6 +112,14 @@ export class SubScriber<
                     if (Object.keys(this.subDataMap).length > 0) {
                         this.connect();
                     }
+                });
+
+                socket.on('data', (opRecords: OpRecord<ED>[], ids: string[]) => {
+                    this.cache.sync(opRecords);
+                    this.emit('data', {
+                        ids,
+                        opRecords,
+                    });
                 });
 
                 if (Object.keys(this.subDataMap).length > 0) {

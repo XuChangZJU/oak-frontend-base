@@ -14,6 +14,7 @@ export class SubScriber extends Feature {
     eventCallbackMap = {
         connect: [],
         disconnect: [],
+        data: [],
     };
     constructor(cache, message, getSubscribePointFn) {
         super();
@@ -27,8 +28,8 @@ export class SubScriber extends Feature {
     off(event, callback) {
         pull(this.eventCallbackMap[event], callback);
     }
-    emit(event) {
-        this.eventCallbackMap[event].forEach((ele) => ele());
+    emit(event, ...data) {
+        this.eventCallbackMap[event].forEach((ele) => ele(data));
     }
     async initSocketPoint() {
         const { url, path } = await this.getSubscribePointFn();
@@ -67,6 +68,13 @@ export class SubScriber extends Feature {
                     if (Object.keys(this.subDataMap).length > 0) {
                         this.connect();
                     }
+                });
+                socket.on('data', (opRecords, ids) => {
+                    this.cache.sync(opRecords);
+                    this.emit('data', {
+                        ids,
+                        opRecords,
+                    });
                 });
                 if (Object.keys(this.subDataMap).length > 0) {
                     const data = Object.values(this.subDataMap).map(ele => omit(ele, 'callback'));

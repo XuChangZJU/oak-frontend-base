@@ -69,7 +69,7 @@ export class Cache extends Feature {
             this.refreshing++;
             const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
             if (opRecords) {
-                this.sync(opRecords);
+                this.syncInner(opRecords);
             }
             this.refreshing--;
             callback && callback(result, opRecords);
@@ -87,7 +87,7 @@ export class Cache extends Feature {
             if (e instanceof OakException) {
                 const { opRecord } = e;
                 if (opRecord) {
-                    this.sync([opRecord]);
+                    this.syncInner([opRecord]);
                     this.publish();
                 }
             }
@@ -343,12 +343,16 @@ export class Cache extends Feature {
         }, callback);
         return result;
     }
-    sync(records) {
+    syncInner(records) {
         // sync会异步并发的调用，不能用this.context;
         const context = this.contextBuilder();
         this.cacheStore.sync(records, context);
         // 唤起同步注册的回调
         this.syncEventsCallbacks.map((ele) => ele(records));
+    }
+    sync(records) {
+        this.syncInner(records);
+        this.publish();
     }
     /**
      * 前端缓存做operation只可能是测试权限，必然回滚
