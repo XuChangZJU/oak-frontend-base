@@ -4,9 +4,10 @@
 
 declare namespace NodeJS {
 	interface ProcessEnv {
-		readonly NODE_ENV: 'development' | 'production' | 'test';
-		readonly PUBLIC_URL: string;
-	}
+        readonly NODE_ENV: 'development' | 'production' | 'test' | 'staging';
+        readonly PUBLIC_URL: string;
+        readonly OAK_PLATFORM: 'web' | 'wechatMp' | 'server';
+    }
 }
 
 declare module '*.avif' {
