@@ -1,3 +1,4 @@
+/// <reference path="../typings/react.d.ts" />
 export { Cache } from './features/cache';
 export { LocalStorage } from './features/localStorage';
 export * from './types/Feature';
