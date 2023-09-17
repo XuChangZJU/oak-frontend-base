@@ -6,7 +6,7 @@ import {
 } from 'antd';
 import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { ED } from '../../types/AbstractComponent';
+import { ED, OakExtraActionProps } from '../../types/AbstractComponent';
 
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import Style from './web.module.less';
@@ -60,6 +60,7 @@ export default function Render(
             entity: string;
             actions: ActionDef<ED, keyof EntityDict>[];
             cascadeActions: CascadeActionDef;
+            extraActions: OakExtraActionProps[];
             onAction: (action?: string, cascadeAction?: CascadeActionProps) => void;
         },
         {
@@ -77,11 +78,12 @@ export default function Render(
         cascadeActions,
         items,
         i18n,
+        extraActions,
     } = data;
     const zhCNKeys: number = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
     useEffect(() => {
         makeItems();
-    }, [zhCNKeys, actions, cascadeActions])
+    }, [zhCNKeys, actions, cascadeActions, extraActions])
     return (
         <div className={Style.panelContainer}>
             <Space align='center' style={{ width: '100%' }}>
