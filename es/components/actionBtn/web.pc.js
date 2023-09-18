@@ -17,11 +17,11 @@ function ItemComponent(props) {
 export default function Render(props) {
     const { methods, data } = props;
     const { t, makeItems } = methods;
-    const { schema, actions, onAction, entity, cascadeActions, items, i18n, } = data;
+    const { schema, actions, onAction, entity, cascadeActions, items, i18n, extraActions, } = data;
     const zhCNKeys = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
     useEffect(() => {
         makeItems();
-    }, [zhCNKeys, actions, cascadeActions]);
+    }, [zhCNKeys, actions, cascadeActions, extraActions]);
     return (_jsx("div", { className: Style.panelContainer, children: _jsx(Space, { align: 'center', style: { width: '100%' }, children: _jsx(Space, { align: 'center', size: 12, children: _jsx(_Fragment, { children: items?.map((ele, index) => {
                         return (_jsx(ItemComponent, { label: ele.label, type: "a", onClick: ele.onClick }));
                     }) }) }) }) }));

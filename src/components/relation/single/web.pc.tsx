@@ -17,10 +17,11 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
 }, {
     getNodes: (entity: keyof ED) => void;
     checkSelectRelation: () => boolean;
+    resolveP: (path: string) => string;
 }>) {
     const { methods, data } = props;
     const { entity, entityDNode, entitySNode, oakFullpath } = data;
-    const { getNodes, checkSelectRelation } = methods;
+    const { getNodes, checkSelectRelation, resolveP } = methods;
     const [open, setOpen] = useState(false);
     const [breadcrumbItems, setBreadcrumbItems] = useState<string[]>([])
     return (
@@ -97,8 +98,10 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
                                                         return;
                                                     }
                                                     breadcrumbItems.push(ele);
-                                                    setBreadcrumbItems(breadcrumbItems)
-                                                    getNodes(ele)
+                                                    setBreadcrumbItems(breadcrumbItems);
+                                                    const path = breadcrumbItems.join('.');
+                                                    const entity = resolveP(path);
+                                                    getNodes(entity)
                                                 }}
                                             >
                                                 {ele}

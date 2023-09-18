@@ -9,5 +9,6 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
 }, {
     getNodes: (entity: keyof ED) => void;
     checkSelectRelation: () => boolean;
+    resolveP: (path: string) => string;
 }>): import("react/jsx-runtime").JSX.Element;
 export {};
