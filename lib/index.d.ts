@@ -15,3 +15,5 @@ export * from './utils/upload';
 export { CacheStore } from './cacheStore/CacheStore';
 export { default as SyncTriggerExecutor } from './cacheStore/SyncTriggerExecutor';
 export { DebugStore } from './debugStore/DebugStore';
+export { FrontendRuntimeContext, SerializedData } from './context/FrontendRuntimeContext';
+export { BackendRuntimeContext } from './context/BackendRuntimeContext';

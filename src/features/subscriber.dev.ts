@@ -48,4 +48,8 @@ export class SubScriber<
     }
 
     async unsub(ids: string[]) {}
+
+    getSubscriberId() {
+        return undefined;
+    }
 }

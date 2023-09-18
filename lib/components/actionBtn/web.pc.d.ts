@@ -1,6 +1,6 @@
 import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { ED } from '../../types/AbstractComponent';
+import { ED, OakExtraActionProps } from '../../types/AbstractComponent';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { CascadeActionProps } from '../../types/AbstractComponent';
@@ -19,6 +19,7 @@ export default function Render(props: WebComponentProps<ED, keyof EntityDict, fa
     entity: string;
     actions: ActionDef<ED, keyof EntityDict>[];
     cascadeActions: CascadeActionDef;
+    extraActions: OakExtraActionProps[];
     onAction: (action?: string, cascadeAction?: CascadeActionProps) => void;
 }, {
     makeItems: () => void;

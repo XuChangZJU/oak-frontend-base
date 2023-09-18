@@ -221,4 +221,10 @@ export class SubScriber<
             }
         }
     }
+
+    getSubscriberId() {
+        if (this.socket) {
+            return this.socket.id;
+        }
+    }
 }

@@ -18,4 +18,7 @@ export class SubScriber extends Feature {
         console.log('data subscribe 在dev模式下不起作用');
     }
     async unsub(ids) { }
+    getSubscriberId() {
+        return undefined;
+    }
 }

@@ -158,4 +158,9 @@ export class SubScriber extends Feature {
             }
         }
     }
+    getSubscriberId() {
+        if (this.socket) {
+            return this.socket.id;
+        }
+    }
 }

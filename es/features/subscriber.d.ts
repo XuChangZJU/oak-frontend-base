@@ -28,5 +28,6 @@ export declare class SubScriber<ED extends EntityDict & BaseEntityDict, Cxt exte
     private connect;
     sub(data: SubDataDef<ED, keyof ED>[], callback?: (records: OpRecord<ED>[], ids: string[]) => void): Promise<void>;
     unsub(ids: string[]): Promise<void>;
+    getSubscriberId(): string | undefined;
 }
 export {};
