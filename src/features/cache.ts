@@ -486,6 +486,7 @@ export class Cache<
                     dontCollect: true,
                     dontCreateOper: true,
                     dontCreateModi: true,
+                    blockTrigger: true,
                 });
             }
             this.rollback();

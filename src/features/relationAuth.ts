@@ -133,11 +133,17 @@ export class RelationAuth<
                             nodeOutSet[entity].push(`${attr.replace('Id', '')}(${ref})`);
                         }
                         else {
-                            nodeOutSet[entity].push(ref);
+                            nodeOutSet[entity].push(`${attr.replace('Id', '')}`);
                         }
                     }
                     else {
-                        nodeOutSet[entity] = [ref];
+                        // 如果外键ref是user 使用属性名(user)以解决relation/entityList页面授权路径不对的问题
+                        if (ref === "user") {
+                            nodeOutSet[entity] = [`${attr.replace('Id', '')}(${ref})`];
+                        }
+                        else {
+                            nodeOutSet[entity] = [`${attr.replace('Id', '')}`];
+                        }
                     }                    
                 }
             }

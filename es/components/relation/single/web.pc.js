@@ -7,7 +7,7 @@ import ActionAuthList from '../actionAuthList';
 export default function render(props) {
     const { methods, data } = props;
     const { entity, entityDNode, entitySNode, oakFullpath } = data;
-    const { getNodes, checkSelectRelation } = methods;
+    const { getNodes, checkSelectRelation, resolveP } = methods;
     const [open, setOpen] = useState(false);
     const [breadcrumbItems, setBreadcrumbItems] = useState([]);
     return (_jsxs(Space, { direction: "vertical", style: { width: '100%' }, children: [_jsx(Button, { onClick: () => setOpen(true), children: "\u8BBE\u7F6E" }), _jsx(Modal, { title: `权限设置`, open: open, destroyOnClose: true, footer: null, onCancel: () => {
@@ -32,7 +32,9 @@ export default function render(props) {
                                                             }
                                                             breadcrumbItems.push(ele);
                                                             setBreadcrumbItems(breadcrumbItems);
-                                                            getNodes(ele);
+                                                            const path = breadcrumbItems.join('.');
+                                                            const entity = resolveP(path);
+                                                            getNodes(entity);
                                                         }, children: ele }))) }) })] }), _jsxs(Row, { gutter: 24, children: [_jsx(Col, { span: 2, children: _jsx(Text, { style: { whiteSpace: 'nowrap', marginRight: 16 }, children: "\u53CD\u6307\u7ED3\u70B9" }) }), _jsx(Col, { span: 22, children: _jsx(Space, { wrap: true, children: entitySNode.map((ele) => (_jsx(Tag, { style: { cursor: 'pointer' }, color: "cyan", bordered: false, onClick: () => {
                                                             if (checkSelectRelation()) {
                                                                 return;
