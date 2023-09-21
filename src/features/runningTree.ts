@@ -559,6 +559,7 @@ class ListNode<
                     $in: this.ids,
                 }
             };
+
             const result = this.cache.get(this.entity, {
                 data,
                 filter: filter2,
@@ -566,7 +567,7 @@ class ListNode<
 
 
             const r2 = result.filter(
-                ele => ele.$$createAt$$ === 1 || (this.ids?.includes(ele.id!))
+                ele => this.ids ? (ele.$$createAt$$ === 1 || (this.ids?.includes(ele.id!))) : true
             ).sort(
                 (ele1, ele2) => {
                     if (ele1.$$createAt$$ === 1) {
