@@ -10,7 +10,7 @@ import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import io, { Socket } from '../utils/socket.io/socket.io';
 import { Feature } from '../types/Feature';
 
-type SubscribeEvent = 'connect' | 'disconnect' | 'data';
+type SubscribeEvent = 'connect' | 'disconnect';
 
 export class SubScriber<
     ED extends EntityDict & BaseEntityDict,
@@ -35,13 +35,11 @@ export class SubScriber<
     private path?: string;
     private socket?: Socket;
 
-    private socketState: 'connecting' | 'connected' | 'unconnected' =
-        'unconnected';
+    private socketState: 'connecting' | 'connected' | 'unconnected' = 'unconnected';
 
     private eventCallbackMap: Record<SubscribeEvent, Array<(...data: any) => void>> = {
         connect: [],
         disconnect: [],
-        data: [],
     };
 
     constructor(
@@ -116,29 +114,27 @@ export class SubScriber<
 
                 socket.on('data', (opRecords: OpRecord<ED>[], ids: string[]) => {
                     this.cache.sync(opRecords);
-                    this.emit('data', {
-                        ids,
-                        opRecords,
-                    });
+                    ids.forEach(
+                        (id) => {
+                            this.subDataMap[id] && this.subDataMap[id].callback && this.subDataMap[id].callback!(opRecords, ids)
+                        }
+                    );
                 });
+
+                socket.on('error', (errString) => {
+                    console.error(errString);
+                    this.message.setMessage({
+                        type: 'error',
+                        title: '服务器subscriber抛出异常',
+                    });
+                })
 
                 if (Object.keys(this.subDataMap).length > 0) {
                     const data = Object.values(this.subDataMap).map(
                         ele => omit(ele, 'callback')
                     );
-                    socket.emit('sub', data, (result: string) => {
-                        if (result) {
-                            this.message.setMessage({
-                                type: 'error',
-                                title: 'sub data error',
-                                content: result,
-                            });
-                            reject();
-                        }
-                        else {
-                            resolve(undefined);
-                        }
-                    });
+                    socket.emit('sub', data);
+                    resolve(undefined);
                 }
                 else {
                     resolve(undefined);

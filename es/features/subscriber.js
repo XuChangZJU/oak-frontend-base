@@ -14,7 +14,6 @@ export class SubScriber extends Feature {
     eventCallbackMap = {
         connect: [],
         disconnect: [],
-        data: [],
     };
     constructor(cache, message, getSubscribePointFn) {
         super();
@@ -71,26 +70,21 @@ export class SubScriber extends Feature {
                 });
                 socket.on('data', (opRecords, ids) => {
                     this.cache.sync(opRecords);
-                    this.emit('data', {
-                        ids,
-                        opRecords,
+                    ids.forEach((id) => {
+                        this.subDataMap[id] && this.subDataMap[id].callback && this.subDataMap[id].callback(opRecords, ids);
+                    });
+                });
+                socket.on('error', (errString) => {
+                    console.error(errString);
+                    this.message.setMessage({
+                        type: 'error',
+                        title: '服务器subscriber抛出异常',
                     });
                 });
                 if (Object.keys(this.subDataMap).length > 0) {
                     const data = Object.values(this.subDataMap).map(ele => omit(ele, 'callback'));
-                    socket.emit('sub', data, (result) => {
-                        if (result) {
-                            this.message.setMessage({
-                                type: 'error',
-                                title: 'sub data error',
-                                content: result,
-                            });
-                            reject();
-                        }
-                        else {
-                            resolve(undefined);
-                        }
-                    });
+                    socket.emit('sub', data);
+                    resolve(undefined);
                 }
                 else {
                     resolve(undefined);
