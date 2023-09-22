@@ -198,7 +198,7 @@ class ListNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Node<ED, T, Cxt, FrontCxt, AD> {
+    > extends Node<ED, T, Cxt, FrontCxt, AD> {
     private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     private updates: Record<
         string,
@@ -1616,7 +1616,7 @@ class VirtualNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Feature {
+    > extends Feature {
     private dirty: boolean;
     private executing: boolean;
     private loading = false;
@@ -1807,7 +1807,7 @@ export class RunningTree<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Feature {
+    > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
     private root: Record<
@@ -1831,7 +1831,9 @@ export class RunningTree<
         this.root = {};
     }
 
-    createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>) {
+    createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>): ListNode<ED, T, Cxt, FrontCxt, AD>
+        | SingleNode<ED, T, Cxt, FrontCxt, AD>
+        | VirtualNode<ED, Cxt, FrontCxt, AD> {
         const {
             entity,
             pagination,
@@ -1844,50 +1846,55 @@ export class RunningTree<
             actions,
             cascadeActions,
         } = options;
-        let node:
-            | ListNode<ED, T, Cxt, FrontCxt, AD>
+        let node: ListNode<ED, T, Cxt, FrontCxt, AD>
             | SingleNode<ED, T, Cxt, FrontCxt, AD>
-            | VirtualNode<ED, Cxt, FrontCxt, AD>;
+            | VirtualNode<ED, Cxt, FrontCxt, AD>
+            | undefined;
         const { parent, path } = analyzePath(fullPath);
         const parentNode = parent ? this.findNode(parent) : undefined;
-        if (this.findNode(fullPath)) {
+        node = this.findNode(fullPath) as (ListNode<ED, T, Cxt, FrontCxt, AD>
+            | SingleNode<ED, T, Cxt, FrontCxt, AD>
+            | VirtualNode<ED, Cxt, FrontCxt, AD>
+            | undefined);
+        if (node) {
             // 现在都允许结点不析构
-            const node = this.findNode(fullPath)!;
-            if (node instanceof ListNode) {
-                assert(isList && node.getEntity() === entity);
-                if (!node.getProjection() && projection) {
-                    node.setProjection(projection!);
-                    if (filters) {
-                        node.setNamedFilters(filters);
+            if (entity) {
+                if (node instanceof ListNode) {
+                    assert(isList && node.getEntity() === entity);
+                    if (!node.getProjection() && projection) {
+                        node.setProjection(projection!);
+                        if (filters) {
+                            node.setNamedFilters(filters);
+                        }
+                        if (sorters) {
+                            node.setNamedSorters(sorters);
+                        }
+                        if (pagination) {
+                            node.setPagination(pagination, false);      // 创建成功后会统一refresh
+                        }
                     }
-                    if (sorters) {
-                        node.setNamedSorters(sorters);
-                    }
-                    if (pagination) {
-                        node.setPagination(pagination, false);      // 创建成功后会统一refresh
+                    else if (projection) {
+                        // 这里有一个例外是queryPanel这种和父结点共用此结点的抽象组件
+                        // assert(false, `创建node时发现path[${fullPath}]已经存在有效的ListNod结点，这种情况不应该存在`);
                     }
                 }
-                else if (projection) {
-                    // 这里有一个例外是queryPanel这种和父结点共用此结点的抽象组件
-                    // assert(false, `创建node时发现path[${fullPath}]已经存在有效的ListNod结点，这种情况不应该存在`);
-                }
-            }
-            else if (node instanceof SingleNode) {
-                assert(!isList && node.getEntity() === entity);
-                if (!node.getProjection() && projection) {
-                    node.setProjection(projection);
-                    if (id) {
-                        const id2 = node.getId();
-                        assert(id === id2, `重用path[${fullPath}]上的singleNode时，其上没有置有效id，这种情况id应当由父结点设置`);
+                else if (node instanceof SingleNode) {
+                    assert(!isList && node.getEntity() === entity);
+                    if (!node.getProjection() && projection) {
+                        node.setProjection(projection);
+                        if (id) {
+                            const id2 = node.getId();
+                            assert(id === id2, `重用path[${fullPath}]上的singleNode时，其上没有置有效id，这种情况id应当由父结点设置`);
+                        }
+                    }
+                    else {
+                        // 目前只有一种情况合法，即parentNode是list，列表中的位置移动引起的重用
+                        // assert(parentNode instanceof ListNode, `创建node时发现path[${fullPath}]已有有效的SingleNode结点，本情况不应当存在`);
                     }
                 }
                 else {
-                    // 目前只有一种情况合法，即parentNode是list，列表中的位置移动引起的重用
-                    // assert(parentNode instanceof ListNode, `创建node时发现path[${fullPath}]已有有效的SingleNode结点，本情况不应当存在`);
+                    // assert(false, `创建node时发现path[${fullPath}]已有有效的VirtualNode结点，本情况不应当存在`);
                 }
-            }
-            else {
-                // assert(false, `创建node时发现path[${fullPath}]已有有效的VirtualNode结点，本情况不应当存在`);
             }
             return node;
         }

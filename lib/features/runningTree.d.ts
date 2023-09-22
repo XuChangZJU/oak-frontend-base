@@ -226,7 +226,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     private root;
     private relationAuth;
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, schema: StorageSchema<ED>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>);
-    createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
+    createNode<T extends keyof ED>(options: CreateNodeOptions<ED, T>): ListNode<ED, T, Cxt, FrontCxt, AD> | SingleNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     private checkSingleNodeIsModiNode;
     checkIsModiNode(path: string): boolean;
     private findNode;

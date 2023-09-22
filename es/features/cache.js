@@ -369,7 +369,6 @@ export class Cache extends Feature {
                     dontCollect: true,
                     dontCreateOper: true,
                     dontCreateModi: true,
-                    blockTrigger: true,
                 });
             }
             this.rollback();
