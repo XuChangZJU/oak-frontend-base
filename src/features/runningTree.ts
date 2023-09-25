@@ -576,9 +576,12 @@ class ListNode<
                     else if (ele2.$$createAt$$ === 1) {
                         return -1;
                     }
-                    const idx1 = this.ids!.indexOf(ele1.id!);
-                    const idx2 = this.ids!.indexOf(ele2.id!);
-                    return idx1 - idx2;
+                    if (this.ids) {
+                        const idx1 = this.ids!.indexOf(ele1.id!);
+                        const idx2 = this.ids!.indexOf(ele2.id!);
+                        return idx1 - idx2;
+                    }
+                    return (ele2!.$$createAt$$ as number) - (ele1.$$createAt$$ as number);
                 }
             );
             if (this.aggr) {
