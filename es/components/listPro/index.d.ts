@@ -22,10 +22,13 @@ type Props<ED2 extends ED, T extends keyof ED2> = {
             type: 'single' | 'multiple' | 'none';
         }) => void;
     };
+    disableSerialNumber?: boolean;
 };
 export type TableAttributeType = {
     attribute: OakAbsAttrJudgeDef;
     show: boolean;
+    disabled?: boolean;
+    disableCheckbox?: boolean;
 };
 export declare const TableContext: React.Context<{
     tableAttributes: TableAttributeType[] | undefined;

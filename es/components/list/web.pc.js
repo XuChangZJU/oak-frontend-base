@@ -90,12 +90,15 @@ export default function Render(props) {
             type: rowSelection?.type,
             selectedRowKeys,
             onChange: (selectedRowKeys, row, info) => {
-                rowSelection?.onChange && rowSelection?.onChange(selectedRowKeys, row, info);
+                rowSelection?.onChange &&
+                    rowSelection?.onChange(selectedRowKeys, row, info);
+            },
+        }, loading: loading, dataSource: data, columns: tableColumns, pagination: tablePagination, scroll: showScroll
+            ? {
+                scrollToFirstRowOnChange: true,
+                x: 1200,
             }
-        }, loading: loading, dataSource: data, columns: tableColumns, pagination: tablePagination, scroll: showScroll ? {
-            scrollToFirstRowOnChange: true,
-            x: 1200,
-        } : {}, onRow: (record) => {
+            : {}, onRow: (record) => {
             return {
                 onClick: () => {
                     const index = selectedRowKeys.findIndex((ele) => ele === record.id);
@@ -112,8 +115,9 @@ export default function Render(props) {
                         keys = [record.id];
                     }
                     const row = data.filter((ele) => keys.includes(ele.id));
-                    rowSelection?.onChange && rowSelection?.onChange(keys, row, { type: 'all' });
-                }
+                    rowSelection?.onChange &&
+                        rowSelection?.onChange(keys, row, { type: 'all' });
+                },
             };
         }, showHeader: !hideHeader }));
 }

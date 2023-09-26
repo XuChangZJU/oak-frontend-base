@@ -6,6 +6,7 @@ import ToolBar from '../list/toolBar';
 import ButtonGroup from '../list/buttonGroup';
 import Style from './index.module.less';
 import { useWidth } from '../../platforms/web/responsive/useWidth';
+import { useFeatures } from '../../platforms/web';
 export const TableContext = createContext({
     tableAttributes: undefined,
     entity: undefined,
@@ -15,18 +16,44 @@ export const TableContext = createContext({
     onReset: undefined,
 });
 const ProList = (props) => {
-    const { title, buttonGroup, entity, extraActions, onAction, disabledOp, attributes, data, loading, tablePagination, rowSelection, onReload, } = props;
+    const { title, buttonGroup, entity, extraActions, onAction, disabledOp, attributes, data, loading, tablePagination, rowSelection, onReload, disableSerialNumber, } = props;
+    const features = useFeatures();
     const [tableAttributes, setTableAttributes] = useState([]);
     const [schema, setSchema] = useState(undefined);
-    useEffect(() => {
-        if (schema) {
-            const judgeAttributes = translateAttributes(schema, entity, attributes);
-            const newTableAttributes = judgeAttributes.map((ele) => ({ attribute: ele, show: true }));
-            setTableAttributes(newTableAttributes);
-        }
-    }, [attributes, schema]);
     const width = useWidth();
     const isMobile = width === 'xs';
+    const initTableAttributes = () => {
+        if (schema) {
+            const judgeAttributes = translateAttributes(schema, entity, attributes);
+            const newTableAttributes = judgeAttributes.map((ele) => ({
+                attribute: ele,
+                show: true,
+            }));
+            if (tablePagination && !disableSerialNumber) {
+                // 存在分页配置 启用#序号
+                newTableAttributes.unshift({
+                    attribute: {
+                        path: '#',
+                        attribute: '',
+                        attrType: 'number',
+                        attr: '#',
+                        entity: entity,
+                    },
+                    show: true,
+                    disabled: true,
+                    disableCheckbox: true,
+                });
+            }
+            setTableAttributes(newTableAttributes);
+        }
+    };
+    useEffect(() => {
+        initTableAttributes();
+    }, [attributes, schema]);
+    const showTotal = (total) => {
+        const totalStr = features.locales.t('total number of rows');
+        return `${totalStr}：${total > 999 ? `${total} +` : total}`;
+    };
     return (_jsx(TableContext.Provider, { value: {
             tableAttributes,
             entity: entity,
@@ -34,17 +61,24 @@ const ProList = (props) => {
             setTableAttributes,
             setSchema,
             onReset: () => {
-                if (schema) {
-                    const judgeAttributes = translateAttributes(schema, entity, attributes);
-                    const newTableAttr = judgeAttributes.map((ele) => ({
-                        attribute: ele,
-                        show: true,
-                    }));
-                    setTableAttributes(newTableAttr);
-                }
+                initTableAttributes();
             },
-        }, children: _jsxs("div", { className: Style.listContainer, children: [!isMobile && (_jsx(ToolBar, { title: title, buttonGroup: buttonGroup, reload: () => {
+        }, children: _jsxs("div", { className: Style.container, children: [!isMobile && (_jsx(ToolBar, { title: title, buttonGroup: buttonGroup, reload: () => {
                         onReload && onReload();
-                    } })), isMobile && _jsx(ButtonGroup, { items: buttonGroup }), _jsx(List, { entity: entity, extraActions: extraActions, onAction: onAction, disabledOp: disabledOp, attributes: attributes, data: data, loading: loading, tablePagination: tablePagination, rowSelection: rowSelection })] }) }));
+                    } })), isMobile && _jsx(ButtonGroup, { items: buttonGroup }), _jsx(List, { entity: entity, extraActions: extraActions, onAction: onAction, disabledOp: disabledOp, attributes: attributes, data: !disableSerialNumber
+                        ? data?.map((ele, index) => {
+                            if (tablePagination) {
+                                const total = tablePagination.total || 0;
+                                const pageSize = tablePagination.pageSize || 20; //条数
+                                const current = tablePagination.current || 1; //当前页
+                                ele['#'] =
+                                    pageSize * (current - 1) +
+                                        (index + 1);
+                            }
+                            return ele;
+                        })
+                        : data, loading: loading, tablePagination: Object.assign({
+                        showTotal,
+                    }, tablePagination), rowSelection: rowSelection })] }) }));
 };
 export default ProList;

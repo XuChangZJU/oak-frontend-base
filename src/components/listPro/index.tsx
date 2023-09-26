@@ -1,5 +1,5 @@
 import React, { createContext, useEffect, useMemo, useState } from 'react';
-import { TableProps } from 'antd';
+import { TableProps, PaginationProps } from 'antd';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import {
     OakAbsAttrDef,
@@ -16,6 +16,8 @@ import ToolBar from '../list/toolBar';
 import ButtonGroup from '../list/buttonGroup';
 import Style from './index.module.less';
 import { useWidth } from '../../platforms/web/responsive/useWidth';
+import { useFeatures } from '../../platforms/web';
+import { Locales } from '../../features/locales';
 
 type Props<ED2 extends ED, T extends keyof ED2> = {
     title?: string;
@@ -38,11 +40,14 @@ type Props<ED2 extends ED, T extends keyof ED2> = {
             info?: { type: 'single' | 'multiple' | 'none' }
         ) => void;
     };
+    disableSerialNumber?: boolean; //是否禁用序号 默认启用
 };
 
 export type TableAttributeType = {
     attribute: OakAbsAttrJudgeDef;
     show: boolean;
+    disabled?: boolean;
+    disableCheckbox?: boolean;
 };
 
 export const TableContext = createContext<{
@@ -77,12 +82,20 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
         tablePagination,
         rowSelection,
         onReload,
+        disableSerialNumber,
     } = props;
+    const features = useFeatures<{
+        locales: Locales<any, any, any, any>;
+    }>();
+
     const [tableAttributes, setTableAttributes] = useState<
         TableAttributeType[]
     >([]);
     const [schema, setSchema] = useState(undefined);
-    useEffect(() => {
+    const width = useWidth();
+    const isMobile = width === 'xs';
+
+    const initTableAttributes = () => {
         if (schema) {
             const judgeAttributes = translateAttributes(
                 schema,
@@ -90,12 +103,37 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
                 attributes
             );
             const newTableAttributes: TableAttributeType[] =
-                judgeAttributes.map((ele) => ({ attribute: ele, show: true }));
+                judgeAttributes.map((ele) => ({
+                    attribute: ele,
+                    show: true,
+                }));
+            if (tablePagination && !disableSerialNumber) {
+                // 存在分页配置 启用#序号
+                newTableAttributes.unshift({
+                    attribute: {
+                        path: '#',
+                        attribute: '',
+                        attrType: 'number',
+                        attr: '#',
+                        entity: entity as string,
+                    },
+                    show: true,
+                    disabled: true,
+                    disableCheckbox: true,
+                });
+            }
             setTableAttributes(newTableAttributes);
         }
+    };
+
+    useEffect(() => {
+        initTableAttributes();
     }, [attributes, schema]);
-    const width = useWidth();
-    const isMobile = width === 'xs';
+
+    const showTotal: PaginationProps['showTotal'] = (total) => {
+        const totalStr = features.locales.t('total number of rows');
+        return `${totalStr}：${total > 999 ? `${total} +` : total}`;
+    };
 
     return (
         <TableContext.Provider
@@ -106,23 +144,11 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
                 setTableAttributes,
                 setSchema,
                 onReset: () => {
-                    if (schema) {
-                        const judgeAttributes = translateAttributes(
-                            schema,
-                            entity as string,
-                            attributes
-                        );
-                        const newTableAttr: TableAttributeType[] =
-                            judgeAttributes.map((ele) => ({
-                                attribute: ele,
-                                show: true,
-                            }));
-                        setTableAttributes(newTableAttr);
-                    }
+                    initTableAttributes();
                 },
             }}
         >
-            <div className={Style.listContainer}>
+            <div className={Style.container}>
                 {!isMobile && (
                     <ToolBar
                         title={title}
@@ -139,9 +165,30 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
                     onAction={onAction}
                     disabledOp={disabledOp}
                     attributes={attributes}
-                    data={data}
+                    data={
+                        !disableSerialNumber
+                            ? data?.map((ele, index) => {
+                                  if (tablePagination) {
+                                      const total = tablePagination.total || 0;
+                                      const pageSize =
+                                          tablePagination.pageSize || 20; //条数
+                                      const current =
+                                          tablePagination.current || 1; //当前页
+                                      (ele as any)['#'] =
+                                          pageSize * (current - 1) +
+                                          (index + 1);
+                                  }
+                                  return ele;
+                              })
+                            : data
+                    }
                     loading={loading}
-                    tablePagination={tablePagination}
+                    tablePagination={Object.assign(
+                        {
+                            showTotal,
+                        },
+                        tablePagination
+                    )}
                     rowSelection={rowSelection}
                 />
             </div>

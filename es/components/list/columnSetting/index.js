@@ -8,8 +8,8 @@ import { getPath, getLabel } from '../../../utils/usefulFn';
 import { useFeatures } from '../../../platforms/web';
 function ListItem(props) {
     const features = useFeatures();
-    const { title, onSelect, showToBottom, showToTop, onMoveTop, onMoveBottom, } = props;
-    return (_jsxs("div", { className: Style.listItemView, onClick: onSelect, children: [_jsx("div", { className: Style.listItemTitle, children: title }), _jsxs("div", { className: Style.listIconView, children: [_jsx(Tooltip, { title: features.locales.t('leftPin'), children: showToTop && (_jsx("div", { className: Style.listIcon, onClick: (e) => {
+    const { disabled, title, onSelect, showToBottom, showToTop, onMoveTop, onMoveBottom, } = props;
+    return (_jsxs("div", { className: Style.listItemView, onClick: onSelect, children: [_jsx("div", { className: Style.listItemTitle, children: title }), !disabled ? (_jsxs("div", { className: Style.listIconView, children: [_jsx(Tooltip, { title: features.locales.t('leftPin'), children: showToTop && (_jsx("div", { className: Style.listIcon, onClick: (e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 onMoveTop();
@@ -17,7 +17,7 @@ function ListItem(props) {
                                 e.stopPropagation();
                                 e.preventDefault();
                                 onMoveBottom();
-                            }, children: _jsx(VerticalAlignBottomOutlined, {}) })) })] })] }));
+                            }, children: _jsx(VerticalAlignBottomOutlined, {}) })) })] })) : null] }));
 }
 function ColumnSetting() {
     const features = useFeatures();
@@ -35,6 +35,8 @@ function ColumnSetting() {
                     title,
                     key: ele.attribute.path,
                     keyIndex: index,
+                    disableCheckbox: ele.disableCheckbox,
+                    disabled: ele.disabled,
                 });
                 if (ele.show) {
                     newCheckedKeys.push(ele.attribute.path);
@@ -79,7 +81,7 @@ function ColumnSetting() {
             move(dragKey, dropKey, position);
         }, blockNode: true, onCheck: (checkedKeys, e) => {
             onCheck(e.node);
-        }, titleRender: (node) => (_jsx(ListItem, { title: node.title, nodeKey: node.key, showToTop: node.keyIndex !== 0, showToBottom: node.keyIndex !== treeData.length - 1, onSelect: () => onCheck(node), onMoveTop: () => move(node.key, treeData[0].key, 0), onMoveBottom: () => move(node.key, treeData[treeData.length - 1].key, treeData.length + 1) })), checkedKeys: checkedKeys, showLine: false, treeData: treeData }));
+        }, titleRender: (node) => (_jsx(ListItem, { disabled: node.disabled, title: node.title, nodeKey: node.key, showToTop: node.keyIndex !== 0, showToBottom: node.keyIndex !== treeData.length - 1, onSelect: () => onCheck(node), onMoveTop: () => move(node.key, treeData[0].key, 0), onMoveBottom: () => move(node.key, treeData[treeData.length - 1].key, treeData.length + 1) })), checkedKeys: checkedKeys, showLine: false, treeData: treeData }));
     return (_jsx(Popover, { arrow: false, title: _jsxs("div", { className: Style.titleView, children: [_jsx("strong", { children: features.locales.t('columnSetting') }), _jsx(Button, { type: "link", onClick: onReset, children: features.locales.t('common::reset') })] }), trigger: "click", placement: "bottomRight", content: _jsx(Space, { children: listDom }), children: _jsx(Tooltip, { title: features.locales.t('columnSetting'), children: _jsx("div", { className: Style.iconBox, children: _jsx(SettingOutlined, {}) }) }) }));
 }
 export default ColumnSetting;

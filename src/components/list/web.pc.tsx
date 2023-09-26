@@ -150,44 +150,51 @@ export default function Render(
     return (
         <Table
             rowKey="id"
-            rowSelection={rowSelection?.type && {
-                type: rowSelection?.type,
-                selectedRowKeys,
-                onChange: (selectedRowKeys, row, info) => {
-                    rowSelection?.onChange && rowSelection?.onChange(selectedRowKeys, row, info);
+            rowSelection={
+                rowSelection?.type && {
+                    type: rowSelection?.type,
+                    selectedRowKeys,
+                    onChange: (selectedRowKeys, row, info) => {
+                        rowSelection?.onChange &&
+                            rowSelection?.onChange(selectedRowKeys, row, info);
+                    },
                 }
-            }}
+            }
             loading={loading}
             dataSource={data}
             columns={tableColumns}
             pagination={tablePagination}
-            scroll={showScroll ? {
-                scrollToFirstRowOnChange: true,
-                x: 1200,
-            } : {}}
+            scroll={
+                showScroll
+                    ? {
+                          scrollToFirstRowOnChange: true,
+                          x: 1200,
+                      }
+                    : {}
+            }
             onRow={(record) => {
                 return {
                     onClick: () => {
-                        const index = selectedRowKeys.findIndex((ele) => ele === record.id);
+                        const index = selectedRowKeys.findIndex(
+                            (ele) => ele === record.id
+                        );
                         let keys = selectedRowKeys;
                         if (rowSelection?.type === 'checkbox') {
                             if (index !== -1) {
-                                keys.splice(index, 1)
+                                keys.splice(index, 1);
+                            } else {
+                                keys.push(record.id);
                             }
-                            else {
-                                keys.push(record.id)
-                            }
-                        }
-                        else {
+                        } else {
                             keys = [record.id];
                         }
                         const row = data.filter((ele) => keys.includes(ele.id));
-                        rowSelection?.onChange && rowSelection?.onChange(keys, row, { type: 'all' });
-                    }
-                }
+                        rowSelection?.onChange &&
+                            rowSelection?.onChange(keys, row, { type: 'all' });
+                    },
+                };
             }}
             showHeader={!hideHeader}
-        >
-        </Table>
+        ></Table>
     );
 }

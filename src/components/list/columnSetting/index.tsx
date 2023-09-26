@@ -12,6 +12,7 @@ import { useFeatures } from '../../../platforms/web';
 import { Locales } from '../../../features/locales';
 
 function ListItem(props: {
+    disabled?: boolean;
     title: string;
     nodeKey: string;
     showToTop: boolean;
@@ -22,6 +23,7 @@ function ListItem(props: {
 }) {
     const features = useFeatures<{ locales: Locales<any, any, any, any> }>();
     const {
+        disabled,
         title,
         onSelect,
         showToBottom,
@@ -32,36 +34,38 @@ function ListItem(props: {
     return (
         <div className={Style.listItemView} onClick={onSelect}>
             <div className={Style.listItemTitle}>{title}</div>
-            <div className={Style.listIconView}>
-                <Tooltip title={features.locales.t('leftPin')}>
-                    {showToTop && (
-                        <div
-                            className={Style.listIcon}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                onMoveTop();
-                            }}
-                        >
-                            <VerticalAlignTopOutlined />
-                        </div>
-                    )}
-                </Tooltip>
-                <Tooltip title={features.locales.t('rightPin')}>
-                    {showToBottom && (
-                        <div
-                            className={Style.listIcon}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                onMoveBottom();
-                            }}
-                        >
-                            <VerticalAlignBottomOutlined />
-                        </div>
-                    )}
-                </Tooltip>
-            </div>
+            {!disabled ? (
+                <div className={Style.listIconView}>
+                    <Tooltip title={features.locales.t('leftPin')}>
+                        {showToTop && (
+                            <div
+                                className={Style.listIcon}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    onMoveTop();
+                                }}
+                            >
+                                <VerticalAlignTopOutlined />
+                            </div>
+                        )}
+                    </Tooltip>
+                    <Tooltip title={features.locales.t('rightPin')}>
+                        {showToBottom && (
+                            <div
+                                className={Style.listIcon}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    onMoveBottom();
+                                }}
+                            >
+                                <VerticalAlignBottomOutlined />
+                            </div>
+                        )}
+                    </Tooltip>
+                </div>
+            ) : null}
         </div>
     );
 }
@@ -70,6 +74,8 @@ type TreeNode = {
     title: string;
     key: string;
     keyIndex: number;
+    disableCheckbox?: boolean;
+    disabled?: boolean;
 };
 
 function ColumnSetting() {
@@ -95,6 +101,8 @@ function ColumnSetting() {
                     title,
                     key: ele.attribute.path,
                     keyIndex: index,
+                    disableCheckbox: ele.disableCheckbox,
+                    disabled: ele.disabled,
                 });
                 if (ele.show) {
                     newCheckedKeys.push(ele.attribute.path);
@@ -159,6 +167,7 @@ function ColumnSetting() {
             }}
             titleRender={(node) => (
                 <ListItem
+                    disabled={node.disabled}
                     title={node.title as string}
                     nodeKey={node.key as string}
                     showToTop={node.keyIndex !== 0}
