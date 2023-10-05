@@ -237,7 +237,7 @@ abstract class OakComponentBase<
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
         return this.features.runningTree.addItem(
-            this.state.oakFullpath,
+            path2,
             data,
             beforeExecute,
             afterExecute

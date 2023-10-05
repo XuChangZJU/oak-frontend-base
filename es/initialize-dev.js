@@ -1,7 +1,7 @@
 import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
 import { createDebugStore } from './debugStore';
 import { initializeStep1 as initBasicFeaturesStep1, initializeStep2 as initBasicFeaturesStep2 } from './features';
-import { intersection } from 'oak-domain/lib/utils/lodash';
+import { cloneDeep, intersection } from 'oak-domain/lib/utils/lodash';
 import commonAspectDict from 'oak-common-aspect';
 import { registerPorts } from 'oak-common-aspect';
 /**
@@ -38,7 +38,7 @@ export function initialize(storageSchema, frontendContextBuilder, backendContext
             await contextBackend.begin();
             let result;
             try {
-                result = await aspectDict2[name](params, contextBackend);
+                result = await aspectDict2[name](cloneDeep(params), contextBackend);
                 await contextBackend.commit();
             }
             catch (err) {

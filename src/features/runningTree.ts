@@ -2357,6 +2357,14 @@ export class RunningTree<
                     () => {
                         // 清空缓存
                         node.clean();
+                        if (node instanceof SingleNode) {
+                            assert(operations.length === 1);
+                            if (operations[0].operation.action === 'create') {
+                                // 如果是create动作，给结点赋上id，以保证页面数据的完整性
+                                const { id } = operations[0].operation.data as ED[keyof ED]['CreateSingle']['data'];
+                                node.setId(id);
+                            }
+                        }
                         node.setExecuting(false);
                     }
                 );
