@@ -971,30 +971,23 @@ class ListNode<
         this.refresh(currentPage, undefined, append);
     }
 
-    clean(preserveAfterExecute?: true) {
+    clean() {
         if (this.dirty) {
             const originUpdates = this.updates;
             this.updates = {};
-            if (preserveAfterExecute) {
-                for (const k in originUpdates) {
-                    if (originUpdates[k].afterExecute) {
-                        this.updates[k] = {
-                            afterExecute: originUpdates[k].afterExecute,
-                        };
-                    }
+            for (const k in originUpdates) {
+                if (originUpdates[k].afterExecute) {
+                    this.updates[k] = {
+                        afterExecute: originUpdates[k].afterExecute,
+                    };
                 }
             }
             for (const k in this.children) {
-                this.children[k].clean(preserveAfterExecute);
+                this.children[k].clean();
             }
 
-            if (!preserveAfterExecute) {
-                this.dirty = undefined;
-            }
-            else {
-                // preserveAfterExecute一定发生在execute，后面的cache会publish
-                this.publish();
-            }
+            this.dirty = undefined;
+            this.publish();
         }
     }
 
@@ -1451,24 +1444,15 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
     }
 
-    clean(preserveAfterExecute?: true) {
+    clean() {
         if (this.dirty) {
-            if (preserveAfterExecute && this.operation?.afterExecute) {
-                this.operation.operation = undefined;
-            }
-            else {
-                this.operation = undefined;
-            }
+            this.operation = undefined;
             for (const child in this.children) {
-                this.children[child]!.clean(preserveAfterExecute);
+                this.children[child]!.clean();
             }
 
-            if (!preserveAfterExecute) {
-                this.dirty = undefined;
-            }
-            else {
-                this.publish();
-            }
+            this.dirty = undefined;
+            this.publish();
         }
     }
 
@@ -1752,16 +1736,12 @@ class VirtualNode<
         }
         this.dirty = false;
     }
-    clean(preserveAfterExecute?: true) {
+    clean() {
         for (const ele in this.children) {
-            this.children[ele].clean(preserveAfterExecute);
+            this.children[ele].clean();
         }
-        if (!preserveAfterExecute) {
-            this.dirty = false;
-        }
-        else {
-            this.publish();
-        }
+        this.dirty = false;
+        this.publish();
     }
     checkIfClean() {
         for (const k in this.children) {
@@ -2376,7 +2356,15 @@ export class RunningTree<
                     undefined,
                     () => {
                         // 清空缓存
-                        node.clean(true);
+                        node.clean();
+                        if (node instanceof SingleNode) {
+                            assert(operations.length === 1);
+                            if (operations[0].operation.action === 'create') {
+                                // 如果是create动作，给结点赋上id，以保证页面数据的完整性
+                                const { id } = operations[0].operation.data as ED[keyof ED]['CreateSingle']['data'];
+                                node.setId(id);
+                            }
+                        }
                         node.setExecuting(false);
                     }
                 );
@@ -2385,7 +2373,7 @@ export class RunningTree<
 
                 return result;
             }
-            node.clean(true);
+            node.clean();
             node.setExecuting(false);
             await node.doAfterTrigger();
 

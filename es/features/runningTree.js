@@ -762,29 +762,22 @@ class ListNode extends Node {
     setCurrentPage(currentPage, append) {
         this.refresh(currentPage, undefined, append);
     }
-    clean(preserveAfterExecute) {
+    clean() {
         if (this.dirty) {
             const originUpdates = this.updates;
             this.updates = {};
-            if (preserveAfterExecute) {
-                for (const k in originUpdates) {
-                    if (originUpdates[k].afterExecute) {
-                        this.updates[k] = {
-                            afterExecute: originUpdates[k].afterExecute,
-                        };
-                    }
+            for (const k in originUpdates) {
+                if (originUpdates[k].afterExecute) {
+                    this.updates[k] = {
+                        afterExecute: originUpdates[k].afterExecute,
+                    };
                 }
             }
             for (const k in this.children) {
-                this.children[k].clean(preserveAfterExecute);
+                this.children[k].clean();
             }
-            if (!preserveAfterExecute) {
-                this.dirty = undefined;
-            }
-            else {
-                // preserveAfterExecute一定发生在execute，后面的cache会publish
-                this.publish();
-            }
+            this.dirty = undefined;
+            this.publish();
         }
     }
     getChildOperation(child) {
@@ -1186,23 +1179,14 @@ class SingleNode extends Node {
             this.publish();
         }
     }
-    clean(preserveAfterExecute) {
+    clean() {
         if (this.dirty) {
-            if (preserveAfterExecute && this.operation?.afterExecute) {
-                this.operation.operation = undefined;
-            }
-            else {
-                this.operation = undefined;
-            }
+            this.operation = undefined;
             for (const child in this.children) {
-                this.children[child].clean(preserveAfterExecute);
+                this.children[child].clean();
             }
-            if (!preserveAfterExecute) {
-                this.dirty = undefined;
-            }
-            else {
-                this.publish();
-            }
+            this.dirty = undefined;
+            this.publish();
         }
     }
     getFilter() {
@@ -1461,16 +1445,12 @@ class VirtualNode extends Feature {
         }
         this.dirty = false;
     }
-    clean(preserveAfterExecute) {
+    clean() {
         for (const ele in this.children) {
-            this.children[ele].clean(preserveAfterExecute);
+            this.children[ele].clean();
         }
-        if (!preserveAfterExecute) {
-            this.dirty = false;
-        }
-        else {
-            this.publish();
-        }
+        this.dirty = false;
+        this.publish();
     }
     checkIfClean() {
         for (const k in this.children) {
@@ -1891,13 +1871,21 @@ export class RunningTree extends Feature {
                     .filter((ele) => !!ele)
                     .map((ele) => ele.operation), undefined, () => {
                     // 清空缓存
-                    node.clean(true);
+                    node.clean();
+                    if (node instanceof SingleNode) {
+                        assert(operations.length === 1);
+                        if (operations[0].operation.action === 'create') {
+                            // 如果是create动作，给结点赋上id，以保证页面数据的完整性
+                            const { id } = operations[0].operation.data;
+                            node.setId(id);
+                        }
+                    }
                     node.setExecuting(false);
                 });
                 await node.doAfterTrigger();
                 return result;
             }
-            node.clean(true);
+            node.clean();
             node.setExecuting(false);
             await node.doAfterTrigger();
             return { message: 'No Operation' };
