@@ -252,6 +252,9 @@ export default OakComponent({
                     const dASameActionAuth = actionAuths.find((ele) => difference(actions, ele.deActions).length === 0);
                     // 存在deActions相同，paths push并做去重处理
                     if (dASameActionAuth) {
+                        if (dASameActionAuth.$$deleteAt$$ && dASameActionAuth.$$deleteAt$$ === 1) {
+                            this.recoverItem(dASameActionAuth.id);
+                        }
                         this.updateItem({
                             paths: dASameActionAuth.paths.concat(path),
                         }, dASameActionAuth.id)
