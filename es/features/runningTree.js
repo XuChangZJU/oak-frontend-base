@@ -470,6 +470,14 @@ class ListNode extends Node {
         }, this.isLoading()); */
     }
     addItem(item, beforeExecute, afterExecute) {
+        // 如果数据键值是一个空字符串则更新成null
+        for (const k in item) {
+            if (item[k] === '') {
+                Object.assign(item, {
+                    [k]: null,
+                });
+            }
+        }
         const id = generateNewId();
         assert(!this.updates[id]);
         this.updates[id] = {
@@ -527,6 +535,14 @@ class ListNode extends Node {
      * @param afterExecute
      */
     updateItem(data, id, action, beforeExecute, afterExecute) {
+        // 如果数据键值是一个空字符串则更新成null
+        for (const k in data) {
+            if (data[k] === '') {
+                Object.assign(data, {
+                    [k]: null,
+                });
+            }
+        }
         // assert(Object.keys(this.children).length === 0, `更新子结点应该落在相应的component上`);
         if (this.children && this.children[id]) {
             // 实际中有这样的case出现，当使用actionButton时。先这样处理。by Xc 20230214
@@ -937,6 +953,14 @@ class SingleNode extends Node {
     create(data, beforeExecute, afterExecute) {
         const id = generateNewId();
         assert(!this.id && !this.dirty, 'create前要保证singleNode为空');
+        // 如果数据键值是一个空字符串则更新成null
+        for (const k in data) {
+            if (data[k] === '') {
+                Object.assign(data, {
+                    [k]: null,
+                });
+            }
+        }
         this.operation = {
             operation: {
                 id: generateNewId(),
@@ -949,6 +973,14 @@ class SingleNode extends Node {
         this.setDirty();
     }
     update(data, action, beforeExecute, afterExecute) {
+        // 如果数据键值是一个空字符串则更新成null
+        for (const k in data) {
+            if (data[k] === '') {
+                Object.assign(data, {
+                    [k]: null,
+                });
+            }
+        }
         if (!this.operation) {
             if (this.id) {
                 const operation = {

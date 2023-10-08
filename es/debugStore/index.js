@@ -107,8 +107,10 @@ function initializeWatchers(store, contextBuilder, watchers) {
                         dontCollect: true,
                         blockTrigger: true,
                     });
-                    const result = await fn(context, rows);
-                    console.log(`执行了watcher【${w.name}】，结果是：`, result);
+                    if (rows.length > 0) {
+                        const result = await fn(context, rows);
+                        console.log(`执行了watcher【${w.name}】，结果是：`, result);
+                    }
                 }
                 await context.commit();
             }

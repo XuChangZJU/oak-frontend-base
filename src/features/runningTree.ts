@@ -619,6 +619,14 @@ class ListNode<
         beforeExecute?: () => Promise<void>,
         afterExecute?: () => Promise<void>
     ) {
+        // 如果数据键值是一个空字符串则更新成null
+        for (const k in item) {
+            if (item[k] === '') {
+                Object.assign(item, {
+                    [k]: null,
+                });
+            }
+        }
         const id = generateNewId();
         assert(!this.updates[id]);
         this.updates[id] = {
@@ -691,6 +699,14 @@ class ListNode<
         beforeExecute?: () => Promise<void>,
         afterExecute?: () => Promise<void>
     ) {
+        // 如果数据键值是一个空字符串则更新成null
+        for (const k in data) {
+            if (data[k] === '') {
+                Object.assign(data, {
+                    [k]: null,
+                });
+            }
+        }
         // assert(Object.keys(this.children).length === 0, `更新子结点应该落在相应的component上`);
         if (this.children && this.children[id]) {
             // 实际中有这样的case出现，当使用actionButton时。先这样处理。by Xc 20230214
@@ -1188,6 +1204,14 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
         const id = generateNewId();
         assert(!this.id && !this.dirty, 'create前要保证singleNode为空');
+        // 如果数据键值是一个空字符串则更新成null
+        for (const k in data) {
+            if (data[k] === '') {
+                Object.assign(data, {
+                    [k]: null,
+                });
+            }
+        }
         this.operation = {
             operation: {
                 id: generateNewId(),
@@ -1201,6 +1225,14 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     }
 
     update(data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
+        // 如果数据键值是一个空字符串则更新成null
+        for (const k in data) {
+            if (data[k] === '') {
+                Object.assign(data, {
+                    [k]: null,
+                });
+            }
+        }
         if (!this.operation) {
             if (this.id) {
                 const operation: ED[T]['Update'] = {
