@@ -8,5 +8,6 @@ export declare abstract class BackendRuntimeContext<ED extends EntityDict & Base
     private subscriberId?;
     constructor(store: AsyncRowStore<ED, BackendRuntimeContext<ED>>, data?: SerializedData, headers?: IncomingHttpHeaders);
     getSubscriberId(): string | undefined;
+    protected getSerializedData(): SerializedData;
     protected initialized(): Promise<void>;
 }

@@ -10,6 +10,11 @@ export class BackendRuntimeContext extends AsyncContext {
     getSubscriberId() {
         return this.subscriberId;
     }
+    getSerializedData() {
+        return {
+            sid: this.subscriberId,
+        };
+    }
     async initialized() {
     }
 }

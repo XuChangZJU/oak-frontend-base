@@ -18,6 +18,12 @@ export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDi
         return this.subscriberId;
     }
 
+    protected getSerializedData(): SerializedData {
+        return {
+            sid: this.subscriberId,
+        }
+    }
+
     protected async initialized() {
     }
 }

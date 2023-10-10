@@ -26,6 +26,11 @@ export default OakComponent({
                 assert(entity);
                 return {
                     destEntity: entity,
+                    relation: {
+                        entityId: {
+                            $exists: false,
+                        }
+                    }
                 };
                 /*  if (!actions || actions.length === 0) {
                      return {
@@ -51,62 +56,15 @@ export default OakComponent({
         const { entity } = this.props;
         const schema = this.features.cache.getSchema();
         const cascadeEntities = this.features.relationAuth.getCascadeActionAuths(entity, true);
-        const cascadeEntityActions = cascadeEntities.map((ele) => {
-            const [de, p, se] = ele;
-            const actionAuths = data?.filter(ele => ele.destEntity === de);
-            const relations = this.features.cache.get('relation', {
-                data: {
-                    id: 1,
-                    entity: 1,
-                    entityId: 1,
-                    name: 1,
-                    display: 1,
-                },
-                filter: {
-                    entity: se,
-                    entityId: {
-                        $exists: false,
-                    },
-                },
-            });
-            return {
-                actionAuths,
-                relations,
-                path: ele,
-            };
-        });
-        // path里含有$
-        const $pathActionAuths = [];
-        data.forEach((ele) => {
-            if (ele.paths?.join('').includes('$')) {
-                ele.paths.forEach((path) => {
-                    if (path.includes('$')) {
-                        $pathActionAuths.push({
-                            ...ele,
-                            path,
-                        });
-                    }
-                });
-            }
-        });
-        // groupBy
-        // 分解groupBy 的key
-        const $actionAuthsObject = groupBy($pathActionAuths, 'path');
-        // 含有反向指针的路径，其所对应实体的请求放在了onChange方法
-        Object.keys($actionAuthsObject).forEach((ele) => {
-            const entities = ele.split('.');
-            const slicePath = entities[entities.length - 1];
-            const se = entities[entities.length - 1].split('$')[0];
-            const relationEntity = this.resolveP(schema, ele, entity);
-            const p = ele;
-            const de = entity;
-            // 初始时 relation先用{name: relationName}表示
-            let relations = [];
-            if (relationEntity === 'user') {
-                relations = [{ id: '', name: '当前用户' }];
-            }
-            else {
-                relations = this.features.cache.get('relation', {
+        const actionAuthGroup = groupBy(data, (ele) => ele.paths?.join(','));
+        const actionAuthList = Object.keys(actionAuthGroup).map((key) => {
+            let result = {};
+            const row = actionAuthGroup[key][0];
+            const { paths } = row;
+            const path = paths[0];
+            if (path.includes('$')) {
+                const relationEntity = this.resolveP(schema, path, row.destEntity);
+                const relations = this.features.cache.get('relation', {
                     data: {
                         id: 1,
                         entity: 1,
@@ -121,40 +79,150 @@ export default OakComponent({
                         },
                     },
                 });
-            }
-            cascadeEntityActions.push({
-                path: [de, p, se, true],
-                relations: relations,
-                actionAuths: $actionAuthsObject[ele],
-            });
-        });
-        // relationId为空字符串 表示为user的actionAuth 也要特殊处理
-        const hasUserActionAuths = [];
-        data.forEach((ele) => {
-            if (ele.relationId === '') {
-                ele.paths?.forEach((path) => {
-                    hasUserActionAuths.push({
-                        ...ele,
-                        path
-                    });
+                Object.assign(result, {
+                    sourceEntity: relationEntity,
+                    relationSelections: relations,
                 });
             }
-        });
-        // const hasUserActionAuths = data.filter((ele) => ele.relationId === '');
-        const $actionAuthsObject2 = groupBy(hasUserActionAuths, 'path');
-        Object.keys($actionAuthsObject2).forEach((ele) => {
-            const entities = ele.split('.');
-            const se = entities[entities.length - 1].split('$')[0];
-            const p = ele;
-            const de = entity;
-            cascadeEntityActions.push({
-                path: [de, p, se, true],
-                relations: [{ id: '', name: '当前用户' }],
-                actionAuths: $actionAuthsObject2[ele],
+            else {
+                const cascadeEntity = cascadeEntities.find((ele) => ele[1] === path);
+                const relations = this.features.cache.get('relation', {
+                    data: {
+                        id: 1,
+                        entity: 1,
+                        entityId: 1,
+                        name: 1,
+                        display: 1,
+                    },
+                    filter: {
+                        entity: cascadeEntity[2],
+                        entityId: {
+                            $exists: false,
+                        },
+                    },
+                });
+                Object.assign(result, {
+                    sourceEntity: cascadeEntity[2],
+                    relationSelections: relations,
+                });
+            }
+            Object.assign(result, {
+                paths,
+                relations: actionAuthGroup[key],
             });
+            return result;
         });
+        console.log(actionAuthList);
+        // const cascadeEntityActions = cascadeEntities.map(
+        //     (ele) => {
+        //         const [de, p, se] = ele;
+        //         const actionAuths = data?.filter(
+        //             ele => ele.destEntity === de
+        //         );
+        //         const relations = this.features.cache.get('relation', {
+        //             data: {
+        //                 id: 1,
+        //                 entity: 1,
+        //                 entityId: 1,
+        //                 name: 1,
+        //                 display: 1,
+        //             },
+        //             filter: {
+        //                 entity: se as string,
+        //                 entityId: {
+        //                     $exists: false,
+        //                 },
+        //             },
+        //         });
+        //         return {
+        //             actionAuths,
+        //             relations,
+        //             path: ele,
+        //         };
+        //     }
+        // );
+        // // path里含有$
+        // const $pathActionAuths: (RowWithActions<ED, 'actionAuth'> & { path: string })[] = [];
+        // data.forEach((ele) => {
+        //     if (ele.paths?.join('').includes('$')) {
+        //         ele.paths.forEach((path) => {
+        //             if (path.includes('$')) {
+        //                 $pathActionAuths.push({
+        //                     ...ele,
+        //                     path,
+        //                 })
+        //             }
+        //         })
+        //     }
+        // })
+        // // groupBy
+        // // 分解groupBy 的key
+        // const $actionAuthsObject = groupBy($pathActionAuths, 'path');
+        // // 含有反向指针的路径，其所对应实体的请求放在了onChange方法
+        // Object.keys($actionAuthsObject).forEach((ele) => {
+        //     const entities = ele.split('.');
+        //     const slicePath = entities[entities.length - 1];
+        //     const se = entities[entities.length - 1].split('$')[0];
+        //     const relationEntity = this.resolveP(schema, ele, entity);
+        //     const p = ele;
+        //     const de = entity!;
+        //     // 初始时 relation先用{name: relationName}表示
+        //     let relations = [];
+        //     if (relationEntity === 'user') {
+        //         relations = [{ id: '', name: '当前用户' }];
+        //     }
+        //     else {
+        //         relations = this.features.cache.get('relation', {
+        //             data: {
+        //                 id: 1,
+        //                 entity: 1,
+        //                 entityId: 1,
+        //                 name: 1,
+        //                 display: 1,
+        //             },
+        //             filter: {
+        //                 entity: relationEntity as string,
+        //                 entityId: {
+        //                     $exists: false,
+        //                 },
+        //             },
+        //         });
+        //     }
+        //     cascadeEntityActions.push({
+        //         path: [de, p, se, true],
+        //         relations: relations,
+        //         actionAuths: $actionAuthsObject[ele],
+        //     })
+        // })
+        // // relationId为空字符串 表示为user的actionAuth 也要特殊处理
+        // const hasUserActionAuths: (RowWithActions<ED, 'actionAuth'> & { path: string })[] = [];
+        // data.forEach((ele) => {
+        //     if (ele.relationId === '') {
+        //         ele.paths?.forEach((path) => {
+        //             hasUserActionAuths.push({
+        //                 ...ele,
+        //                 path
+        //             })
+        //         })
+        //     }
+        // })
+        // // const hasUserActionAuths = data.filter((ele) => ele.relationId === '');
+        // const $actionAuthsObject2 = groupBy(hasUserActionAuths, 'path');
+        // Object.keys($actionAuthsObject2).forEach((ele) => {
+        //     const entities = ele.split('.');
+        //     const se = entities[entities.length - 1].split('$')[0];
+        //     const p = ele;
+        //     const de = entity!;
+        //     cascadeEntityActions.push({
+        //         path: [de, p, se, true],
+        //         relations: [{ id: '', name: '当前用户' }],
+        //         actionAuths: $actionAuthsObject2[ele],
+        //     })
+        // })
         return {
-            cascadeEntityActions,
+            actionAuthList,
+            actionAuths: data,
+            // cascadeEntityActions,
         };
     },
     lifetimes: {
@@ -296,6 +364,47 @@ export default OakComponent({
                     destEntity: this.props.entity,
                     deActions: actions,
                 });
+            }
+        },
+        async onChange2(checked, relationId, paths, actionAuths) {
+            console.log(checked);
+            const { actions } = this.props;
+            if (checked) {
+                const dASameActionAuth = actionAuths.find((ele) => ele.relationId === relationId);
+                if (dASameActionAuth) {
+                    if (dASameActionAuth.$$deleteAt$$ && dASameActionAuth.$$deleteAt$$ === 1) {
+                        this.recoverItem(dASameActionAuth.id);
+                        this.updateItem({
+                            deActions: actions,
+                        }, dASameActionAuth.id);
+                    }
+                    else {
+                        this.updateItem({
+                            deActions: uniq((actions || []).concat(dASameActionAuth.deActions)),
+                        }, dASameActionAuth.id);
+                    }
+                }
+                else {
+                    this.addItem({
+                        paths,
+                        relationId,
+                        destEntity: this.props.entity,
+                        deActions: actions,
+                    });
+                }
+            }
+            else {
+                const dASameActionAuth = actionAuths.find((ele) => ele.relationId === relationId && !ele.$$deleteAt$$);
+                assert(dASameActionAuth);
+                const newActions = difference(dASameActionAuth.deActions, actions);
+                if (newActions.length === 0) {
+                    this.removeItem(dASameActionAuth.id);
+                }
+                else {
+                    this.updateItem({
+                        deActions: newActions,
+                    }, dASameActionAuth.id);
+                }
             }
         },
         confirm() {
