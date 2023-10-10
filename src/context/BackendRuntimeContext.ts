@@ -7,13 +7,6 @@ import { IncomingHttpHeaders } from 'http';
 export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDict> extends AsyncContext<ED> {
     private subscriberId?: string;
 
-    constructor(store: AsyncRowStore<ED, BackendRuntimeContext<ED>>, data?: SerializedData, headers?: IncomingHttpHeaders) {
-        super(store, headers);
-        if (data) {
-            this.subscriberId = data.sid;
-        }
-    }
-
     getSubscriberId() {
         return this.subscriberId;
     }
@@ -24,6 +17,9 @@ export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDi
         }
     }
 
-    protected async initialized() {
+    async initialize(data?: SerializedData) {
+        if (data?.sid) {
+            this.subscriberId = data.sid;
+        }
     }
 }
