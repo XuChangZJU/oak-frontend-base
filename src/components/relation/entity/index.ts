@@ -14,7 +14,7 @@ export default OakComponent({
         relationIds: [] as string[],
     },
     formData() {
-        const { entity } = this.props;
+        const entity  = this.props.entity;
         const actions = this.features.relationAuth.getActions(entity!);
         const daas = this.features.relationAuth.getCascadeActionAuths(entity!, false);
         const relations = this.features.cache.get('relation', {

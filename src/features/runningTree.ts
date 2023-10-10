@@ -635,7 +635,7 @@ class ListNode<
             operation: {
                 id: generateNewId(),
                 action: 'create',
-                data: item.id ? item : Object.assign(item, { id }),
+                data: Object.assign(item, { id }),
             },
         };
         this.setDirty();
