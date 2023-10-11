@@ -26,12 +26,12 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         relationCascadeGraph: AuthCascadePath<ED>[],
         authDeduceRelationMap: AuthDeduceRelationMap<ED>,
         selectFreeEntities?: (keyof ED)[],
-        createFreeEntities?:  (keyof ED)[],
+        createFreeEntities?: (keyof ED)[],
         updateFreeEntities?: (keyof ED)[]
     ) {
         super(storageSchema);
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
-        this.relationAuth = new RelationAuth(storageSchema, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);        
+        this.relationAuth = new RelationAuth(storageSchema, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);
     }
 
     async exec(script: string, txnId?: string) {
@@ -69,13 +69,29 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         context: Cxt,
         option: OP
     ) {
-        assert(context.getCurrentTxnId());
+        const autoCommit = !context.getCurrentTxnId();
+        let result;
+        if (autoCommit) {
+            await context.begin();
+        }
         /**
          * 这里似乎还有点问题，如果在后续的checker里增加了cascadeUpdate，是无法在一开始检查权限的
          * 后台的DbStore也一样          by Xc 20230801
-         */
-        await this.relationAuth.checkRelationAsync(entity, operation, context);
-        return super.operateAsync(entity, operation, context, option);
+         */if (autoCommit) {
+            await context.begin();
+        }
+        try {
+            await this.relationAuth.checkRelationAsync(entity, operation, context);
+            result = await super.operateAsync(entity, operation, context, option);
+        }
+        catch (err) {
+            await context.rollback();
+            throw err;
+        }
+        if (autoCommit) {
+            await context.commit();
+        }
+        return result;
     }
 
     async select<T extends keyof ED, OP extends DebugStoreSelectOption>(
@@ -84,24 +100,39 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         context: Cxt,
         option: OP
     ) {
-        assert(context.getCurrentTxnId());
+        const autoCommit = !context.getCurrentTxnId();
+        if (autoCommit) {
+            await context.begin();
+        }
         Object.assign(selection, {
             action: 'select',
         });
 
         // select的trigger应加在根结点的动作之前
-        if (!option.blockTrigger) {
-            await this.executor.preOperation(entity, selection as ED[T]['Operation'], context, option);
-        }
-        if (!option.dontCollect) {
-            await this.relationAuth.checkRelationAsync(entity, selection, context);
-        }
-        const result = await super.selectAsync(entity, selection, context, option);
+        try {
+            if (!option.blockTrigger) {
+                await this.executor.preOperation(entity, selection as ED[T]['Operation'], context, option);
+            }
+            if (!option.dontCollect) {
+                await this.relationAuth.checkRelationAsync(entity, selection, context);
+            }
+            const result = await super.selectAsync(entity, selection, context, option);
 
-        if (!option.blockTrigger) {
-            await this.executor.postOperation(entity, selection as ED[T]['Operation'], context, option, result);
+            if (!option.blockTrigger) {
+                await this.executor.postOperation(entity, selection as ED[T]['Operation'], context, option, result);
+            }
+
+            if (autoCommit) {
+                await context.commit();
+            }
+            return result;
         }
-        return result;
+        catch (err) {
+            if (autoCommit) {
+                await context.rollback();
+            }
+            throw err;
+        }
     }
 
     async count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]["Selection"], "filter" | "count">, context: Cxt, option: OP): Promise<number> {
