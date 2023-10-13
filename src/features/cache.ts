@@ -537,9 +537,9 @@ export class Cache<
             (oper) => {
                 const { entity, operation } = oper;
                 this.cacheStore!.operate(entity, operation, this.context!, {
+                    checkerTypes: ['logical'],      // 这里不能检查data，不然在数据没填完前会有大量异常
                     dontCollect: true,
                     dontCreateOper: true,
-                    blockTrigger: true,
                     dontCreateModi: true,
                 });
             }

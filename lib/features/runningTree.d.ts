@@ -108,7 +108,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
      * @param afterExecute
      */
     updateItem(data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
-    updateItems(data: Record<string, ED[T]['Update']['data']>, action?: ED[T]['Action']): Promise<void>;
+    updateItems(data: Record<string, ED[T]['Update']['data']>, action?: ED[T]['Action']): void;
     doBeforeTrigger(): Promise<void>;
     doAfterTrigger(): Promise<void>;
     getParentFilter(childNode: SingleNode<ED, T, Cxt, FrontCxt, AD>): ED[T]['Selection']['filter'] | undefined;

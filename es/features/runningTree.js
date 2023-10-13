@@ -574,9 +574,9 @@ class ListNode extends Node {
         }
         this.setDirty();
     }
-    async updateItems(data, action) {
+    updateItems(data, action) {
         for (const id in data) {
-            await this.updateItem(data[id], id, action);
+            this.updateItem(data[id], id, action);
         }
     }
     async doBeforeTrigger() {

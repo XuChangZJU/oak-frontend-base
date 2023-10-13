@@ -14,6 +14,7 @@ import {
     ActionDef,
     RowWithActions,
     ComponentProps,
+    OakComponentData,
 } from './types/Page';
 import { cloneDeep, unset } from 'oak-domain/lib/utils/lodash';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
@@ -24,13 +25,13 @@ import { combineFilters } from 'oak-domain/lib/store/filter';
 import { MODI_NEXT_PATH_SUFFIX } from './features/runningTree';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
 
-export async function onPathSet<
+export function onPathSet<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>>(
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
-        option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>) {
+        option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>): Partial<OakComponentData<ED, T>> {
     const { props, state } = this;
     const { oakPath, oakProjection, oakFilters, oakSorters, oakId } = props as ComponentProps<ED, T, true, {}>;
     const { entity, path, projection, isList, filters, sorters, pagination } = option;
@@ -114,21 +115,10 @@ export async function onPathSet<
         );
 
         // 确保SetState生效，这里改成异步
-        await new Promise(
-            (resolve) => {
-                this.setState({
-                    oakEntity: entity2,
-                    oakFullpath: oakPath2,
-                }, () => resolve(0));
-            }
-        );
-
-        if ((projection || oakProjection) && !features.runningTree.checkIsModiNode(oakPath2)) {
-            this.refresh();
-        }
-        else {
-            this.reRender();
-        }
+        return {
+            oakEntity: entity2,
+            oakFullpath: oakPath2,
+        };
     }
     else {
         // 创建virtualNode
@@ -145,14 +135,10 @@ export async function onPathSet<
                 oakPath2!
             )
         );
-        await new Promise(
-            (resolve) => {
-                this.setState({
-                    oakFullpath: oakPath2,
-                }, () => resolve(0));
-            }
-        );
-        this.reRender();
+
+        return {
+            oakFullpath: oakPath2,
+        };
     }
 }
 

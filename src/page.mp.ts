@@ -74,6 +74,7 @@ const oakBehavior = Behavior<
             loadMissedLocales: (key: string) => void;
         },
     {
+        unmounted: false,
         prevState: Record<string, any>;
         state: Record<string, any>;
         props: {
@@ -221,9 +222,15 @@ const oakBehavior = Behavior<
                 this.setState(dataResolved);
             }
             if (this.props.oakPath || (this.iAmThePage() && path)) {
-                await onPathSet.call(this as any, this.oakOption as any);
-            } else {
-                this.reRender();
+                const pathState = onPathSet.call(this as any, this.oakOption as any);
+                if (this.unmounted) {
+                    return;
+                }
+                this.setState(pathState as any, () => {
+                    if (this.iAmThePage()) {
+                        this.refresh();
+                    }
+                });
             }
         },
 
@@ -665,7 +672,11 @@ const oakBehavior = Behavior<
     observers: {
         oakPath(data) {
             if (data && data !== this.state.oakFullpath) {
-                onPathSet.call(this as any, this.oakOption as any);
+                const pathState = onPathSet.call(this as any, this.oakOption as any);
+                if (this.unmounted) {
+                    return;
+                }
+                this.setState(pathState as any);
             }
         },
         oakId(data) {
@@ -710,10 +721,12 @@ const oakBehavior = Behavior<
         show() {
             const { show } = this.oakOption.lifetimes || {};
             // this.reRender();
+            assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
             show && show.call(this);
         },
         hide() {
             const { hide } = this.oakOption.lifetimes || {};
+            assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
             hide && hide.call(this);
         },
     },
@@ -885,6 +898,7 @@ export function createComponent<
         WechatMiniprogram.Component.PropertyOption,
         MethodOption,
         {
+            umounted: Boolean;
             state: Record<string, any>;
             props: {
                 oakId: string;
@@ -970,6 +984,7 @@ export function createComponent<
                 created && created.call(this);
             },
             attached() {
+                this.umounted = false;
                 this.subscribed.push(
                     features.locales.subscribe(() => this.reRender())
                 );
@@ -1024,6 +1039,7 @@ export function createComponent<
                     destroyNode.call(this as any);
 
                 detached && detached.call(this);
+                this.umounted = true;
             },
             ready() {
                 if (typeof data === 'function') {
@@ -1031,6 +1047,7 @@ export function createComponent<
                     const data2 = (data as Function).call(this as any);
                     this.setData(data2);
                 }
+                assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
                 ready && ready.call(this);
             },
             moved() {

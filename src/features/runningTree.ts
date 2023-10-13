@@ -743,12 +743,12 @@ class ListNode<
         this.setDirty();
     }
 
-    async updateItems(
+    updateItems(
         data: Record<string, ED[T]['Update']['data']>,
         action?: ED[T]['Action']
     ) {
         for (const id in data) {
-            await this.updateItem(data[id], id, action);
+            this.updateItem(data[id], id, action);
         }
     }
 

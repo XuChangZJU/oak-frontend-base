@@ -122,10 +122,15 @@ const oakBehavior = Behavior({
                 this.setState(dataResolved);
             }
             if (this.props.oakPath || (this.iAmThePage() && path)) {
-                await onPathSet.call(this, this.oakOption);
-            }
-            else {
-                this.reRender();
+                const pathState = onPathSet.call(this, this.oakOption);
+                if (this.unmounted) {
+                    return;
+                }
+                this.setState(pathState, () => {
+                    if (this.iAmThePage()) {
+                        this.refresh();
+                    }
+                });
             }
         },
         subEvent(type, callback) {
@@ -434,7 +439,11 @@ const oakBehavior = Behavior({
     observers: {
         oakPath(data) {
             if (data && data !== this.state.oakFullpath) {
-                onPathSet.call(this, this.oakOption);
+                const pathState = onPathSet.call(this, this.oakOption);
+                if (this.unmounted) {
+                    return;
+                }
+                this.setState(pathState);
             }
         },
         oakId(data) {
@@ -476,10 +485,12 @@ const oakBehavior = Behavior({
         show() {
             const { show } = this.oakOption.lifetimes || {};
             // this.reRender();
+            assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
             show && show.call(this);
         },
         hide() {
             const { hide } = this.oakOption.lifetimes || {};
+            assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
             hide && hide.call(this);
         },
     },
@@ -641,6 +652,7 @@ export function createComponent(option, features) {
                 created && created.call(this);
             },
             attached() {
+                this.umounted = false;
                 this.subscribed.push(features.locales.subscribe(() => this.reRender()));
                 if (option.entity) {
                     this.subscribed.push(features.cache.subscribe(() => this.reRender()));
@@ -677,6 +689,7 @@ export function createComponent(option, features) {
                     (this.iAmThePage() || this.props.oakAutoUnmount) &&
                     destroyNode.call(this);
                 detached && detached.call(this);
+                this.umounted = true;
             },
             ready() {
                 if (typeof data === 'function') {
@@ -684,6 +697,7 @@ export function createComponent(option, features) {
                     const data2 = data.call(this);
                     this.setData(data2);
                 }
+                assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
                 ready && ready.call(this);
             },
             moved() {

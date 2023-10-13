@@ -3,7 +3,7 @@ import { cloneDeep, unset } from 'oak-domain/lib/utils/lodash';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { combineFilters } from 'oak-domain/lib/store/filter';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
-export async function onPathSet(option) {
+export function onPathSet(option) {
     const { props, state } = this;
     const { oakPath, oakProjection, oakFilters, oakSorters, oakId } = props;
     const { entity, path, projection, isList, filters, sorters, pagination } = option;
@@ -72,18 +72,10 @@ export async function onPathSet(option) {
             }
         }, oakPath2));
         // 确保SetState生效，这里改成异步
-        await new Promise((resolve) => {
-            this.setState({
-                oakEntity: entity2,
-                oakFullpath: oakPath2,
-            }, () => resolve(0));
-        });
-        if ((projection || oakProjection) && !features.runningTree.checkIsModiNode(oakPath2)) {
-            this.refresh();
-        }
-        else {
-            this.reRender();
-        }
+        return {
+            oakEntity: entity2,
+            oakFullpath: oakPath2,
+        };
     }
     else {
         // 创建virtualNode
@@ -95,12 +87,9 @@ export async function onPathSet(option) {
                 this.reRender();
             }
         }, oakPath2));
-        await new Promise((resolve) => {
-            this.setState({
-                oakFullpath: oakPath2,
-            }, () => resolve(0));
-        });
-        this.reRender();
+        return {
+            oakFullpath: oakPath2,
+        };
     }
 }
 function checkActionsAndCascadeEntities(rows, option) {

@@ -69,10 +69,6 @@ abstract class OakComponentBase<
         } as any);
     }
 
-    onPathSet() {
-        return onPathSet.call(this as any, this.oakOption as any);
-    }
-
     triggerEvent<DetailType = any>(
         name: string,
         detail?: DetailType,
@@ -974,28 +970,72 @@ export function createComponent<
             }
             lifetimes?.attached && lifetimes.attached.call(this);
             const { oakPath } = this.props;
-            if (option.entity) {
+            if (oakPath || this.iAmThePage() && path) {
+                const pathState = onPathSet.call(this as any, this.oakOption as any);
+                if (this.unmounted) {
+                    return;
+                }
+                this.setState(pathState as any, () => {
+                    lifetimes?.ready && lifetimes.ready.call(this);
+                    lifetimes?.show && lifetimes.show.call(this);
+
+                    const { oakFullpath } = this.state;
+                    if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && this.iAmThePage()) {
+                        this.refresh();
+                    }
+                    else {
+                        this.reRender();
+                    }
+                });
+            }
+            /* if (option.entity) {
                 if (oakPath || this.iAmThePage() && path) {
-                    await this.onPathSet();
+                    const pathState = onPathSet.call(this as any, this.oakOption as any);
                     if (this.unmounted) {
                         return;
                     }
-                    lifetimes?.ready && lifetimes.ready.call(this);
-                    lifetimes?.show && lifetimes.show.call(this);
+                    this.setState(pathState as any, () => {
+                        lifetimes?.ready && lifetimes.ready.call(this);
+                        lifetimes?.show && lifetimes.show.call(this);
+
+                        const { oakFullpath } = this.state;
+                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath)) {
+                            this.refresh();
+                        }
+                        else {
+                            this.reRender();
+                        }
+                    });
                 }
             }
             else {
                 // 无entity的结点此时直接调ready生命周期
+                // 这是原来的代码逻辑，看不懂这里为什么要区分，如果oakPath没有设置可以渲染吗？  by Xc 20231013
                 if (oakPath || this.iAmThePage() && path) {
-                    await this.onPathSet();
+                    const pathState = onPathSet.call(this as any, this.oakOption as any);
                     if (this.unmounted) {
                         return;
                     }
+
+                    this.setState(pathState as any, () => {
+                        lifetimes?.ready && lifetimes.ready.call(this);
+                        lifetimes?.show && lifetimes.show.call(this);
+
+                        const { oakFullpath } = this.state;
+                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath)) {
+                            this.refresh();
+                        }
+                        else {
+                            this.reRender();
+                        }
+                    });
                 }
-                lifetimes?.ready && lifetimes.ready.call(this);
-                lifetimes?.show && lifetimes.show.call(this);
-                this.reRender();
-            }
+                else {
+                    lifetimes?.ready && lifetimes.ready.call(this);
+                    lifetimes?.show && lifetimes.show.call(this);
+                    this.reRender();
+                }
+            } */
             if (option.features) {
                 option.features.forEach(
                     ele => {
@@ -1046,14 +1086,26 @@ export function createComponent<
             if (prevProps.oakPath !== this.props.oakPath) {
                 // oakPath如果是用变量初始化，在这里再执行onPathSet，如果有entity的结点在此执行ready
                 assert(this.props.oakPath);
-                await this.onPathSet();
+                const pathState = onPathSet.call(this as any, this.oakOption as any);
                 if (this.unmounted) {
                     return;
                 }
-                if (option.entity) {
-                    lifetimes?.ready && lifetimes.ready.call(this);
-                    lifetimes?.show && lifetimes.show.call(this);
-                }
+                this.setState(pathState as any, () => {
+                    if (prevProps.oakPath === undefined) {
+                        // 如果每个页面都在oakFullpath形成后再渲染子结点，这个if感觉是不应该命中的
+                        console.warn('发生了结点先形成再配置oakPath的情况，请检查代码修正');
+                        lifetimes?.ready && lifetimes.ready.call(this);
+                        lifetimes?.show && lifetimes.show.call(this);
+    
+                        const { oakFullpath } = this.state;
+                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && this.iAmThePage()) {
+                            this.refresh();
+                        }
+                        else {
+                            this.reRender();
+                        }
+                    }
+                });
             }
             if (this.props.oakId !== prevProps.oakId) {
                 assert(this.props.oakId);       // 好像不可能把已有的id设空的界面需求吧
