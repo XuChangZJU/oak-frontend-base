@@ -626,6 +626,12 @@ export function createComponent(option, features) {
                     }
                 });
             }
+            else if (!this.oakOption.entity) {
+                // 如果没有entity，也不需要onPathSet，直接走ready
+                lifetimes?.ready && lifetimes.ready.call(this);
+                lifetimes?.show && lifetimes.show.call(this);
+                this.reRender();
+            }
             /* if (option.entity) {
                 if (oakPath || this.iAmThePage() && path) {
                     const pathState = onPathSet.call(this as any, this.oakOption as any);
@@ -709,7 +715,7 @@ export function createComponent(option, features) {
         async componentDidUpdate(prevProps, prevState) {
             if (prevProps.oakPath !== this.props.oakPath) {
                 // oakPath如果是用变量初始化，在这里再执行onPathSet，如果有entity的结点在此执行ready
-                assert(this.props.oakPath);
+                assert(this.props.oakPath && this.oakOption.entity);
                 const pathState = onPathSet.call(this, this.oakOption);
                 if (this.unmounted) {
                     return;

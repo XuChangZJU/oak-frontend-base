@@ -230,7 +230,13 @@ const oakBehavior = Behavior<
                     if (this.iAmThePage()) {
                         this.refresh();
                     }
+                    else {
+                        this.reRender();
+                    }
                 });
+            }
+            else if(!this.oakOption.entity) {
+                this.reRender();
             }
         },
 
