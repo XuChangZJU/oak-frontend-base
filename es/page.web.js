@@ -618,7 +618,7 @@ export function createComponent(option, features) {
                     lifetimes?.ready && lifetimes.ready.call(this);
                     lifetimes?.show && lifetimes.show.call(this);
                     const { oakFullpath } = this.state;
-                    if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && this.iAmThePage()) {
+                    if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath)) {
                         this.refresh();
                     }
                     else {
@@ -727,7 +727,7 @@ export function createComponent(option, features) {
                         lifetimes?.ready && lifetimes.ready.call(this);
                         lifetimes?.show && lifetimes.show.call(this);
                         const { oakFullpath } = this.state;
-                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && this.iAmThePage()) {
+                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath)) {
                             this.refresh();
                         }
                         else {

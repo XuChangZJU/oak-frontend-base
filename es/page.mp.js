@@ -127,7 +127,8 @@ const oakBehavior = Behavior({
                     return;
                 }
                 this.setState(pathState, () => {
-                    if (this.iAmThePage()) {
+                    const { oakFullpath } = this.state;
+                    if (oakFullpath) {
                         this.refresh();
                     }
                     else {

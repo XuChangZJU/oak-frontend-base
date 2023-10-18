@@ -1754,11 +1754,13 @@ export class RunningTree extends Feature {
             return;
         } */
         const node = this.findNode(path);
-        if (node instanceof ListNode) {
-            await node.refresh(1, true);
-        }
-        else if (node) {
-            await node.refresh();
+        if (!node?.isLoading()) {
+            if (node instanceof ListNode) {
+                await node.refresh(1, true);
+            }
+            else if (node) {
+                await node.refresh();
+            }
         }
     }
     async loadMore(path) {
