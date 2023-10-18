@@ -921,7 +921,7 @@ class ListNode<
                 if (append) {
                     this.loadingMore = true;
                 }
-                this.publish();
+                this.publishRecursively();
                 await this.cache.refresh(
                     entity,
                     {
@@ -957,19 +957,19 @@ class ListNode<
                         }
                     }
                 );
-                this.publish();
+                this.publishRecursively();
             } catch (err) {
                 this.setLoading(false);
                 if (append) {
                     this.loadingMore = false;
                 }
-                this.publish();
+                this.publishRecursively();
                 throw err;
             }
         }
         else {
             // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
-            this.publish();
+            this.publishRecursively();
         }
     }
 
@@ -1025,6 +1025,13 @@ class ListNode<
     getIntrinsticFilters() {
         const filters = this.constructFilters(undefined, true, true);
         return combineFilters(this.entity, this.schema, filters || []);
+    }
+
+    publishRecursively() {
+        this.publish();
+        for (const child in this.children) {
+            this.children[child].publishRecursively();
+        }
     }
 }
 
@@ -1434,7 +1441,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         const filter = this.getFilter();
         if (projection && filter) {
             this.setLoading(true);
-            this.publish();
+            this.publishRecursively();
             try {
                 const { data: [value] } = await this.cache.refresh(this.entity, {
                     data: projection,
@@ -1462,17 +1469,17 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     this.setLoading(false);
                     //this.clean();
                 });
-                this.publish();
+                this.publishRecursively();
             }
             catch (err) {
                 this.setLoading(false);
-                this.publish();
+                this.publishRecursively();
                 throw err;
             }
         }
         else {
             // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
-            this.publish();
+            this.publishRecursively();
         }
     }
 
@@ -1628,6 +1635,13 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         return;
     }
+
+    publishRecursively() {
+        this.publish();
+        for (const child in this.children) {
+            this.children[child].publishRecursively();
+        }
+    }
 }
 
 class VirtualNode<
@@ -1697,6 +1711,7 @@ class VirtualNode<
     }
     async refresh() {
         this.loading = true;
+        this.publishRecursively();
         try {
             await Promise.all(
                 Object.keys(this.children).map(
@@ -1704,10 +1719,11 @@ class VirtualNode<
                 )
             );
             this.loading = false;
-            this.publish();
+            this.publishRecursively();
         }
         catch (err) {
             this.loading = false;
+            this.publishRecursively();
             throw err;
         }
     }
@@ -1782,6 +1798,13 @@ class VirtualNode<
             }
         }
         this.dirty = false;
+    }
+
+    publishRecursively() {
+        this.publish();
+        for (const child in this.children) {
+            this.children[child].publishRecursively();
+        }
     }
 }
 
