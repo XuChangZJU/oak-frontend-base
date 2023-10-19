@@ -1,4 +1,4 @@
-import { AggregationResult, AuthCascadePath, AuthDeduceRelationMap, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
+import { AggregationResult, AuthDeduceRelationMap, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
 import { TreeStore, TreeStoreOperateOption, TreeStoreSelectOption } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
@@ -22,16 +22,15 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
     constructor(
         storageSchema: StorageSchema<ED>,
         contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>,
-        actionCascadeGraph: AuthCascadePath<ED>[],
-        relationCascadeGraph: AuthCascadePath<ED>[],
         authDeduceRelationMap: AuthDeduceRelationMap<ED>,
         selectFreeEntities?: (keyof ED)[],
-        createFreeEntities?: (keyof ED)[],
-        updateFreeEntities?: (keyof ED)[]
+        updateFreeDict?: {
+            [A in keyof ED]?: string[];
+        }
     ) {
         super(storageSchema);
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
-        this.relationAuth = new RelationAuth(storageSchema, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);
+        this.relationAuth = new RelationAuth(storageSchema, authDeduceRelationMap, selectFreeEntities, updateFreeDict);
     }
 
     async exec(script: string, txnId?: string) {

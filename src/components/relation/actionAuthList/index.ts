@@ -1,5 +1,5 @@
 import assert from "assert";
-import { AuthCascadePath, EntityDict } from "oak-domain/lib/types";
+import { EntityDict } from "oak-domain/lib/types";
 import { ED } from "../../../types/AbstractComponent";
 
 export default OakComponent({

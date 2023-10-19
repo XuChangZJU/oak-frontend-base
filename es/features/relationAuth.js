@@ -2,37 +2,18 @@ import { OakUserException, OakRowUnexistedException } from 'oak-domain/lib/types
 import { Feature } from '../types/Feature';
 import { union } from 'oak-domain/lib/utils/lodash';
 import { RelationAuth as BaseRelationAuth } from 'oak-domain/lib/store/RelationAuth';
-import { judgeRelation } from 'oak-domain/lib/store/relation';
 export class RelationAuth extends Feature {
     cache;
-    actionCascadePathGraph;
-    actionCascadePathMap;
-    relationCascadePathGraph;
     baseRelationAuth;
     authDeduceRelationMap;
     static IgnoredActions = ['download', 'aggregate', 'count', 'stat'];
     entityGraph;
-    constructor(cache, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities) {
+    constructor(cache, authDeduceRelationMap, selectFreeEntities, updateFreeDict) {
         super();
         this.cache = cache;
-        this.actionCascadePathGraph = actionCascadePathGraph;
-        this.relationCascadePathGraph = relationCascadePathGraph;
-        this.actionCascadePathMap = {};
-        actionCascadePathGraph.forEach((ele) => {
-            const [entity] = ele;
-            if (this.actionCascadePathMap[entity]) {
-                this.actionCascadePathMap[entity].push(ele);
-            }
-            else {
-                this.actionCascadePathMap[entity] = [ele];
-            }
-        });
         this.authDeduceRelationMap = authDeduceRelationMap;
-        this.baseRelationAuth = new BaseRelationAuth(cache.getSchema(), actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);
+        this.baseRelationAuth = new BaseRelationAuth(cache.getSchema(), authDeduceRelationMap, selectFreeEntities, updateFreeDict);
         this.buildEntityGraph();
-    }
-    judgeRelation(entity, attr) {
-        return judgeRelation(this.cache.getSchema(), entity, attr);
     }
     getHasRelationEntities() {
         const schema = this.cache.getSchema();
@@ -146,23 +127,16 @@ export class RelationAuth extends Feature {
         return schema[entity].relation;
     }
     getCascadeActionEntitiesBySource(entity) {
-        const paths = this.actionCascadePathGraph.filter(ele => ele[2] === entity && ele[3]);
-        return paths.map((ele) => ({
-            path: ele,
-            actions: this.cache.getSchema()[ele[0]].actions.filter(ele => !RelationAuth.IgnoredActions.includes(ele)),
-        }));
+        return [];
     }
     getCascadeActionAuths(entity, ir) {
-        const paths = this.actionCascadePathGraph.filter(ele => ele[0] === entity && ir === ele[3]);
-        return paths;
+        return [];
     }
     getCascadeRelationAuthsBySource(entity) {
-        const relationAuths = this.relationCascadePathGraph.filter(ele => ele[2] === entity && ele[3]);
-        return relationAuths;
+        return [];
     }
     getCascadeRelationAuths(entity, ir) {
-        const relationAuths = this.relationCascadePathGraph.filter(ele => ele[0] === entity && ir === ele[3]);
-        return relationAuths;
+        return [];
     }
     checkRelation(entity, operation) {
         const context = this.cache.begin();

@@ -14,16 +14,16 @@ import { Style } from './style';
 import { SubScriber } from './subscriber';
 import { ContextMenuFactory } from './contextMenuFactory';
 import { Geo } from './geo';
-export function initializeStep2(features, aspectWrapper, storageSchema, frontendContextBuilder, checkers, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, colorDict, getFullDataFn, getSubscribePointFn, makeBridgeUrlFn, selectFreeEntities, createFreeEntities, updateFreeEntities, savedEntities, keepFreshPeriod) {
+export function initializeStep2(features, aspectWrapper, storageSchema, frontendContextBuilder, checkers, authDeduceRelationMap, colorDict, getFullDataFn, getSubscribePointFn, makeBridgeUrlFn, selectFreeEntities, updateFreeDict, savedEntities, keepFreshPeriod) {
     const { localStorage, environment, message } = features;
     const cache = new Cache(storageSchema, aspectWrapper, frontendContextBuilder, checkers, getFullDataFn, localStorage, savedEntities, keepFreshPeriod);
-    const relationAuth = new RelationAuth(cache, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);
+    const relationAuth = new RelationAuth(cache, authDeduceRelationMap, selectFreeEntities, updateFreeDict);
     const runningTree = new RunningTree(cache, storageSchema, relationAuth);
     const geo = new Geo(aspectWrapper);
     const port = new Port(aspectWrapper);
     const style = new Style(colorDict);
     const locales = new Locales(cache, localStorage, environment, 'zh-CN', makeBridgeUrlFn); // 临时性代码，应由上层传入
-    const contextMenuFactory = new ContextMenuFactory(cache, relationAuth, actionCascadePathGraph);
+    const contextMenuFactory = new ContextMenuFactory(cache, relationAuth);
     const subscriber = new SubScriber(cache, message, getSubscribePointFn);
     return {
         cache,

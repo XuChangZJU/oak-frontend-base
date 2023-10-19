@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, AuthCascadePath, AuthDeduceRelationMap, OakUserException, OakRowUnexistedException } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, AuthDeduceRelationMap, OakUserException, OakRowUnexistedException } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -16,9 +16,6 @@ export class RelationAuth<
     AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>
     > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
-    private actionCascadePathGraph: AuthCascadePath<ED>[];
-    private actionCascadePathMap: Record<string, AuthCascadePath<ED>[]>;
-    private relationCascadePathGraph: AuthCascadePath<ED>[];
     private baseRelationAuth: BaseRelationAuth<ED>;
     private authDeduceRelationMap: AuthDeduceRelationMap<ED>;
     static IgnoredActions = ['download', 'aggregate', 'count', 'stat'];
@@ -33,37 +30,17 @@ export class RelationAuth<
 
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
-        actionCascadePathGraph: AuthCascadePath<ED>[],
-        relationCascadePathGraph: AuthCascadePath<ED>[],
         authDeduceRelationMap: AuthDeduceRelationMap<ED>,
         selectFreeEntities?: (keyof ED)[],
-        createFreeEntities?:  (keyof ED)[],
-        updateFreeEntities?: (keyof ED)[]
+        updateFreeDict?: {
+            [A in keyof ED]?: string[];
+        }
     ) {
         super();
         this.cache = cache;
-        this.actionCascadePathGraph = actionCascadePathGraph;
-        this.relationCascadePathGraph = relationCascadePathGraph;
-        this.actionCascadePathMap = {};
-        actionCascadePathGraph.forEach(
-            (ele) => {
-                const [entity] = ele;
-                if (this.actionCascadePathMap[entity as string]) {
-                    this.actionCascadePathMap[entity as string].push(ele);
-                }
-                else {
-                    this.actionCascadePathMap[entity as string] = [ele];
-                }
-            }
-        );
         this.authDeduceRelationMap = authDeduceRelationMap;
-        this.baseRelationAuth = new BaseRelationAuth(cache.getSchema(), actionCascadePathGraph, relationCascadePathGraph,
-            authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);
+        this.baseRelationAuth = new BaseRelationAuth(cache.getSchema(), authDeduceRelationMap, selectFreeEntities, updateFreeDict);
         this.buildEntityGraph();
-    }
-
-    private judgeRelation(entity: keyof ED, attr: string) {
-        return judgeRelation(this.cache.getSchema(), entity, attr);
     }
 
     getHasRelationEntities() {
@@ -203,40 +180,23 @@ export class RelationAuth<
     }
 
     getCascadeActionEntitiesBySource(entity: keyof ED) {
-        const paths = this.actionCascadePathGraph.filter(
-            ele => ele[2] === entity && ele[3]
-        );
-
-        return paths.map(
-            (ele) => ({
-                path: ele,
-                actions: this.cache.getSchema()[ele[0]].actions.filter(
-                    ele => !RelationAuth.IgnoredActions.includes(ele)
-                ),
-            })
-        );
+        return [] as Array<{
+            path: string,
+            actions: string[],
+        }>;
+        
     }
 
     getCascadeActionAuths(entity: keyof ED, ir: boolean) {
-        const paths = this.actionCascadePathGraph.filter(
-            ele => ele[0] === entity && ir === ele[3]
-        );
-
-        return paths;
+        return [] as Array<[string, string, string, boolean]>;
     }
 
     getCascadeRelationAuthsBySource(entity: keyof ED) {
-        const relationAuths = this.relationCascadePathGraph.filter(
-            ele => ele[2] === entity && ele[3]
-        );
-        return relationAuths;
+        return [] as Array<[string, string, string, boolean]>;
     }
 
     getCascadeRelationAuths(entity: keyof ED, ir: boolean) {
-        const relationAuths = this.relationCascadePathGraph.filter(
-            ele => ele[0] === entity && ir === ele[3]
-        );
-        return relationAuths;
+        return [] as Array<[string, string, string, boolean]>;
     }
 
     checkRelation<T extends keyof ED>(entity: T, operation: Omit< ED[T]['Operation'] | ED[T]['Selection'], 'id'>) {

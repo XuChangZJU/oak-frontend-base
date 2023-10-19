@@ -1,6 +1,5 @@
 import assert from "assert";
 import { uniq } from 'oak-domain/lib/utils/lodash';
-import { AuthCascadePath } from "oak-domain/lib/types";
 import { ED } from "../../../types/AbstractComponent";
 
 export default OakComponent({

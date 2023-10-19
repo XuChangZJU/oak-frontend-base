@@ -14,7 +14,7 @@ import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
  * @returns
  */
 export function initialize(storageSchema, frontendContextBuilder, connector, checkers, option) {
-    const { actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, actionDict, selectFreeEntities, createFreeEntities, updateFreeEntities, colorDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
+    const { authDeduceRelationMap, actionDict, selectFreeEntities, updateFreeDict, colorDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
     const { checkers: intCheckers } = makeIntrinsicCTWs(storageSchema, actionDict);
     const checkers2 = checkers.concat(intCheckers);
     const features1 = initBasicFeaturesStep1();
@@ -29,7 +29,7 @@ export function initialize(storageSchema, frontendContextBuilder, connector, che
             };
         },
     };
-    const features2 = initBasicFeaturesStep2(features1, wrapper, storageSchema, frontendContextBuilder, checkers2, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, colorDict, () => '请查看数据库中的数据', () => connector.getSubscribePoint(), (url, headers) => connector.makeBridgeUrl(url, headers), selectFreeEntities, createFreeEntities, updateFreeEntities, cacheSavedEntities, cacheKeepFreshPeriod);
+    const features2 = initBasicFeaturesStep2(features1, wrapper, storageSchema, frontendContextBuilder, checkers2, authDeduceRelationMap, colorDict, () => '请查看数据库中的数据', () => connector.getSubscribePoint(), (url, headers) => connector.makeBridgeUrl(url, headers), selectFreeEntities, updateFreeDict, cacheSavedEntities, cacheKeepFreshPeriod);
     const features = Object.assign(features1, features2);
     return {
         features,

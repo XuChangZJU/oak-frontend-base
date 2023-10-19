@@ -1,7 +1,7 @@
 import { assert } from 'oak-domain/lib/utils/assert';
 import { uniq, set, omit } from 'oak-domain/lib/utils/lodash';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict, Aspect, AuthCascadePath } from 'oak-domain/lib/types';
+import { EntityDict, Aspect } from 'oak-domain/lib/types';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
@@ -25,17 +25,14 @@ export class ContextMenuFactory<
 > extends Feature {
     cache: Cache<ED, Cxt, FrontCxt, AD>;
     menus?: IMenu<ED, keyof ED>[];
-    cascadePathGraph: AuthCascadePath<ED>[];
     relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>;
 
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
         relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
-        cascadePathGraph: AuthCascadePath<ED>[]
     ) {
         super();
         this.cache = cache;
-        this.cascadePathGraph = cascadePathGraph;
         this.relationAuth = relationAuth;
     }
 

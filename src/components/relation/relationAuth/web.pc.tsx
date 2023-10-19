@@ -2,7 +2,7 @@ import { Table, Checkbox, Button, Row, Radio, Col } from 'antd';
 import { Typography } from 'antd';
 const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { intersection, difference } from 'oak-domain/lib/utils/lodash';
 
@@ -17,7 +17,7 @@ export default function render(
         {
             relationIds: string[];
             relationAuths: ED['relationAuth']['OpSchema'][];
-            auths: AuthCascadePath<ED>[];
+            auths: any[];
             sourceRelations: ED['relation']['OpSchema'][];
         },
         {

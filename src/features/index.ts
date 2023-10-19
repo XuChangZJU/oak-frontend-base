@@ -1,4 +1,4 @@
-import { Aspect, AspectWrapper, AuthCascadePath, AuthDeduceRelationMap, Checker, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, AspectWrapper, AuthDeduceRelationMap, Checker, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 
@@ -33,8 +33,6 @@ export function initializeStep2<
         storageSchema: StorageSchema<ED>,
         frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt,
         checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
-        actionCascadePathGraph: AuthCascadePath<ED>[],
-        relationCascadePathGraph: AuthCascadePath<ED>[],
         authDeduceRelationMap: AuthDeduceRelationMap<ED>,
         colorDict: ColorDict<ED>,
         getFullDataFn: () => any,
@@ -44,21 +42,21 @@ export function initializeStep2<
         }>,
         makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string,
         selectFreeEntities?: (keyof ED)[],
-        createFreeEntities?: (keyof ED)[],
-        updateFreeEntities?: (keyof ED)[],
+        updateFreeDict?: {
+            [A in keyof ED]?: string[];
+        },
         savedEntities?: (keyof ED)[],
         keepFreshPeriod?: number) {
     const { localStorage, environment, message } = features;
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(storageSchema, aspectWrapper,
         frontendContextBuilder, checkers, getFullDataFn, localStorage, savedEntities, keepFreshPeriod);
-    const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache,
-        actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);
+    const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, authDeduceRelationMap, selectFreeEntities, updateFreeDict);
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, relationAuth);
     const geo = new Geo(aspectWrapper);
     const port = new Port<ED, Cxt, AD & CommonAspectDict<ED, Cxt>>(aspectWrapper);
     const style = new Style<ED>(colorDict);
     const locales = new Locales(cache, localStorage, environment, 'zh-CN', makeBridgeUrlFn);        // 临时性代码，应由上层传入
-    const contextMenuFactory = new ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, relationAuth, actionCascadePathGraph);
+    const contextMenuFactory = new ContextMenuFactory<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, relationAuth);
     const subscriber = new SubScriber(cache, message, getSubscribePointFn);
     return {
         cache,

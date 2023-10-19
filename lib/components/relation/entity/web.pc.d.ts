@@ -1,12 +1,12 @@
-import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { WebComponentProps } from '../../../types/Page';
 type ED = EntityDict & BaseEntityDict;
 export default function render(props: WebComponentProps<ED, keyof ED, false, {
     entity: keyof ED;
     actions: string[];
-    daas: AuthCascadePath<ED>[];
-    dras: AuthCascadePath<ED>[];
+    daas: any[];
+    dras: any[];
     checkedActions: string[];
     relations: ED['relation']['OpSchema'][];
     relationIds: string[];

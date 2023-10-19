@@ -1,7 +1,7 @@
 import { Table, Checkbox, Button, Row, Radio, Col, Typography, Space, Modal, Badge, Tag } from 'antd';
 const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { difference, intersection, isEqual } from 'oak-domain/lib/utils/lodash';
 import { useState, useEffect } from 'react';
@@ -9,11 +9,6 @@ import ActionAuthListSingle from '../../relation/single';
 
 type ED = EntityDict & BaseEntityDict;
 
-type CascadeEntityActions = Array<{
-    path: AuthCascadePath<ED>;
-    relations: ED['relation']['Schema'][];
-    actionAuths?: ED['actionAuth']['OpSchema'][];
-}>;
 
 export default function render(
     props: WebComponentProps<
@@ -22,7 +17,7 @@ export default function render(
         true,
         {
             cascadeEntityActions: Array<{
-                path: AuthCascadePath<ED>;
+                path: any;
                 relations: ED['relation']['Schema'][];
                 actionAuths?: ED['actionAuth']['Schema'][];
             }>;

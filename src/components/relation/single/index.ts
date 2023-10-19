@@ -1,5 +1,5 @@
 
-import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
 type ED = EntityDict & BaseEntityDict;
@@ -65,7 +65,7 @@ export default OakComponent({
             const schema = this.features.cache.getSchema();
 
             const { attributes } = schema[source];
-            if (Object.hasOwn(attributes, 'entityId')) {
+            if (attributes.hasOwnProperty('entityId')) {
                 return target as string;
             }
             const attr = Object.keys(attributes).find((key) => attributes[key].ref && attributes[key].ref === target);

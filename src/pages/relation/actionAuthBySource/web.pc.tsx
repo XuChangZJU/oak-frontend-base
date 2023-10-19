@@ -2,7 +2,7 @@ import { Table, Checkbox, Button, Row } from 'antd';
 import { Typography } from 'antd';
 const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { assert } from 'oak-domain/lib/utils/assert';
 
@@ -17,13 +17,13 @@ export default function render(
             entity: string;
             relationName: string;
             cascadeEntityActions: Array<{
-                path: AuthCascadePath<ED>;
+                path: any;
                 actions: string[];
                 actionAuth?: ED['actionAuth']['OpSchema'];
             }>;
         },
         {
-            onChange: (actions: string[], path: AuthCascadePath<ED>, actionAuth?: ED['actionAuth']['OpSchema']) => void;
+            onChange: (actions: string[], path: any, actionAuth?: ED['actionAuth']['OpSchema']) => void;
             confirm: () => void;
         }
     >

@@ -54,7 +54,7 @@ export default OakComponent({
         entityToRef(source, target) {
             const schema = this.features.cache.getSchema();
             const { attributes } = schema[source];
-            if (Object.hasOwn(attributes, 'entityId')) {
+            if (attributes.hasOwnProperty('entityId')) {
                 return target;
             }
             const attr = Object.keys(attributes).find((key) => attributes[key].ref && attributes[key].ref === target);

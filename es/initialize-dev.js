@@ -18,7 +18,7 @@ import { registerPorts } from 'oak-common-aspect';
  * @returns
  */
 export function initialize(storageSchema, frontendContextBuilder, backendContextBuilder, aspectDict, triggers, checkers, watchers, timers, startRoutines, initialData, option) {
-    const { actionCascadePathGraph, actionDict, relationCascadePathGraph, authDeduceRelationMap, colorDict, importations, exportations, selectFreeEntities, createFreeEntities, updateFreeEntities, cacheKeepFreshPeriod, cacheSavedEntities } = option;
+    const { actionDict, authDeduceRelationMap, colorDict, importations, exportations, selectFreeEntities, updateFreeDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
     let intersected = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
     if (intersected.length > 0) {
         throw new Error(`用户定义的aspect中不能和系统aspect同名：「${intersected.join(',')}」`);
@@ -29,7 +29,7 @@ export function initialize(storageSchema, frontendContextBuilder, backendContext
     const triggers2 = triggers.concat(intTriggers);
     const watchers2 = watchers.concat(intWatchers);
     const features1 = initBasicFeaturesStep1();
-    const debugStore = createDebugStore(storageSchema, backendContextBuilder, triggers2, checkers2, watchers2, timers, startRoutines, initialData, actionDict, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, (key, data) => features1.localStorage.save(key, data), (key) => features1.localStorage.load(key), selectFreeEntities, createFreeEntities, updateFreeEntities);
+    const debugStore = createDebugStore(storageSchema, backendContextBuilder, triggers2, checkers2, watchers2, timers, startRoutines, initialData, actionDict, authDeduceRelationMap, (key, data) => features1.localStorage.save(key, data), (key) => features1.localStorage.load(key), selectFreeEntities, updateFreeDict);
     const wrapper = {
         exec: async (name, params) => {
             const context = features2.cache.buildContext();
@@ -52,7 +52,7 @@ export function initialize(storageSchema, frontendContextBuilder, backendContext
             };
         },
     };
-    const features2 = initBasicFeaturesStep2(features1, wrapper, storageSchema, frontendContextBuilder, checkers2, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, colorDict, () => debugStore.getCurrentData(), async () => ({ url: '', path: '' }), undefined, selectFreeEntities, createFreeEntities, updateFreeEntities, cacheSavedEntities, cacheKeepFreshPeriod);
+    const features2 = initBasicFeaturesStep2(features1, wrapper, storageSchema, frontendContextBuilder, checkers2, authDeduceRelationMap, colorDict, () => debugStore.getCurrentData(), async () => ({ url: '', path: '' }), undefined, selectFreeEntities, updateFreeDict, cacheSavedEntities, cacheKeepFreshPeriod);
     registerPorts(importations || [], exportations || []);
     const features = Object.assign(features2, features1);
     return {
