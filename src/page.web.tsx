@@ -43,10 +43,10 @@ abstract class OakComponentBase<
     TData extends DataOption,
     TProperty extends DataOption,
     TMethod extends MethodOption
-    > extends React.PureComponent<
+> extends React.PureComponent<
     ComponentProps<ED, T, IsList, TProperty>,
     ComponentData<ED, T, FormedData, TData>
-    > {
+> {
     abstract features: FD &
         BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     abstract oakOption: OakComponentOption<
@@ -1103,7 +1103,7 @@ export function createComponent<
                         console.warn('发生了结点先形成再配置oakPath的情况，请检查代码修正');
                         lifetimes?.ready && lifetimes.ready.call(this);
                         lifetimes?.show && lifetimes.show.call(this);
-    
+
                         const { oakFullpath } = this.state;
                         if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath)) {
                             this.refresh();
@@ -1149,6 +1149,12 @@ export function createComponent<
         render(): React.ReactNode {
             const { oakPullDownRefreshLoading } = this.state;
             const Render = getRender.call(this);
+            if ((this.props.oakPath || this.iAmThePage() && path) && !this.state.oakFullpath) {
+                return null
+            }
+            if (this.oakOption.entity && !this.state.oakFullpath) {
+                return null
+            }
 
             if (this.supportPullDownRefresh()) {
                 return (

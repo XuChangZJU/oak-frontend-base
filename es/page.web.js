@@ -768,6 +768,12 @@ export function createComponent(option, features) {
         render() {
             const { oakPullDownRefreshLoading } = this.state;
             const Render = getRender.call(this);
+            if ((this.props.oakPath || this.iAmThePage() && path) && !this.state.oakFullpath) {
+                return null;
+            }
+            if (this.oakOption.entity && !this.state.oakFullpath) {
+                return null;
+            }
             if (this.supportPullDownRefresh()) {
                 return (_jsx(PullToRefresh, { onRefresh: async () => {
                         this.pullDownRefresh = true;
