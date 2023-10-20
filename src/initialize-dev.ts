@@ -57,8 +57,8 @@ export function initialize<
     },
     option: InitializeOptions<ED, Cxt>
 ) {
-    const { actionCascadePathGraph, actionDict, relationCascadePathGraph, authDeduceRelationMap,
-        colorDict, importations, exportations, selectFreeEntities, createFreeEntities, updateFreeEntities,
+    const { actionDict, authDeduceRelationMap,
+        colorDict, importations, exportations, selectFreeEntities, updateFreeDict,
         cacheKeepFreshPeriod, cacheSavedEntities } = option;
     let intersected = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
     if (intersected.length > 0) {
@@ -84,14 +84,11 @@ export function initialize<
         startRoutines,
         initialData,
         actionDict,
-        actionCascadePathGraph,
-        relationCascadePathGraph,
         authDeduceRelationMap,
         (key, data) => features1.localStorage.save(key, data),
         (key) => features1.localStorage.load(key),
         selectFreeEntities,
-        createFreeEntities,
-        updateFreeEntities
+        updateFreeDict
     );
 
     const wrapper: AspectWrapper<ED, Cxt, CommonAspectDict<ED, Cxt> & AD> = {
@@ -122,16 +119,13 @@ export function initialize<
         storageSchema,
         frontendContextBuilder,
         checkers2,
-        actionCascadePathGraph,
-        relationCascadePathGraph,
         authDeduceRelationMap,
         colorDict,
         () => debugStore.getCurrentData(),
         async () => ({ url: '', path: '' }),
         undefined,
         selectFreeEntities,
-        createFreeEntities,
-        updateFreeEntities,
+        updateFreeDict,
         cacheSavedEntities,
         cacheKeepFreshPeriod
     );

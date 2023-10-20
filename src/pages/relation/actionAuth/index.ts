@@ -2,7 +2,6 @@ import assert from "assert";
 import { uniq, pull, union, difference } from 'oak-domain/lib/utils/lodash';
 import { ED } from "../../../types/AbstractComponent";
 import { groupBy } from "oak-domain/lib/utils/lodash";
-import { AuthCascadePath } from "oak-domain/lib/types";
 import { RowWithActions } from "../../../types/Page";
 import { resolvePath } from "../../../utils/usefulFn";
 import { StorageSchema } from "oak-domain/lib/types";
@@ -133,11 +132,11 @@ export default OakComponent({
                     },
                 });
             }
-            cascadeEntityActions.push({
+            /* cascadeEntityActions.push({
                 path: [de, p, se, true],
                 relations: relations,
                 actionAuths: $actionAuthsObject[ele],
-            })
+            }) */
         })
 
         // relationId为空字符串 表示为user的actionAuth 也要特殊处理
@@ -159,11 +158,11 @@ export default OakComponent({
             const se = entities[entities.length - 1].split('$')[0];
             const p = ele;
             const de = entity!;
-            cascadeEntityActions.push({
+            /* cascadeEntityActions.push({
                 path: [de, p, se, true],
                 relations: [{ id: '', name: '当前用户' }],
                 actionAuths: $actionAuthsObject2[ele],
-            })
+            }) */
         })
         return {
             cascadeEntityActions,

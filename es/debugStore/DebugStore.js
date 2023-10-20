@@ -6,10 +6,10 @@ import { RelationAuth } from "oak-domain/lib/store/RelationAuth";
 export class DebugStore extends TreeStore {
     executor;
     relationAuth;
-    constructor(storageSchema, contextBuilder, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities) {
+    constructor(storageSchema, contextBuilder, authDeduceRelationMap, selectFreeEntities, updateFreeDict) {
         super(storageSchema);
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
-        this.relationAuth = new RelationAuth(storageSchema, actionCascadeGraph, relationCascadeGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);
+        this.relationAuth = new RelationAuth(storageSchema, authDeduceRelationMap, selectFreeEntities, updateFreeDict);
     }
     async exec(script, txnId) {
         throw new Error('debugStore dont support exec script directly');

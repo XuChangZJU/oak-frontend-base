@@ -122,11 +122,11 @@ export default OakComponent({
                     },
                 });
             }
-            cascadeEntityActions.push({
+            /* cascadeEntityActions.push({
                 path: [de, p, se, true],
                 relations: relations,
                 actionAuths: $actionAuthsObject[ele],
-            });
+            }) */
         });
         // relationId为空字符串 表示为user的actionAuth 也要特殊处理
         const hasUserActionAuths = [];
@@ -147,11 +147,11 @@ export default OakComponent({
             const se = entities[entities.length - 1].split('$')[0];
             const p = ele;
             const de = entity;
-            cascadeEntityActions.push({
+            /* cascadeEntityActions.push({
                 path: [de, p, se, true],
                 relations: [{ id: '', name: '当前用户' }],
                 actionAuths: $actionAuthsObject2[ele],
-            });
+            }) */
         });
         return {
             cascadeEntityActions,

@@ -3,7 +3,7 @@ import { Table, Checkbox, Button, Row, Space, Tooltip, } from 'antd';
 import { Typography } from 'antd';
 const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { assert } from 'oak-domain/lib/utils/assert';
 

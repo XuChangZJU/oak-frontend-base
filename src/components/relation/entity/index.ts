@@ -1,5 +1,5 @@
 
-import { AuthCascadePath, EntityDict } from 'oak-domain/lib/types/Entity';
+import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
 type ED = EntityDict & BaseEntityDict;

@@ -1,5 +1,4 @@
 import assert from "assert";
-import { AuthCascadePath } from "oak-domain/lib/types";
 import { uniq, pull, difference } from 'oak-domain/lib/utils/lodash';
 import { ED } from "../../../types/AbstractComponent";
 

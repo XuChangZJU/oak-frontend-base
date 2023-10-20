@@ -5,12 +5,10 @@ import { judgeRelation } from 'oak-domain/lib/store/relation';
 export class ContextMenuFactory extends Feature {
     cache;
     menus;
-    cascadePathGraph;
     relationAuth;
-    constructor(cache, relationAuth, cascadePathGraph) {
+    constructor(cache, relationAuth) {
         super();
         this.cache = cache;
-        this.cascadePathGraph = cascadePathGraph;
         this.relationAuth = relationAuth;
     }
     setMenus(menus) {

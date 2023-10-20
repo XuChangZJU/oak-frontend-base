@@ -2,7 +2,7 @@ import { scheduleJob } from 'node-schedule';
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 import { DebugStore } from './DebugStore';
 import {
-    Checker, Trigger, StorageSchema, EntityDict, ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, Routine, Timer, AuthCascadePath, AuthDeduceRelationMap
+    Checker, Trigger, StorageSchema, EntityDict, ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, Routine, Timer, AuthDeduceRelationMap
 } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
@@ -214,16 +214,14 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },
     actionDict: ActionDictOfEntityDict<ED>,
-    actionCascadePathGraph: AuthCascadePath<ED>[],
-    relationCascadePathGraph: AuthCascadePath<ED>[],
     authDeduceRelationMap: AuthDeduceRelationMap<ED>,
     saveFn: (key: string, data: any) => void,
     loadFn: (key: string) => any,
     selectFreeEntities?: (keyof ED)[],
-    createFreeEntities?: (keyof ED)[],
-    updateFreeEntities?: (keyof ED)[],) {
-    const store = new DebugStore<ED, Cxt>(storageSchema, contextBuilder, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap,
-        selectFreeEntities, createFreeEntities, updateFreeEntities);
+    updateFreeDict?: {
+        [A in keyof ED]?: string[];
+    }) {
+    const store = new DebugStore<ED, Cxt>(storageSchema, contextBuilder, authDeduceRelationMap, selectFreeEntities, updateFreeDict);
 
     triggers.forEach(
         ele => store.registerTrigger(ele)

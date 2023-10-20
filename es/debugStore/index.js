@@ -169,8 +169,8 @@ async function doRoutines(store, contextBuilder, routines) {
         }
     }
 }
-export function createDebugStore(storageSchema, contextBuilder, triggers, checkers, watchers, timers, startRoutines, initialData, actionDict, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, saveFn, loadFn, selectFreeEntities, createFreeEntities, updateFreeEntities) {
-    const store = new DebugStore(storageSchema, contextBuilder, actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, selectFreeEntities, createFreeEntities, updateFreeEntities);
+export function createDebugStore(storageSchema, contextBuilder, triggers, checkers, watchers, timers, startRoutines, initialData, actionDict, authDeduceRelationMap, saveFn, loadFn, selectFreeEntities, updateFreeDict) {
+    const store = new DebugStore(storageSchema, contextBuilder, authDeduceRelationMap, selectFreeEntities, updateFreeDict);
     triggers.forEach(ele => store.registerTrigger(ele));
     checkers.forEach(ele => store.registerChecker(ele));
     assert(actionDict);

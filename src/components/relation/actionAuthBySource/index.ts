@@ -1,5 +1,4 @@
 import assert from "assert";
-import { AuthCascadePath } from "oak-domain/lib/types";
 import { ED } from "../../../types/AbstractComponent";
 
 export default OakComponent({
@@ -69,7 +68,7 @@ export default OakComponent({
         };
     },
     methods: {
-        onChange(actions: string[], path: AuthCascadePath<ED>, actionAuth?: ED['actionAuth']['OpSchema']) {
+        onChange(actions: string[], path: any, actionAuth?: ED['actionAuth']['OpSchema']) {
             if (actionAuth) {
                 this.updateItem({
                     deActions: actions,

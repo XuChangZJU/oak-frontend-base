@@ -41,9 +41,7 @@ export function initialize<
     checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     option: InitializeOptions<ED, Cxt>
 ) {
-    const {  actionCascadePathGraph, relationCascadePathGraph, authDeduceRelationMap, actionDict, 
-        selectFreeEntities, createFreeEntities, updateFreeEntities, colorDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
-
+    const {  authDeduceRelationMap, actionDict, selectFreeEntities, updateFreeDict, colorDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
 
     const { checkers: intCheckers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict);
     const checkers2 = checkers.concat(intCheckers);
@@ -68,16 +66,13 @@ export function initialize<
         storageSchema, 
         frontendContextBuilder, 
         checkers2,
-        actionCascadePathGraph,
-        relationCascadePathGraph,
         authDeduceRelationMap,
         colorDict,
         () => '请查看数据库中的数据',
         () => connector.getSubscribePoint(),
         (url, headers) => connector.makeBridgeUrl(url, headers),
         selectFreeEntities,
-        createFreeEntities,
-        updateFreeEntities,
+        updateFreeDict,
         cacheSavedEntities,
         cacheKeepFreshPeriod
     );
