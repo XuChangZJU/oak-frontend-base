@@ -307,11 +307,11 @@ class OakComponentBase extends React.PureComponent {
             const namedSorters = this.features.runningTree.getNamedSorters(path2);
             const sorters = namedSorters
                 .map(({ sorter }) => {
-                    if (typeof sorter === 'function') {
-                        return sorter();
-                    }
-                    return sorter;
-                })
+                if (typeof sorter === 'function') {
+                    return sorter();
+                }
+                return sorter;
+            })
                 .filter((ele) => !!ele);
             return sorters;
         }
@@ -778,8 +778,7 @@ export function createComponent(option, features) {
                 return null;
             }
             if (this.supportPullDownRefresh()) {
-                return (_jsx(PullToRefresh, {
-                    onRefresh: async () => {
+                return (_jsx(PullToRefresh, { onRefresh: async () => {
                         this.pullDownRefresh = true;
                         await this.refresh();
                         this.pullDownRefresh = false;
@@ -796,22 +795,17 @@ export function createComponent(option, features) {
                         finish: this.t('common::ptrFinish', {
                             '#oakModule': 'oak-frontend-base',
                         }),
-                    }, children: _jsx(Render, {
-                        methods: this.methodProps, data: {
+                    }, children: _jsx(Render, { methods: this.methodProps, data: {
                             ...this.defaultProperties,
                             ...this.state,
                             ...this.props,
-                        }
-                    })
-                }));
+                        } }) }));
             }
-            return (_jsx(Render, {
-                methods: this.methodProps, data: {
+            return (_jsx(Render, { methods: this.methodProps, data: {
                     ...this.defaultProperties,
                     ...this.state,
                     ...this.props,
-                }
-            }));
+                } }));
         }
     }
     ;
