@@ -74,7 +74,7 @@ export default function render(
                                                 let checked = false, indeterminate = false;
                                                 // filter出对应path的actionAuth来决定relation的check
                                                 // sort deActions长的在后，不然会影响checked
-                                                const actionAuthsByPath = actionAuths?.filter((ele) => ele.paths.includes(path[1]))
+                                                const actionAuthsByPath = actionAuths?.filter((ele) => false/* for compile ele.paths.includes(path[1])*/)
                                                     .sort((a, b) => b.deActions.length - a.deActions.length);
                                                 if (actionAuthsByPath && actions.length > 0) {
                                                     for (const aa of actionAuthsByPath) {

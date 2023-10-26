@@ -79,7 +79,7 @@ export default OakComponent({
                 },
             });
             //已授权的relation中可能有定制的relationId
-            const authedRelations = data ? data.filter((ele) => ele.path === p) : [];
+            const authedRelations = data ? data.filter((ele) => false /* ele.path === p */) : [];
             return {
                 entity: de,
                 path: p,
@@ -124,11 +124,11 @@ export default OakComponent({
                     this.recoverItem(relationAuthId);
                 }
                 else {
-                    this.addItem({
-                        sourceRelationId: this.props.relationId,
+                    /* this.addItem({
+                        sourceRelationId: this.props.relationId!,
                         path,
                         destRelationId: relationId,
-                    });
+                    }); */
                 }
             }
             else {

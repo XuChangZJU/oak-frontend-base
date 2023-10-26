@@ -368,14 +368,26 @@ function checkActionsAndCascadeEntities<
             data: {
                 id: 1,
                 relationId: 1,
-                paths: 1,
-                destEntity: 1,
+                path: {
+                    id: 1,
+                    sourceEntity: 1,
+                    destEntity: 1,
+                    value: 1,
+                    recursive: 1,
+                },
                 deActions: 1,
             },
             filter: {
-                destEntity: {
-                    $in: destEntities as string[],
+                path: {
+                    destEntity: {
+                        $in: destEntities as string[],
+                    }
                 }
+            }
+        }, undefined, undefined, undefined, {
+            useLocalCache: {
+                keys: destEntities as string[],
+                gap: process.env.NODE_ENV === 'development' ? 60 * 1000 : 1200 * 1000,
             }
         });
     }

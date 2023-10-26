@@ -1429,7 +1429,9 @@ class VirtualNode extends Feature {
         this.loading = true;
         this.publishRecursively();
         try {
-            await Promise.all(Object.keys(this.children).map(ele => this.children[ele].refresh()));
+            if (Object.keys(this.children).length > 0) {
+                await Promise.all(Object.keys(this.children).map(ele => this.children[ele].refresh()));
+            }
             this.loading = false;
             this.publishRecursively();
         }
@@ -1807,6 +1809,11 @@ export class RunningTree extends Feature {
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
         return node.getId();
+    }
+    getEntity(path) {
+        const node = this.findNode(path);
+        assert(node instanceof Node);
+        return node.getEntity();
     }
     setPageSize(path, pageSize) {
         const node = this.findNode(path);

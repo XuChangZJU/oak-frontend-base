@@ -254,6 +254,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     setId(path: string, id: string): void;
     unsetId(path: string): void;
     getId(path: string): string | undefined;
+    getEntity(path: string): keyof ED;
     setPageSize<T extends keyof ED>(path: string, pageSize: number): void;
     setCurrentPage<T extends keyof ED>(path: string, currentPage: number): void;
     getNamedFilters<T extends keyof ED>(path: string): (NamedFilterItem<ED, keyof ED> & {

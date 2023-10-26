@@ -42,12 +42,14 @@ export default function render(props) {
                                 }, options: options, defaultValue: defaultValue, onChange: (checkedArr) => {
                                     const path2 = path.replaceAll('(user)', '');
                                     if (!actionAuth) {
-                                        methods.addItem({
-                                            relationId: row.relationId || '',
+                                        /* methods.addItem({
+                                            relationId:
+                                                row.relationId || '',
                                             paths: [path2],
-                                            deActions: checkedArr,
-                                            destEntity: entity,
-                                        });
+                                            deActions:
+                                                checkedArr as string[],
+                                            destEntity: entity as string,
+                                        }); */
                                     }
                                     else {
                                         methods.updateItem({

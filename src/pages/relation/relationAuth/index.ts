@@ -138,22 +138,22 @@ export default OakComponent({
                         includedRelationIds.push(auth.destRelationId);
                     }
                     const restRelationIds = difference(relationIds, includedRelationIds);
-                    restRelationIds.forEach(
+                    /* restRelationIds.forEach(
                         (relationId) => this.addItem({
                             sourceRelationId,
                             path,
                             destRelationId: relationId,
                         })
-                    );
+                    ); */
                 }
                 else {
-                    relationIds.forEach(
+                   /*  relationIds.forEach(
                         relationId => this.addItem({
                             sourceRelationId,
                             path,
                             destRelationId: relationId,
                         })
-                    );
+                    ); */
                 }
             }
             else {

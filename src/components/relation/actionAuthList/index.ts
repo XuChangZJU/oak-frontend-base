@@ -24,7 +24,7 @@ export default OakComponent({
         onClose: (() => undefined) as () => void,
     },
     filters: [
-        {
+        /* {
             filter() {
                 const { path, entity } = this.props;
                 return {
@@ -35,7 +35,7 @@ export default OakComponent({
                 };
             },
             '#name': 'path',
-        }
+        } */
     ],
     pagination: {
         pageSize: 1000,
@@ -55,7 +55,7 @@ export default OakComponent({
             if (prev.path !== next.path) {
                 const { path, entity } = this.props;
                 this.getRelationAndActions();
-                this.addNamedFilter({
+                /* this.addNamedFilter({
                     filter: {
                         paths: {
                             $contains: path?.replaceAll('(user)', ''),
@@ -63,7 +63,7 @@ export default OakComponent({
                         destEntity: entity as string,
                     },
                     '#name': 'path'
-                }, true)
+                }, true) */
             }
         }
     },

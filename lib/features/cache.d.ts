@@ -9,6 +9,14 @@ import { LocalStorage } from './localStorage';
 interface CacheSelectOption extends SelectOption {
     ignoreKeepFreshRule?: true;
 }
+type RefreshOption = {
+    dontPublish?: true;
+    useLocalCache?: {
+        keys: string[];
+        gap?: number;
+        onlyReturnFresh?: boolean;
+    };
+};
 export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends Feature {
     cacheStore: CacheStore<ED, FrontCxt>;
     private aspectWrapper;
@@ -31,24 +39,9 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         result: Awaited<ReturnType<AD[K]>>;
         message: string | null | undefined;
     }>;
-    private getRefreshRecordSize;
-    private reduceRefreshRecord;
+    private saveRefreshRecord;
     private addRefreshRecord;
-    /**
-     * 判定一个refresh行为是否可以应用缓存优化
-     * 可以优化的selection必须满足：
-     * 1）没有indexFrom和count
-     * 2）没要求getCount
-     * 3）查询的projection和filter只限定在该对象自身属性上
-     * 4）有filter
-     * @param entity
-     * @param selection
-     * @param option
-     * @param getCount
-     */
-    private canOptimizeRefresh;
-    private filterToKey;
-    refresh<T extends keyof ED, OP extends CacheSelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true, callback?: (result: Awaited<ReturnType<AD['select']>>) => void, dontPublish?: true, onlyReturnFresh?: true): Promise<{
+    refresh<T extends keyof ED, OP extends CacheSelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true, callback?: (result: Awaited<ReturnType<AD['select']>>) => void, refreshOption?: RefreshOption): Promise<{
         data: Partial<ED[T]["Schema"]>[];
         count?: undefined;
     } | {

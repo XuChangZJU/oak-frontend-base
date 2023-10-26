@@ -93,14 +93,14 @@ export default function render(
                                             ''
                                         );
                                         if (!actionAuth) {
-                                            methods.addItem({
+                                            /* methods.addItem({
                                                 relationId:
                                                     row.relationId || '',
                                                 paths: [path2],
                                                 deActions:
                                                     checkedArr as string[],
                                                 destEntity: entity as string,
-                                            });
+                                            }); */
                                         } else {
                                             methods.updateItem(
                                                 {

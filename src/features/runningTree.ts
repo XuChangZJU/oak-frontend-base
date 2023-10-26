@@ -1713,11 +1713,13 @@ class VirtualNode<
         this.loading = true;
         this.publishRecursively();
         try {
-            await Promise.all(
-                Object.keys(this.children).map(
-                    ele => this.children[ele].refresh()
-                )
-            );
+            if (Object.keys(this.children).length > 0) {
+                await Promise.all(
+                    Object.keys(this.children).map(
+                        ele => this.children[ele].refresh()
+                    )
+                );
+            }
             this.loading = false;
             this.publishRecursively();
         }
@@ -2237,6 +2239,12 @@ export class RunningTree<
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
         return node.getId();
+    }
+
+    getEntity(path: string) {
+        const node = this.findNode(path);
+        assert(node instanceof Node);
+        return node.getEntity();
     }
 
     setPageSize<T extends keyof ED>(path: string, pageSize: number) {

@@ -1,6 +1,5 @@
 import assert from "assert";
 import { uniq, difference } from 'oak-domain/lib/utils/lodash';
-import { groupBy } from "oak-domain/lib/utils/lodash";
 export default OakComponent({
     entity: 'actionAuth',
     projection: {
@@ -56,7 +55,7 @@ export default OakComponent({
         const { entity } = this.props;
         const schema = this.features.cache.getSchema();
         const cascadeEntities = this.features.relationAuth.getCascadeActionAuths(entity, true);
-        const actionAuthGroup = groupBy(data, (ele) => ele.paths?.join(','));
+        const actionAuthGroup = {}; //  for compile groupBy(data, (ele) => ele.paths?.join(','));
         const actionAuthList = Object.keys(actionAuthGroup).map((key) => {
             let result = {};
             const row = actionAuthGroup[key][0];
@@ -309,36 +308,36 @@ export default OakComponent({
                         if (dASameActionAuth.$$deleteAt$$ && dASameActionAuth.$$deleteAt$$ === 1) {
                             this.recoverItem(dASameActionAuth.id);
                         }
-                        this.updateItem({
+                        /* this.updateItem({
                             paths: dASameActionAuth.paths.concat(path),
-                        }, dASameActionAuth.id);
+                        }, dASameActionAuth.id) */
                     }
                     else {
-                        this.addItem({
+                        /* this.addItem({
                             paths: [path],
                             relationId,
-                            destEntity: this.props.entity,
+                            destEntity: this.props.entity as string,
                             deActions: actions,
-                        });
+                        }); */
                     }
                 }
                 else {
                     // 将path从paths中删除
-                    actionAuths.forEach((ele) => {
-                        const pathIndex = ele.paths.findIndex((pathE) => pathE === path);
-                        if (pathIndex !== -1) {
-                            const newPaths = [...ele.paths];
-                            newPaths.splice(pathIndex, 1);
-                            if (!newPaths.length) {
-                                this.removeItem(ele.id);
-                            }
-                            else {
-                                this.updateItem({
-                                    paths: newPaths
-                                }, ele.id);
-                            }
-                        }
-                    });
+                    /*  actionAuths.forEach((ele) => {
+                         const pathIndex = ele.paths.findIndex((pathE) => pathE === path);
+                         if (pathIndex !== -1) {
+                             const newPaths = [...ele.paths];
+                             newPaths.splice(pathIndex, 1);
+                             if (!newPaths.length) {
+                                 this.removeItem(ele.id);
+                             }
+                             else {
+                                 this.updateItem({
+                                     paths: newPaths
+                                 }, ele.id);
+                             }
+                         }
+                     }) */
                 }
                 // if (checked) {
                 //     const deActions2 = union(deActions, actions);
@@ -358,12 +357,12 @@ export default OakComponent({
             else {
                 // 新增actionAuth
                 assert(checked);
-                this.addItem({
+                /* this.addItem({
                     paths: [path],
                     relationId,
-                    destEntity: this.props.entity,
+                    destEntity: this.props.entity as string,
                     deActions: actions,
-                });
+                }); */
             }
         },
         async onChange2(checked, relationId, paths, actionAuths) {
@@ -385,12 +384,12 @@ export default OakComponent({
                     }
                 }
                 else {
-                    this.addItem({
+                    /* this.addItem({
                         paths,
                         relationId,
-                        destEntity: this.props.entity,
+                        destEntity: this.props.entity as string,
                         deActions: actions,
-                    });
+                    }) */
                 }
             }
             else {

@@ -69,7 +69,7 @@ export default function render(
                                                 if (!disabled && relationAuths) {
                                                     const includedRelationIds = [] as string[];
                                                     for(const auth of relationAuths) {
-                                                        if (!auth.$$deleteAt$$ && auth.sourceRelationId === r.id && auth.path === record[1]) {
+                                                        if (!auth.$$deleteAt$$ && auth.sourceRelationId === r.id /* && auth.path === record[1] */) {
                                                             includedRelationIds.push(auth.destRelationId);
                                                         }
                                                     }
@@ -84,7 +84,7 @@ export default function render(
                                                         onChange={({ target }) => {
                                                             const { checked } = target;
                                                             const refRelationAuths = relationAuths?.filter(
-                                                                ele => ele.sourceRelationId === r.id && ele.path === record[1]
+                                                                ele => ele.sourceRelationId === r.id /*&&  ele.path === record[1] */
                                                                 && relationIds!.includes(ele.destRelationId)
                                                             );
     

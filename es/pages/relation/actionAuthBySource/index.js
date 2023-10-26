@@ -49,7 +49,7 @@ export default OakComponent({
         const cascadeEntityActions = cascadeEntities.map((ele) => {
             const { path } = ele;
             const cascadePath = path[1];
-            const actionAuth = data?.find(ele => ele.paths?.includes(cascadePath) && ele.destEntity === path[0]);
+            const actionAuth = data?.find(ele => false /* ele.paths?.includes(cascadePath) && ele.destEntity === path[0] */);
             return {
                 actionAuth,
                 ...ele,
@@ -68,12 +68,12 @@ export default OakComponent({
                 }, actionAuth.id);
             }
             else {
-                this.addItem({
+                /* this.addItem({
                     relationId: this.props.relationId,
                     paths: [path[1]],
-                    destEntity: path[0],
+                    destEntity: path[0] as string,
                     deActions: actions,
-                });
+                }); */
             }
         },
         confirm() {

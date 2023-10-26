@@ -37,7 +37,7 @@ export default function render(props) {
                                     if (!disabled && relationAuths) {
                                         const includedRelationIds = [];
                                         for (const auth of relationAuths) {
-                                            if (!auth.$$deleteAt$$ && auth.sourceRelationId === r.id && auth.path === record[1]) {
+                                            if (!auth.$$deleteAt$$ && auth.sourceRelationId === r.id /* && auth.path === record[1] */) {
                                                 includedRelationIds.push(auth.destRelationId);
                                             }
                                         }
@@ -46,7 +46,7 @@ export default function render(props) {
                                     }
                                     return (_jsx(Checkbox, { disabled: disabled, checked: checked, indeterminate: indeterminate, onChange: ({ target }) => {
                                             const { checked } = target;
-                                            const refRelationAuths = relationAuths?.filter(ele => ele.sourceRelationId === r.id && ele.path === record[1]
+                                            const refRelationAuths = relationAuths?.filter(ele => ele.sourceRelationId === r.id /*&&  ele.path === record[1] */
                                                 && relationIds.includes(ele.destRelationId));
                                             onChange(checked, r.id, record[1], refRelationAuths);
                                         }, children: r.name }));

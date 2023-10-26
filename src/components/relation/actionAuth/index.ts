@@ -59,7 +59,7 @@ export default OakComponent({
         const { entity } = this.props;
         const schema = this.features.cache.getSchema();
         const cascadeEntities = this.features.relationAuth.getCascadeActionAuths(entity!, true);
-        const actionAuthGroup = groupBy(data, (ele) => ele.paths?.join(','));
+        const actionAuthGroup = {} as any; //  for compile groupBy(data, (ele) => ele.paths?.join(','));
         const actionAuthList = Object.keys(actionAuthGroup).map(
             (key) => {
                 let result = {};
@@ -318,22 +318,22 @@ export default OakComponent({
                         if (dASameActionAuth.$$deleteAt$$ && dASameActionAuth.$$deleteAt$$ === 1) {
                             this.recoverItem(dASameActionAuth.id);
                         }
-                        this.updateItem({
+                        /* this.updateItem({
                             paths: dASameActionAuth.paths.concat(path),
-                        }, dASameActionAuth.id)
+                        }, dASameActionAuth.id) */
                     }
                     else {
-                        this.addItem({
+                        /* this.addItem({
                             paths: [path],
                             relationId,
                             destEntity: this.props.entity as string,
                             deActions: actions,
-                        });
+                        }); */
                     }
                 }
                 else {
                     // 将path从paths中删除
-                    actionAuths.forEach((ele) => {
+                   /*  actionAuths.forEach((ele) => {
                         const pathIndex = ele.paths.findIndex((pathE) => pathE === path);
                         if (pathIndex !== -1) {
                             const newPaths = [...ele.paths];
@@ -347,7 +347,7 @@ export default OakComponent({
                                 }, ele.id);
                             }
                         }
-                    })
+                    }) */
                 }
                 // if (checked) {
                 //     const deActions2 = union(deActions, actions);
@@ -367,12 +367,12 @@ export default OakComponent({
             else {
                 // 新增actionAuth
                 assert(checked);
-                this.addItem({
+                /* this.addItem({
                     paths: [path],
                     relationId,
                     destEntity: this.props.entity as string,
                     deActions: actions,
-                });
+                }); */
             }
         },
         async onChange2(checked: boolean, relationId: string, paths: string[], actionAuths: ED['actionAuth']['Schema'][]) {
@@ -393,12 +393,12 @@ export default OakComponent({
                         }, dASameActionAuth.id)
                     }
                 } else {
-                    this.addItem({
+                    /* this.addItem({
                         paths,
                         relationId,
                         destEntity: this.props.entity as string,
                         deActions: actions,
-                    })
+                    }) */
                 }
             } else {
                 const dASameActionAuth = (actionAuths as ED['actionAuth']['Schema'][]).find((ele) => ele.relationId === relationId && !ele.$$deleteAt$$);

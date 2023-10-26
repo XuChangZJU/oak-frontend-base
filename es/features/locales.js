@@ -90,7 +90,13 @@ export class Locales extends Feature {
             filter: {
                 namespace: ns,
             }
-        }, undefined, undefined, undefined, true, true);
+        }, undefined, undefined, undefined, {
+            dontPublish: true,
+            useLocalCache: {
+                keys: [ns],
+                gap: process.env.NODE_ENV === 'development' ? 60 * 1000 : 1200 * 1000,
+            },
+        });
         if (newI18ns.length > 0) {
             const dataset = {};
             newI18ns.forEach(({ namespace, data, language }) => {
