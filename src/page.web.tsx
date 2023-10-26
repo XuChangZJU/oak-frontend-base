@@ -43,10 +43,10 @@ abstract class OakComponentBase<
     TData extends DataOption,
     TProperty extends DataOption,
     TMethod extends MethodOption
-    > extends React.PureComponent<
+> extends React.PureComponent<
     ComponentProps<ED, T, IsList, TProperty>,
     ComponentData<ED, T, FormedData, TData>
-    > {
+> {
     abstract features: FD &
         BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     abstract oakOption: OakComponentOption<
@@ -1103,7 +1103,7 @@ export function createComponent<
                         console.warn('发生了结点先形成再配置oakPath的情况，请检查代码修正');
                         lifetimes?.ready && lifetimes.ready.call(this);
                         lifetimes?.show && lifetimes.show.call(this);
-    
+
                         const { oakFullpath } = this.state;
                         if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath)) {
                             this.refresh();
@@ -1149,6 +1149,17 @@ export function createComponent<
         render(): React.ReactNode {
             const { oakPullDownRefreshLoading } = this.state;
             const Render = getRender.call(this);
+            // 传入oakPath或page入口页 需要等待oakFullpath初始化完成
+            if (
+                (this.props.oakPath || (this.iAmThePage() && path)) &&
+                !this.state.oakFullpath
+            ) {
+                return null;
+            }
+            // option有entity，也需要等待oakFullpath初始化完成
+            if (this.oakOption.entity && !this.state.oakFullpath) {
+                return null;
+            }
 
             if (this.supportPullDownRefresh()) {
                 return (
@@ -1161,25 +1172,41 @@ export function createComponent<
                         refreshing={oakPullDownRefreshLoading}
                         distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}
                         indicator={{
-                            activate: this.t('common::ptrActivate', { '#oakModule': 'oak-frontend-base' }),
-                            deactivate: this.t('common::ptrDeactivate', { '#oakModule': 'oak-frontend-base' }),
-                            release: this.t('common::ptrRelease', { '#oakModule': 'oak-frontend-base' }),
-                            finish: this.t('common::ptrFinish', { '#oakModule': 'oak-frontend-base' }),
+                            activate: this.t('common::ptrActivate', {
+                                '#oakModule': 'oak-frontend-base',
+                            }),
+                            deactivate: this.t('common::ptrDeactivate', {
+                                '#oakModule': 'oak-frontend-base',
+                            }),
+                            release: this.t('common::ptrRelease', {
+                                '#oakModule': 'oak-frontend-base',
+                            }),
+                            finish: this.t('common::ptrFinish', {
+                                '#oakModule': 'oak-frontend-base',
+                            }),
                         }}
                     >
-                        <Render methods={this.methodProps} data={{
-                            ...this.defaultProperties,
-                            ...this.state,
-                            ...this.props,
-                        }} />
+                        <Render
+                            methods={this.methodProps}
+                            data={{
+                                ...this.defaultProperties,
+                                ...this.state,
+                                ...this.props,
+                            }}
+                        />
                     </PullToRefresh>
                 );
             }
-            return <Render methods={this.methodProps} data={{
-                ...this.defaultProperties,
-                ...this.state,
-                ...this.props,
-            }} />;
+            return (
+                <Render
+                    methods={this.methodProps}
+                    data={{
+                        ...this.defaultProperties,
+                        ...this.state,
+                        ...this.props,
+                    }}
+                />
+            );
         }
     };
     return withRouter(OakComponentWrapper, option);

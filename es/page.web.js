@@ -768,27 +768,44 @@ export function createComponent(option, features) {
         render() {
             const { oakPullDownRefreshLoading } = this.state;
             const Render = getRender.call(this);
+            // 传入oakPath或page入口页 需要等待oakFullpath初始化完成
+            if ((this.props.oakPath || (this.iAmThePage() && path)) &&
+                !this.state.oakFullpath) {
+                return null;
+            }
+            // option有entity，也需要等待oakFullpath初始化完成
+            if (this.oakOption.entity && !this.state.oakFullpath) {
+                return null;
+            }
             if (this.supportPullDownRefresh()) {
                 return (_jsx(PullToRefresh, { onRefresh: async () => {
                         this.pullDownRefresh = true;
                         await this.refresh();
                         this.pullDownRefresh = false;
                     }, refreshing: oakPullDownRefreshLoading, distanceToRefresh: DEFAULT_REACH_BOTTOM_DISTANCE, indicator: {
-                        activate: this.t('common::ptrActivate', { '#oakModule': 'oak-frontend-base' }),
-                        deactivate: this.t('common::ptrDeactivate', { '#oakModule': 'oak-frontend-base' }),
-                        release: this.t('common::ptrRelease', { '#oakModule': 'oak-frontend-base' }),
-                        finish: this.t('common::ptrFinish', { '#oakModule': 'oak-frontend-base' }),
+                        activate: this.t('common::ptrActivate', {
+                            '#oakModule': 'oak-frontend-base',
+                        }),
+                        deactivate: this.t('common::ptrDeactivate', {
+                            '#oakModule': 'oak-frontend-base',
+                        }),
+                        release: this.t('common::ptrRelease', {
+                            '#oakModule': 'oak-frontend-base',
+                        }),
+                        finish: this.t('common::ptrFinish', {
+                            '#oakModule': 'oak-frontend-base',
+                        }),
                     }, children: _jsx(Render, { methods: this.methodProps, data: {
                             ...this.defaultProperties,
                             ...this.state,
                             ...this.props,
                         } }) }));
             }
-            return _jsx(Render, { methods: this.methodProps, data: {
+            return (_jsx(Render, { methods: this.methodProps, data: {
                     ...this.defaultProperties,
                     ...this.state,
                     ...this.props,
-                } });
+                } }));
         }
     }
     ;

@@ -31,3 +31,8 @@
 .oak-pull-to-refresh-content-wrapper .oak-pull-to-refresh-content>:nth-child(2) {
     height: auto;
 }
+
+.oak-pull-to-refresh {
+    height: 100%;
+    transform: translate3d(0px, 0px, 0px);
+}
