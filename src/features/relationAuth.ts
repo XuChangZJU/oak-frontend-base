@@ -254,7 +254,7 @@ export class RelationAuth<
                     $entity: 'actionAuth',
                     data: {
                         id: 1,
-                        paths: 1,
+                        pathId: 1,
                         deActions: 1,
                         destEntity: 1,
                     },
