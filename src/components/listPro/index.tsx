@@ -112,7 +112,10 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
                 newTableAttributes.unshift({
                     attribute: {
                         path: '#',
-                        attribute: '',
+                        attribute: {
+                            label: '#',
+                            path: '#',
+                        },
                         attrType: 'number',
                         attr: '#',
                         entity: entity as string,
