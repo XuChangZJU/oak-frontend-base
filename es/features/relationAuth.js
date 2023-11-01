@@ -194,7 +194,13 @@ export class RelationAuth extends Feature {
                         id: 1,
                         pathId: 1,
                         deActions: 1,
-                        destEntity: 1,
+                        path: {
+                            id: 1,
+                            destEntity: 1,
+                            value: 1,
+                            sourceEntity: 1,
+                            recursive: 1,
+                        }
                     },
                 },
             },
