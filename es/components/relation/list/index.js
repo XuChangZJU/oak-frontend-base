@@ -1,4 +1,4 @@
-import { assert } from 'oak-domain/lib/utils/assert';
+import { uniq } from 'oak-domain/lib/utils/lodash';
 export default OakComponent({
     entity: 'relation',
     isList: true,
@@ -9,23 +9,11 @@ export default OakComponent({
         entity: 1,
         entityId: 1,
     },
-    formData({ data = [] }) {
-        // 根据设计，这里如果同一个entity上同时存在有entityId和没有entityId的，则隐藏掉没有entityId的行
-        const relations = data.filter((ele) => !!ele.entityId);
-        data.forEach((ele) => {
-            if (!ele.entityId) {
-                if (!relations.find((ele2) => ele2.entity === ele.entity && ele2.entityId)) {
-                    relations.push(ele);
-                }
-            }
-            else {
-                assert(ele.entityId === this.props.entityId);
-            }
-        });
-        const hasRelationEntites = this.features.relationAuth.getHasRelationEntities();
+    formData({ data }) {
+        const entities = data && uniq(data.map(ele => ele.entity));
         return {
-            relations,
-            hasRelationEntites,
+            relations: data || [],
+            entities,
         };
     },
     filters: [
@@ -64,24 +52,6 @@ export default OakComponent({
     properties: {
         entity: '',
         entityId: '',
-    },
-    features: ['relationAuth'],
-    methods: {
-        onActionClicked(id, entity) {
-            this.features.navigator.navigateTo({
-                url: '/relation/actionAuthBySource',
-            }, {
-                relationId: id,
-                entity,
-            });
-        },
-        onRelationClicked(id, entity) {
-            this.features.navigator.navigateTo({
-                url: '/relation/relationAuthBySource',
-            }, {
-                relationId: id,
-                entity,
-            });
-        },
+        onClicked: (relationId) => undefined,
     },
 });

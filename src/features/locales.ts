@@ -120,6 +120,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             useLocalCache: {
                 keys: [ns],
                 gap: process.env.NODE_ENV === 'development' ? 60 * 1000 : 1200 * 1000,
+                onlyReturnFresh: true,
             },
         });
 

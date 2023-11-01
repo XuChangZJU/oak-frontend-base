@@ -4,9 +4,8 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 type ED = EntityDict & BaseEntityDict;
 export default function render(props: WebComponentProps<ED, 'relation', true, {
     relations: RowWithActions<ED, 'relation'>[];
-    hasRelationEntites: string[];
-}, {
-    onActionClicked: (id: string, entity: keyof ED) => void;
-    onRelationClicked: (id: string, entity: keyof ED) => void;
+    entity: string;
+    entities: string[];
+    onClicked: (relationId: string) => any;
 }>): import("react/jsx-runtime").JSX.Element;
 export {};

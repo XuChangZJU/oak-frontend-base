@@ -95,6 +95,7 @@ export class Locales extends Feature {
             useLocalCache: {
                 keys: [ns],
                 gap: process.env.NODE_ENV === 'development' ? 60 * 1000 : 1200 * 1000,
+                onlyReturnFresh: true,
             },
         });
         if (newI18ns.length > 0) {
