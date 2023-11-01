@@ -14,7 +14,7 @@ export class RelationAuth<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>
-    > extends Feature {
+> extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private baseRelationAuth: BaseRelationAuth<ED>;
     private authDeduceRelationMap: AuthDeduceRelationMap<ED>;
@@ -121,7 +121,7 @@ export class RelationAuth<
                         else {
                             nodeOutSet[entity] = [`${attr.replace('Id', '')}`];
                         }
-                    }                    
+                    }
                 }
             }
         }
@@ -184,7 +184,7 @@ export class RelationAuth<
             path: string,
             actions: string[],
         }>;
-        
+
     }
 
     getCascadeActionAuths(entity: keyof ED, ir: boolean) {
@@ -199,7 +199,7 @@ export class RelationAuth<
         return [] as Array<[string, string, string, boolean]>;
     }
 
-    checkRelation<T extends keyof ED>(entity: T, operation: Omit< ED[T]['Operation'] | ED[T]['Selection'], 'id'>) {
+    checkRelation<T extends keyof ED>(entity: T, operation: Omit<ED[T]['Operation'] | ED[T]['Selection'], 'id'>) {
         const context = this.cache.begin();
         try {
             this.baseRelationAuth.checkRelationSync(entity, operation, context);
@@ -256,7 +256,13 @@ export class RelationAuth<
                         id: 1,
                         pathId: 1,
                         deActions: 1,
-                        destEntity: 1,
+                        path: {
+                            id: 1,
+                            destEntity: 1,
+                            value: 1,
+                            sourceEntity: 1,
+                            recursive: 1,
+                        }
                     },
                 },
             },
