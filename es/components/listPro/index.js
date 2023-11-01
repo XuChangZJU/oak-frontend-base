@@ -34,7 +34,10 @@ const ProList = (props) => {
                 newTableAttributes.unshift({
                     attribute: {
                         path: '#',
-                        attribute: '',
+                        attribute: {
+                            label: '#',
+                            path: '#',
+                        },
                         attrType: 'number',
                         attr: '#',
                         entity: entity,

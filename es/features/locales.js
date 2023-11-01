@@ -113,8 +113,11 @@ export class Locales extends Feature {
             this.i18n.store(dataset);
             this.publish();
         }
-        else {
-            // console.warn(`命名空间${ns}中的${key}缺失且可能请求不到更新的数据，请检查`);
+        if (!this.hasKey(key)) {
+            console.warn(`命名空间${ns}中的${key}缺失且可能请求不到更新的数据`);
+            if (process.env.NODE_ENV === 'development') {
+                console.warn('请增加好相应的键值后执行make:locale');
+            }
         }
     }
     /**
