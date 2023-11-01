@@ -1,4 +1,3 @@
-import { assert } from 'oak-domain/lib/utils/assert';
 import { uniq } from 'oak-domain/lib/utils/lodash';
 
 export default OakComponent({
@@ -12,11 +11,16 @@ export default OakComponent({
         entityId: 1,
     },
     formData({ data }) {
-        const entities = data && uniq(data.map(
+        const { filter } = this.state;
+
+        const data2 = filter ? data.filter(
+            ele => ele.entity?.includes(filter)
+        ) : data;
+        const entities = data2 && uniq(data2.map(
             ele => ele.entity
         ));
         return {
-            relations: data || [],
+            relations: data2 || [],
             entities,
         };
     },
@@ -57,4 +61,14 @@ export default OakComponent({
         entityId: '',
         onClicked: (relationId: string) => undefined as any,
     },
+    data: {
+        filter: '',
+    },
+    methods: {
+        setEntityFilter(filter: string) {
+            this.setState({
+                filter,
+            }, () => this.reRender());
+        }
+    }
 });

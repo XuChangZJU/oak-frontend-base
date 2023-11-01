@@ -7,5 +7,7 @@ export default function render(props: WebComponentProps<ED, 'relation', true, {
     entity: string;
     entities: (keyof ED)[];
     onClicked: (relationId: string) => any;
+}, {
+    setEntityFilter: (filter: string) => void;
 }>): import("react/jsx-runtime").JSX.Element | null;
 export {};

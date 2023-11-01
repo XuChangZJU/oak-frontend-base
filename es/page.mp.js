@@ -492,12 +492,12 @@ const oakBehavior = Behavior({
         show() {
             const { show } = this.oakOption.lifetimes || {};
             // this.reRender();
-            // assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
+            assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
             show && show.call(this);
         },
         hide() {
             const { hide } = this.oakOption.lifetimes || {};
-            // assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
+            assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
             hide && hide.call(this);
         },
     },
@@ -704,7 +704,7 @@ export function createComponent(option, features) {
                     const data2 = data.call(this);
                     this.setData(data2);
                 }
-                // assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
+                assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
                 ready && ready.call(this);
             },
             moved() {

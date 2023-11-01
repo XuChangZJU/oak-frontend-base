@@ -1,8 +1,8 @@
-import { List } from 'antd-mobile';
+import { List, Tag, Input, Divider } from 'antd-mobile';
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { assert } from 'oak-domain/lib/utils/assert';
+import Styles from './web.module.less';
 
 type ED = EntityDict & BaseEntityDict;
 
@@ -16,14 +16,29 @@ export default function render(
             entity: string,
             entities: (keyof ED)[],
             onClicked: (relationId: string) => any;
+        },
+        {
+            setEntityFilter: (filter: string) => void;
         }
     >
 ) {
     const { entities, entity, relations, onClicked } = props.data;
+    const { t, setEntityFilter } = props.methods;
 
     if (entities) {
         return (
             <>
+                {!entity &&
+                    <>
+                        <div className={Styles.inputDiv}>
+                            <Input
+                                placeholder={t('searchTip')}
+                                clearable
+                                onChange={(val) => setEntityFilter(val)}
+                            />
+                        </div>
+                    </>
+                }
                 {
                     entities.map(
                         (e) => {
@@ -31,20 +46,23 @@ export default function render(
                                 ele => ele.entity === e
                             );
                             return (
-                                <List header={e}>
+                                <List header={t(`${e as string}:name`) + ` (${e as string})`}>
                                     {
                                         rs.map(
                                             (r) => (
-                                                <List.Item onClick={() => onClicked(r.id!)}>
-                                                    {r.name!}
+                                                <List.Item
+                                                    extra={r.entityId && <Tag color='primary' fill='outline'>{t('hasEntityId')}</Tag>}
+                                                    onClick={() => onClicked(r.id!)}
+                                                >
+                                                    {t(`${e as string}:r.${r.name!}`) + ` (${r.name})`}
                                                 </List.Item>
                                             )
                                         )
                                     }
-                                </List>                            
+                                </List>
                             )
                         }
-                    )    
+                    )
                 }
             </>
         );

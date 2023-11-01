@@ -5,7 +5,9 @@ type ED = EntityDict & BaseEntityDict;
 export default function render(props: WebComponentProps<ED, 'relation', true, {
     relations: RowWithActions<ED, 'relation'>[];
     entity: string;
-    entities: string[];
+    entities: (keyof ED)[];
     onClicked: (relationId: string) => any;
-}>): import("react/jsx-runtime").JSX.Element;
+}, {
+    setEntityFilter: (filter: string) => void;
+}>): import("react/jsx-runtime").JSX.Element | null;
 export {};
