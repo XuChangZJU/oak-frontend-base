@@ -38,6 +38,8 @@ export function onPathSet<
     const { features } = this;
 
     const oakPath2 = oakPath || path;
+    assert(oakPath2);
+    assert(!oakPath || !path);
     if (entity) {
         const entity2 = entity instanceof Function ? entity.call(this) : entity;
         const filters2: NamedFilterItem<ED, T>[] = [];

@@ -568,9 +568,9 @@ export function createComponent(option, features) {
             }
             lifetimes?.created && lifetimes.created.call(this);
         }
-        // todo 这里还需要根据path和location来判断自己是不是page
+        // 编译器只会在page层注入path，component依赖父亲设置的oakPath
         iAmThePage() {
-            return this.props.routeMatch;
+            return this.oakOption.path;
         }
         supportPullDownRefresh() {
             const { oakDisablePulldownRefresh = false } = this.props;
@@ -609,7 +609,7 @@ export function createComponent(option, features) {
             }
             lifetimes?.attached && lifetimes.attached.call(this);
             const { oakPath } = this.props;
-            if (oakPath || this.iAmThePage() && path) {
+            if (oakPath || path) {
                 const pathState = onPathSet.call(this, this.oakOption);
                 if (this.unmounted) {
                     return;
@@ -769,7 +769,7 @@ export function createComponent(option, features) {
             const { oakPullDownRefreshLoading } = this.state;
             const Render = getRender.call(this);
             // 传入oakPath或page入口页 需要等待oakFullpath初始化完成
-            if ((this.props.oakPath || (this.iAmThePage() && path)) &&
+            if ((this.props.oakPath || path) &&
                 !this.state.oakFullpath) {
                 return null;
             }

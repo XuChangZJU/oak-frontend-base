@@ -84,7 +84,11 @@ const withRouter = (Component, { path, properties }) => {
         const { forwardedRef, ...rest } = props;
         let params = {};
         let routeMatch = false;
-        if (path && (props.customRouter || location.pathname.toLowerCase().includes(path.toLowerCase()))) {
+        /**
+         * 由path来判定是否为Page。这里有个隐患，未来实现了keepAlive后，可能会影响到之前压栈的Page
+         * 待测试。by Xc 20231102
+         */
+        if (path) {
             params = Object.assign(params, getParams(location, properties), routerParams);
             routeMatch = true;
         }
