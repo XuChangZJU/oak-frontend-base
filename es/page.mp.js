@@ -491,13 +491,11 @@ const oakBehavior = Behavior({
     pageLifetimes: {
         show() {
             const { show } = this.oakOption.lifetimes || {};
-            // this.reRender();
-            assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
+            this.reRender();
             show && show.call(this);
         },
         hide() {
             const { hide } = this.oakOption.lifetimes || {};
-            assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
             hide && hide.call(this);
         },
     },
@@ -700,11 +698,13 @@ export function createComponent(option, features) {
             },
             ready() {
                 if (typeof data === 'function') {
-                    // ts的编译好像有问题，这里不硬写as过不去 
+                    // ts的编译好像有问题，这里不硬写as过不去
                     const data2 = data.call(this);
                     this.setData(data2);
                 }
-                assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
+                if (this.props.oakPath) {
+                    assert(this.state.oakFullpath, '组件不应当在oakPath没确定前就渲染');
+                }
                 ready && ready.call(this);
             },
             moved() {
