@@ -29,7 +29,7 @@
 }
 
 .oak-pull-to-refresh-content-wrapper .oak-pull-to-refresh-content>:nth-child(2) {
-    height: auto;
+    height: 100%;
 }
 
 .oak-pull-to-refresh {
