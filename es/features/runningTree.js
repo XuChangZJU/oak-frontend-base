@@ -469,7 +469,7 @@ class ListNode extends Node {
             sorter,
         }, this.isLoading()); */
     }
-    addItem(item, beforeExecute, afterExecute) {
+    addItem(item) {
         // 如果数据键值是一个空字符串则更新成null
         for (const k in item) {
             if (item[k] === '') {
@@ -481,48 +481,40 @@ class ListNode extends Node {
         const id = generateNewId();
         assert(!this.updates[id]);
         this.updates[id] = {
-            beforeExecute,
-            afterExecute,
-            operation: {
-                id: generateNewId(),
-                action: 'create',
-                data: Object.assign(item, { id }),
-            },
+            id: generateNewId(),
+            action: 'create',
+            data: Object.assign(item, { id }),
         };
         this.setDirty();
         return id;
     }
-    removeItem(id, beforeExecute, afterExecute) {
+    removeItem(id) {
         if (this.updates[id] &&
-            this.updates[id].operation?.action === 'create') {
+            this.updates[id].action === 'create') {
             // 如果是新增项，在这里抵消
             unset(this.updates, id);
             this.removeChild(id);
         }
         else {
             this.updates[id] = {
-                beforeExecute,
-                afterExecute,
-                operation: {
-                    id: generateNewId(),
-                    action: 'remove',
-                    data: {},
-                    filter: {
-                        id,
-                    },
+                id: generateNewId(),
+                action: 'remove',
+                data: {},
+                filter: {
+                    id,
                 },
             };
         }
         this.setDirty();
     }
     recoverItem(id) {
-        const { operation } = this.updates[id];
+        const operation = this.updates[id];
         assert(operation?.action === 'remove');
         unset(this.updates, id);
         this.setDirty();
     }
     resetItem(id) {
-        const { operation } = this.updates[id];
+        const operation = this.updates[id];
         assert(operation?.action === 'update');
         unset(this.updates, id);
         this.setDirty();
@@ -534,7 +526,7 @@ class ListNode extends Node {
      * @param beforeExecute
      * @param afterExecute
      */
-    updateItem(data, id, action, beforeExecute, afterExecute) {
+    updateItem(data, id, action) {
         // 如果数据键值是一个空字符串则更新成null
         for (const k in data) {
             if (data[k] === '') {
@@ -546,11 +538,10 @@ class ListNode extends Node {
         // assert(Object.keys(this.children).length === 0, `更新子结点应该落在相应的component上`);
         if (this.children && this.children[id]) {
             // 实际中有这样的case出现，当使用actionButton时。先这样处理。by Xc 20230214
-            return this.children[id].update(data, action, beforeExecute, afterExecute);
+            return this.children[id].update(data, action);
         }
         if (this.updates[id]) {
-            const { operation } = this.updates[id];
-            assert(operation);
+            const operation = this.updates[id];
             const { data: dataOrigin } = operation;
             Object.assign(dataOrigin, data);
             if (action && operation.action !== action) {
@@ -560,15 +551,11 @@ class ListNode extends Node {
         }
         else {
             this.updates[id] = {
-                beforeExecute,
-                afterExecute,
-                operation: {
-                    id: generateNewId(),
-                    action: action || 'update',
-                    data,
-                    filter: {
-                        id,
-                    },
+                id: generateNewId(),
+                action: action || 'update',
+                data,
+                filter: {
+                    id,
                 },
             };
         }
@@ -578,33 +565,6 @@ class ListNode extends Node {
         for (const id in data) {
             this.updateItem(data[id], id, action);
         }
-    }
-    async doBeforeTrigger() {
-        for (const k in this.children) {
-            await this.children[k].doBeforeTrigger();
-        }
-        for (const k in this.updates) {
-            const update = this.updates[k];
-            if (update.beforeExecute) {
-                await update.beforeExecute();
-                update.beforeExecute = undefined;
-            }
-        }
-    }
-    async doAfterTrigger() {
-        for (const k in this.children) {
-            await this.children[k].doAfterTrigger();
-        }
-        for (const k in this.updates) {
-            const update = this.updates[k];
-            if (update.afterExecute) {
-                await update.afterExecute();
-            }
-            // afterExecute完了肯定可以清除结点了
-            assert(!update.operation && !update.beforeExecute);
-            unset(this.updates, k);
-        }
-        this.dirty = false;
     }
     getParentFilter(childNode) {
         for (const id in this.children) {
@@ -621,10 +581,10 @@ class ListNode extends Node {
         }
         const operations = [];
         for (const id in this.updates) {
-            if (this.updates[id].operation) {
+            if (this.updates[id]) {
                 operations.push({
                     entity: this.entity,
-                    operation: cloneDeep(this.updates[id].operation),
+                    operation: cloneDeep(this.updates[id]),
                 });
             }
         }
@@ -782,13 +742,6 @@ class ListNode extends Node {
         if (this.dirty) {
             const originUpdates = this.updates;
             this.updates = {};
-            for (const k in originUpdates) {
-                if (originUpdates[k].afterExecute) {
-                    this.updates[k] = {
-                        afterExecute: originUpdates[k].afterExecute,
-                    };
-                }
-            }
             for (const k in this.children) {
                 this.children[k].clean();
             }
@@ -806,7 +759,7 @@ class ListNode extends Node {
         }
         assert(childId);
         if (this.updates && this.updates[childId]) {
-            return this.updates[childId].operation;
+            return this.updates[childId];
         }
     }
     // 查看这个list上所有数据必须遵守的限制
@@ -884,8 +837,8 @@ class SingleNode extends Node {
     setId(id) {
         if (id !== this.id) {
             // 如果本身是create， 这里无视就行（因为框架原因会调用一次）
-            if (this.operation?.operation?.action === 'create') {
-                if (this.operation.operation.data.id === id) {
+            if (this.operation?.action === 'create') {
+                if (this.operation.data.id === id) {
                     return;
                 }
             }
@@ -904,8 +857,8 @@ class SingleNode extends Node {
         if (this.id) {
             return this.id;
         }
-        if (this.operation && this.operation.operation?.action === 'create') {
-            return this.operation.operation.data.id;
+        if (this.operation && this.operation?.action === 'create') {
+            return this.operation.data.id;
         }
     }
     getChildren() {
@@ -934,29 +887,7 @@ class SingleNode extends Node {
             return result[0];
         }
     }
-    async doBeforeTrigger() {
-        for (const k in this.children) {
-            const child = this.children[k];
-            await child.doBeforeTrigger();
-        }
-        if (this.operation?.beforeExecute) {
-            await this.operation.beforeExecute();
-            this.operation.beforeExecute = undefined;
-        }
-    }
-    async doAfterTrigger() {
-        for (const k in this.children) {
-            const child = this.children[k];
-            await child.doAfterTrigger();
-        }
-        if (this.operation?.afterExecute) {
-            await this.operation.afterExecute();
-            assert(!this.operation.operation && !this.operation.beforeExecute);
-            this.operation = undefined;
-        }
-        this.dirty = false;
-    }
-    create(data, beforeExecute, afterExecute) {
+    create(data) {
         const id = generateNewId();
         assert(!this.id && !this.dirty, 'create前要保证singleNode为空');
         // 如果数据键值是一个空字符串则更新成null
@@ -968,17 +899,13 @@ class SingleNode extends Node {
             }
         }
         this.operation = {
-            operation: {
-                id: generateNewId(),
-                action: 'create',
-                data: Object.assign({}, data, { id }),
-            },
-            beforeExecute,
-            afterExecute,
+            id: generateNewId(),
+            action: 'create',
+            data: Object.assign({}, data, { id }),
         };
         this.setDirty();
     }
-    update(data, action, beforeExecute, afterExecute) {
+    update(data, action) {
         // 如果数据键值是一个空字符串则更新成null
         for (const k in data) {
             if (data[k] === '') {
@@ -999,11 +926,7 @@ class SingleNode extends Node {
                         id: this.id,
                     },
                 });
-                this.operation = {
-                    operation,
-                    beforeExecute,
-                    afterExecute,
-                };
+                this.operation = operation;
             }
             else {
                 // 有可能是create，上层不考虑两者的区别
@@ -1015,16 +938,11 @@ class SingleNode extends Node {
                         id: generateNewId(),
                     }),
                 };
-                this.operation = {
-                    operation,
-                    beforeExecute,
-                    afterExecute,
-                };
+                this.operation = operation;
             }
         }
         else {
-            const { operation } = this.operation;
-            assert(operation);
+            const operation = this.operation;
             assert(['create', 'update', action].includes(operation.action));
             Object.assign(operation.data, data);
             if (action && operation.action !== action) {
@@ -1048,7 +966,7 @@ class SingleNode extends Node {
         }
         this.setDirty();
     }
-    remove(beforeExecute, afterExecute) {
+    remove() {
         assert(this.id);
         const operation = {
             id: generateNewId(),
@@ -1058,11 +976,7 @@ class SingleNode extends Node {
                 id: this.id,
             },
         };
-        this.operation = {
-            operation,
-            beforeExecute,
-            afterExecute,
-        };
+        this.operation = operation;
         this.setDirty();
     }
     setDirty() {
@@ -1070,13 +984,11 @@ class SingleNode extends Node {
             // 这种情况是下面的子结点setDirty引起的连锁设置
             assert(this.id);
             this.operation = {
-                operation: {
-                    id: generateNewId(),
-                    action: 'update',
-                    data: {},
-                    filter: {
-                        id: this.id,
-                    }
+                id: generateNewId(),
+                action: 'update',
+                data: {},
+                filter: {
+                    id: this.id,
                 }
             };
         }
@@ -1084,7 +996,7 @@ class SingleNode extends Node {
     }
     composeOperations() {
         if (this.dirty) {
-            const operation = this.operation?.operation && cloneDeep(this.operation.operation);
+            const operation = this.operation && cloneDeep(this.operation);
             if (operation) {
                 for (const ele in this.children) {
                     const ele2 = ele.includes(':') ? ele.slice(0, ele.indexOf(':')) : ele;
@@ -1229,7 +1141,7 @@ class SingleNode extends Node {
     }
     getFilter() {
         // 如果是新建，等于没有filter
-        if (this.operation?.operation?.action === 'create') {
+        if (this.operation?.action === 'create') {
             return;
         }
         // singleNode的filter可以优化权限的判断范围
@@ -1482,17 +1394,6 @@ class VirtualNode extends Feature {
     isLoading() {
         return this.loading;
     }
-    async doBeforeTrigger() {
-        for (const ele in this.children) {
-            await this.children[ele].doBeforeTrigger();
-        }
-    }
-    async doAfterTrigger() {
-        for (const ele in this.children) {
-            await this.children[ele].doAfterTrigger();
-        }
-        this.dirty = false;
-    }
     clean() {
         for (const ele in this.children) {
             this.children[ele].clean();
@@ -1712,20 +1613,20 @@ export class RunningTree extends Feature {
         const node = this.findNode(path);
         return node ? node.isDirty() : false;
     }
-    addItem(path, data, beforeExecute, afterExecute) {
+    addItem(path, data) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        return node.addItem(data, beforeExecute, afterExecute);
+        return node.addItem(data);
     }
-    removeItem(path, id, beforeExecute, afterExecute) {
+    removeItem(path, id) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        node.removeItem(id, beforeExecute, afterExecute);
+        node.removeItem(id);
     }
-    updateItem(path, data, id, action, beforeExecute, afterExecute) {
+    updateItem(path, data, id, action) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        node.updateItem(data, id, action, beforeExecute, afterExecute);
+        node.updateItem(data, id, action);
     }
     recoverItem(path, id) {
         const node = this.findNode(path);
@@ -1737,20 +1638,20 @@ export class RunningTree extends Feature {
         assert(node instanceof ListNode);
         node.resetItem(id);
     }
-    create(path, data, beforeExecute, afterExecute) {
+    create(path, data) {
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
-        node.create(data, beforeExecute, afterExecute);
+        node.create(data);
     }
-    update(path, data, action, beforeExecute, afterExecute) {
+    update(path, data, action) {
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
-        node.update(data, action, beforeExecute, afterExecute);
+        node.update(data, action);
     }
-    remove(path, beforeExecute, afterExecute) {
+    remove(path) {
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
-        node.remove(beforeExecute, afterExecute);
+        node.remove();
     }
     isCreation(path) {
         const node = this.findNode(path);
@@ -1922,7 +1823,6 @@ export class RunningTree extends Feature {
         assert(node.isDirty());
         node.setExecuting(true);
         try {
-            await node.doBeforeTrigger();
             const operations = node.composeOperations();
             // 这里理论上virtualNode下面也可以有多个不同的entity的组件，但实际中不应当出现这样的设计
             if (operations.length > 0) {
@@ -1943,12 +1843,10 @@ export class RunningTree extends Feature {
                     }
                     node.setExecuting(false);
                 });
-                await node.doAfterTrigger();
                 return result;
             }
             node.clean();
             node.setExecuting(false);
-            await node.doAfterTrigger();
             return { message: 'No Operation' };
         }
         catch (err) {

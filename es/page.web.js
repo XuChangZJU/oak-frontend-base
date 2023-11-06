@@ -116,23 +116,23 @@ class OakComponentBase extends React.PureComponent {
             return this.props.navigate(url2, { replace: true });
         }
     } */
-    addItem(data, beforeExecute, afterExecute, path) {
+    addItem(data, path) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        return this.features.runningTree.addItem(path2, data, beforeExecute, afterExecute);
+        return this.features.runningTree.addItem(path2, data);
     }
-    removeItem(id, beforeExecute, afterExecute, path) {
+    removeItem(id, path) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.removeItem(path2, id, beforeExecute, afterExecute);
+        this.features.runningTree.removeItem(path2, id);
     }
-    updateItem(data, id, action, beforeExecute, afterExecute, path) {
+    updateItem(data, id, action, path) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.updateItem(path2, data, id, action, beforeExecute, afterExecute);
+        this.features.runningTree.updateItem(path2, data, id, action);
     }
     recoverItem(id, path) {
         const path2 = path
@@ -149,23 +149,23 @@ class OakComponentBase extends React.PureComponent {
     /* create<T extends keyof ED>(data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) {
         this.features.runningTree.create(this.state.oakFullpath, data, beforeExecute, afterExecute);
     } */
-    update(data, action, beforeExecute, afterExecute, path) {
+    update(data, action, path) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.update(path2, data, action, beforeExecute, afterExecute);
+        this.features.runningTree.update(path2, data, action);
     }
-    create(data, beforeExecute, afterExecute, path) {
+    create(data, path) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.create(path2, data, beforeExecute, afterExecute);
+        this.features.runningTree.create(path2, data);
     }
-    remove(beforeExecute, afterExecute, path) {
+    remove(path) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.remove(path2, beforeExecute, afterExecute);
+        this.features.runningTree.remove(path2);
     }
     isCreation(path) {
         const path2 = path
@@ -464,14 +464,14 @@ export function createComponent(option, features) {
                 }
             };
             Object.assign(methodProps, {
-                addItem: (data, beforeExecute, afterExecute, path) => {
-                    return this.addItem(data, beforeExecute, afterExecute, path);
+                addItem: (data, path) => {
+                    return this.addItem(data, path);
                 },
-                removeItem: (id, beforeExecute, afterExecute, path) => {
-                    return this.removeItem(id, beforeExecute, afterExecute, path);
+                removeItem: (id, path) => {
+                    return this.removeItem(id, path);
                 },
-                updateItem: (data, id, action, beforeExecute, afterExecute, path) => {
-                    return this.updateItem(data, id, action, beforeExecute, afterExecute, path);
+                updateItem: (data, id, action, path) => {
+                    return this.updateItem(data, id, action, path);
                 },
                 setFilters: (filters, path) => {
                     return this.setFilters(filters, path);
@@ -523,17 +523,14 @@ export function createComponent(option, features) {
                 }
             });
             Object.assign(methodProps, {
-                /* create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
-                    return this.create(data, beforeExecute, afterExecute);
-                }, */
-                update: (data, action, beforeExecute, afterExecute, path) => {
-                    return this.update(data, action, beforeExecute, afterExecute, path);
+                update: (data, action, path) => {
+                    return this.update(data, action, path);
                 },
-                create: (data, beforeExecute, afterExecute, path) => {
-                    return this.create(data, beforeExecute, afterExecute, path);
+                create: (data, path) => {
+                    return this.create(data, path);
                 },
-                remove: (beforeExecute, afterExecute, path) => {
-                    return this.remove(beforeExecute, afterExecute, path);
+                remove: (path) => {
+                    return this.remove(path);
                 },
                 isCreation: (path) => {
                     return this.isCreation(path);

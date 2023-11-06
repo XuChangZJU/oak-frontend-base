@@ -225,8 +225,6 @@ abstract class OakComponentBase<
 
     addItem<T extends keyof ED>(
         data: Omit<ED[T]['CreateSingle']['data'], 'id'>,
-        beforeExecute?: () => Promise<void>,
-        afterExecute?: () => Promise<void>,
         path?: string
     ) {
         const path2 = path
@@ -234,16 +232,12 @@ abstract class OakComponentBase<
             : this.state.oakFullpath;
         return this.features.runningTree.addItem(
             path2,
-            data,
-            beforeExecute,
-            afterExecute
+            data
         );
     }
 
     removeItem(
         id: string,
-        beforeExecute?: () => Promise<void>,
-        afterExecute?: () => Promise<void>,
         path?: string
     ) {
         const path2 = path
@@ -251,9 +245,7 @@ abstract class OakComponentBase<
             : this.state.oakFullpath;
         this.features.runningTree.removeItem(
             path2,
-            id,
-            beforeExecute,
-            afterExecute
+            id
         );
     }
 
@@ -261,8 +253,6 @@ abstract class OakComponentBase<
         data: ED[T]['Update']['data'],
         id: string,
         action?: ED[T]['Action'],
-        beforeExecute?: () => Promise<void>,
-        afterExecute?: () => Promise<void>,
         path?: string
     ) {
         const path2 = path
@@ -272,9 +262,7 @@ abstract class OakComponentBase<
             path2,
             data,
             id,
-            action,
-            beforeExecute,
-            afterExecute
+            action
         );
     }
 
@@ -299,8 +287,6 @@ abstract class OakComponentBase<
     update<T extends keyof ED>(
         data: ED[T]['Update']['data'],
         action?: ED[T]['Action'],
-        beforeExecute?: () => Promise<void>,
-        afterExecute?: () => Promise<void>,
         path?: string
     ) {
         const path2 = path
@@ -309,16 +295,12 @@ abstract class OakComponentBase<
         this.features.runningTree.update(
             path2,
             data,
-            action,
-            beforeExecute,
-            afterExecute
+            action
         );
     }
 
     create<T extends keyof ED>(
         data: Omit<ED[T]['CreateSingle']['data'], 'id'>,
-        beforeExecute?: () => Promise<void>,
-        afterExecute?: () => Promise<void>,
         path?: string
     ) {
         const path2 = path
@@ -326,21 +308,15 @@ abstract class OakComponentBase<
             : this.state.oakFullpath;
         this.features.runningTree.create(
             path2,
-            data,
-            beforeExecute,
-            afterExecute
+            data
         );
     }
 
-    remove(
-        beforeExecute?: () => Promise<void>,
-        afterExecute?: () => Promise<void>,
-        path?: string
-    ) {
+    remove(path?: string) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        this.features.runningTree.remove(path2, beforeExecute, afterExecute);
+        this.features.runningTree.remove(path2);
     }
 
     isCreation(path?: string) {
@@ -803,14 +779,14 @@ export function createComponent<
                 }
             };
             Object.assign(methodProps, {
-                addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
-                    return this.addItem(data, beforeExecute, afterExecute, path);
+                addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, path?: string) => {
+                    return this.addItem(data, path);
                 },
-                removeItem: (id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
-                    return this.removeItem(id, beforeExecute, afterExecute, path);
+                removeItem: (id: string, path?: string) => {
+                    return this.removeItem(id, path);
                 },
-                updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
-                    return this.updateItem(data, id, action, beforeExecute, afterExecute, path);
+                updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], path?: string) => {
+                    return this.updateItem(data, id, action, path);
                 },
                 setFilters: (filters: NamedFilterItem<ED, T>[], path?: string) => {
                     return this.setFilters(filters, path);
@@ -863,20 +839,14 @@ export function createComponent<
             } as Record<WebComponentListMethodNames, Function>);
 
             Object.assign(methodProps, {
-                /* create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>) => {
-                    return this.create(data, beforeExecute, afterExecute);
-                }, */
-                update: (data: ED[T]['Update']['data'], action: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
-                    return this.update(data, action, beforeExecute, afterExecute, path);
+                update: (data: ED[T]['Update']['data'], action: ED[T]['Action'], path?: string) => {
+                    return this.update(data, action, path);
                 },
-                create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>,
-                    beforeExecute?: () => Promise<void>,
-                    afterExecute?: () => Promise<void>,
-                    path?: string) => {
-                    return this.create(data, beforeExecute, afterExecute, path);
+                create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, path?: string) => {
+                    return this.create(data, path);
                 },
-                remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => {
-                    return this.remove(beforeExecute, afterExecute, path);
+                remove: (path?: string) => {
+                    return this.remove(path);
                 },
                 isCreation: (path?: string) => {
                     return this.isCreation(path);

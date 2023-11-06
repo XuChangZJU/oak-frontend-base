@@ -181,9 +181,9 @@ export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T 
     setId: (id: string) => void;
     unsetId: () => void;
     getId: () => string | undefined;
-    create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
-    update: (data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
-    remove: (beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
+    create: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, path?: string) => void;
+    update: (data: ED[T]['Update']['data'], action?: ED[T]['Action'], path?: string) => void;
+    remove: (path?: string) => void;
     isCreation: (path?: string) => boolean;
 };
 export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
@@ -204,9 +204,9 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     getPagination: (path?: string) => Pagination | undefined;
     setPageSize: (pageSize: number, path?: string) => void;
     setCurrentPage: (current: number, path?: string) => void;
-    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => string;
-    removeItem: (id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
-    updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>, path?: string) => void;
+    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, path?: string) => string;
+    removeItem: (id: string, path?: string) => void;
+    updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], path?: string) => void;
     recoverItem: (id: string, path?: string) => void;
     resetItem: (id: string, path?: string) => void;
 };

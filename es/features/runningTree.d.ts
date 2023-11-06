@@ -30,8 +30,6 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     getEntity(): T;
     getSchema(): StorageSchema<ED>;
     protected abstract getChildPath(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): string;
-    abstract doBeforeTrigger(): Promise<void>;
-    abstract doAfterTrigger(): Promise<void>;
     abstract checkIfClean(): void;
     /**
      * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
@@ -96,8 +94,8 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     removeNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(name: string, refresh: boolean): void;
     getFreshValue(): Array<Partial<ED[T]['Schema']>>;
-    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): string;
-    removeItem(id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
+    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>): string;
+    removeItem(id: string): void;
     recoverItem(id: string): void;
     resetItem(id: string): void;
     /**
@@ -107,10 +105,8 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
      * @param beforeExecute
      * @param afterExecute
      */
-    updateItem(data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
+    updateItem(data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action']): void;
     updateItems(data: Record<string, ED[T]['Update']['data']>, action?: ED[T]['Action']): void;
-    doBeforeTrigger(): Promise<void>;
-    doAfterTrigger(): Promise<void>;
     getParentFilter(childNode: SingleNode<ED, T, Cxt, FrontCxt, AD>): ED[T]['Selection']['filter'] | undefined;
     composeOperations(): Array<{
         entity: keyof ED;
@@ -154,11 +150,9 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
     getFreshValue(): Partial<ED[T]['Schema']> | undefined;
-    doBeforeTrigger(): Promise<void>;
-    doAfterTrigger(): Promise<void>;
-    create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
-    update(data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
-    remove(beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
+    create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>): void;
+    update(data: ED[T]['Update']['data'], action?: ED[T]['Action']): void;
+    remove(): void;
     setDirty(): void;
     composeOperations(): Array<{
         entity: keyof ED;
@@ -201,8 +195,6 @@ declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends As
     setExecuting(executing: boolean): void;
     isExecuting(): boolean;
     isLoading(): boolean;
-    doBeforeTrigger(): Promise<void>;
-    doAfterTrigger(): Promise<void>;
     clean(): void;
     checkIfClean(): void;
     publishRecursively(): void;
@@ -236,14 +228,14 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     destroyNode(path: string): void;
     getFreshValue(path: string): Partial<ED[keyof ED]["Schema"]> | Partial<ED[keyof ED]["Schema"]>[] | undefined;
     isDirty(path: string): boolean;
-    addItem<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): string;
-    removeItem(path: string, id: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
-    updateItem<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
+    addItem<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>): string;
+    removeItem(path: string, id: string): void;
+    updateItem<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action']): void;
     recoverItem(path: string, id: string): void;
     resetItem(path: string, id: string): void;
-    create<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
-    update<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], action?: ED[T]['Action'], beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
-    remove(path: string, beforeExecute?: () => Promise<void>, afterExecute?: () => Promise<void>): void;
+    create<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>): void;
+    update<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], action?: ED[T]['Action']): void;
+    remove(path: string): void;
     isCreation(path: string): boolean;
     isLoading(path: string): boolean | undefined;
     isLoadingMore(path: string): boolean | undefined;

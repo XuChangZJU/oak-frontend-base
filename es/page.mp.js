@@ -370,23 +370,23 @@ const oakBehavior = Behavior({
                 this.features.runningTree.setCurrentPage(path2, currentPage);
             }
         },
-        addItem(data, beforeExecute, afterExecute, path) {
+        addItem(data, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.addItem(path2, data, beforeExecute, afterExecute);
+            return this.features.runningTree.addItem(path2, data);
         },
-        updateItem(data, id, action, beforeExecute, afterExecute, path) {
+        updateItem(data, id, action, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.updateItem(path2, data, id, action, beforeExecute, afterExecute);
+            return this.features.runningTree.updateItem(path2, data, id, action);
         },
-        removeItem(id, beforeExecute, afterExecute, path) {
+        removeItem(id, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.removeItem(path2, id, beforeExecute, afterExecute);
+            return this.features.runningTree.removeItem(path2, id);
         },
         recoverItem(id, path) {
             const path2 = path
@@ -406,23 +406,23 @@ const oakBehavior = Behavior({
         unsetId() {
             return this.features.runningTree.unsetId(this.state.oakFullpath);
         },
-        update(data, action, beforeExecute, afterExecute, path) {
+        update(data, action, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.update(path2, data, action, beforeExecute, afterExecute);
+            return this.features.runningTree.update(path2, data, action);
         },
-        create(data, beforeExecute, afterExecute, path) {
+        create(data, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.create(path2, data, beforeExecute, afterExecute);
+            return this.features.runningTree.create(path2, data);
         },
-        remove(beforeExecute, afterExecute, path) {
+        remove(path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.remove(path2, beforeExecute, afterExecute);
+            return this.features.runningTree.remove(path2);
         },
         isCreation(path) {
             const path2 = path
