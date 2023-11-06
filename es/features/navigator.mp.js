@@ -31,7 +31,7 @@ export class Navigator extends Feature {
     getNamespace() {
         return this.namespace;
     }
-    constructUrl(url, state) {
+    constructUrl(url, state, disableNamespace) {
         const urlParse = URL.parse(url, true);
         const { pathname, search } = urlParse;
         if (!/^\/{1}/.test(pathname)) {
@@ -42,7 +42,8 @@ export class Navigator extends Feature {
             pathname?.lastIndexOf('index') !== -1) {
             assert(false, 'url两边不需要加上/pages和/index');
         }
-        const pathname2 = `/pages${pathname}/index`;
+        let pathname2 = this.constructNamespace(pathname, disableNamespace);
+        pathname2 = `/pages${pathname2}/index`;
         let search2 = search;
         if (state) {
             for (const param in state) {
@@ -62,9 +63,33 @@ export class Navigator extends Feature {
         });
         return url2;
     }
-    navigateTo(options, state) {
+    constructNamespace(url, disableNamespace) {
+        let url2 = url;
+        if (!disableNamespace && this.namespace) {
+            // 处理this.namespace 前缀未设置“/”, 先置上“/”, 格式为 /console
+            const namespace = this.namespace.startsWith('/')
+                ? this.namespace
+                : `/${this.namespace}`;
+            const urls = url2.split('?');
+            const urls_0 = urls[0] || '';
+            if (namespace === '/') {
+                url2 = url2;
+            }
+            else if (namespace !== '/' && urls_0 === '') {
+                url2 = namespace + url2;
+            }
+            else if (namespace !== '/' && urls_0 === '/') {
+                url2 = namespace + url2.substring(1, url2.length);
+            }
+            else {
+                url2 = namespace + (url2.startsWith('/') ? '' : '/') + url2;
+            }
+        }
+        return url2;
+    }
+    navigateTo(options, state, disableNamespace) {
         const { url, ...rest } = options;
-        const url2 = this.constructUrl(url, Object.assign({}, rest, state));
+        const url2 = this.constructUrl(url, Object.assign({}, rest, state), disableNamespace);
         return new Promise((resolve, reject) => {
             wx.navigateTo({
                 url: url2,
@@ -74,9 +99,9 @@ export class Navigator extends Feature {
         });
     }
     //  关闭当前页面，跳转到应用内的某个页面，但不允许跳转到tabBar页面。
-    redirectTo(options, state) {
+    redirectTo(options, state, disableNamespace) {
         const { url, ...rest } = options;
-        const url2 = this.constructUrl(url, Object.assign({}, rest, state));
+        const url2 = this.constructUrl(url, Object.assign({}, rest, state), disableNamespace);
         return new Promise((resolve, reject) => {
             wx.redirectTo({
                 url: url2,
@@ -86,9 +111,9 @@ export class Navigator extends Feature {
         });
     }
     //跳转到tabBar页面，并关闭其他所有非tabBar页面，用于跳转到主页。
-    switchTab(options, state) {
+    switchTab(options, state, disableNamespace) {
         const { url, ...rest } = options;
-        const url2 = this.constructUrl(url, Object.assign({}, rest, state));
+        const url2 = this.constructUrl(url, Object.assign({}, rest, state), disableNamespace);
         return new Promise((resolve, reject) => {
             wx.switchTab({
                 url: url2,
@@ -106,15 +131,15 @@ export class Navigator extends Feature {
             });
         });
     }
-    navigateBackOrRedirectTo(options, state) {
+    navigateBackOrRedirectTo(options, state, disableNamespace) {
         const pages = getCurrentPages();
         if (pages.length > 1) {
             return this.navigateBack();
         }
         const isTabBar = options?.isTabBar;
         if (isTabBar) {
-            return this.switchTab(options, state);
+            return this.switchTab(options, state, disableNamespace);
         }
-        return this.redirectTo(options, state);
+        return this.redirectTo(options, state, disableNamespace);
     }
 }

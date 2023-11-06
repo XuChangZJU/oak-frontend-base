@@ -47,8 +47,10 @@ export class Navigator extends Feature {
         state?: Record<string, any>,
         disableNamespace?: boolean
     ) {
-        const url = this.getUrl(options, disableNamespace);
-        this.history.push(url, state);
+        const { url, ...rest } = options;
+
+        const url2 = this.constructUrl(url, rest, disableNamespace);
+        this.history.push(url2, state);
     }
 
     async redirectTo<
@@ -59,8 +61,10 @@ export class Navigator extends Feature {
         state?: Record<string, any>,
         disableNamespace?: boolean
     ) {
-        const url = this.getUrl(options, disableNamespace);
-        this.history.replace(url, state);
+        const { url, ...rest } = options;
+
+        const url2 = this.constructUrl(url, rest, disableNamespace);
+        this.history.replace(url2, state);
     }
 
     async switchTab<
@@ -74,36 +78,45 @@ export class Navigator extends Feature {
         console.warn(
             '浏览器无switchTab，为了适配小程序，小程序redirectTo无法跳到tabBar页面'
         );
-        const url = this.getUrl(options, disableNamespace);
-        this.history.replace(url, state);
+        const { url, ...rest } = options;
+        const url2 = this.constructUrl(url, options, disableNamespace);
+        this.history.replace(url2, state);
     }
 
     async navigateBack(delta?: number) {
         this.history.go(delta ? 0 - delta : -1);
     }
 
-    private getUrl<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
-        options: { url: string } & OakNavigateToParameters<ED, T2>,
+    private constructUrl(
+        url: string,
+        state?: Record<string, any>,
         disableNamespace?: boolean
     ) {
-        const { url, ...rest } = options;
         let url2 = url;
 
-        for (const param in rest) {
-            const param2 = param as unknown as keyof typeof rest;
-            if (rest[param2] !== undefined) {
-                url2 += `${url2.includes('?') ? '&' : '?'}${param}=${
-                    typeof rest[param2] === 'string'
-                        ? rest[param2]
-                        : JSON.stringify(rest[param2])
+        for (const param in state) {
+            const param2 = param as unknown as keyof typeof state;
+            if (state[param2] !== undefined) {
+                url2 += `${url2.includes('?') ? '&' : '?'}`;
+                url2 += `${param}=${
+                    typeof state[param2] === 'string'
+                        ? state[param2]
+                        : JSON.stringify(state[param2])
                 }`;
             }
         }
+        url2 = this.constructNamespace(url2, disableNamespace);
+        return url2;
+    }
+
+    private constructNamespace(url: string, disableNamespace?: boolean) {
+        let url2 = url;
+
         if (!disableNamespace && this.namespace) {
-            // 处理this.namespace没加“/” 先加上“/”
+            // 处理this.namespace 前缀未设置“/”, 先置上“/”, 格式为 /console
             const namespace = this.namespace.startsWith('/')
                 ? this.namespace
-                : `/${this.namespace}`; // 格式为 /、/console
+                : `/${this.namespace}`;
             const urls = url2.split('?');
             const urls_0 = urls[0] || '';
             if (namespace === '/') {
@@ -116,7 +129,6 @@ export class Navigator extends Feature {
                 url2 = namespace + (url2.startsWith('/') ? '' : '/') + url2;
             }
         }
-
         return url2;
     }
 
@@ -128,7 +140,8 @@ export class Navigator extends Feature {
             ED,
             T2
         >,
-        state?: Record<string, any>
+        state?: Record<string, any>,
+        disableNamespace?: boolean
     ) {
         console.error('浏览器暂无法获得history堆栈');
         this.history.back();
