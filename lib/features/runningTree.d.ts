@@ -17,7 +17,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     protected parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     protected dirty?: boolean;
     protected cache: Cache<ED, Cxt, FrontCxt, AD>;
-    protected loading: boolean;
+    protected loading: number;
     protected loadingMore: boolean;
     protected executing: boolean;
     protected modiIds: string[] | undefined;
@@ -41,7 +41,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     setDirty(): void;
     isDirty(): boolean;
     isLoading(): boolean;
-    protected setLoading(loading: boolean): void;
+    protected setLoading(loading: number): void;
     isLoadingMore(): boolean;
     isExecuting(): boolean;
     setExecuting(executing: boolean): void;
@@ -61,6 +61,10 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     private syncHandler;
     getChildPath(child: SingleNode<ED, T, Cxt, FrontCxt, AD>): string;
     setFiltersAndSortedApplied(): void;
+    setLoading(loading: number): void;
+    setUnloading(loading: number): void;
+    startLoading(): void;
+    endLoading(): void;
     checkIfClean(): void;
     onCacheSync(records: OpRecord<ED>[]): void;
     destroy(): void;
@@ -138,6 +142,10 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     });
     protected getChildPath(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): string;
     setFiltersAndSortedApplied(): void;
+    setLoading(loading: number): void;
+    setUnloading(loading: number): void;
+    startLoading(): void;
+    endLoading(): void;
     checkIfClean(): void;
     destroy(): void;
     getChild(path: string): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;

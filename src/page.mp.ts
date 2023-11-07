@@ -629,13 +629,11 @@ const oakBehavior = Behavior<
             );
         },
 
-        remove( path) {
+        remove(path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.remove(
-                path2
-            );
+            return this.features.runningTree.remove(path2);
         },
 
         isCreation(path) {

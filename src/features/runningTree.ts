@@ -32,7 +32,7 @@ abstract class Node<
     protected parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     protected dirty?: boolean;
     protected cache: Cache<ED, Cxt, FrontCxt, AD>;
-    protected loading: boolean;
+    protected loading: number;
     protected loadingMore: boolean;
     protected executing: boolean;
     protected modiIds: string[] | undefined;        //  对象所关联的modi
@@ -57,7 +57,7 @@ abstract class Node<
         this.projection = projection;
         this.parent = parent;
         this.dirty = undefined;
-        this.loading = false;
+        this.loading = 0;
         this.loadingMore = false;
         this.executing = false;
         this.modiIds = undefined;
@@ -134,10 +134,10 @@ abstract class Node<
     }
 
     isLoading(): boolean {
-        return this.loading || (!!this.parent && this.parent.isLoading());
+        return !!this.loading;
     }
 
-    protected setLoading(loading: boolean) {
+    protected setLoading(loading: number) {
         this.loading = loading;
     }
 
@@ -196,7 +196,7 @@ class ListNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Node<ED, T, Cxt, FrontCxt, AD> {
+> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     private updates: Record<
         string,
@@ -237,12 +237,33 @@ class ListNode<
         }
     }
 
-    /* setLoading(loading: boolean) {
-        super.setLoading(loading);
-        for (const k in this.children) {
-            this.children[k].setLoading(loading);
+    setLoading(loading: number) {
+        if (this.loading === 0) {
+            super.setLoading(loading);
+            for (const k in this.children) {
+                this.children[k].setLoading(loading);
+            }
         }
-    } */
+    }
+
+    setUnloading(loading: number) {
+        if (this.loading === loading) {
+            super.setLoading(0);
+            for (const k in this.children) {
+                this.children[k].setUnloading(loading);
+            }
+        }
+    }
+
+    startLoading() {
+        const number = Math.random() + 1;
+        this.setLoading(number);
+    }
+
+    endLoading() {
+        const number = this.loading;
+        this.setUnloading(number);
+    }
 
     checkIfClean(): void {
         if (Object.keys(this.updates).length > 0) {
@@ -261,7 +282,6 @@ class ListNode<
 
     onCacheSync(records: OpRecord<ED>[]) {
         // 只需要处理insert
-        // todo 这里处理有点问题，因为前台的sorter在处理enum类型时的结果和后台不一致，会导致数据顺序变乱 by Xc 20230809
         if (this.loading) {
             return;
         }
@@ -313,16 +333,22 @@ class ListNode<
             此时对userRelation的删除动作就会导致user不会被移出list
          */
         if (needRefresh) {
-            const { filter, sorter } = this.constructSelection(true, false, true);
-            if (filter) {
-                const result = this.cache.get(this.getEntity(), {
-                    data: {
-                        id: 1,
-                    },
-                    filter,
-                    sorter,
-                }, true);
-                this.ids = result.map((ele) => ele.id) as unknown as string[];
+            const { currentPage, pageSize } = this.pagination;
+            if (currentPage === 0) {
+                // 只有当前为第0页时才需要尝试刷新
+                const { filter, sorter } = this.constructSelection(true, false, true);
+                if (filter) {
+                    const result = this.cache.get(this.getEntity(), {
+                        data: {
+                            id: 1,
+                        },
+                        filter,
+                        sorter,
+                        indexFrom: currentPage * pageSize,
+                        count: pageSize,
+                    }, true);
+                    this.ids = result.map((ele) => ele.id) as unknown as string[];
+                }
             }
         }
     }
@@ -536,54 +562,61 @@ class ListNode<
          * 
          * 修改memeory-tree，当属性缺失不再报missedRow，改回直接用filter去取数据的逻辑
          * 
-         * 这里不能用sorter排序，enum的排序顺序目前前后台尚不一致 by Xc 20230809
          */
-        const { data, filter } = this.constructSelection(true, false, true);
+        const { data, filter, sorter } = this.constructSelection(true, false, true);
 
-        if (filter || this.ids) {
-            const filter2 = filter && this.ids ? {
-                $or: [filter, {
-                    id: {
-                        $in: this.ids || [],
+        if (filter) {
+            // 如果有this.ids，则要取ids在这些当中的行，唯一的特例是若pageNumber为0（在第一页），则也要取createAt为1（自己建立的行）
+            const getRows = () => {
+                const { currentPage, pageSize } = this.pagination;
+                if (this.ids) {
+                    if (currentPage === 0) {
+                        const filter2 = combineFilters(this.entity, this.schema, [{
+                            $$createAt$$: 1,
+                        }, filter])!;
+
+                        const result = this.cache.get(this.entity, {
+                            data,
+                            filter: {
+                                $or: [filter2, {
+                                    id: {
+                                        $in: this.ids,
+                                    },
+                                }],
+                            },
+                            sorter,
+                        }, true);
+                        return result;
                     }
-                }]
-            } : filter || {
-                id: {
-                    $in: this.ids,
+                    const result = this.cache.get(this.entity, {
+                        data,
+                        filter: {
+                            id: {
+                                $in: this.ids,
+                            },
+                        },
+                        sorter,
+                    }, true);
+                    return result;
                 }
-            };
+                const result = this.cache.get(this.entity, {
+                    data,
+                    filter,
+                    sorter,
+                    indexFrom: pageSize * currentPage,
+                    count: pageSize,
+                }, true);
+                return result;
+            }
 
-            const result = this.cache.get(this.entity, {
-                data,
-                filter: filter2,
-            }, true);
-
-
-            const r2 = result.filter(
-                ele => this.ids ? (ele.$$createAt$$ === 1 || (this.ids?.includes(ele.id!))) : true
-            ).sort(
-                (ele1, ele2) => {
-                    if (ele1.$$createAt$$ === 1) {
-                        return -1;
-                    }
-                    else if (ele2.$$createAt$$ === 1) {
-                        return -1;
-                    }
-                    if (this.ids) {
-                        const idx1 = this.ids!.indexOf(ele1.id!);
-                        const idx2 = this.ids!.indexOf(ele2.id!);
-                        return idx1 - idx2;
-                    }
-                    return (ele2!.$$createAt$$ as number) - (ele1.$$createAt$$ as number);
-                }
-            );
+            const rows = getRows();
             if (this.aggr) {
                 // 如果有聚合查询的结果，这里按理不应该有aggregate和create同时出现，但也以防万一
                 this.aggr.forEach(
                     (ele, idx) => {
                         const id = this.ids![idx];
                         assert(id);
-                        const row = r2.find(
+                        const row = rows.find(
                             ele => ele.id === id
                         );
                         assert(id);
@@ -592,7 +625,7 @@ class ListNode<
                 );
             }
 
-            return r2;
+            return rows;
         }
         return [];
         /* const finalIds = result.filter(
@@ -851,7 +884,7 @@ class ListNode<
         // 若不存在有效的过滤条件（若有父结点但却为空时，说明父结点是一个create动作，不用刷新），则不能刷新
         if ((!this.getParent() || filter) && projection) {
             try {
-                this.setLoading(true);
+                this.startLoading();
                 if (append) {
                     this.loadingMore = true;
                 }
@@ -871,7 +904,7 @@ class ListNode<
                     ({ ids, count, aggr }) => {
                         this.pagination.currentPage = currentPage3 + 1;
                         this.pagination.more = ids.length === pageSize;
-                        this.setLoading(false);
+                        this.endLoading();
                         this.setFiltersAndSortedApplied();
                         if (append) {
                             this.loadingMore = false;
@@ -893,7 +926,7 @@ class ListNode<
                 );
                 this.publishRecursively();
             } catch (err) {
-                this.setLoading(false);
+                this.endLoading();
                 if (append) {
                     this.loadingMore = false;
                 }
@@ -1014,12 +1047,33 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
     }
 
-    /*  setLoading(loading: boolean) {
-         super.setLoading(loading);
-         for (const k in this.children) {
-             this.children[k].setLoading(loading);
-         }
-     } */
+    setLoading(loading: number) {
+        if (this.loading === 0) {
+            super.setLoading(loading);
+            for (const k in this.children) {
+                this.children[k].setLoading(loading);
+            }
+        }
+    }
+
+    setUnloading(loading: number) {
+        if (this.loading === loading) {
+            super.setLoading(0);
+            for (const k in this.children) {
+                this.children[k].setUnloading(loading);
+            }
+        }
+    }
+
+    startLoading() {
+        const number = Math.random() + 1;
+        this.setLoading(number);
+    }
+
+    endLoading() {
+        const loading = this.loading;
+        this.setUnloading(loading);
+    }
 
     checkIfClean(): void {
         if (this.operation) {
@@ -1319,7 +1373,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         const projection = this.getProjection(true);
         const filter = this.getFilter();
         if (projection && filter) {
-            this.setLoading(true);
+            this.startLoading();
             this.publishRecursively();
             try {
                 const { data: [value] } = await this.cache.refresh(this.entity, {
@@ -1345,13 +1399,13 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     }
                     this.aggr = aggr && aggr[0];
                     this.setFiltersAndSortedApplied();
-                    this.setLoading(false);
+                    this.endLoading();
                     //this.clean();
                 });
                 this.publishRecursively();
             }
             catch (err) {
-                this.setLoading(false);
+                this.endLoading();
                 this.publishRecursively();
                 throw err;
             }
@@ -1528,7 +1582,7 @@ class VirtualNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private dirty: boolean;
     private executing: boolean;
     private loading = false;
@@ -1715,7 +1769,7 @@ export class RunningTree<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
     private root: Record<
