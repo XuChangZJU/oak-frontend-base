@@ -22,7 +22,7 @@ export default function Render(props) {
     useEffect(() => {
         makeItems();
     }, [zhCNKeys, actions, cascadeActions, extraActions]);
-    return (_jsx("div", { className: Style.panelContainer, children: _jsx(Space, { align: 'center', style: { width: '100%' }, children: _jsx(Space, { align: 'center', size: 12, children: _jsx(_Fragment, { children: items?.map((ele, index) => {
-                        return (_jsx(ItemComponent, { label: ele.label, type: "a", onClick: ele.onClick }));
-                    }) }) }) }) }));
+    return (_jsx("div", { className: Style.panelContainer, children: _jsx(Space, { align: 'center', size: 12, style: { width: '100%' }, wrap: true, children: _jsx(_Fragment, { children: items?.map((ele, index) => {
+                    return (_jsx(ItemComponent, { label: ele.label, type: "a", onClick: ele.onClick }));
+                }) }) }) }));
 }
