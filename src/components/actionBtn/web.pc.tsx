@@ -86,20 +86,18 @@ export default function Render(
     }, [zhCNKeys, actions, cascadeActions, extraActions])
     return (
         <div className={Style.panelContainer}>
-            <Space align='center' style={{ width: '100%' }}>
-                <Space align='center' size={12}>
-                    <>
-                        {items?.map((ele, index: number) => {
-                            return (
-                                <ItemComponent
-                                    label={ele.label}
-                                    type="a"
-                                    onClick={ele.onClick}
-                                />
-                            );
-                        })}
-                    </>
-                </Space>
+            <Space align='center' size={12} style={{ width: '100%' }} wrap>
+                <>
+                    {items?.map((ele, index: number) => {
+                        return (
+                            <ItemComponent
+                                label={ele.label}
+                                type="a"
+                                onClick={ele.onClick}
+                            />
+                        );
+                    })}
+                </>
             </Space>
         </div>
     );
