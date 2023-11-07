@@ -100,7 +100,7 @@ export default function Render(
                             return <></>
                         }
                         const color = colorDict && colorDict[ele.entity]?.[ele.attr]?.[stateValue] as string;
-                        if (type === 'enum') {
+                        if (type === 'enum' && !color) {
                             console.warn(color, `${ele.entity}实体${ele.attr}颜色定义缺失`)
                         }
                         if (type === 'link') {

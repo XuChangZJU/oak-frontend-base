@@ -47,7 +47,7 @@ export default function Render(props) {
                             return _jsx(_Fragment, {});
                         }
                         const color = colorDict && colorDict[ele.entity]?.[ele.attr]?.[stateValue];
-                        if (type === 'enum') {
+                        if (type === 'enum' && !color) {
                             console.warn(color, `${ele.entity}实体${ele.attr}颜色定义缺失`);
                         }
                         if (type === 'link') {
