@@ -372,6 +372,7 @@ export class Cache extends Feature {
             const result = this.cacheStore.select(entity, selection, this.context, {
                 dontCollect: true,
                 includedDeleted: true,
+                ignoreAttrMiss: allowMiss || undefined,
             });
             if (autoCommit) {
                 this.commit();

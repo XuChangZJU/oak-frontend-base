@@ -507,6 +507,7 @@ export class Cache<
                 {
                     dontCollect: true,
                     includedDeleted: true,
+                    ignoreAttrMiss: allowMiss || undefined,
                 }
             );
             if (autoCommit) {

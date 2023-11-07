@@ -334,7 +334,7 @@ class ListNode<
          */
         if (needRefresh) {
             const { currentPage, pageSize } = this.pagination;
-            if (currentPage === 0) {
+            if (currentPage === 1) {
                 // 只有当前为第0页时才需要尝试刷新
                 const { filter, sorter } = this.constructSelection(true, false, true);
                 if (filter) {
@@ -344,7 +344,7 @@ class ListNode<
                         },
                         filter,
                         sorter,
-                        indexFrom: currentPage * pageSize,
+                        indexFrom: 0,
                         count: pageSize,
                     }, true);
                     this.ids = result.map((ele) => ele.id) as unknown as string[];
@@ -603,7 +603,7 @@ class ListNode<
                     data,
                     filter,
                     sorter,
-                    indexFrom: pageSize * currentPage,
+                    indexFrom: pageSize * (currentPage - 1),
                     count: pageSize,
                 }, true);
                 return result;
