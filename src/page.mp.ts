@@ -221,24 +221,24 @@ const oakBehavior = Behavior<
             if (Object.keys(dataResolved).length > 0) {
                 this.setState(dataResolved);
             }
-            if (this.props.oakPath || (this.iAmThePage() && path)) {
-                const pathState = onPathSet.call(this as any, this.oakOption as any);
-                if (this.unmounted) {
-                    return;
-                }
-                this.setState(pathState as any, () => {
-                    const { oakFullpath } = this.state;
-                    if (oakFullpath) {
-                        this.refresh();
-                    }
-                    else {
-                        this.reRender();
-                    }
-                });
-            }
-            else if(!this.oakOption.entity) {
-                this.reRender();
-            }
+            // if (this.props.oakPath || (this.iAmThePage() && path)) {
+            //     const pathState = onPathSet.call(this as any, this.oakOption as any);
+            //     if (this.unmounted) {
+            //         return;
+            //     }
+            //     this.setState(pathState as any, () => {
+            //         const { oakFullpath } = this.state;
+            //         if (oakFullpath) {
+            //             this.refresh();
+            //         }
+            //         else {
+            //             this.reRender();
+            //         }
+            //     });
+            // }
+            // else if(!this.oakOption.entity) {
+            //     this.reRender();
+            // }
         },
 
         subEvent(type: string, callback: Function) {
@@ -669,7 +669,23 @@ const oakBehavior = Behavior<
                 if (this.unmounted) {
                     return;
                 }
-                this.setState(pathState as any);
+                this.setState(pathState as any, () => {
+                    if (data.oakPath === undefined) {
+                        // 如果每个页面都在oakFullpath形成后再渲染子结点，这个if感觉是不应该命中的
+                        console.warn(
+                            '发生了结点先形成再配置oakPath的情况，请检查代码修正'
+                        );
+                        this.oakOption.lifetimes?.ready &&
+                            this.oakOption.lifetimes?.ready.call(this);
+
+                        const { oakFullpath } = this.state;
+                        if (oakFullpath) {
+                            this.refresh();
+                        } else {
+                            this.reRender();
+                        }
+                    }
+                });
             }
         },
         oakId(data) {
@@ -709,33 +725,6 @@ const oakBehavior = Behavior<
         oakProjection(data) {
             assert(data === this.props.oakProjection, 'oakProjection暂不支持变化');
         } */
-    },
-    pageLifetimes: {
-        show() {
-            const { show } = this.oakOption.lifetimes || {};
-            this.reRender();
-            show && show.call(this);
-        },
-        hide() {
-            const { hide } = this.oakOption.lifetimes || {};
-            hide && hide.call(this);
-        },
-    },
-    lifetimes: {
-        created() {
-            const { setData } = this;
-            this.state = this.data;
-            this.props = this.data;
-            this.prevState = {};
-            this.setData = (data, callback) => {
-                this.prevState = cloneDeep(this.data);
-                setData.call(this, data, () => {
-                    this.state = this.data;
-                    this.props = this.data;
-                    callback && callback.call(this);
-                });
-            };
-        },
     },
 });
 
@@ -890,18 +879,19 @@ export function createComponent<
         MethodOption,
         {
             umounted: Boolean;
+            prevState: Record<string, any>;
             state: Record<string, any>;
             props: {
-                oakId: string;
-                oakPath: string;
-                oakFilters: string;
-                oakSorters: string;
+                oakId?: string;
+                oakPath?: string;
+                oakFilters?: string;
+                oakSorters?: string;
                 oakProjection?: string;
-                oakParentEntity: string;
-                oakFrom: string;
-                oakActions: string;
-                oakAutoUnmount: boolean;
-                oakDisablePulldownRefresh: boolean;
+                oakParentEntity?: string;
+                oakFrom?: string;
+                oakActions?: string;
+                oakAutoUnmount?: boolean;
+                oakDisablePulldownRefresh?: boolean;
             } & Record<string, any>;
             features: BasicFeatures<
                 ED,
@@ -909,7 +899,7 @@ export function createComponent<
                 FrontCxt,
                 AD & CommonAspectDict<ED, Cxt>
             > &
-            FD;
+                FD;
             subscribed: Array<() => void>;
             oakOption: OakComponentOption<
                 IsList,
@@ -927,15 +917,17 @@ export function createComponent<
         }
     >({
         externalClasses,
-        // options,
         behaviors: [oakBehavior],
-        data: typeof data !== 'function' ? Object.assign({}, data, {
-            oakFullpath: '',
-            oakLoading: !!option.entity && !!option.projection,
-        }) : {
-            oakFullpath: '',
-            oakLoading: !!option.entity && !!option.projection,
-        },
+        data:
+            typeof data !== 'function'
+                ? Object.assign({}, data, {
+                      oakFullpath: '',
+                      oakLoading: !!option.entity && !!option.projection,
+                  })
+                : {
+                      oakFullpath: '',
+                      oakLoading: !!option.entity && !!option.projection,
+                  },
         properties: Object.assign(
             {},
             translatePropertiesToPropertyDefinitions(properties),
@@ -949,82 +941,129 @@ export function createComponent<
                     !this.state.oakDisablePulldownRefresh &&
                     !this.props.oakDisablePulldownRefresh
                 ) {
-                    await (onPullDownRefresh ? onPullDownRefresh.call(this) : this.refresh());
+                    await (onPullDownRefresh
+                        ? onPullDownRefresh.call(this)
+                        : this.refresh());
                 }
                 await wx.stopPullDownRefresh();
             },
-    
+
             async onReachBottom() {
                 if (
                     !this.state.oakLoadingMore &&
                     this.iAmThePage() &&
                     this.oakOption.isList
                 ) {
-                    await (onReachBottom ? onReachBottom.call(this) : this.loadMore());
+                    await (onReachBottom
+                        ? onReachBottom.call(this)
+                        : this.loadMore());
                 }
             },
 
             ...restMethods,
         },
         observers,
+        pageLifetimes: {
+            show() {
+                const { show } = this.oakOption.lifetimes || {};
+                this.reRender();
+                show && show.call(this);
+            },
+            hide() {
+                const { hide } = this.oakOption.lifetimes || {};
+                hide && hide.call(this);
+            },
+        },
         lifetimes: {
             created() {
+                const { setData } = this;
+                this.state = this.data;
+                this.props = this.data;
+                this.prevState = {};
+                this.setData = (data, callback) => {
+                    this.prevState = cloneDeep(this.data);
+                    setData.call(this, data, () => {
+                        this.state = this.data;
+                        this.props = this.data;
+                        callback && callback.call(this);
+                    });
+                };
                 this.oakOption = option;
                 this.features = features;
                 this.subscribed = [];
                 created && created.call(this);
             },
             attached() {
+                if (typeof data === 'function') {
+                    // ts的编译好像有问题，这里不硬写as过不去
+                    const data2 = (data as Function).call(this as any);
+                    this.setData(data2);
+                }
                 this.umounted = false;
                 this.subscribed.push(
                     features.locales.subscribe(() => this.reRender())
                 );
-                
+
                 if (option.entity) {
                     this.subscribed.push(
                         features.cache.subscribe(() => this.reRender())
                     );
                 }
                 if (option.features) {
-                    option.features.forEach(
-                        ele => {
-                            if (typeof ele === 'string') {
-                                this.subscribed.push(
-                                    features[ele].subscribe(
-                                        () => this.reRender()
-                                    )
-                                );
-                            }
-                            else {
-                                assert(typeof ele === 'object');
-                                const { feature, behavior } = ele;
-                                this.subscribed.push(
-                                    features[feature].subscribe(
-                                        () => {
-                                            switch(behavior) {
-                                                case 'reRender': {
-                                                    this.reRender();
-                                                    return;
-                                                }
-                                                default: {
-                                                    assert(behavior === 'refresh');
-                                                    this.refresh();
-                                                    return;
-                                                }
-                                            }
+                    option.features.forEach((ele) => {
+                        if (typeof ele === 'string') {
+                            this.subscribed.push(
+                                features[ele].subscribe(() => this.reRender())
+                            );
+                        } else {
+                            assert(typeof ele === 'object');
+                            const { feature, behavior } = ele;
+                            this.subscribed.push(
+                                features[feature].subscribe(() => {
+                                    switch (behavior) {
+                                        case 'reRender': {
+                                            this.reRender();
+                                            return;
                                         }
-                                    )
-                                );
-                            }
+                                        default: {
+                                            assert(behavior === 'refresh');
+                                            this.refresh();
+                                            return;
+                                        }
+                                    }
+                                })
+                            );
                         }
-                    );
+                    });
                 }
+
+                if (
+                    this.props.oakPath ||
+                    (this.iAmThePage() && this.oakOption.path)
+                ) {
+                    const pathState = onPathSet.call(
+                        this as any,
+                        this.oakOption as any
+                    );
+                    if (this.unmounted) {
+                        return;
+                    }
+                    this.setState(pathState as any, () => {
+                        const { oakFullpath } = this.state;
+                        if (oakFullpath) {
+                            this.refresh();
+                        } else {
+                            this.reRender();
+                        }
+                    });
+                } else if (!this.oakOption.entity) {
+                    this.reRender();
+                }
+
                 attached && attached.call(this);
             },
             detached() {
-                this.subscribed.forEach(
-                    ele => ele()
-                );
+                this.subscribed.forEach((ele) => ele());
                 this.state.oakFullpath &&
                     (this.iAmThePage() || this.props.oakAutoUnmount) &&
                     destroyNode.call(this as any);
@@ -1033,18 +1072,13 @@ export function createComponent<
                 this.umounted = true;
             },
             ready() {
-                if (typeof data === 'function') {
-                    // ts的编译好像有问题，这里不硬写as过不去
-                    const data2 = (data as Function).call(this as any);
-                    this.setData(data2);
+                // 等oakFullpath构建完成后再ready
+                if (this.state.oakFullpath) {
+                    ready && ready.call(this);
                 }
-                if (this.props.oakPath) {
-                    assert(
-                        this.state.oakFullpath,
-                        '组件不应当在oakPath没确定前就渲染'
-                    );
+                else if (!this.oakOption.entity) {
+                    ready && ready.call(this);
                 }
-                ready && ready.call(this);
             },
             moved() {
                 moved && moved.call(this);

@@ -569,10 +569,17 @@ export function createComponent(option, features) {
         iAmThePage() {
             return this.oakOption.path;
         }
+        isMobile() {
+            // 现按屏幕宽度判断是否为mobile， 未来需要根据浏览器的内核判断吗？ by wkj
+            return this.props.width === 'xs';
+        }
         supportPullDownRefresh() {
             const { oakDisablePulldownRefresh = false } = this.props;
             const { oakDisablePulldownRefresh: disable2 } = this.state;
-            return this.props.width === 'xs' && this.iAmThePage() && !oakDisablePulldownRefresh && !disable2;
+            return (this.isMobile() &&
+                this.iAmThePage() &&
+                !oakDisablePulldownRefresh &&
+                !disable2);
         }
         scrollEvent = () => {
             this.checkReachBottom();
