@@ -1439,7 +1439,7 @@ class VirtualNode extends Feature {
     }
     setExecuting(executing) {
         this.executing = executing;
-        this.publish();
+        this.publishRecursively();
     }
     isExecuting() {
         return this.executing;
@@ -1452,7 +1452,7 @@ class VirtualNode extends Feature {
             this.children[ele].clean();
         }
         this.dirty = false;
-        this.publish();
+        this.publishRecursively();
     }
     checkIfClean() {
         for (const k in this.children) {
@@ -1888,11 +1888,12 @@ export class RunningTree extends Feature {
                     node.clean();
                     if (node instanceof SingleNode) {
                         assert(operations.length === 1);
-                        if (operations[0].operation.action === 'create') {
-                            // 如果是create动作，给结点赋上id，以保证页面数据的完整性
-                            const { id } = operations[0].operation.data;
-                            node.setId(id);
-                        }
+                        // 这逻辑有点扯，页面自己决定后续逻辑  by Xc 20231108
+                        // if (operations[0].operation.action === 'create') {
+                        //     // 如果是create动作，给结点赋上id，以保证页面数据的完整性
+                        //     const { id } = operations[0].operation.data as ED[keyof ED]['CreateSingle']['data'];
+                        //     node.setId(id);
+                        // }
                     }
                     node.setExecuting(false);
                 });

@@ -424,52 +424,49 @@ export function reRender<
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
         const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
 
-        let data: Record<string, any> = {};
-        if (rows) {
-            const oakLegalActions = checkActionsAndCascadeEntities.call(
-                this as any,
-                rows,
-                option as any
-            );
-            data = formData
-                ? formData.call(this, {
-                      data: rows as RowWithActions<ED, T>,
-                      features,
-                      props: this.props,
-                      legalActions: oakLegalActions,
-                  })
-                : {};
+        const oakLegalActions = rows && checkActionsAndCascadeEntities.call(
+            this as any,
+            rows,
+            option as any
+        );
+        let data = formData
+            ? formData.call(this, {
+                data: rows as RowWithActions<ED, T>,
+                features,
+                props: this.props,
+                legalActions: oakLegalActions,
+            })
+            : {};
 
+        Object.assign(data, {
+            oakLegalActions,
+            oakLocales: localeState.dataset,
+            oakLocalesVersion: localeState.version,
+            oakLng: localeState.lng,
+            oakDefaultLng: localeState.defaultLng,
+        });
+
+        if (option.isList) {
+            // 因为oakFilters和props里的oakFilters同名，这里只能先注掉，好像还没有组件用过
+            // const oakFilters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getFilters();
+            // const oakSorters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getSorters();
+            const oakPagination = (
+                this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>
+            ).getPagination();
             Object.assign(data, {
-                oakLegalActions,
-                oakLocales: localeState.dataset,
-                oakLocalesVersion: localeState.version,
-                oakLng: localeState.lng,
-                oakDefaultLng: localeState.defaultLng,
+                // oakFilters,
+                // oakSorters,
+                oakPagination,
             });
+        }
 
-            if (option.isList) {
-                // 因为oakFilters和props里的oakFilters同名，这里只能先注掉，好像还没有组件用过
-                // const oakFilters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getFilters();
-                // const oakSorters = (this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>).getSorters();
-                const oakPagination = (
-                    this as ComponentFullThisType<ED, T, true, Cxt, FrontCxt>
-                ).getPagination();
+        for (const k in data) {
+            if (data[k] === undefined) {
                 Object.assign(data, {
-                    // oakFilters,
-                    // oakSorters,
-                    oakPagination,
+                    [k]: null,
                 });
             }
-
-            for (const k in data) {
-                if (data[k] === undefined) {
-                    Object.assign(data, {
-                        [k]: null,
-                    });
-                }
-            }
-        }
+        };
         Object.assign(data, {
             oakExecutable,
             oakDirty,

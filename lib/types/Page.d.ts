@@ -58,7 +58,7 @@ interface ComponentOption<IsList extends boolean, ED extends EntityDict & BaseEn
         data: IsList extends true ? RowWithActions<ED, T>[] : RowWithActions<ED, T> | undefined;
         features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         props: TProperty;
-        legalActions: ActionDef<ED, T>[];
+        legalActions?: ActionDef<ED, T>[];
     }) => FormedData;
     ns?: T | T[];
     data?: ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => TData) | TData;
