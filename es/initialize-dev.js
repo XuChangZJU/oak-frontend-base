@@ -40,6 +40,7 @@ export function initialize(storageSchema, frontendContextBuilder, backendContext
             try {
                 result = await aspectDict2[name](cloneDeep(params), contextBackend);
                 await contextBackend.commit();
+                await contextBackend.refineOpRecords();
             }
             catch (err) {
                 await contextBackend.rollback();

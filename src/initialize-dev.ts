@@ -101,6 +101,7 @@ export function initialize<
             try {
                 result = await aspectDict2[name](cloneDeep(params), contextBackend);
                 await contextBackend.commit();
+                await contextBackend.refineOpRecords();
             } catch (err) {
                 await contextBackend.rollback();
                 throw err;
