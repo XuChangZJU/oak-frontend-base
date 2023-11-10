@@ -817,7 +817,7 @@ function translatePropertiesToPropertyDefinitions(properties?: DataOption) {
                     }
                     case 'function': {
                          Object.assign(definitions, {
-                             [prop]: Object,
+                             [prop]: Function,
                          });
                     }
                     default: {
