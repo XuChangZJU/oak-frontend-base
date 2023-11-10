@@ -539,8 +539,7 @@ function translatePropertiesToPropertyDefinitions(properties) {
                             type: String,
                             value: properties[prop],
                         };
-                    }
-                    else {
+                    } else {
                         definitions[prop] = String;
                     }
                     break;
@@ -566,25 +565,27 @@ function translatePropertiesToPropertyDefinitions(properties) {
                                 type: Array,
                                 value: properties[prop],
                             };
-                        }
-                        else {
+                        } else {
                             definitions[prop] = Array;
                         }
-                    }
-                    else {
+                    } else {
                         if (Object.keys(properties[prop]).length > 0) {
                             definitions[prop] = {
                                 type: Object,
                                 value: properties[prop],
                             };
-                        }
-                        else {
+                        } else {
                             definitions[prop] = Object;
                         }
                     }
                     break;
                 }
-                case 'function':
+                case 'function': {
+                    Object.assign(definitions, {
+                        [prop]: Object,
+                    });
+                    break;
+                }
                 default: {
                     // 小程序也支持传函数 https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html
                     // 其它什么类型都写null，小程序能识别出来
