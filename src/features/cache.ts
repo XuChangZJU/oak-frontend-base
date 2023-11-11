@@ -66,7 +66,7 @@ export class Cache<
 
         this.cacheStore = new CacheStore(storageSchema);
         this.contextBuilder = () => frontendContextBuilder()(this.cacheStore);
-        this.savedEntities = ['actionAuth', 'i18n', ...(savedEntities || [])];
+        this.savedEntities = ['actionAuth', 'i18n', 'path', ...(savedEntities || [])];
         this.keepFreshPeriod = keepFreshPeriod || DEFAULT_KEEP_FRESH_PERIOD;
         this.localStorage = localStorage;
 
