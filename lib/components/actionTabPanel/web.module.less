@@ -1,0 +1,99 @@
+
+.tabContainer {
+    position: relative,
+}
+
+.scrollBox {
+    width: 100%;
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+
+.scrollView {
+    white-space: nowrap;
+    width: 100%;
+    overflow-y: hidden;
+    overflow-x: auto;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    background-color: transparent;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+.tabView {
+    width: 100%;
+    display: inline-block;
+    display: -webkit-inline-box;
+}
+
+.slideBar {
+    width: 50px;
+    height: 4px;
+    position: absolute;
+    background-color: #eee;
+    border-radius: 2px;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+}
+
+.slideShow {
+    height: 100%;
+    background-color: #8f8f8f;
+}
+
+.btnContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.btnBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.btnBox_top {
+    margin-top: 10px,
+}
+
+.btn {
+    height: unset !important;
+}
+
+.space {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+}
+
+.icon {
+    font-size:24px;
+    color: #000;
+}
+
+.iconWhite {
+    color: #fff;
+}
+
+.iconBox {
+    font-size: 24px;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 8px;
+    background-color: #fff;
+    color: #000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

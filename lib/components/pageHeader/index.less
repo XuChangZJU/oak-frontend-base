@@ -1,0 +1,65 @@
+.oak-pageHeader {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    &-header {
+        margin: 0;
+        font-size: 0;
+        height: auto;
+        line-height: inherit;
+        min-height: inherit;
+        position: relative;
+        padding: 10px 20px;
+        color: #000;
+        background: var(--oak-bg-color-container);
+
+        &-backIcon {
+            width: 16px;
+            height: 16px;
+            font-size: 16px;
+        }
+
+        &-title {
+            display: inline-block;
+            vertical-align: middle;
+            font-size: 16px;
+            font-weight: 700;
+            margin-right: 20px;
+            max-width: 70%;
+            overflow: hidden;
+            white-space: nowrap;
+            -o-text-overflow: ellipsis;
+            text-overflow: ellipsis;
+            height: 30px;
+            line-height: 30px;
+        }
+
+        &-subTitle {
+            font-size: 12px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 20px;
+        }
+
+        &-back {
+            margin-right: 24px;
+        }
+
+        &-col {
+            display: flex;
+            align-items: center;
+        }
+    }
+
+
+    &-content {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+
+        &-margin {
+            margin: 12px;
+        }
+    }
+}

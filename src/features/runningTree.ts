@@ -565,12 +565,12 @@ class ListNode<
          */
         const { data, filter, sorter } = this.constructSelection(true, false, true);
 
-        if (filter) {
+        if (filter || this.ids) {
             // 如果有this.ids，则要取ids在这些当中的行，唯一的特例是若pageNumber为0（在第一页），则也要取createAt为1（自己建立的行）
             const getRows = () => {
                 const { currentPage, pageSize } = this.pagination;
                 if (this.ids) {
-                    if (currentPage === 0) {
+                    if (currentPage === 1) {
                         const filter2 = combineFilters(this.entity, this.schema, [{
                             $$createAt$$: 1,
                         }, filter])!;
