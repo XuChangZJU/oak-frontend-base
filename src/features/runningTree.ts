@@ -882,7 +882,7 @@ class ListNode<
             sorter,
         } = this.constructSelection(true, true);
         // 若不存在有效的过滤条件（若有父结点但却为空时，说明父结点是一个create动作，不用刷新），则不能刷新
-        if ((!this.getParent() || filter) && projection) {
+        if ((!this.getParent() || this.getParent() instanceof VirtualNode || filter) && projection) {
             try {
                 this.startLoading();
                 if (append) {
