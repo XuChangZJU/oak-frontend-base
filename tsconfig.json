@@ -84,6 +84,7 @@
     "package.json",
     "tsconfig.json",
     "tsconfig.es.json",
+    "tsconfig.lib.json",
     "package-lock.json",
     "test",
     "scripts"
