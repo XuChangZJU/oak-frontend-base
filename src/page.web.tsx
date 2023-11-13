@@ -865,6 +865,11 @@ export function createComponent<
             }
 
             const data2 = typeof data === 'function' ? (data as Function).call(this as any) : data;
+            for (const k in data2) {
+                if (typeof data2[k] === 'function') {
+                    data2[k] = data2[k].bind(this);
+                }
+            }
             this.state = Object.assign({}, data2, {
                 oakLoading: !!option.entity && !!option.projection,
                 oakLoadingMore: false,

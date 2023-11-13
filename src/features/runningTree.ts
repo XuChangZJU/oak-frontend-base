@@ -1854,10 +1854,7 @@ export class RunningTree<
                         // 目前只有一种情况合法，即parentNode是list，列表中的位置移动引起的重用
                         // assert(parentNode instanceof ListNode, `创建node时发现path[${fullPath}]已有有效的SingleNode结点，本情况不应当存在`);
                     }
-                }
-                else {
-                    // assert(false, `创建node时发现path[${fullPath}]已有有效的VirtualNode结点，本情况不应当存在`);
-                }
+                }               
             }
             return node;
         }

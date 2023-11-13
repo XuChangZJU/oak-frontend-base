@@ -1001,7 +1001,20 @@ export function createComponent<
                 if (typeof data === 'function') {
                     // ts的编译好像有问题，这里不硬写as过不去
                     const data2 = (data as Function).call(this as any);
-                    this.setData(data2);
+                    this.setData(data2, () => {
+                        for (const k in this.data) {
+                            if (typeof this.data[k] === 'function') {
+                                this.data[k] = this.data[k].bind(this);
+                            }
+                        }
+                    });
+                }
+                else {
+                    for (const k in this.data) {
+                        if (typeof this.data[k] === 'function') {
+                            this.data[k] = this.data[k].bind(this);
+                        }
+                    }
                 }
                 this.umounted = false;
                 this.subscribed.push(
