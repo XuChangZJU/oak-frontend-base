@@ -1002,18 +1002,27 @@ export function createComponent<
                     // ts的编译好像有问题，这里不硬写as过不去
                     const data2 = (data as Function).call(this as any);
                     this.setData(data2, () => {
+                        const fnData = {} as Partial<WechatMiniprogram.Component.DataOption>;
                         for (const k in this.data) {
                             if (typeof this.data[k] === 'function') {
-                                this.data[k] = this.data[k].bind(this);
+                                // this.data[k] = this.data[k].bind(this);
+                                fnData[k] = this.data[k].bind(this);
                             }
                         }
+                        if (Object.keys(fnData).length > 0) {
+                            this.setData(fnData);
+                        }
                     });
-                }
-                else {
+                } else {
+                    const fnData = {} as Partial<WechatMiniprogram.Component.DataOption>;
                     for (const k in this.data) {
                         if (typeof this.data[k] === 'function') {
-                            this.data[k] = this.data[k].bind(this);
+                            // this.data[k] = this.data[k].bind(this);
+                            fnData[k] = this.data[k].bind(this);
                         }
+                    }
+                    if (Object.keys(fnData).length > 0) {
+                        this.setData(fnData);
                     }
                 }
                 this.umounted = false;
