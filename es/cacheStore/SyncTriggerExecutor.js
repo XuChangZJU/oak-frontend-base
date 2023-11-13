@@ -55,7 +55,7 @@ export default class SyncTriggerExecutor {
             action.forEach(a => this.addToCheckerMap(a, entity, priority || CHECKER_PRIORITY_MAP[type], when, fn, type, conditionalFilter));
         }
         else {
-            this.addToCheckerMap(action, entity, priority, when, fn, type, conditionalFilter);
+            this.addToCheckerMap(action, entity, priority || CHECKER_PRIORITY_MAP[type], when, fn, type, conditionalFilter);
         }
     }
     /* registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>) {

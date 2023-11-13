@@ -30,7 +30,7 @@ export default class SyncTriggerExecutor<ED extends EntityDict & BaseEntityDict,
             let iter = 0;
             const checkers = this.checkerMap[entity]![action]!;
             for (; iter < checkers.length; iter++) {
-                if (priority! <= checkers[iter].priority!) {
+                if (priority <= checkers[iter].priority!) {
                     break;
                 }
             }
@@ -78,7 +78,7 @@ export default class SyncTriggerExecutor<ED extends EntityDict & BaseEntityDict,
             );
         }
         else {
-            this.addToCheckerMap(action as string, entity, priority!, when, fn as any, type, conditionalFilter);
+            this.addToCheckerMap(action as string, entity, priority || CHECKER_PRIORITY_MAP[type], when, fn as any, type, conditionalFilter);
         }
     }
 

@@ -1,0 +1,37 @@
+<view class="container">
+    <block wx:if="{{oakLoading}}">
+        <view class="loading">
+            <l-loading show="{{true}}" type="circle">
+            </l-loading>
+        </view>
+    </block>
+    <block wx:if="{{mobileData && mobileData.length}}">
+        <view class="list-container">
+            <view class="card" wx:for="{{mobileData}}" wx:key="index">
+                <block wx:if="{{item.data && item.data.length > 0}}">
+                    <view class="card-content">
+                        <block wx:for="{{item.data}}" wx:for-item="row" wx:key="index">
+                            <view class="text-view">
+                                <text class="label">{{row.label}}</text>
+                                <text>{{row.value}}</text>
+                            </view>
+                        </block>
+                    </view>
+                </block>
+                <block wx:if="{{!disabledOp}}">
+                    <action-btn
+                        data-row="{{item.record}}"
+                        entity="{{entity}}"
+                        extraActions="{{extraActions}}"
+                        actions="{{item.record['#oakLegalActions']}}"
+                        cascadeActions="{{item.record['#oakLegalCascadeActions']}}"
+                        bind:onAction="onActionMp"
+                    />
+                </block>
+            </view>
+        </view>
+    </block>
+    <block wx:else>
+        <l-status-show show="{{true}}" type="data"></l-status-show>
+    </block>
+</view>

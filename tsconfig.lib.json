@@ -82,10 +82,12 @@
     "node_modules",
     "src/pages/**/*",
     "src/components/**/*",
+    "src/miniprogram_npm/**/*",
     "**/*.spec.ts",
     "package.json",
     "tsconfig.json",
     "tsconfig.es.json",
+    "tsconfig.lib.json",
     "package-lock.json",
     "test",
     "scripts"

@@ -1,0 +1,36 @@
+<block wx:if="{{ newItems && newItems.length > 0 }}">
+    <view class="tab-container">
+        <scroll-view class="scroll-view" scroll-x="true" bindscroll="scroll" style="height: 100%;">
+            <view class="tab-view" wx:for="{{ tabNums }}" wx:key="idx" wx:for-item="tabNum" wx:for-index="idx">
+                <view class="btn-container">
+                    <block wx:for="{{ newItems }}" wx:key="index">
+                        <block wx:if="{{ ((tabNum -1) * count) < index + 1 && index + 1 <= (tabNum * count) }}">
+                            <view style="width: calc(100% / {{ column }})" class="btn-box {{  newItems.length > column && index > column - 1 ? 'btn-box_top' : '' }}" bindtap="handleClick" data-item="{{ item }}" >
+                                <block wx:if="{{ mode === 'card' }}">
+                                    <view class="icon-box {{ item.iconProps.rootStyle }}" style="{{ item.iconProps.bgColor ? 'background-color:' + item.iconProps.bgColor : '' }}">
+                                        <oak-icon name="{{ item.icon }}" size="24" color="{{ item.iconColor || '' }}" oak-class="icon {{ item.iconProps.bgColor ? 'icon-white' : '' }} {{ item.iconProps.style }}" />
+                                    </view>
+                                </block>
+                                <block wx:else>
+<oak-icon name="{{ item.icon }}" size="24" color="{{ item.iconColor || '' }}"  oak-class="icon {{ item.iconProps.bgColor ? 'icon-white' : '' }} {{ item.iconProps.style }}"/>
+                                </block>
+
+                                    <view class="btn-name">
+                                   {{ item.text }}
+                                    </view>
+                                </view>
+                            </block>
+                        </block>
+                    </view>
+                </view>
+            </scroll-view>
+            <block wx:if="{{ slideShow }}">
+                <view class="slide-bar">
+                    <view class="slide-show" style="width:{{slideWidth}}rpx; margin-left:{{slideLeft <= 1 ? 0 : slideLeft + 'rpx'}};"></view>
+                </view>
+            </block>
+        </view>
+
+        <l-dialog id="my-action-tab-dialog" bind:linconfirm="linconfirm" bind:lincancel="lincancel" />
+
+    </block>

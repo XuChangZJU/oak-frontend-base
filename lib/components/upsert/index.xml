@@ -1,0 +1,67 @@
+<view class="col">
+    <l-form>
+        <view wx:for="{{renderData}}">
+            <view wx:if="{{item.type === 'string' || item.type === 'varchar'|| item.type === 'char' || item.type === 'poiName'}}">
+                <l-form-item label="{{item.label}}" name="{{item.attr}}" l-form-label-class="textarea" label-width="120rpx" rules="{{[{required:item.required}]}}">
+                    <l-input placeholder="{{item.placeholder || '请输入'+item.label}}" value="{{item.value}}" hide-label show-row="{{false}}" bind:lininput="setValueMp" data-attr="{{item.attr}}"/>
+                </l-form-item>
+            </view>
+            <view wx:if="{{item.type === 'text'}}">
+                <l-form-item label="{{item.label}}" name="{{item.attr}}" l-form-label-class="textarea" label-width="120rpx" rules="{{[{required:item.required}]}}">
+                    <l-textarea placeholder="{{item.placeholder || '请输入'+item.label}}" indicator="{{true}}" maxlength="{{item.maxlength}}" value="{{item.value}}" bind:lininput="setValueMp" data-attr="{{item.attr}}" border="{{false}}"/>
+                </l-form-item>
+            </view>
+            <view wx:if="{{item.type === 'int'}}">
+                <l-form-item label="{{item.label}}" name="{{item.attr}}"  rules="{{[{required:item.required}]}}">
+                    <l-counter count="{{item.value}}" min="{{item.min}}" max="{{item.max}}" round-float="{{true}}" bind:linchange="setValueMp" data-attr="{{item.attr}}" />
+                </l-form-item>
+            </view>
+            <view wx:if="{{item.type === 'decimal'}}">
+                <l-form-item label="{{item.label}}" name="{{item.attr}}"  rules="{{[{required:item.required}]}}">
+                    <l-input label="{{item.label}}" type="number" placeholder="{{item.placeholder || '请输入'+item.label+'(将保留一位小数)'}}" value="{{item.value / 10}}" hide-label show-row="{{false}}" bind:lininput="setValueMp1" data-attr="{{item.attr}}"/>
+                </l-form-item>
+            </view>
+            <view wx:if="{{item.type === 'money'}}">
+                <l-form-item label="{{item.label}}" name="{{item.attr}}"  rules="{{[{required:item.required}]}}">
+                    <l-input label="{{item.label}}" type="number" placeholder="{{item.placeholder || '请输入'+item.label+'(将保留两位小数)'}}" value="{{item.value / 100}}" hide-label show-row="{{false}}" bind:lininput="setValueMp2" data-attr="{{item.attr}}"/>
+                </l-form-item>
+            </view>
+            <view wx:if="{{item.type === 'enum'}}">
+                <l-form-item label="{{item.label}}" name="{{item.attr}}"  rules="{{[{required:item.required}]}}">
+                    <l-radio-group wx:for="{{item.enumeration}}" wx:key="index" wx:for-item="enumItem" current="{{item.value}}" data-attr="{{item.attr}}" bind:linchange="setValueMp">
+                        <l-radio key="{{enumItem.value}}">{{enumItem.label}}</l-radio>
+                    </l-radio-group>
+                </l-form-item>
+            </view>
+            <view wx:if="{{item.type === 'date' || item.type === 'datetime'}}">
+                <l-form-item label="{{item.label}}" name="{{item.attr}}"  rules="{{[{required:item.required}]}}">
+                    <picker mode="date" value="{{item.value}}" bind:change="onDateChange" start="{{today}}">
+                        <view class="input-content">
+                            <block wx:if="{{item.value}}">
+                                <view>
+                                    {{item.value}}
+                                </view>
+                            </block>
+                            <block wx:else>
+                                <view>
+                                    请选择时间
+                                </view>
+                            </block>
+                            <l-icon name="right" color="#777777" size="24" style="margin-left: 20rpx" />
+                        </view>
+                    </picker>
+                </l-form-item>
+            </view>
+            <view wx:if="{{item.type === 'boolean'}}">
+                <l-form-item label="{{item.label}}" name="{{item.attr}}"  rules="{{[{required:item.required}]}}"> 
+                    <l-switch checked="{{ item.value }}" active-value="{{ 1 }}" inactive-value="{{ 0 }}" bind:linchange="onChangeMp"/>
+                </l-form-item>
+            </view>
+            <view wx:if="{{item.type === 'ref'}}" >
+                <l-form-item label="{{item.label}}" name="{{item.attr}}"  rules="{{[{required:item.required}]}}">
+                <refAttr   multiple="{{false}}" entityId="{{item.value}}"  pickerRender="{{attrRender}}"/>
+                </l-form-item>
+            </view>
+        </view>
+    </l-form>
+</view>

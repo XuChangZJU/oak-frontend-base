@@ -1,0 +1,102 @@
+@import '../../config/styles/mp/mixins.less';
+.draw-container {
+    height: 100%;
+    padding: 20rpx;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    background-color: #fff;
+    overflow-y: scroll;
+    .safe-area-inset-bottom();
+}
+.opBtn-view {
+    margin-bottom: 20rpx;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.cancel-btn {
+    padding: 4px;
+    padding-bottom: 0px;
+    padding-left: 0px;
+    color: #888;
+}
+.confirm-btn {
+    padding: 4px;
+    padding-bottom: 0px;
+    padding-right: 0px;
+    color: var(--oak-color-primary);
+}
+.card {
+    display: flex;
+    flex-direction: column;
+    background-color: #fff;
+}
+.label {
+    color: rgba(0, 0, 0, 0.9);
+    font-size: 28rpx;
+}
+.form-label {
+    color: rgba(0, 0, 0, 0.9);
+    font-size: 28rpx;
+}
+.input-content {
+    display: flex;
+    align-items: center;
+    line-height: 1.2;
+}
+.l-checkbox {
+    padding: 10rpx 0rpx;
+}
+.search-bar {
+    height: 70rpx;
+}
+.l-placeholder-class {
+    font-size: 28rpx;
+    height: 40rpx;
+    line-height: 40rpx;
+    flex: 1;
+    margin-left: 15rpx;
+    color:#bdbdbd;
+}
+.l-input-class {
+    font-size: 30rpx;
+}
+.filter-bar {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 20rpx;
+    box-sizing: border-box;
+    width: 100%;
+}
+.filter-bg {
+    border-radius: 8rpx;
+    height: 70rpx;
+    background-color: #f3f3f3;
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    align-items: center;
+    padding-left: 30rpx;
+    box-sizing: border-box;
+}
+.selectedText {
+    height: 40rpx;
+    line-height: 40rpx;
+    flex: 1;
+    margin-left: 15rpx;
+    font-size: 28rpx;
+    color: #666;
+    cursor: auto;
+    display: block;
+    font-family: UICTFontTextStyleBody;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.l-icon {
+    font-size: 14px;
+    color: #bdbdbd;
+}

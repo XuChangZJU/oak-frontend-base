@@ -451,7 +451,7 @@ const oakBehavior = Behavior({
                     return;
                 }
                 this.setState(pathState, () => {
-                    if (data.oakPath === undefined) {
+                    if (data === undefined) {
                         // 如果每个页面都在oakFullpath形成后再渲染子结点，这个if感觉是不应该命中的
                         console.warn('发生了结点先形成再配置oakPath的情况，请检查代码修正');
                         this.oakOption.lifetimes?.ready &&
@@ -584,7 +584,11 @@ function translatePropertiesToPropertyDefinitions(properties) {
                     }
                     break;
                 }
-                case 'function':
+                case 'function': {
+                    Object.assign(definitions, {
+                        [prop]: Function,
+                    });
+                }
                 default: {
                     // 小程序也支持传函数 https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html
                     // 其它什么类型都写null，小程序能识别出来

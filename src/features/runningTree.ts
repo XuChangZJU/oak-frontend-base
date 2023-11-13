@@ -565,12 +565,12 @@ class ListNode<
          */
         const { data, filter, sorter } = this.constructSelection(true, false, true);
 
-        if (filter) {
+        if (filter || this.ids) {
             // 如果有this.ids，则要取ids在这些当中的行，唯一的特例是若pageNumber为0（在第一页），则也要取createAt为1（自己建立的行）
             const getRows = () => {
                 const { currentPage, pageSize } = this.pagination;
                 if (this.ids) {
-                    if (currentPage === 0) {
+                    if (currentPage === 1) {
                         const filter2 = combineFilters(this.entity, this.schema, [{
                             $$createAt$$: 1,
                         }, filter])!;
@@ -882,7 +882,7 @@ class ListNode<
             sorter,
         } = this.constructSelection(true, true);
         // 若不存在有效的过滤条件（若有父结点但却为空时，说明父结点是一个create动作，不用刷新），则不能刷新
-        if ((!this.getParent() || filter) && projection) {
+        if ((!this.getParent() || this.getParent() instanceof VirtualNode || filter) && projection) {
             try {
                 this.startLoading();
                 if (append) {
