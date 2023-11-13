@@ -1840,7 +1840,8 @@ export class RunningTree<
                         // assert(false, `创建node时发现path[${fullPath}]已经存在有效的ListNod结点，这种情况不应该存在`);
                     }
                 }
-                else if (node instanceof SingleNode) {
+                else {
+                    assert(node instanceof SingleNode);
                     assert(!isList && node.getEntity() === entity);
                     if (!node.getProjection() && projection) {
                         node.setProjection(projection);
