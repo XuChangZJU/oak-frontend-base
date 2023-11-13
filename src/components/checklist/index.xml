@@ -1,0 +1,14 @@
+<block wx:for="{{option}}">
+    <l-list
+        title="{{item.label}}"
+        bind:lintap="onClick"
+        data-value="{{item.value}}"
+        is-link="{{false}}"
+    >
+        <block wx:if="{{checked[item.value]}}">
+            <view slot="right-section">
+                <icon name="right" />
+            </view>
+        </block>
+    </l-list>
+</block>
