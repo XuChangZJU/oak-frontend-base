@@ -6,5 +6,6 @@ declare const _default: (props: import("../..").ReactComponentProps<import("oak-
         value: string | number;
     }[];
     onSelect: (v: Array<string | number>) => void;
+    disabled: boolean;
 }>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;

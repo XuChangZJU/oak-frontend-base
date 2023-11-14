@@ -3,6 +3,7 @@ export default OakComponent({
         value: [],
         option: [],
         onSelect: (v) => undefined,
+        disabled: false,
     },
     formData() {
         const { value } = this.props;
@@ -22,6 +23,9 @@ export default OakComponent({
     },
     methods: {
         onClick(event) {
+            if (this.props.disabled) {
+                return;
+            }
             const { target: { dataset: { value: v } } } = event;
             const { value } = this.props;
             if (value.includes(v)) {

@@ -1,14 +1,15 @@
 <block wx:for="{{option}}">
-    <l-list
-        title="{{item.label}}"
-        bind:lintap="onClick"
-        data-value="{{item.value}}"
-        is-link="{{false}}"
-    >
-        <block wx:if="{{checked[item.value]}}">
-            <view slot="right-section">
-                <icon name="right" />
-            </view>
-        </block>
-    </l-list>
+        <l-list
+            title="{{item.label}}"
+            bind:lintap="onClick"
+            data-value="{{item.value}}"
+            is-link="{{false}}"
+            is-hover="{{!disabled}}"
+        >
+            <block wx:if="{{checked[item.value]}}">
+                <view slot="right-section">
+                    <icon name="right" size="{{30}}" />
+                </view>
+            </block>
+        </l-list>
 </block>

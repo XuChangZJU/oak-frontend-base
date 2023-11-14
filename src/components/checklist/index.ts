@@ -3,6 +3,7 @@ export default OakComponent({
         value: [] as Array<string | number>,
         option: [] as Array<{ label: string, value: string | number }>,
         onSelect: (v: Array<string | number>) => undefined as void,
+        disabled: false,
     },
     formData() {
         const { value } = this.props;
@@ -25,6 +26,9 @@ export default OakComponent({
     },
     methods: {
         onClick(event: WechatMiniprogram.TouchEvent) {
+            if (this.props.disabled) {
+                return;
+            }
             const { target: { dataset: { value: v } }} = event;
             const { value } = this.props;
             if (value!.includes(v)) {
