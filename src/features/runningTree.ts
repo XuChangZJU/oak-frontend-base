@@ -337,7 +337,7 @@ class ListNode<
             if (currentPage === 1) {
                 // 只有当前为第0页时才需要尝试刷新
                 const { filter, sorter } = this.constructSelection(true, false, true);
-                if (filter) {
+                if ((!this.getParent() || this.getParent() instanceof VirtualNode || filter) && this.projection) {
                     const result = this.cache.get(this.getEntity(), {
                         data: {
                             id: 1,
