@@ -36,6 +36,7 @@ export class SubScriber extends Feature {
         this.path = path;
     }
     async connect() {
+        this.socketState = 'connecting';
         let optionInited = false;
         if (!this.url) {
             await this.initSocketPoint();

@@ -75,6 +75,7 @@ export class SubScriber<
     }
 
     private async connect(): Promise<void> {
+        this.socketState = 'connecting';
         let optionInited = false;
         if (!this.url) {
             await this.initSocketPoint();
