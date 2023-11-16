@@ -78,6 +78,13 @@ export class Cache<
         this.initSavedLogic();
     }
 
+    private rebuildRefreshRows<T extends keyof ED>(entity: T, projection: ED[T]['Selection']['data'], result: Awaited<ReturnType<AD['select']>>) {
+        const { data } = result;
+        const rows = [] as Partial<ED['T']['Schema']>[];
+
+        // 重新建立
+    }
+
     /**
      * 处理cache中需要缓存的数据
      */
@@ -198,7 +205,6 @@ export class Cache<
         entity: T,
         selection: ED[T]['Selection'],
         option?: OP,
-        getCount?: true,
         callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
         refreshOption?: RefreshOption,
     ) {
@@ -264,16 +270,15 @@ export class Cache<
         }
 
         try {
-            const { result: { ids, count, aggr } } = await this.exec('select', {
+            const { result: { data: sr, total } } = await this.exec('select', {
                 entity,
                 selection,
                 option,
-                getCount,
             }, callback, dontPublish);
 
             let filter2: ED[T]['Selection']['filter'] = {
                 id: {
-                    $in: ids,
+                    $in: Object.keys(sr),
                 }
             };
 
@@ -284,16 +289,13 @@ export class Cache<
             const selection2 = Object.assign({}, selection, {
                 filter: filter2,
             });
-            const data = this.get(entity, selection2);
-            if (aggr) {
-                merge(data, aggr);
-            }
+            const data = this.get(entity, selection2, undefined, sr);
             if (useLocalCache) {
                 this.saveRefreshRecord(entity);
             }
             return {
-                data: data as Partial<ED[T]['Schema']>[],
-                count,
+                data,
+                total,
             };
         }
         catch(err) {
@@ -455,41 +457,7 @@ export class Cache<
             })
         }
     }
-
-    /**
-     * getById可以处理当本行不在缓存中的自动取
-     * @attention 这里如果访问了一个id不存在的行（被删除？），可能会陷入无限循环。如果遇到了再处理
-     * @param entity 
-     * @param data 
-     * @param id 
-     * @param allowMiss 
-     */
-    getById<T extends keyof ED>(
-        entity: T,
-        data: ED[T]['Selection']['data'],
-        id: string,
-        allowMiss?: boolean
-    ): Partial<ED[T]['Schema']> | undefined {
-        const result = this.getInner(entity, {
-            data, 
-            filter: {
-                id,
-            },
-        }, allowMiss);
-        if (result.length === 0 && !allowMiss) {
-            this.fetchRows([{
-                entity,
-                selection: {
-                    data, 
-                    filter: {
-                        id,
-                    },
-                }
-            }]);
-        }
-        return result[0];
-    }
-
+    
     private getInner<T extends keyof ED>(
         entity: T,
         selection: ED[T]['Selection'],
@@ -529,12 +497,70 @@ export class Cache<
         }
     }
 
+    /**
+     * 把select的结果merge到sr中，因为select有可能存在aggr数据，在这里必须要使用合并后的结果
+     * sr的数据结构不好规范化描述，参见common-aspect中的select接口
+     * @param entity 
+     * @param rows 
+     * @param sr 
+     */
+    mergeSelectResult<T extends keyof ED>(entity: T, rows: Partial<ED[T]['Schema']>[], sr: Record<string, any>) {
+        const mergeSingleRow = (e: keyof ED, r: Partial<ED[keyof ED]['Schema']>, sr2: Record<string, any>) => {
+            for (const k in sr2) {
+                if (k.endsWith('$$aggr')) {
+                    Object.assign(r, {
+                        [k]: sr2[k],
+                    });
+                }
+                else if (r[k]) {
+                    const rel = this.judgeRelation(e, k);
+                    if (rel === 2) {
+                        mergeSingleRow(k, r[k]!, sr2[k]);
+                    }
+                    else if (typeof rel === 'string') {
+                        mergeSingleRow(rel, r[k]!, sr2[k]);
+                    }
+                    else {
+                        assert(rel instanceof Array);
+                        assert((r[k] as any) instanceof Array)
+                        const { data } = sr2[k];
+                        this.mergeSelectResult(rel[0], r[k]!, data);
+                    }
+                }
+            }
+        };
+
+        rows.forEach(
+            (row) => {
+                const { id } = row;
+                if (sr[id!]) {
+                    mergeSingleRow(entity, row, sr[id!]);
+                }
+            }
+        );
+    }
+
     get<T extends keyof ED>(
         entity: T,
         selection: ED[T]['Selection'],
-        allowMiss?: boolean
+        allowMiss?: boolean,
+        sr?: Record<string, any>
     ) {
-        return this.getInner(entity, selection, allowMiss);
+        const rows = this.getInner(entity, selection, allowMiss);
+
+        if (sr) {
+            this.mergeSelectResult(entity, rows, sr);
+        }
+        return rows;
+    }
+
+    getById<T extends keyof ED>(entity: T, projection: ED[T]['Selection']['data'], id: string, allowMiss?: boolean) {
+        return this.getInner(entity, {
+            data: projection,
+            filter: {
+                id,
+            },
+        }, allowMiss);
     }
 
     judgeRelation(entity: keyof ED, attr: string) {

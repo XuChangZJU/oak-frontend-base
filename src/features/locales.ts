@@ -115,7 +115,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             filter: {
                 namespace: ns,
             }
-        }, undefined, undefined, undefined, {
+        }, undefined, undefined, {
             dontPublish: true,
             useLocalCache: {
                 keys: [ns],

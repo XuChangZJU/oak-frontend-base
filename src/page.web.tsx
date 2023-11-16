@@ -1129,6 +1129,7 @@ export function createComponent<
             } */
 
             fn && fn.call(this, prevProps, prevState);
+            this.reRender();
         }
 
         render(): React.ReactNode {

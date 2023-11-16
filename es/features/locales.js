@@ -90,7 +90,7 @@ export class Locales extends Feature {
             filter: {
                 namespace: ns,
             }
-        }, undefined, undefined, undefined, {
+        }, undefined, undefined, {
             dontPublish: true,
             useLocalCache: {
                 keys: [ns],

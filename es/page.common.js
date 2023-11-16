@@ -6,7 +6,7 @@ import { generateNewId } from 'oak-domain/lib/utils/uuid';
 export function onPathSet(option) {
     const { props, state } = this;
     const { oakPath, oakProjection, oakFilters, oakSorters, oakId } = props;
-    const { entity, path, projection, isList, filters, sorters, pagination } = option;
+    const { entity, path, projection, isList, filters, sorters, pagination, getTotal } = option;
     const { features } = this;
     const oakPath2 = oakPath || path;
     assert(oakPath2);
@@ -66,6 +66,7 @@ export function onPathSet(option) {
             id: oakId,
             actions: typeof actions === 'function' ? () => actions.call(this) : actions,
             cascadeActions: cascadeActions && (() => cascadeActions.call(this)),
+            getTotal,
         });
         this.subscribed.push(features.runningTree.subscribeNode((path2) => {
             // 父结点改变，子结点要重渲染
@@ -309,7 +310,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                     }
                 }
             }
-        }, undefined, undefined, undefined, {
+        }, undefined, undefined, {
             useLocalCache: {
                 keys: destEntities,
                 gap: process.env.NODE_ENV === 'development' ? 60 * 1000 : 1200 * 1000,

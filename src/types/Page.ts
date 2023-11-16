@@ -128,6 +128,7 @@ interface ComponentOption<
     EMethod extends Record<string, Function> = {},
     > {
     isList?: IsList;
+    getTotal?: number;
     entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => T);
     path?: string;
     features?: FeatureDef<ED, Cxt, FrontCxt, AD, FD>[];

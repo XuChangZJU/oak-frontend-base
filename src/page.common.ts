@@ -34,7 +34,7 @@ export function onPathSet<
         option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>): Partial<OakComponentData<ED, T>> {
     const { props, state } = this;
     const { oakPath, oakProjection, oakFilters, oakSorters, oakId } = props as ComponentProps<ED, T, true, {}>;
-    const { entity, path, projection, isList, filters, sorters, pagination } = option;
+    const { entity, path, projection, isList, filters, sorters, pagination, getTotal } = option;
     const { features } = this;
 
     const oakPath2 = oakPath || path;
@@ -103,6 +103,7 @@ export function onPathSet<
             id: oakId,
             actions: typeof actions === 'function' ? () => actions.call(this) : actions,
             cascadeActions: cascadeActions && (() => cascadeActions.call(this)),
+            getTotal,
         });
         this.subscribed.push(
             features.runningTree.subscribeNode(
@@ -386,7 +387,7 @@ function checkActionsAndCascadeEntities<
                     }
                 }
             }
-        }, undefined, undefined, undefined, {
+        }, undefined, undefined, {
             useLocalCache: {
                 keys: destEntities as string[],
                 gap: process.env.NODE_ENV === 'development' ? 60 * 1000 : 1200 * 1000,

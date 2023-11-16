@@ -36,6 +36,7 @@ type FeatureDef<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext
 };
 interface ComponentOption<IsList extends boolean, ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, TData extends DataOption, TProperty extends DataOption, TMethod extends Record<string, Function>, EMethod extends Record<string, Function> = {}> {
     isList?: IsList;
+    getTotal?: number;
     entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => T);
     path?: string;
     features?: FeatureDef<ED, Cxt, FrontCxt, AD, FD>[];
