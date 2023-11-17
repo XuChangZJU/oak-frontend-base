@@ -63,15 +63,6 @@ function getQuery(url: string, properties?: Record<string, any>) {
                     });
                     break;
                 }
-                case 'oakProjection':
-                case 'oakSorters':
-                case 'oakFilters': {
-                    Object.assign(query2, {
-                        [k]: JSON.parse(query[k]),
-                    });
-                    break;
-                    break;
-                }
                 default: {
                     Object.assign(query2, {
                         [k]: query[k],

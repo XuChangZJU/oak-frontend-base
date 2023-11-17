@@ -4,10 +4,6 @@ import { resolvePath } from '../../utils/usefulFn';
 import dayjs from 'dayjs';
 import { set } from 'oak-domain/lib/utils/lodash';
 export default OakComponent({
-    entity() {
-        const { entity } = this.props;
-        return entity;
-    },
     isList: true,
     formData() {
         const { column } = this.props;

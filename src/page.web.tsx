@@ -399,7 +399,10 @@ abstract class OakComponentBase<
     }
 
     refresh() {
-        return refresh.call(this as any);
+        if (this.oakOption.entity) {
+            // 如FilterPanel这样的和真正数据结点共享路径的不用再refresh
+            return refresh.call(this as any);
+        }
     }
 
     loadMore() {
@@ -1104,32 +1107,7 @@ export function createComponent<
                 this.setId(this.props.oakId!);
             }
 
-            /*  这几个东西暂不支持变化，必须在初始化时确定
-            // 如果上层将oakFilters和oakSorters作为props传入，这里会将当前的filters和sorters清空，所以使用这两个props时最好是静态不变的
-            if (this.props.oakFilters !== prevProps.oakFilters) {
-                if (this.props.oakFilters) {
-                    const namedFilters = JSON.parse(this.props.oakFilters!);
-                    this.setNamedFilters(namedFilters, true);
-                }
-                else {
-                    this.setNamedFilters([], true);
-                }
-            }
-            if (this.props.oakSorters !== prevProps.oakSorters) {
-                if (this.props.oakSorters) {
-                    const namedSorters = JSON.parse(this.props.oakSorters!);
-                    this.setNamedSorters(namedSorters, true);
-                }
-                else {
-                    this.setNamedSorters([], true);
-                }
-            }
-            if (this.props.oakProjection !== prevProps.oakProjection) {
-                assert(false, 'oakProjection参数暂不允许变动');
-            } */
-
             fn && fn.call(this, prevProps, prevState);
-            this.reRender();
         }
 
         render(): React.ReactNode {

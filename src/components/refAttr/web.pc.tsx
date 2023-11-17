@@ -197,23 +197,9 @@ export default function render(
                                 entity={entity as string}
                                 title={title}
                                 titleLabel={titleLabel}
-                                oakFilters={
-                                    dynamicFilter
-                                        ? [
-                                              {
-                                                  filter: dynamicFilter,
-                                              },
-                                          ]
-                                        : undefined
-                                }
-                                oakSorters={
-                                    dynamicSorter
-                                        ? dynamicSorter.map((ele) => ({
-                                              sorter: ele,
-                                          }))
-                                        : undefined
-                                }
-                                oakProjection={dynamicProjection || projection}
+                                filter={dynamicFilter}
+                                sorter={dynamicSorter}
+                                projection={dynamicProjection || projection}
                                 onSelect={(data: { id: string }[]) => {
                                     onChange(data.map((ele) => ele.id));
                                     setVisible(false);

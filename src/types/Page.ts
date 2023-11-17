@@ -144,7 +144,8 @@ interface ComponentOption<
         '#name'?: string;
     }>;
     sorters?: Array<{
-        sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => NonNullable<ED[T]['Selection']['sorter']>[number]);
+        sorter: NonNullable<ED[T]['Selection']['sorter']>[number] 
+            | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => ED[T]['Selection']['sorter'] | NonNullable<ED[T]['Selection']['sorter']>[number]);
         '#name'?: string;
     }>;
     formData?: (options: {
@@ -294,7 +295,6 @@ export type OakComponentProperties<
     T extends keyof ED> = Partial<{
         oakPath: string;
         oakId: string;
-        // oakProjection: ED[T]['Selection']['data'];
         oakFrom: string;
         oakParentEntity: string;
         oakDisablePulldownRefresh: boolean;
@@ -306,20 +306,12 @@ export type OakComponentProperties<
 export type OakListComponentProperties<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED> = Partial<{
-        oakFilters: NamedFilterItem<ED, T>[];
-        oakSorters: NamedSorterItem<ED, T>[];
-        oakProjection: ED[T]['Selection']['data'];
-        // oakPagination: Pagination;
     }>;
 
 export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakId?: string;
-    oakEntity?: T;
     oakPath?: string;
     oakParent?: string;
-    oakProjection?: ED[T]['Selection']['data'],
-    oakSorters?: Array<NamedSorterItem<ED, T>>,
-    oakFilters?: Array<NamedFilterItem<ED, T>>;
     [k: string]: any;
 };
 

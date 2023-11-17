@@ -72,17 +72,7 @@ export default function render(props) {
                                 setVisible(false);
                             }, destroyOnClose: true, showCloseButton: true, bodyStyle: {
                                 height: '80%',
-                            }, children: _jsx(Picker, { multiple: false, oakPath: `$refAttr-picker-${entity}`, entity: entity, title: title, titleLabel: titleLabel, oakFilters: dynamicFilter
-                                    ? [
-                                        {
-                                            filter: dynamicFilter,
-                                        },
-                                    ]
-                                    : undefined, oakSorters: dynamicSorter
-                                    ? dynamicSorter.map((ele) => ({
-                                        sorter: ele,
-                                    }))
-                                    : undefined, oakProjection: dynamicProjection, onSelect: (data) => {
+                            }, children: _jsx(Picker, { multiple: false, oakPath: `$refAttr-picker-${entity}`, entity: entity, title: title, titleLabel: titleLabel, filter: dynamicFilter, sorter: dynamicSorter, projection: dynamicProjection, onSelect: (data) => {
                                     onChange(data.map((ele) => ele.id));
                                     setVisible(false);
                                 } }) })] }));

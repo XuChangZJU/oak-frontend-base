@@ -461,7 +461,7 @@ class ListNode<
     }
 
     getNamedSorterByName(name: string) {
-        const sorter = this.sorters.find((ele) => ele['#name'] === name);
+        const sorter = this.sorters.find((ele) => ele && ele['#name'] === name);
         return sorter;
     }
 
@@ -718,8 +718,7 @@ class ListNode<
                 return (sorter as Function)();
             }
             return sorter;
-        })
-            .filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
+        }).flat().filter((ele) => !!ele) as ED[T]['Selection']['sorter'];
 
         const filters = this.constructFilters(withParent, ignoreNewParent, ignoreUnapplied);
 
@@ -782,7 +781,7 @@ class ListNode<
                         indexFrom: currentPage3 * pageSize,
                         count: pageSize,
                         randomRange,
-                        total,
+                        total:  currentPage3 === 1 ? total : undefined,
                     },
                     undefined,
                     (selectResult) => {

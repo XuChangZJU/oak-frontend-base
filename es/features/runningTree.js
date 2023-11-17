@@ -343,7 +343,7 @@ class ListNode extends Node {
         return this.sorters;
     }
     getNamedSorterByName(name) {
-        const sorter = this.sorters.find((ele) => ele['#name'] === name);
+        const sorter = this.sorters.find((ele) => ele && ele['#name'] === name);
         return sorter;
     }
     setNamedSorters(sorters, refresh) {
@@ -566,8 +566,7 @@ class ListNode extends Node {
                 return sorter();
             }
             return sorter;
-        })
-            .filter((ele) => !!ele);
+        }).flat().filter((ele) => !!ele);
         const filters = this.constructFilters(withParent, ignoreNewParent, ignoreUnapplied);
         const filters2 = filters?.filter((ele) => !!ele);
         const filter = filters2 ? combineFilters(this.entity, this.schema, filters2) : undefined;
@@ -618,7 +617,7 @@ class ListNode extends Node {
                     indexFrom: currentPage3 * pageSize,
                     count: pageSize,
                     randomRange,
-                    total,
+                    total: currentPage3 === 1 ? total : undefined,
                 }, undefined, (selectResult) => {
                     this.pagination.currentPage = currentPage3 + 1;
                     this.saveRefreshResult(selectResult, append);

@@ -12,10 +12,6 @@ import { ReactComponentProps } from '../../types/Page';
 type ModeMp = 'selector' | 'multiSelector';
 
 export default OakComponent({
-    entity() {
-        const { entity } = this.props;
-        return entity as keyof ED;
-    },
     isList: true,
     formData() {
         const { column } = this.props;

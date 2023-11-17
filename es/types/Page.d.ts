@@ -52,7 +52,7 @@ interface ComponentOption<IsList extends boolean, ED extends EntityDict & BaseEn
         '#name'?: string;
     }>;
     sorters?: Array<{
-        sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => NonNullable<ED[T]['Selection']['sorter']>[number]);
+        sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => ED[T]['Selection']['sorter'] | NonNullable<ED[T]['Selection']['sorter']>[number]);
         '#name'?: string;
     }>;
     formData?: (options: {
@@ -121,19 +121,11 @@ export type OakComponentProperties<ED extends EntityDict & BaseEntityDict, T ext
     oakActions: string;
     oakCascadeActions: string;
 }>;
-export type OakListComponentProperties<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<{
-    oakFilters: NamedFilterItem<ED, T>[];
-    oakSorters: NamedSorterItem<ED, T>[];
-    oakProjection: ED[T]['Selection']['data'];
-}>;
+export type OakListComponentProperties<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<{}>;
 export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakId?: string;
-    oakEntity?: T;
     oakPath?: string;
     oakParent?: string;
-    oakProjection?: ED[T]['Selection']['data'];
-    oakSorters?: Array<NamedSorterItem<ED, T>>;
-    oakFilters?: Array<NamedFilterItem<ED, T>>;
     [k: string]: any;
 };
 export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {

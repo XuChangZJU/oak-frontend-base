@@ -30,9 +30,6 @@ import { cloneDeep } from 'oak-domain/lib/utils/lodash';
 const OakProperties = {
     oakId: '',
     oakPath: '',
-    oakFilters: [],
-    oakSorters: [],
-    oakProjection: {},
     oakParentEntity: '',
     oakFrom: '',
     oakActions: '',
@@ -43,10 +40,6 @@ const OakProperties = {
 const OakPropertyTypes = {
     oakId: String,
     oakPath: String,
-    // 这几个不能写成Array或Object，小程序会初始化成空对象和空数组
-    oakFilters: null,
-    oakSorters: null,
-    oakProjection: null,
     oakParentEntity: String,
     oakFrom: String,
     oakActions: String,
@@ -80,9 +73,6 @@ const oakBehavior = Behavior<
         props: {
             oakId?: string;
             oakPath?: string;
-            oakFilters?: string;
-            oakSorters?: string;
-            oakProjection?: string;
             oakParentEntity?: string;
             oakFrom?: string;
             oakActions?: string;
@@ -363,8 +353,11 @@ const oakBehavior = Behavior<
             return this.features.runningTree.getOperations(path2);
         },
 
-        refresh() {
-            return refresh.call(this as any);
+        async refresh() {
+            // 如FilterPanel这样的和真正数据结点共享路径的不用再refresh
+            if (this.oakOption.entity) {
+                return refresh.call(this as any);
+            }
         },
 
         loadMore() {
@@ -494,7 +487,10 @@ const oakBehavior = Behavior<
                 );
                 if (sorter?.sorter) {
                     if (typeof sorter.sorter === 'function') {
-                        return sorter.sorter();
+                        const sortItem = sorter.sorter();
+                        // 要支持自定义sorter函数返回完整的sorter，但这种sorter应当确保是无名的不被查找
+                        assert(!(sortItem instanceof Array), '不应该有非item的sorter被查找');
+                        return sortItem;
                     }
                     return sorter.sorter;
                 }
@@ -698,33 +694,6 @@ const oakBehavior = Behavior<
                 }
             }
         },
-        /* oakFilters(data) {
-            if (data !== this.props.oakFilters) {
-                // 如果oakFilters被置空或重置，会完全重置当前结点上所有的nameFilter并重取数据。这个逻辑可能有问题，对oakFilters要慎用
-                if (!data) {
-                    this.setNamedFilters([], true);
-                }
-                else {
-                    const namedFilters = JSON.parse(data);
-                    this.setNamedFilters(namedFilters, true);
-                }
-            }
-        },
-        oakSorters(data) {
-            if (data !== this.props.oakSorters) {
-                // 如果oakSorters被置空或重置，会完全重置当前结点上所有的nameSorter并重取数据。这个逻辑可能有问题，对oakSorter要慎用
-                if (!data) {
-                    this.setNamedSorters([], true);
-                }
-                else {
-                    const namedSorters = JSON.parse(data);
-                    this.setNamedSorters(namedSorters, true);
-                }
-            }
-        },
-        oakProjection(data) {
-            assert(data === this.props.oakProjection, 'oakProjection暂不支持变化');
-        } */
     },
 });
 
@@ -888,9 +857,6 @@ export function createComponent<
             props: {
                 oakId?: string;
                 oakPath?: string;
-                oakFilters?: string;
-                oakSorters?: string;
-                oakProjection?: string;
                 oakParentEntity?: string;
                 oakFrom?: string;
                 oakActions?: string;

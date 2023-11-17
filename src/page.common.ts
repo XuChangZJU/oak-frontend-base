@@ -33,7 +33,7 @@ export function onPathSet<
         this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
         option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>): Partial<OakComponentData<ED, T>> {
     const { props, state } = this;
-    const { oakPath, oakProjection, oakFilters, oakSorters, oakId } = props as ComponentProps<ED, T, true, {}>;
+    const { oakPath, oakId } = props as ComponentProps<ED, T, true, {}>;
     const { entity, path, projection, isList, filters, sorters, pagination, getTotal } = option;
     const { features } = this;
 
@@ -41,51 +41,32 @@ export function onPathSet<
     assert(oakPath2);
     assert(!oakPath || !path);
     if (entity) {
+        // entity在node生命周期中不可可变，但sorter/filter/projection应当是运行时来决定
         const entity2 = entity instanceof Function ? entity.call(this) : entity;
-        const filters2: NamedFilterItem<ED, T>[] = [];
-        if (oakFilters) {
-            // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
-            const oakFilters2 = typeof oakFilters === 'string' ? JSON.parse(oakFilters) : oakFilters;
-            filters2.push(...oakFilters2);
-        }
-        if (filters) {
-            for (const ele of filters) {
+        const projection2 = typeof projection === 'function' ? projection.call(this) : projection;
+        const filters2 = filters?.map(
+            (ele) => {
                 const { filter, '#name': name } = ele;
-                filters2.push({
-                    filter:
-                        typeof filter === 'function'
-                            ? () =>
-                                (filter as Function).call(this)
-                            : filter,
+                return {
+                    filter: typeof filter === 'function' ? () => (filter as Function).call(this) : filter,
                     ['#name']: name,
-                });
+                }
             }
-        }
-        let proj = oakProjection && (typeof oakProjection === 'string' ? JSON.parse(oakProjection) : oakProjection);
-        if (!proj && projection) {
-            proj = typeof projection === 'function'
-                ? () =>
-                    (projection as Function).call(this)
-                : projection;
-        }
-        let sorters2: NamedSorterItem<ED, T>[] = [];
-        if (oakSorters) {
-            // 这里在跳页面的时候用this.navigate应该可以限制传过来的sorter的格式
-            const oakSorters2 = typeof oakSorters === 'string' ? JSON.parse(oakSorters) : oakSorters;
-            sorters2.push(...oakSorters2);
-        } else if (sorters) {
-            for (const ele of sorters) {
+        );
+        const sorters2 = sorters?.map(
+            (ele) => {
                 const { sorter, '#name': name } = ele;
-                sorters2.push({
+                return {
                     sorter:
                         typeof sorter === 'function'
                             ? () =>
                                 (sorter as Function).call(this)
                             : sorter,
                     ['#name']: name,
-                });
+                };
             }
-        }
+        );
+        
         assert(
             oakPath2,
             '没有正确的path信息，请检查是否配置正确'
@@ -96,7 +77,7 @@ export function onPathSet<
             path: oakPath2,
             entity: entity2,
             isList,
-            projection: proj,
+            projection: projection2,
             pagination: pagination,
             filters: filters2,
             sorters: sorters2,

@@ -1,10 +1,6 @@
 import { assert } from 'oak-domain/lib/utils/assert';
 import { getFilterName } from '../filter2/utils';
 export default OakComponent({
-    entity() {
-        const { entity } = this.props;
-        return entity;
-    },
     isList: true,
     data: {
         isExpandContent: false,
