@@ -1775,7 +1775,7 @@ export class RunningTree<
             if (!node) {
                 return;
             }
-            assert(node instanceof SingleNode, '不再允许listnode带更深的子结点');
+            assert(node instanceof SingleNode || node instanceof VirtualNode, '不再允许listnode带更深的子结点');
             const childPath = paths[iter];
             iter++;
             node = node.getChild(childPath)!;
