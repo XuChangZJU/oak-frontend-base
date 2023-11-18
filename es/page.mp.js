@@ -456,7 +456,7 @@ const oakBehavior = Behavior({
                         this.oakOption.lifetimes?.ready &&
                             this.oakOption.lifetimes?.ready.call(this);
                         const { oakFullpath } = this.state;
-                        if (oakFullpath) {
+                        if (oakFullpath && this.oakOption.entity) {
                             this.refresh();
                         }
                         else {
@@ -713,7 +713,7 @@ export function createComponent(option, features) {
                     }
                     this.setState(pathState, () => {
                         const { oakFullpath } = this.state;
-                        if (oakFullpath) {
+                        if (oakFullpath && this.oakOption.entity) {
                             this.refresh();
                         }
                         else {

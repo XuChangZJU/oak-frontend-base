@@ -399,10 +399,7 @@ abstract class OakComponentBase<
     }
 
     refresh() {
-        if (this.oakOption.entity) {
-            // 如FilterPanel这样的和真正数据结点共享路径的不用再refresh
-            return refresh.call(this as any);
-        }
+        return refresh.call(this as any);
     }
 
     loadMore() {
@@ -968,7 +965,8 @@ export function createComponent<
                     lifetimes?.show && lifetimes.show.call(this);
 
                     const { oakFullpath } = this.state;
-                    if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath)) {
+                    if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && this.oakOption.entity) {
+                        // 如FilterPanel这样的和真正数据结点共享路径的不用再做无意义的refresh
                         this.refresh();
                     }
                     else {
@@ -1093,7 +1091,7 @@ export function createComponent<
                         lifetimes?.show && lifetimes.show.call(this);
 
                         const { oakFullpath } = this.state;
-                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath)) {
+                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && this.oakOption.entity) {
                             this.refresh();
                         }
                         else {
