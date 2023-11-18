@@ -195,8 +195,8 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     setNamedSorters: (sorters: NamedSorterItem<ED, T>[], refresh?: boolean, path?: string) => void;
     getSorters: (path?: string) => ED[T]['Selection']['sorter'] | undefined;
     getSorterByName: (name: string, path?: string) => NonNullable<ED[T]['Selection']['sorter']>[number] | undefined;
-    addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
-    removeNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
+    addNamedSorter: (sorter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
+    removeNamedSorter: (sorter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
     removeNamedSorterByName: (name: string, refresh?: boolean, path?: string) => void;
     getPagination: (path?: string) => Pagination | undefined;
     setPageSize: (pageSize: number, path?: string) => void;
