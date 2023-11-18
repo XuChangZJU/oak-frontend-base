@@ -183,9 +183,8 @@ abstract class Node<
 }
 
 const DEFAULT_PAGINATION: Pagination = {
-    currentPage: 1,
+    currentPage: 0,
     pageSize: 20,
-    append: true,
     more: true,
     total: 0,
 }
@@ -361,7 +360,7 @@ class ListNode<
         filters?: NamedFilterItem<ED, T>[],
         sorters?: NamedSorterItem<ED, T>[],
         getTotal?: number,
-        pagination?: Pagination,
+        pagination?: Pick<Pagination, 'currentPage' | 'pageSize' | 'randomRange'>,
         actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]),
         cascadeActions?: () => {
             [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
@@ -371,7 +370,12 @@ class ListNode<
         this.filters = filters || [];
         this.sorters = sorters || [];
         this.getTotal = getTotal;
-        this.pagination = pagination || DEFAULT_PAGINATION;
+        this.pagination = pagination ? {
+            ...pagination,
+            currentPage: pagination.currentPage - 1,
+            more: true,
+            total: 0,
+        } : DEFAULT_PAGINATION;
         this.updates = {};
         this.sr = {};
 
@@ -735,9 +739,12 @@ class ListNode<
     /**
      * 存留查询结果
      */
-    saveRefreshResult(sr: Awaited<ReturnType<AD['select']>>, append?: boolean) {
+    saveRefreshResult(sr: Awaited<ReturnType<AD['select']>>, append?: boolean, currentPage?: number) {
         const { data, total } = sr;
         this.pagination.more = Object.keys(data).length === this.pagination.pageSize;
+        if (currentPage) {
+            this.pagination.currentPage = currentPage;
+        }
         if (typeof total === 'number') {
             this.pagination.total = total;
         }
@@ -756,7 +763,7 @@ class ListNode<
         const { entity, pagination } = this;
         const { currentPage, pageSize, randomRange } = pagination;
         const currentPage3 =
-            typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
+            typeof pageNumber === 'number' ? pageNumber : currentPage;
         assert(!randomRange || !currentPage3, 'list在访问数据时，如果设置了randomRange，则不应再有pageNumber');
         const {
             data: projection,
@@ -781,12 +788,11 @@ class ListNode<
                         indexFrom: currentPage3 * pageSize,
                         count: pageSize,
                         randomRange,
-                        total:  currentPage3 === 1 ? total : undefined,
+                        total:  currentPage3 === 0 ? total : undefined,
                     },
                     undefined,
                     (selectResult) => {
-                        this.pagination.currentPage = currentPage3 + 1;
-                        this.saveRefreshResult(selectResult, append);
+                        this.saveRefreshResult(selectResult, append, currentPage3);
                         this.endLoading();
                         this.setFiltersAndSortedApplied();
                         if (append) {
@@ -1558,7 +1564,7 @@ export type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends 
     isList?: boolean;
     getTotal?: number;
     projection?: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
-    pagination?: Pagination;
+    pagination?: Pick<Pagination, 'currentPage' | 'pageSize' | 'randomRange'>;
     filters?: NamedFilterItem<ED, T>[];
     sorters?: NamedSorterItem<ED, T>[];
     beforeExecute?: (operations: ED[T]['Operation'][]) => Promise<void>;
@@ -1934,7 +1940,7 @@ export class RunningTree<
         const node = this.findNode(path);
         if (!node?.isLoading()) {
             if (node instanceof ListNode) {
-                await node.refresh(1, true);
+                await node.refresh(0, false);
             } else if (node) {
                 await node.refresh();
             }
@@ -1950,7 +1956,11 @@ export class RunningTree<
     getPagination(path: string) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        return node.getPagination();
+        const pn = node.getPagination();
+        return {
+            ...pn,
+            currentPage: pn.currentPage + 1,            
+        } as Pagination;
     }
 
     setId(path: string, id: string) {
@@ -1991,7 +2001,7 @@ export class RunningTree<
     setCurrentPage<T extends keyof ED>(path: string, currentPage: number) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        return node.setCurrentPage(currentPage);
+        return node.setCurrentPage(currentPage - 1);
     }
 
     getNamedFilters<T extends keyof ED>(path: string) {

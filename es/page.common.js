@@ -33,6 +33,39 @@ export function onPathSet(option) {
         });
         assert(oakPath2, '没有正确的path信息，请检查是否配置正确');
         const { actions, cascadeActions } = option;
+        // 在这里适配宽窄屏处理getTotal，不到运行时处理了 by Xc
+        let getTotal2;
+        if (getTotal) {
+            const { width } = this.props;
+            if (typeof getTotal === 'object') {
+                const { max, deviceWidth } = getTotal;
+                switch (deviceWidth) {
+                    case 'all': {
+                        getTotal2 = max;
+                        break;
+                    }
+                    case 'mobile':
+                        {
+                            if (width === 'xs') {
+                                getTotal2 = max;
+                            }
+                            break;
+                        }
+                    case 'pc':
+                    default: {
+                        if (width !== 'xs') {
+                            getTotal2 = max;
+                        }
+                        break;
+                    }
+                }
+            }
+            else {
+                if (width !== 'xs') {
+                    getTotal2 = getTotal;
+                }
+            }
+        }
         features.runningTree.createNode({
             path: oakPath2,
             entity: entity2,
@@ -44,7 +77,7 @@ export function onPathSet(option) {
             id: oakId,
             actions: typeof actions === 'function' ? () => actions.call(this) : actions,
             cascadeActions: cascadeActions && (() => cascadeActions.call(this)),
-            getTotal,
+            getTotal: getTotal2,
         });
         this.subscribed.push(features.runningTree.subscribeNode((path2) => {
             // 父结点改变，子结点要重渲染

@@ -128,7 +128,10 @@ interface ComponentOption<
     EMethod extends Record<string, Function> = {},
     > {
     isList?: IsList;
-    getTotal?: number;
+    getTotal?: {
+        max: number;
+        deviceWidth?: 'pc' | 'mobile' | 'all';
+    } | number;
     entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => T);
     path?: string;
     features?: FeatureDef<ED, Cxt, FrontCxt, AD, FD>[];
@@ -293,6 +296,7 @@ export type OakComponentOption<
 export type OakComponentProperties<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED> = Partial<{
+        width?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';     // 判断屏幕宽度，暂时只能放在这儿  by Xc
         oakPath: string;
         oakId: string;
         oakFrom: string;

@@ -65,7 +65,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     checkIfClean(): void;
     onCacheSync(records: OpRecord<ED>[]): void;
     destroy(): void;
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], getTotal?: number, pagination?: Pagination, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], getTotal?: number, pagination?: Pick<Pagination, 'currentPage' | 'pageSize' | 'randomRange'>, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     });
     getPagination(): Pagination;
@@ -119,7 +119,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     /**
      * 存留查询结果
      */
-    saveRefreshResult(sr: Awaited<ReturnType<AD['select']>>, append?: boolean): void;
+    saveRefreshResult(sr: Awaited<ReturnType<AD['select']>>, append?: boolean, currentPage?: number): void;
     refresh(pageNumber?: number, append?: boolean): Promise<void>;
     loadMore(): Promise<void>;
     setCurrentPage(currentPage: number, append?: boolean): void;
@@ -209,7 +209,7 @@ export type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends 
     isList?: boolean;
     getTotal?: number;
     projection?: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
-    pagination?: Pagination;
+    pagination?: Pick<Pagination, 'currentPage' | 'pageSize' | 'randomRange'>;
     filters?: NamedFilterItem<ED, T>[];
     sorters?: NamedSorterItem<ED, T>[];
     beforeExecute?: (operations: ED[T]['Operation'][]) => Promise<void>;
