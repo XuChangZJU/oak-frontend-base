@@ -295,7 +295,7 @@ class ListNode extends Node {
     setNamedFilters(filters, refresh) {
         this.filters = filters.map((ele) => Object.assign({}, ele, { applied: false }));
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -311,7 +311,7 @@ class ListNode extends Node {
             this.filters.push(Object.assign({}, filter, { applied: false }));
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -324,7 +324,7 @@ class ListNode extends Node {
             this.filters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -337,7 +337,7 @@ class ListNode extends Node {
             this.filters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -353,7 +353,7 @@ class ListNode extends Node {
     setNamedSorters(sorters, refresh) {
         this.sorters = sorters.map(ele => Object.assign({}, ele, { applied: false }));
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -369,7 +369,7 @@ class ListNode extends Node {
             this.sorters.push(Object.assign({}, sorter, { applied: false }));
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -382,7 +382,7 @@ class ListNode extends Node {
             this.sorters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -395,7 +395,7 @@ class ListNode extends Node {
             this.sorters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();

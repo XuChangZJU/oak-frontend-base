@@ -409,7 +409,7 @@ class ListNode<
             (ele) => Object.assign({}, ele, { applied: false })
         );
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         } else {
             this.publish();
         }
@@ -426,7 +426,7 @@ class ListNode<
             this.filters.push(Object.assign({}, filter, { applied: false }));
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         } else {
             this.publish();
         }
@@ -441,7 +441,7 @@ class ListNode<
             this.filters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         } else {
             this.publish();
         }
@@ -454,7 +454,7 @@ class ListNode<
             this.filters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         } else {
             this.publish();
         }
@@ -474,7 +474,7 @@ class ListNode<
             ele => Object.assign({}, ele, { applied: false })
         );
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         } else {
             this.publish();
         }
@@ -491,7 +491,7 @@ class ListNode<
             this.sorters.push(Object.assign({}, sorter, { applied: false }));
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         } else {
             this.publish();
         }
@@ -506,7 +506,7 @@ class ListNode<
             this.sorters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         } else {
             this.publish();
         }
@@ -519,7 +519,7 @@ class ListNode<
             this.sorters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         } else {
             this.publish();
         }
