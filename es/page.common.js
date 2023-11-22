@@ -426,9 +426,9 @@ export function reRender(option, extra) {
         this.setState(data);
     }
 }
-export async function refresh(inMounting) {
+export async function refresh() {
     if (this.state.oakFullpath) {
-        await this.features.runningTree.refresh(this.state.oakFullpath, inMounting);
+        await this.features.runningTree.refresh(this.state.oakFullpath);
     }
 }
 export async function loadMore() {

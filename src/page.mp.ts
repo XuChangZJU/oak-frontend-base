@@ -667,8 +667,8 @@ const oakBehavior = Behavior<
                             this.oakOption.lifetimes?.ready.call(this);
 
                         const { oakFullpath } = this.state;
-                        if (oakFullpath) {
-                            refresh.call(this as any, true);
+                        if (oakFullpath && !this.features.runningTree.checkIsModiNode(oakFullpath) && !this.features.runningTree.isListDescandent(oakFullpath)) {
+                            this.refresh();
                         } else {
                             this.reRender();
                         }
@@ -1032,8 +1032,8 @@ export function createComponent<
                     }
                     this.setState(pathState as any, () => {
                         const { oakFullpath } = this.state;
-                        if (oakFullpath) {
-                            refresh.call(this as any, true);
+                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && !features.runningTree.isListDescandent(oakFullpath)) {
+                            this.refresh();
                         } else {
                             this.reRender();
                         }

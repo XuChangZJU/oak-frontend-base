@@ -538,11 +538,10 @@ export async function refresh<
     T extends keyof ED,
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>>(
-        this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
-        inMounting?: boolean
+        this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>
     ) {
     if (this.state.oakFullpath) {
-        await this.features.runningTree.refresh(this.state.oakFullpath, inMounting);
+        await this.features.runningTree.refresh(this.state.oakFullpath);
     }
 }
 

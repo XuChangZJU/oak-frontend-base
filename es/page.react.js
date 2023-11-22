@@ -544,8 +544,8 @@ export function createComponent(option, features) {
                     lifetimes?.ready && lifetimes.ready.call(this);
                     lifetimes?.show && lifetimes.show.call(this);
                     const { oakFullpath } = this.state;
-                    if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath)) {
-                        refresh.call(this, true);
+                    if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && !features.runningTree.isListDescandent(oakFullpath)) {
+                        this.refresh();
                     }
                     else {
                         this.reRender();
@@ -597,15 +597,15 @@ export function createComponent(option, features) {
                 if (this.unmounted) {
                     return;
                 }
-                this.setState(pathState, () => {
+                this.setState(pathState, async () => {
                     if (prevProps.oakPath === undefined) {
                         // 如果每个页面都在oakFullpath形成后再渲染子结点，这个if感觉是不应该命中的
                         console.warn('发生了结点先形成再配置oakPath的情况，请检查代码修正');
                         lifetimes?.ready && lifetimes.ready.call(this);
                         lifetimes?.show && lifetimes.show.call(this);
                         const { oakFullpath } = this.state;
-                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath)) {
-                            refresh.call(this, true);
+                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && !features.runningTree.isListDescandent(oakFullpath)) {
+                            this.refresh();
                         }
                         else {
                             this.reRender();

@@ -29,7 +29,7 @@ abstract class Node<
     // protected fullPath: string;
     protected schema: StorageSchema<ED>;
     protected projection?: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);      // 只在Page层有
-    protected parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
+    protected parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     protected dirty?: boolean;
     protected cache: Cache<ED, Cxt, FrontCxt, AD>;
     protected loading: number;
@@ -44,7 +44,7 @@ abstract class Node<
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
-        parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
+        parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
         path?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]),
         cascadeActions?: () => {
             [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
@@ -203,6 +203,7 @@ class ListNode<
         | ED[T]['Remove']
     >;
 
+    private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     private filters: (NamedFilterItem<ED, T> & { applied?: boolean })[];
     private sorters: (NamedSorterItem<ED, T> & { applied?: boolean })[];
     private getTotal?: number;
@@ -219,17 +220,27 @@ class ListNode<
         this.sorters.forEach(
             ele => ele.applied = true
         );
+
+        for (const k in this.children) {
+            this.children[k].setFiltersAndSortedApplied();
+        }
     }
 
     setLoading(loading: number) {
         if (this.loading === 0) {
             super.setLoading(loading);
+            for (const k in this.children) {
+                this.children[k].setLoading(loading);
+            }
         }
     }
 
     setUnloading(loading: number) {
         if (this.loading === loading) {
             super.setLoading(0);
+            for (const k in this.children) {
+                this.children[k].setUnloading(loading);
+            }
         }
     }
 
@@ -246,6 +257,11 @@ class ListNode<
     checkIfClean(): void {
         if (Object.keys(this.updates).length > 0) {
             return;
+        }
+        for (const k in this.children) {
+            if (this.children[k].isDirty()) {
+                return;
+            }
         }
         if (this.isDirty()) {
             this.dirty = false;
@@ -343,6 +359,9 @@ class ListNode<
 
     destroy(): void {
         this.cache.unbindOnSync(this.syncHandler);
+        for (const k in this.children) {
+            this.children[k].destroy();
+        }
     }
 
     constructor(
@@ -367,6 +386,7 @@ class ListNode<
         }
     ) {
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
+        this.children = {};
         this.filters = filters || [];
         this.sorters = sorters || [];
         this.getTotal = getTotal;
@@ -393,6 +413,24 @@ class ListNode<
         if (!dontRefresh) {
             this.refresh();
         }
+    }
+    
+    addChild(path: string, node: SingleNode<ED, T, Cxt, FrontCxt, AD>) {
+        assert(!this.children[path]);
+        // assert(path.length > 10, 'List的path改成了id');
+        this.children[path] = node;
+        assert(this.sr);        // listNode的子结点不可能在取得数据前就建立吧       by Xc
+        node.saveRefreshResult({
+            [path]: this.sr[path] || {},
+        });
+    }
+
+    removeChild(path: string) {
+        unset(this.children, path);
+    }
+
+    getChild(path: string) {
+        return this.children[path];
     }
 
     getNamedFilters() {
@@ -621,6 +659,10 @@ class ListNode<
                 });
             }
         }
+        if (this.children && this.children[id]) {
+            // 实际中有这样的case出现，当使用actionButton时。先这样处理。by Xc 20230214
+            return this.children[id].update(data, action);
+        }
         if (this.updates[id]) {
             const operation = this.updates[id];
             const { data: dataOrigin } = operation;
@@ -666,6 +708,29 @@ class ListNode<
                     entity: this.entity,
                     operation: cloneDeep(this.updates[id]),
                 });
+            }
+        }
+
+        for (const id in this.children) {
+            const childOperation = this.children[id].composeOperations();
+            if (childOperation) {
+                // 现在因为后台有not null检查，不能先create再update，所以还是得合并成一个
+                assert(childOperation.length === 1);
+                const { operation } = childOperation[0];
+                const { action, data, filter } = operation;
+                assert(!['create', 'remove'].includes(action), '在list结点上对子结点进行增删请使用父结点的addItem/removeItem，不要使用子结点的create/remove');
+                assert(filter!.id === id);
+                const sameNodeOperation = operations.find(
+                    ele => ele.operation.action === 'create' && (ele.operation.data as ED[T]['CreateSingle']['data']).id === id || ele.operation.filter?.id === id
+                );
+                if (sameNodeOperation) {
+                    if (sameNodeOperation.operation.action !== 'remove') {
+                        Object.assign(sameNodeOperation.operation.data, data);
+                    }
+                }
+                else {
+                    operations.push(...childOperation);
+                }
             }
         }
 
@@ -757,6 +822,13 @@ class ListNode<
         else {
             this.sr = data;
         }
+        for (const k in this.children) {
+            const child = this.children[k];
+            child.saveRefreshResult({
+                [k]: this.sr![k] || {},
+            });
+        }
+        this.publish();
     }
 
     async refresh(pageNumber?: number, append?: boolean) {
@@ -778,7 +850,7 @@ class ListNode<
                 if (append) {
                     this.loadingMore = true;
                 }
-                this.publishRecursively();
+                this.publish();
                 await this.cache.refresh(
                     entity,
                     {
@@ -792,27 +864,26 @@ class ListNode<
                     },
                     undefined,
                     (selectResult) => {
-                        this.saveRefreshResult(selectResult, append, currentPage3);
                         this.endLoading();
                         this.setFiltersAndSortedApplied();
                         if (append) {
                             this.loadingMore = false;
                         }
+                        this.saveRefreshResult(selectResult, append, currentPage3);
                     }
                 );
-                this.publishRecursively();
             } catch (err) {
                 this.endLoading();
                 if (append) {
                     this.loadingMore = false;
                 }
-                this.publishRecursively();
+                this.publish();
                 throw err;
             }
         }
         else {
             // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
-            this.publishRecursively();
+            this.publish();
         }
     }
 
@@ -834,6 +905,9 @@ class ListNode<
         if (this.dirty) {
             const originUpdates = this.updates;
             this.updates = {};
+            for (const k in this.children) {
+                this.children[k].clean();
+            }
             for (const k in originUpdates) {
                 if (originUpdates[k].action === 'create') {
                     unset(this.sr, originUpdates[k].data.id!);
@@ -849,10 +923,6 @@ class ListNode<
     getIntrinsticFilters() {
         const filters = this.constructFilters(undefined, true, true);
         return combineFilters(this.entity, this.schema, filters || []);
-    }
-
-    publishRecursively() {
-        this.publish();
     }
 }
 
@@ -871,7 +941,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
 
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>,
         projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>),
-        parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>,
+        parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD>,
         path?: string,
         id?: string,
         filters?: NamedFilterItem<ED, T>[],
@@ -1214,7 +1284,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         return projection;
     }
 
-    private saveRefreshResult(data: Record<string, any>) {
+    saveRefreshResult(data: Record<string, any>) {
         const ids = Object.keys(data);
         assert(ids.length === 1);
         this.id = ids[0];
@@ -1224,32 +1294,31 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
          * 把返回的结果中的total和aggr相关的值下降到相关的子结点上去
          */
         const value = this.getFreshValue()!;
-        for (const k in this.sr) {
+        for (const k in this.children) {
             const child = this.children[k];
-            if (child) {
-                const rel = this.judgeRelation(k);
-
-                if (rel === 2) {
-                    assert(child instanceof SingleNode);
-                    assert(value.entity === child.getEntity());
-                    child.saveRefreshResult({
-                        [value.entityId!]: this.sr[k],
-                    });
-                }
-                else if (typeof rel === 'string') {
-                    assert(child instanceof SingleNode);
-                    assert(rel === child.getEntity());
-                    child.saveRefreshResult({
-                        [value[`${k}Id`] as string]: this.sr[k],
-                    });
-                }
-                else {
-                    assert (rel instanceof Array);
-                    assert(child instanceof ListNode);
-                    child.saveRefreshResult(this.sr[k]);
-                }
+            const rel = this.judgeRelation(k);
+            if (rel === 2) {
+                assert(child instanceof SingleNode);
+                assert(value.entity === child.getEntity());
+                child.saveRefreshResult({
+                    [value.entityId!]: this.sr![k] || {},
+                });
+            }
+            else if (typeof rel === 'string') {
+                assert(child instanceof SingleNode);
+                assert(rel === child.getEntity());
+                child.saveRefreshResult({
+                    [value[`${k}Id`] as string]: this.sr![k] || {},
+                });
+            }
+            else {
+                assert (rel instanceof Array);
+                assert(child instanceof ListNode);
+                assert(this.sr![k]);
+                child.saveRefreshResult(this.sr![k]);
             }
         }
+        this.publish();
     }
 
     async refresh() {
@@ -1258,7 +1327,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         const filter = this.getFilter();
         if (projection && filter) {
             this.startLoading();
-            this.publishRecursively();
+            this.publish();
             try {
                 await this.cache.refresh(this.entity, {
                     data: projection,
@@ -1286,17 +1355,16 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     this.endLoading();
                     //this.clean();
                 });
-                this.publishRecursively();
             }
             catch (err) {
                 this.endLoading();
-                this.publishRecursively();
+                this.publish();
                 throw err;
             }
         }
         else {
             // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
-            this.publishRecursively();
+            this.publish();
         }
     }
 
@@ -1394,13 +1462,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         return;
     }
-
-    publishRecursively() {
-        this.publish();
-        for (const child in this.children) {
-            this.children[child].publishRecursively();
-        }
-    }
 }
 
 class VirtualNode<
@@ -1470,7 +1531,7 @@ class VirtualNode<
     }
     async refresh() {
         this.loading = true;
-        this.publishRecursively();
+        this.publish();
         try {
             if (Object.keys(this.children).length > 0) {
                 await Promise.all(
@@ -1480,11 +1541,11 @@ class VirtualNode<
                 );
             }
             this.loading = false;
-            this.publishRecursively();
+            this.publish();
         }
         catch (err) {
             this.loading = false;
-            this.publishRecursively();
+            this.publish();
             throw err;
         }
     }
@@ -1523,7 +1584,7 @@ class VirtualNode<
 
     setExecuting(executing: boolean) {
         this.executing = executing;
-        this.publishRecursively();
+        this.publish();
     }
 
     isExecuting() {
@@ -1539,7 +1600,7 @@ class VirtualNode<
             this.children[ele].clean();
         }
         this.dirty = false;
-        this.publishRecursively();
+        this.publish();
     }
     checkIfClean() {
         for (const k in this.children) {
@@ -1550,12 +1611,6 @@ class VirtualNode<
         this.dirty = false;
     }
 
-    publishRecursively() {
-        this.publish();
-        for (const child in this.children) {
-            this.children[child].publishRecursively();
-        }
-    }
 }
 
 export type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
@@ -1781,7 +1836,6 @@ export class RunningTree<
             if (!node) {
                 return;
             }
-            assert(node instanceof SingleNode || node instanceof VirtualNode, '不再允许listnode带更深的子结点');
             const childPath = paths[iter];
             iter++;
             node = node.getChild(childPath)!;
@@ -1933,7 +1987,19 @@ export class RunningTree<
         return node ? node.isExecuting() : false;
     }
 
-    async refresh(path: string, inMounting?: boolean) {
+    isListDescandent(path: string) {
+        const node = this.findNode(path);
+        let parent = node?.getParent();
+        while (parent) {
+            if (parent instanceof ListNode) {
+                return true;
+            }
+            parent = parent.getParent();
+        }
+        return false;
+    }
+
+    async refresh(path: string) {
         /* if (path.includes(MODI_NEXT_PATH_SUFFIX)) {
             return;
         } */
@@ -1941,7 +2007,8 @@ export class RunningTree<
         if (!node?.isLoading()) {
             if (node instanceof ListNode) {
                 await node.refresh(0, false);
-            } else if (node) {
+            } 
+            else if (node) {
                 await node.refresh();
             }
         }
