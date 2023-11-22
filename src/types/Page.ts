@@ -128,7 +128,10 @@ interface ComponentOption<
     EMethod extends Record<string, Function> = {},
     > {
     isList?: IsList;
-    getTotal?: number;
+    getTotal?: {
+        max: number;
+        deviceWidth?: 'pc' | 'mobile' | 'all';
+    } | number;
     entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => T);
     path?: string;
     features?: FeatureDef<ED, Cxt, FrontCxt, AD, FD>[];
@@ -293,6 +296,7 @@ export type OakComponentOption<
 export type OakComponentProperties<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED> = Partial<{
+        width?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';     // 判断屏幕宽度，暂时只能放在这儿  by Xc
         oakPath: string;
         oakId: string;
         oakFrom: string;
@@ -413,8 +417,8 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     setNamedSorters: (sorters: NamedSorterItem<ED, T>[], refresh?: boolean, path?: string) => void;
     getSorters: (path?: string) => ED[T]['Selection']['sorter'] | undefined;
     getSorterByName: (name: string, path?: string) => NonNullable<ED[T]['Selection']['sorter']>[number] | undefined;
-    addNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
-    removeNamedSorter: (filter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
+    addNamedSorter: (sorter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
+    removeNamedSorter: (sorter: NamedSorterItem<ED, T>, refresh?: boolean, path?: string) => void;
     removeNamedSorterByName: (name: string, refresh?: boolean, path?: string) => void;
     getPagination: (path?: string) => Pagination | undefined;
     setPageSize: (pageSize: number, path?: string) => void;

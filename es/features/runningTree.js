@@ -127,9 +127,8 @@ class Node extends Feature {
     }
 }
 const DEFAULT_PAGINATION = {
-    currentPage: 1,
+    currentPage: 0,
     pageSize: 20,
-    append: true,
     more: true,
     total: 0,
 };
@@ -265,7 +264,12 @@ class ListNode extends Node {
         this.filters = filters || [];
         this.sorters = sorters || [];
         this.getTotal = getTotal;
-        this.pagination = pagination || DEFAULT_PAGINATION;
+        this.pagination = pagination ? {
+            ...pagination,
+            currentPage: pagination.currentPage - 1,
+            more: true,
+            total: 0,
+        } : DEFAULT_PAGINATION;
         this.updates = {};
         this.sr = {};
         this.syncHandler = (records) => this.onCacheSync(records);
@@ -291,7 +295,7 @@ class ListNode extends Node {
     setNamedFilters(filters, refresh) {
         this.filters = filters.map((ele) => Object.assign({}, ele, { applied: false }));
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -307,7 +311,7 @@ class ListNode extends Node {
             this.filters.push(Object.assign({}, filter, { applied: false }));
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -320,7 +324,7 @@ class ListNode extends Node {
             this.filters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -333,7 +337,7 @@ class ListNode extends Node {
             this.filters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -349,7 +353,7 @@ class ListNode extends Node {
     setNamedSorters(sorters, refresh) {
         this.sorters = sorters.map(ele => Object.assign({}, ele, { applied: false }));
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -365,7 +369,7 @@ class ListNode extends Node {
             this.sorters.push(Object.assign({}, sorter, { applied: false }));
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -378,7 +382,7 @@ class ListNode extends Node {
             this.sorters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -391,7 +395,7 @@ class ListNode extends Node {
             this.sorters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -580,9 +584,12 @@ class ListNode extends Node {
     /**
      * 存留查询结果
      */
-    saveRefreshResult(sr, append) {
+    saveRefreshResult(sr, append, currentPage) {
         const { data, total } = sr;
         this.pagination.more = Object.keys(data).length === this.pagination.pageSize;
+        if (currentPage) {
+            this.pagination.currentPage = currentPage;
+        }
         if (typeof total === 'number') {
             this.pagination.total = total;
         }
@@ -599,7 +606,7 @@ class ListNode extends Node {
     async refresh(pageNumber, append) {
         const { entity, pagination } = this;
         const { currentPage, pageSize, randomRange } = pagination;
-        const currentPage3 = typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
+        const currentPage3 = typeof pageNumber === 'number' ? pageNumber : currentPage;
         assert(!randomRange || !currentPage3, 'list在访问数据时，如果设置了randomRange，则不应再有pageNumber');
         const { data: projection, filter, sorter, total, } = this.constructSelection(true, true);
         // 若不存在有效的过滤条件（若有父结点但却为空时，说明父结点是一个create动作，不用刷新），则不能刷新
@@ -617,10 +624,9 @@ class ListNode extends Node {
                     indexFrom: currentPage3 * pageSize,
                     count: pageSize,
                     randomRange,
-                    total: currentPage3 === 1 ? total : undefined,
+                    total: currentPage3 === 0 ? total : undefined,
                 }, undefined, (selectResult) => {
-                    this.pagination.currentPage = currentPage3 + 1;
-                    this.saveRefreshResult(selectResult, append);
+                    this.saveRefreshResult(selectResult, append, currentPage3);
                     this.endLoading();
                     this.setFiltersAndSortedApplied();
                     if (append) {
@@ -1552,14 +1558,14 @@ export class RunningTree extends Feature {
         const node = this.findNode(path);
         return node ? node.isExecuting() : false;
     }
-    async refresh(path) {
+    async refresh(path, inMounting) {
         /* if (path.includes(MODI_NEXT_PATH_SUFFIX)) {
             return;
         } */
         const node = this.findNode(path);
         if (!node?.isLoading()) {
             if (node instanceof ListNode) {
-                await node.refresh(1, true);
+                await node.refresh(0, false);
             }
             else if (node) {
                 await node.refresh();
@@ -1574,7 +1580,11 @@ export class RunningTree extends Feature {
     getPagination(path) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        return node.getPagination();
+        const pn = node.getPagination();
+        return {
+            ...pn,
+            currentPage: pn.currentPage + 1,
+        };
     }
     setId(path, id) {
         const node = this.findNode(path);
@@ -1609,7 +1619,7 @@ export class RunningTree extends Feature {
     setCurrentPage(path, currentPage) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        return node.setCurrentPage(currentPage);
+        return node.setCurrentPage(currentPage - 1);
     }
     getNamedFilters(path) {
         const node = this.findNode(path);

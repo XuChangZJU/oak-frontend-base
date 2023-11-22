@@ -22,11 +22,6 @@ const OakPropertyTypes = {
 };
 const oakBehavior = Behavior({
     methods: {
-        setDisablePulldownRefresh(able) {
-            this.setState({
-                oakDisablePulldownRefresh: able,
-            });
-        },
         t(key, params) {
             return this.features.locales.t(key, params);
         },
@@ -219,10 +214,7 @@ const oakBehavior = Behavior({
             return this.features.runningTree.getOperations(path2);
         },
         async refresh() {
-            // 如FilterPanel这样的和真正数据结点共享路径的不用再refresh
-            if (this.oakOption.entity) {
-                return refresh.call(this);
-            }
+            return refresh.call(this);
         },
         loadMore() {
             return loadMore.call(this);
@@ -457,7 +449,7 @@ const oakBehavior = Behavior({
                             this.oakOption.lifetimes?.ready.call(this);
                         const { oakFullpath } = this.state;
                         if (oakFullpath) {
-                            this.refresh();
+                            refresh.call(this, true);
                         }
                         else {
                             this.reRender();
@@ -714,7 +706,7 @@ export function createComponent(option, features) {
                     this.setState(pathState, () => {
                         const { oakFullpath } = this.state;
                         if (oakFullpath) {
-                            this.refresh();
+                            refresh.call(this, true);
                         }
                         else {
                             this.reRender();
