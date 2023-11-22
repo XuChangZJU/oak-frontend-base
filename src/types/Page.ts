@@ -319,7 +319,6 @@ export type OakCommonComponentMethods<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED
     > = {
-        setDisablePulldownRefresh: (able: boolean) => void;
         subEvent: (type: string, callback: Function) => void;
         unsubEvent: (type: string, callback: Function) => void;
         pubEvent: (type: string, options?: any) => void;
@@ -456,7 +455,6 @@ export type OakComponentData<
         oakEntity: T;
         oakFullpath: string;
         oakLegalActions?: ED[T]['Action'][];
-        oakDisablePulldownRefresh: boolean;
         oakLocales: Record<string, any>;
         oakLocalesVersion: number;
         oakLng: string;
@@ -502,7 +500,7 @@ export type MakeOakComponent<
     ) => (props: ReactComponentProps<ED, T, IsList, TProperty>) => React.ReactElement;
 
 // 暴露给组件的方法
-export type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'setDisablePulldownRefresh' | 'aggregate' | 'checkOperation' | 'isDirty';
+export type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh'  | 'aggregate' | 'checkOperation' | 'isDirty';
 
 // 暴露给list组件的方法
 export type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedFilter' | 'removeNamedFilter' | 'removeNamedFilterByName' | 'setNamedSorters'

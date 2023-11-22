@@ -1927,7 +1927,7 @@ export class RunningTree<
         return node ? node.isExecuting() : false;
     }
 
-    async refresh(path: string) {
+    async refresh(path: string, inMounting?: boolean) {
         /* if (path.includes(MODI_NEXT_PATH_SUFFIX)) {
             return;
         } */
