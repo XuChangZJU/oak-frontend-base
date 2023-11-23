@@ -134,7 +134,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
 }
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?;
-    private sr?;
+    private sr;
     private children;
     private filters?;
     private operation?;

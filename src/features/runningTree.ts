@@ -809,7 +809,9 @@ class ListNode<
      */
     saveRefreshResult(sr: Awaited<ReturnType<AD['select']>>, append?: boolean, currentPage?: number) {
         const { data, total } = sr;
-        this.pagination.more = Object.keys(data).length === this.pagination.pageSize;
+        if (data) {
+            this.pagination.more = Object.keys(data).length === this.pagination.pageSize;
+        }
         if (currentPage) {
             this.pagination.currentPage = currentPage;
         }
@@ -935,7 +937,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?: string;
-    private sr?: Record<string, any>;
+    private sr: Record<string, any>;
     private children: {
         [K: string]: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     };
@@ -954,6 +956,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }) {
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
+        this.sr = {};
         this.filters = filters;
 
         // addChild有可能为本结点赋上id值，所以要先行
@@ -1314,7 +1317,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             },
         });
         const keys = k ? [k] : Object.keys(this.children || {});
-        for (const k in keys) {
+        for (const k of keys) {
             const child = this.children[k]!;
             const rel = this.judgeRelation(k);
             if (rel === 2 && value.entityId) {
@@ -1334,8 +1337,8 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             else {
                 assert (rel instanceof Array);
                 assert(child instanceof ListNode);
-                assert(this.sr![k]);
-                child.saveRefreshResult(this.sr![k]);
+                // assert(this.sr![k]);
+                child.saveRefreshResult(this.sr![k] || {});
             }
         }        
     }

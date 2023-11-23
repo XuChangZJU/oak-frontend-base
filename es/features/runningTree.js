@@ -645,7 +645,9 @@ class ListNode extends Node {
      */
     saveRefreshResult(sr, append, currentPage) {
         const { data, total } = sr;
-        this.pagination.more = Object.keys(data).length === this.pagination.pageSize;
+        if (data) {
+            this.pagination.more = Object.keys(data).length === this.pagination.pageSize;
+        }
         if (currentPage) {
             this.pagination.currentPage = currentPage;
         }
@@ -757,6 +759,7 @@ class SingleNode extends Node {
     constructor(entity, schema, cache, relationAuth, projection, parent, path, id, filters, actions, cascadeActions) {
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
+        this.sr = {};
         this.filters = filters;
         // addChild有可能为本结点赋上id值，所以要先行
         if (parent) {
@@ -1085,7 +1088,7 @@ class SingleNode extends Node {
             },
         });
         const keys = k ? [k] : Object.keys(this.children || {});
-        for (const k in keys) {
+        for (const k of keys) {
             const child = this.children[k];
             const rel = this.judgeRelation(k);
             if (rel === 2 && value.entityId) {
@@ -1105,8 +1108,8 @@ class SingleNode extends Node {
             else {
                 assert(rel instanceof Array);
                 assert(child instanceof ListNode);
-                assert(this.sr[k]);
-                child.saveRefreshResult(this.sr[k]);
+                // assert(this.sr![k]);
+                child.saveRefreshResult(this.sr[k] || {});
             }
         }
     }
