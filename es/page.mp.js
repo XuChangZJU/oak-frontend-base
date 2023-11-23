@@ -25,7 +25,7 @@ const oakBehavior = Behavior({
         t(key, params) {
             return this.features.locales.t(key, params);
         },
-        unsubScribeAll() {
+        unsubscribeAll() {
             this.subscribed.forEach((ele) => ele());
         },
         iAmThePage() {
@@ -54,7 +54,8 @@ const oakBehavior = Behavior({
             const assignProps = (data, property, type) => {
                 if (data.hasOwnProperty(property)) {
                     let value = data[property];
-                    if (typeof data[property] === 'string' && type !== 'string') {
+                    if (typeof data[property] === 'string' &&
+                        type !== 'string') {
                         switch (type) {
                             case 'boolean': {
                                 value = new Boolean(data[property]);
@@ -181,11 +182,12 @@ const oakBehavior = Behavior({
         },
         checkOperation(entity, action, data, filter, checkerTypes) {
             if (checkerTypes?.includes('relation')) {
-                return this.features.relationAuth.checkRelation(entity, {
+                return (this.features.relationAuth.checkRelation(entity, {
                     action,
                     data,
                     filter,
-                }) && this.features.cache.checkOperation(entity, action, data, filter, checkerTypes);
+                }) &&
+                    this.features.cache.checkOperation(entity, action, data, filter, checkerTypes));
             }
             return this.features.cache.checkOperation(entity, action, data, filter, checkerTypes);
         },
@@ -420,7 +422,7 @@ const oakBehavior = Behavior({
         },
         unSubData(ids) {
             return this.features.subscriber.unsub(ids);
-        }
+        },
     },
     observers: {
         oakPath(data) {
@@ -436,7 +438,9 @@ const oakBehavior = Behavior({
                         this.oakOption.lifetimes?.ready &&
                             this.oakOption.lifetimes?.ready.call(this);
                         const { oakFullpath } = this.state;
-                        if (oakFullpath && !this.features.runningTree.checkIsModiNode(oakFullpath) && !this.features.runningTree.isListDescandent(oakFullpath)) {
+                        if (oakFullpath &&
+                            !this.features.runningTree.checkIsModiNode(oakFullpath) &&
+                            !this.features.runningTree.isListDescandent(oakFullpath)) {
                             this.refresh();
                         }
                         else {

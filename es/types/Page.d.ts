@@ -133,7 +133,7 @@ export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T ex
     [k: string]: any;
 };
 export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
-    unsubScribeAll: () => void;
+    unsubscribeAll: () => void;
     subEvent: (type: string, callback: Function) => void;
     unsubEvent: (type: string, callback: Function) => void;
     pubEvent: (type: string, options?: any) => void;

@@ -67,7 +67,7 @@ const oakBehavior = Behavior<
             loadMissedLocales: (key: string) => void;
         },
     {
-        unmounted: false,
+        unmounted: false;
         prevState: Record<string, any>;
         state: Record<string, any>;
         props: {
@@ -107,10 +107,8 @@ const oakBehavior = Behavior<
             return this.features.locales.t(key, params);
         },
 
-        unsubScribeAll() {
-            this.subscribed.forEach(
-                (ele) => ele()
-            );
+        unsubscribeAll() {
+            this.subscribed.forEach((ele) => ele());
         },
 
         iAmThePage() {
@@ -146,7 +144,10 @@ const oakBehavior = Behavior<
             ) => {
                 if (data.hasOwnProperty(property)) {
                     let value = data[property];
-                    if (typeof data[property] === 'string' && type !== 'string') {
+                    if (
+                        typeof data[property] === 'string' &&
+                        type !== 'string'
+                    ) {
                         switch (type) {
                             case 'boolean': {
                                 value = new Boolean(data[property]);
@@ -156,7 +157,7 @@ const oakBehavior = Behavior<
                                 value = new Number(data[property]);
                                 break;
                             }
-                            case 'object':{
+                            case 'object': {
                                 value = JSON.parse(data[property]);
                                 break;
                             }
@@ -177,7 +178,11 @@ const oakBehavior = Behavior<
             if (properties) {
                 for (const key in properties) {
                     if (query[key]) {
-                        assignProps(query, key, typeof properties[key] as 'string');
+                        assignProps(
+                            query,
+                            key,
+                            typeof properties[key] as 'string'
+                        );
                     }
                 }
             }
@@ -186,7 +191,9 @@ const oakBehavior = Behavior<
                     assignProps(
                         query,
                         key,
-                        typeof OakProperties[key as keyof typeof OakProperties] as 'string'
+                        typeof OakProperties[
+                            key as keyof typeof OakProperties
+                        ] as 'string'
                     );
                 }
             }
@@ -282,7 +289,9 @@ const oakBehavior = Behavior<
         },
 
         isDirty(path) {
-            return this.features.runningTree.isDirty(path || this.state.oakFullpath);
+            return this.features.runningTree.isDirty(
+                path || this.state.oakFullpath
+            );
         },
 
         execute(action, messageProps, path) {
@@ -298,20 +307,20 @@ const oakBehavior = Behavior<
 
         checkOperation(entity, action, data, filter, checkerTypes) {
             if (checkerTypes?.includes('relation')) {
-                return this.features.relationAuth.checkRelation(
-                    entity,
-                    {
+                return (
+                    this.features.relationAuth.checkRelation(entity, {
                         action,
                         data,
                         filter,
-                    } as Omit<EDD[keyof EDD]['Operation'], 'id'>
-                ) && this.features.cache.checkOperation(
-                    entity,
-                    action,
-                    data,
-                    filter,
-                    checkerTypes
-                )
+                    } as Omit<EDD[keyof EDD]['Operation'], 'id'>) &&
+                    this.features.cache.checkOperation(
+                        entity,
+                        action,
+                        data,
+                        filter,
+                        checkerTypes
+                    )
+                );
             }
             return this.features.cache.checkOperation(
                 entity,
@@ -434,7 +443,11 @@ const oakBehavior = Behavior<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            this.features.runningTree.setNamedSorters(path2, namedSorters, refresh);
+            this.features.runningTree.setNamedSorters(
+                path2,
+                namedSorters,
+                refresh
+            );
         },
 
         getSorters(path) {
@@ -469,7 +482,10 @@ const oakBehavior = Behavior<
                     if (typeof sorter.sorter === 'function') {
                         const sortItem = sorter.sorter();
                         // 要支持自定义sorter函数返回完整的sorter，但这种sorter应当确保是无名的不被查找
-                        assert(!(sortItem instanceof Array), '不应该有非item的sorter被查找');
+                        assert(
+                            !(sortItem instanceof Array),
+                            '不应该有非item的sorter被查找'
+                        );
                         return sortItem;
                     }
                     return sorter.sorter;
@@ -540,10 +556,7 @@ const oakBehavior = Behavior<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.addItem(
-                path2,
-                data
-            );
+            return this.features.runningTree.addItem(path2, data);
         },
         updateItem(data, id, action, path) {
             const path2 = path
@@ -560,10 +573,7 @@ const oakBehavior = Behavior<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.removeItem(
-                path2,
-                id
-            );
+            return this.features.runningTree.removeItem(path2, id);
         },
         recoverItem(id, path) {
             const path2 = path
@@ -588,21 +598,14 @@ const oakBehavior = Behavior<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.update(
-                path2,
-                data,
-                action
-            );
+            return this.features.runningTree.update(path2, data, action);
         },
 
         create(data, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.create(
-                path2,
-                data
-            );
+            return this.features.runningTree.create(path2, data);
         },
 
         remove(path) {
@@ -636,12 +639,15 @@ const oakBehavior = Behavior<
 
         unSubData(ids) {
             return this.features.subscriber.unsub(ids);
-        }
+        },
     },
     observers: {
         oakPath(data) {
             if (data && data !== this.state.oakFullpath) {
-                const pathState = onPathSet.call(this as any, this.oakOption as any);
+                const pathState = onPathSet.call(
+                    this as any,
+                    this.oakOption as any
+                );
                 if (this.unmounted) {
                     return;
                 }
@@ -655,7 +661,15 @@ const oakBehavior = Behavior<
                             this.oakOption.lifetimes?.ready.call(this);
 
                         const { oakFullpath } = this.state;
-                        if (oakFullpath && !this.features.runningTree.checkIsModiNode(oakFullpath) && !this.features.runningTree.isListDescandent(oakFullpath)) {
+                        if (
+                            oakFullpath &&
+                            !this.features.runningTree.checkIsModiNode(
+                                oakFullpath
+                            ) &&
+                            !this.features.runningTree.isListDescandent(
+                                oakFullpath
+                            )
+                        ) {
                             this.refresh();
                         } else {
                             this.reRender();
