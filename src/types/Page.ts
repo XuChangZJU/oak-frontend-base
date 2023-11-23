@@ -323,7 +323,7 @@ export type OakCommonComponentMethods<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED
     > = {
-        unsubScribeAll: () => void;
+        unsubscribeAll: () => void;
 
         subEvent: (type: string, callback: Function) => void;
         unsubEvent: (type: string, callback: Function) => void;
