@@ -167,6 +167,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
         operation: ED[keyof ED]['Operation'];
     }> | undefined;
     getProjection(withDecendants?: boolean): ED[T]["Selection"]["data"] | undefined;
+    private passRsToChild;
     saveRefreshResult(data: Record<string, any>): void;
     refresh(): Promise<void>;
     clean(): void;

@@ -851,6 +851,7 @@ class SingleNode extends Node {
     addChild(path, node) {
         assert(!this.children[path]);
         this.children[path] = node;
+        this.passRsToChild(path);
     }
     removeChild(path) {
         unset(this.children, path);
@@ -933,17 +934,20 @@ class SingleNode extends Node {
             }
         }
         // 处理外键，如果update的数据中有相应的外键，其子对象上的动作应当被clean掉
+        // 并将sr传递到子组件上
         for (const attr in data) {
             if (attr === 'entityId') {
                 assert(data.entity, '设置entityId时请将entity也传入');
                 if (this.children[data.entity]) {
                     this.children[data.entity].clean();
+                    this.passRsToChild(data.entity);
                 }
             }
             else if (this.schema[this.entity].attributes[attr]?.type === 'ref') {
                 const refKey = attr.slice(0, attr.length - 2);
                 if (this.children[refKey]) {
                     this.children[refKey].clean();
+                    this.passRsToChild(refKey);
                 }
             }
         }
@@ -960,6 +964,7 @@ class SingleNode extends Node {
             },
         };
         this.operation = operation;
+        // 此时应如何处理children？除了clean之外似乎还应当unsetId？没想清楚
         this.setDirty();
     }
     setDirty() {
@@ -1060,11 +1065,7 @@ class SingleNode extends Node {
         }
         return projection;
     }
-    saveRefreshResult(data) {
-        const ids = Object.keys(data);
-        assert(ids.length === 1);
-        this.id = ids[0];
-        this.sr = data[ids[0]];
+    passRsToChild(k) {
         /**
          * 把返回的结果中的total和aggr相关的值下降到相关的子结点上去
          */
@@ -1075,17 +1076,18 @@ class SingleNode extends Node {
                 id: this.id,
             },
         });
-        for (const k in this.children) {
+        const keys = k ? [k] : Object.keys(this.children);
+        for (const k in keys) {
             const child = this.children[k];
             const rel = this.judgeRelation(k);
-            if (rel === 2) {
+            if (rel === 2 && value.entityId) {
                 assert(child instanceof SingleNode);
                 assert(value.entity === child.getEntity());
                 child.saveRefreshResult({
                     [value.entityId]: this.sr[k] || {},
                 });
             }
-            else if (typeof rel === 'string') {
+            else if (typeof rel === 'string' && value[`${k}Id`]) {
                 assert(child instanceof SingleNode);
                 assert(rel === child.getEntity());
                 child.saveRefreshResult({
@@ -1099,6 +1101,13 @@ class SingleNode extends Node {
                 child.saveRefreshResult(this.sr[k]);
             }
         }
+    }
+    saveRefreshResult(data) {
+        const ids = Object.keys(data);
+        assert(ids.length === 1);
+        this.id = ids[0];
+        this.sr = data[ids[0]];
+        this.passRsToChild();
         this.publish();
     }
     async refresh() {
