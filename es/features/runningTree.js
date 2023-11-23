@@ -1027,7 +1027,7 @@ class SingleNode extends Node {
                     console.warn(`父结点都定义了${k}路径上的projection，和子结点产生冲突`);
                 }
                 if (!k.includes(MODI_NEXT_PATH_SUFFIX)) {
-                    const rel = this.judgeRelation(k);
+                    const rel = this.judgeRelation(k.includes(':') ? k.split(':')[0] : k);
                     if (rel === 2) {
                         const subProjection = this.children[k].getProjection(true);
                         Object.assign(projection, {
