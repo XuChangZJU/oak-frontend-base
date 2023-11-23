@@ -4,6 +4,10 @@ import React from 'react';
 import { get } from 'oak-domain/lib/utils/lodash';
 import { onPathSet, reRender, refresh, loadMore, execute, destroyNode, } from './page.common';
 class OakComponentBase extends React.PureComponent {
+    subscribed = [];
+    unsubscribeAll() {
+        this.subscribed.forEach(ele => ele());
+    }
     subEvent(type, callback) {
         this.features.eventBus.sub(type, callback);
     }
@@ -24,21 +28,6 @@ class OakComponentBase extends React.PureComponent {
     }
     clear() {
         this.features.localStorage.clear();
-    }
-    resolveInput(input, keys) {
-        const { currentTarget, target } = input;
-        const { value } = Object.assign({}, currentTarget, target);
-        const { dataset } = currentTarget;
-        const result = {
-            dataset,
-            value,
-        };
-        if (keys) {
-            keys.forEach((k) => Object.assign(result, {
-                [k]: target[k],
-            }));
-        }
-        return result;
     }
     setNotification(data) {
         this.features.notification.setNotification(data);
@@ -367,7 +356,6 @@ export function createComponent(option, features) {
         features = features;
         oakOption = option;
         isReachBottom = false;
-        subscribed = [];
         methodProps;
         defaultProperties;
         unmounted = false;

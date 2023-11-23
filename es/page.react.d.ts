@@ -15,7 +15,6 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         oakOption: OakComponentOption<IsList, ED, T, Cxt, FrontCxt, AD, FD, FormedData, TData, TProperty, TMethod>;
         isReachBottom: boolean;
-        subscribed: Array<() => void>;
         methodProps: Record<string, Function>;
         defaultProperties: Record<string, any>;
         unmounted: boolean;
@@ -26,6 +25,8 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         componentWillUnmount(): void;
         componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>): Promise<void>;
         render(): React.ReactNode;
+        subscribed: (() => void)[];
+        unsubscribeAll(): void;
         subEvent(type: string, callback: Function): void;
         unsubEvent(type: string, callback: Function): void;
         pubEvent(type: string, options?: any): void;
@@ -33,10 +34,6 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         save(key: string, item: any): void;
         load(key: string): any;
         clear(): void;
-        resolveInput(input: React.BaseSyntheticEvent<object, any, any>, keys?: string[] | undefined): {
-            dataset: any;
-            value: any;
-        };
         setNotification(data: NotificationProps): void;
         consumeNotification(): NotificationProps | undefined;
         setMessage(data: MessageProps): Promise<void>;

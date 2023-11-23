@@ -1250,7 +1250,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 if (projection[k] && process.env.NODE_ENV === 'development') {
                     console.warn(`父结点都定义了${k}路径上的projection，和子结点产生冲突`);
                 }
-                if (k.indexOf(':') === -1) {
+                if (!k.includes(MODI_NEXT_PATH_SUFFIX)) {
                     const rel = this.judgeRelation(k);
                     if (rel === 2) {
                         const subProjection = this.children[k].getProjection(true);
@@ -1293,7 +1293,13 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         /**
          * 把返回的结果中的total和aggr相关的值下降到相关的子结点上去
          */
-        const value = this.getFreshValue()!;
+        const projection = this.getProjection(true)!;
+        const [value] = this.cache.get(this.entity, {
+            data: projection,
+            filter: {
+                id: this.id,
+            },
+        });
         for (const k in this.children) {
             const child = this.children[k];
             const rel = this.judgeRelation(k);

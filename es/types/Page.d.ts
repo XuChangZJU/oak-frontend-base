@@ -133,6 +133,7 @@ export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T ex
     [k: string]: any;
 };
 export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
+    unsubScribeAll: () => void;
     subEvent: (type: string, callback: Function) => void;
     unsubEvent: (type: string, callback: Function) => void;
     pubEvent: (type: string, options?: any) => void;
@@ -140,12 +141,6 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
     save: (key: string, item: any) => void;
     load: (key: string) => any;
     clear: () => void;
-    resolveInput: <K extends string>(input: any, keys?: K[]) => {
-        dataset?: Record<string, any>;
-        value?: string;
-    } & {
-        [k in K]?: any;
-    };
     setNotification: (data: NotificationProps) => void;
     consumeNotification: () => NotificationProps | undefined;
     setMessage: (data: MessageProps) => void;

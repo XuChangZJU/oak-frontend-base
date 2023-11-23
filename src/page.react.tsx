@@ -60,6 +60,13 @@ abstract class OakComponentBase<
         TProperty,
         TMethod
     >;
+    subscribed: Array<() => void> = [];
+
+    unsubscribeAll() {
+        this.subscribed.forEach(
+            ele => ele()
+        );
+    }
     
     subEvent(type: string, callback: Function) {
         this.features.eventBus.sub(type, callback);
@@ -87,24 +94,6 @@ abstract class OakComponentBase<
 
     clear() {
         this.features.localStorage.clear();
-    }
-
-    resolveInput(input: React.BaseSyntheticEvent, keys?: string[]) {
-        const { currentTarget, target } = input;
-        const { value } = Object.assign({}, currentTarget, target);
-        const { dataset } = currentTarget;
-        const result = {
-            dataset,
-            value,
-        };
-        if (keys) {
-            keys.forEach((k) =>
-                Object.assign(result, {
-                    [k]: target[k],
-                })
-            );
-        }
-        return result;
     }
 
     setNotification(data: NotificationProps) {
@@ -637,7 +626,6 @@ export function createComponent<
         features = features;
         oakOption = option;
         isReachBottom = false;
-        subscribed: Array<() => void> = [];
         methodProps: Record<string, Function>;
         defaultProperties: Record<string, any>;
         unmounted: boolean = false;

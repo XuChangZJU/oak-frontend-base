@@ -25,20 +25,8 @@ const oakBehavior = Behavior({
         t(key, params) {
             return this.features.locales.t(key, params);
         },
-        resolveInput(input, keys) {
-            const { currentTarget, detail } = input;
-            const { dataset } = currentTarget;
-            const { value } = detail;
-            const result = {
-                dataset,
-                value,
-            };
-            if (keys) {
-                keys.forEach((k) => Object.assign(result, {
-                    [k]: detail[k],
-                }));
-            }
-            return result;
+        unsubScribeAll() {
+            this.subscribed.forEach((ele) => ele());
         },
         iAmThePage() {
             const pages = getCurrentPages();
@@ -719,7 +707,7 @@ export function createComponent(option, features) {
                 attached && attached.call(this);
             },
             detached() {
-                this.subscribed.forEach((ele) => ele());
+                this.unsubscribeAll();
                 this.state.oakFullpath &&
                     (this.iAmThePage() || this.props.oakAutoUnmount) &&
                     destroyNode.call(this);
