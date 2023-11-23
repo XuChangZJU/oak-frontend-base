@@ -119,6 +119,8 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
         filter: ED[T]["Selection"]["filter"] | undefined;
         sorter: ED[T]["Selection"]["sorter"];
         total: number | undefined;
+        indexFrom: number;
+        count: number;
     };
     /**
      * 存留查询结果

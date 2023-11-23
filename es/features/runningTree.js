@@ -632,11 +632,14 @@ class ListNode extends Node {
         const filters = this.constructFilters(withParent, ignoreNewParent, ignoreUnapplied);
         const filters2 = filters?.filter((ele) => !!ele);
         const filter = filters2 ? combineFilters(this.entity, this.schema, filters2) : undefined;
+        const { currentPage, pageSize } = this.pagination;
         return {
             data,
             filter,
             sorter: sorterArr,
             total: getTotal,
+            indexFrom: currentPage * pageSize,
+            count: pageSize,
         };
     }
     /**
