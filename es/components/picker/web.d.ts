@@ -1,3 +1,4 @@
+import React from 'react';
 import { WebComponentProps, RowWithActions } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 export default function Render(props: WebComponentProps<ED, keyof ED, false, {
@@ -7,4 +8,4 @@ export default function Render(props: WebComponentProps<ED, keyof ED, false, {
     onSelect: (rows: RowWithActions<ED, keyof ED>[]) => void;
     multiple: boolean;
     titleLabel: string;
-}, {}>): import("react/jsx-runtime").JSX.Element;
+}, {}>): React.JSX.Element;

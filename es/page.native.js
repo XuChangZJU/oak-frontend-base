@@ -1,5 +1,3 @@
-import React from 'react';
-import { withRouter, PullToRefresh } from './platforms/web';
 import { createComponent as createReactComponent } from './page.react';
 const DEFAULT_REACH_BOTTOM_DISTANCE = 50;
 export function createComponent(option, features) {
@@ -40,34 +38,7 @@ export function createComponent(option, features) {
         render() {
             const { oakPullDownRefreshLoading } = this.state;
             const Render = super.render();
-            if (this.supportPullDownRefresh()) {
-                return (<PullToRefresh onRefresh={async () => {
-                        this.setState({
-                            oakPullDownRefreshLoading: true,
-                        });
-                        await this.refresh();
-                        this.setState({
-                            oakPullDownRefreshLoading: false,
-                        });
-                    }} refreshing={oakPullDownRefreshLoading} distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE} indicator={{
-                        activate: this.t('common::ptrActivate', {
-                            '#oakModule': 'oak-frontend-base',
-                        }),
-                        deactivate: this.t('common::ptrDeactivate', {
-                            '#oakModule': 'oak-frontend-base',
-                        }),
-                        release: this.t('common::ptrRelease', {
-                            '#oakModule': 'oak-frontend-base',
-                        }),
-                        finish: this.t('common::ptrFinish', {
-                            '#oakModule': 'oak-frontend-base',
-                        }),
-                    }}>
-                        {Render}
-                    </PullToRefresh>);
-            }
             return Render;
         }
     }
-    return withRouter(Component, option);
 }

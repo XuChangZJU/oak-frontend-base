@@ -1,6 +1,5 @@
-import { jsx as _jsx } from "react/jsx-runtime";
 import { assert } from 'oak-domain/lib/utils/assert';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import OlMap from 'ol/Map';
 import Feature from 'ol/Feature';
 import XYZ from 'ol/source/XYZ';
@@ -117,5 +116,5 @@ export default function Map(props) {
             map.render();
         }
     }, [props.markers]);
-    return (_jsx("div", { id: `map-${id || prefix}`, className: Styles.map, style: props.style }));
+    return (<div id={`map-${id || prefix}`} className={Styles.map} style={props.style}/>);
 }

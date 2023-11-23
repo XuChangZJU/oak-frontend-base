@@ -1,4 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import React from 'react';
 import { Space, Tooltip } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import ButtonGroup from '../buttonGroup';
@@ -8,8 +8,21 @@ import Style from './index.module.less';
 function ToolBar(props) {
     const { title, buttonGroup, reload } = props;
     const features = useFeatures();
-    return (_jsxs("div", { className: Style.toolbarContainer, children: [_jsx("div", { className: Style.title, children: title }), _jsx("div", { className: Style.toolbarRight, children: _jsxs(Space, { children: [buttonGroup && buttonGroup.length > 0 && (_jsx(ButtonGroup, { items: buttonGroup })), _jsx(Tooltip, { title: features.locales.t('reload'), children: _jsx("div", { className: Style.reloadIconBox, onClick: () => {
-                                    reload();
-                                }, children: _jsx(ReloadOutlined, {}) }) }), _jsx(ColumnSetting, {})] }) })] }));
+    return (<div className={Style.toolbarContainer}>
+            <div className={Style.title}>{title}</div>
+            <div className={Style.toolbarRight}>
+                <Space>
+                    {buttonGroup && buttonGroup.length > 0 && (<ButtonGroup items={buttonGroup}/>)}
+                    <Tooltip title={features.locales.t('reload')}>
+                        <div className={Style.reloadIconBox} onClick={() => {
+            reload();
+        }}>
+                            <ReloadOutlined />
+                        </div>
+                    </Tooltip>
+                    <ColumnSetting />
+                </Space>
+            </div>
+        </div>);
 }
 export default ToolBar;

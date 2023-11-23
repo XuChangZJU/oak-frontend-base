@@ -278,6 +278,7 @@ class ListNode extends Node {
         this.filters = filters || [];
         this.sorters = sorters || [];
         this.getTotal = getTotal;
+        this.sr = {};
         this.pagination = pagination ? {
             ...pagination,
             currentPage: pagination.currentPage - 1,
@@ -661,7 +662,7 @@ class ListNode extends Node {
             };
         }
         else {
-            this.sr = data;
+            this.sr = data || {};
         }
         for (const k in this.children) {
             const child = this.children[k];
@@ -1091,19 +1092,23 @@ class SingleNode extends Node {
         for (const k of keys) {
             const child = this.children[k];
             const rel = this.judgeRelation(k);
-            if (rel === 2 && value.entityId) {
-                assert(child instanceof SingleNode);
-                assert(value.entity === child.getEntity());
-                child.saveRefreshResult({
-                    [value.entityId]: this.sr[k] || {},
-                });
+            if (rel === 2) {
+                if (value?.entityId) {
+                    assert(child instanceof SingleNode);
+                    assert(value.entity === child.getEntity());
+                    child.saveRefreshResult({
+                        [value.entityId]: this.sr[k] || {},
+                    });
+                }
             }
-            else if (typeof rel === 'string' && value[`${k}Id`]) {
-                assert(child instanceof SingleNode);
-                assert(rel === child.getEntity());
-                child.saveRefreshResult({
-                    [value[`${k}Id`]]: this.sr[k] || {},
-                });
+            else if (typeof rel === 'string') {
+                if (value && value[`${k}Id`]) {
+                    assert(child instanceof SingleNode);
+                    assert(rel === child.getEntity());
+                    child.saveRefreshResult({
+                        [value[`${k}Id`]]: this.sr[k] || {},
+                    });
+                }
             }
             else {
                 assert(rel instanceof Array);

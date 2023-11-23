@@ -1,5 +1,4 @@
-import { jsx as _jsx, Fragment as _Fragment, jsxs as _jsxs } from "react/jsx-runtime";
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Space, Button, Divider, Popover, Typography, } from 'antd';
 import { MoreOutlined, } from '@ant-design/icons';
 import Style from './mobile.module.less';
@@ -12,5 +11,22 @@ export default function Render(props) {
     useEffect(() => {
         makeItems(isMobile);
     }, [zhCNKeys]);
-    return (_jsxs("div", { className: Style.container, children: [items && items.map((ele, index) => (_jsxs(_Fragment, { children: [_jsx("div", { className: Style.btn, onClick: ele.onClick, children: _jsx(Typography.Link, { children: ele.label }) }), index !== items.length - 1 && (_jsx(Divider, { type: "vertical" }))] }))), moreItems && moreItems.length > 0 && (_jsx(Divider, { type: "vertical" })), moreItems && moreItems.length > 0 && (_jsx(Popover, { placement: 'topRight', content: _jsx(Space, { direction: "vertical", children: moreItems.map((ele) => (_jsx(Button, { size: "small", type: "link", onClick: ele.onClick, children: ele.label }))) }), trigger: "click", children: _jsx(Button, { type: "link", icon: (_jsx(MoreOutlined, {})) }) }))] }));
+    return (<div className={Style.container}>
+            {items && items.map((ele, index) => (<>
+                    <div className={Style.btn} onClick={ele.onClick}>
+                        <Typography.Link>
+                            {ele.label}
+                        </Typography.Link>
+                    </div>
+                    {index !== items.length - 1 && (<Divider type="vertical"></Divider>)}
+                </>))}
+            {moreItems && moreItems.length > 0 && (<Divider type="vertical"/>)}
+            {moreItems && moreItems.length > 0 && (<Popover placement='topRight' content={<Space direction="vertical">
+                            {moreItems.map((ele) => (<Button size="small" type="link" onClick={ele.onClick}>
+                                    {ele.label}
+                                </Button>))}
+                        </Space>} trigger="click">
+                    <Button type="link" icon={(<MoreOutlined />)}/>
+                </Popover>)}
+        </div>);
 }

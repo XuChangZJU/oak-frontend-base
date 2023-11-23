@@ -1,3 +1,4 @@
+import React from 'react';
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 import { ColumnProps, ValueType, ViewType } from '../../types/Filter';
@@ -16,4 +17,4 @@ export default function Render<ED2 extends ED>(props: WebComponentProps<ED2, key
 }, {
     getNamedFilter: (name: string) => Record<string, any>;
     setFilterAndResetFilter: (viewType: ViewType, value?: ValueType) => void;
-}>): import("react/jsx-runtime").JSX.Element | null;
+}>): React.JSX.Element | null;

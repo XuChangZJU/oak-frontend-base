@@ -1,3 +1,4 @@
+/// <reference types="react" />
 import { WebComponentProps } from '../../../types/Page';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -23,5 +24,5 @@ export default function render(props: WebComponentProps<ED, 'actionAuth', true, 
     onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['Schema'][]) => void;
     onChange2: (checked: boolean, relationId: string, paths: string[], actionAuths: ED['actionAuth']['Schema'][], actionAuth?: ED['actionAuth']['Schema']) => void;
     confirm: () => void;
-}>): import("react/jsx-runtime").JSX.Element;
+}>): import("react").JSX.Element;
 export {};

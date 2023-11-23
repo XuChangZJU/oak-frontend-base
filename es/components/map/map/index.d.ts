@@ -1,3 +1,4 @@
+import React from 'react';
 import 'ol/ol.css';
 type MapProps = {
     id?: string;
@@ -10,5 +11,5 @@ type MapProps = {
     autoLocate?: boolean;
     markers?: Array<[number, number]>;
 };
-export default function Map(props: MapProps): import("react/jsx-runtime").JSX.Element;
+export default function Map(props: MapProps): React.JSX.Element;
 export {};

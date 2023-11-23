@@ -1,3 +1,4 @@
+import React from 'react';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 type ED = EntityDict & BaseEntityDict;
@@ -10,5 +11,5 @@ export default function render<T extends keyof ED>(props: WebComponentProps<ED, 
     layout?: 'horizontal' | 'vertical';
     mode?: 'default' | 'card';
     children: any;
-}>): import("react/jsx-runtime").JSX.Element;
+}>): React.JSX.Element;
 export {};

@@ -1,0 +1,100 @@
+import React from 'react';
+import { RefreshControl, View, StyleSheet,  } from 'react-native';
+import { CommonAspectDict } from 'oak-common-aspect';
+import { Aspect, EntityDict } from 'oak-domain/lib/types';
+import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { BasicFeatures } from './features';
+import { Feature } from './types/Feature';
+import {
+    DataOption,
+    OakComponentOption,
+} from './types/Page';
+
+import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+import { createComponent as createReactComponent } from './page.react';
+
+const DEFAULT_REACH_BOTTOM_DISTANCE = 50;
+
+export function createComponent<
+    IsList extends boolean,
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>,
+    AD extends Record<string, Aspect<ED, Cxt>>,
+    FD extends Record<string, Feature>,
+    FormedData extends Record<string, any>,
+    TData extends Record<string, any> = {},
+    TProperty extends DataOption = {},
+    TMethod extends Record<string, Function> = {}
+>(
+    option: OakComponentOption<
+        IsList,
+        ED,
+        T,
+        Cxt,
+        FrontCxt,
+        AD,
+        FD,
+        FormedData,
+        TData,
+        TProperty,
+        TMethod
+    >,
+    features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD,
+) {
+    const BaseComponent = createReactComponent<
+        IsList, ED, T, Cxt, FrontCxt, AD, FD, FormedData, TData, TProperty, TMethod
+    >(option, features);
+
+    class Component extends BaseComponent {
+        private scrollEvent = () => {
+            this.checkReachBottom();
+        };
+
+        private registerPageScroll() {
+            window.addEventListener('scroll', this.scrollEvent);
+        }
+
+        private unregisterPageScroll() {
+            window.removeEventListener('scroll', this.scrollEvent);
+        }
+
+        private checkReachBottom() {
+            if (!this.supportPullDownRefresh()) {
+                return;
+            }
+            const isCurrentReachBottom =
+                document.body.scrollHeight -
+                (window.innerHeight + window.scrollY) <=
+                DEFAULT_REACH_BOTTOM_DISTANCE;
+
+            if (!this.isReachBottom && isCurrentReachBottom && option.isList) {
+                this.isReachBottom = true;
+                // 执行触底事件
+                this.loadMore();
+                return;
+            }
+
+            this.isReachBottom = isCurrentReachBottom;
+        }
+
+        async componentDidMount() {
+            this.registerPageScroll();
+            await super.componentDidMount();                        
+        }
+
+        componentWillUnmount(): void {
+            this.unregisterPageScroll();
+            super.componentWillUnmount();
+        }
+
+        render(): React.ReactNode {
+            const { oakPullDownRefreshLoading } = this.state;
+            const Render = super.render();
+            
+            return Render;      
+        }
+    }
+}

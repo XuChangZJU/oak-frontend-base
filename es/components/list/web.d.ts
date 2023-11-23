@@ -25,5 +25,5 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
             type: 'single' | 'multiple' | 'none';
         }) => void;
     };
-}, {}>): import("react/jsx-runtime").JSX.Element;
+}, {}>): React.JSX.Element;
 export {};
