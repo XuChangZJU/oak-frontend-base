@@ -63,10 +63,6 @@ abstract class Node<
         this.modiIds = undefined;
         this.actions = actions;
         this.cascadeActions = cascadeActions;
-        if (parent) {
-            assert(path);
-            parent.addChild(path, this as any);
-        }
     }
 
     getEntity() {
@@ -203,12 +199,12 @@ class ListNode<
         | ED[T]['Remove']
     >;
 
-    private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
+    private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>> = {};
     private filters: (NamedFilterItem<ED, T> & { applied?: boolean })[];
     private sorters: (NamedSorterItem<ED, T> & { applied?: boolean })[];
     private getTotal?: number;
-    private pagination: Pagination;
-    private sr: Record<string, any>;
+    private pagination: Pagination = DEFAULT_PAGINATION;
+    private sr: Record<string, any> = {};
 
     private syncHandler: (records: OpRecord<ED>[]) => void;
 
@@ -386,7 +382,6 @@ class ListNode<
         }
     ) {
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
-        this.children = {};
         this.filters = filters || [];
         this.sorters = sorters || [];
         this.getTotal = getTotal;
@@ -397,10 +392,14 @@ class ListNode<
             total: 0,
         } : DEFAULT_PAGINATION;
         this.updates = {};
-        this.sr = {};
 
         this.syncHandler = (records) => this.onCacheSync(records);
         this.cache.bindOnSync(this.syncHandler);
+        
+        if (parent) {
+            assert(path);
+            parent.addChild(path, this as any);
+        }
     }
 
     getPagination() {
@@ -957,11 +956,22 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         this.children = {};
         this.filters = filters;
 
+        // addChild有可能为本结点赋上id值，所以要先行
+        if (parent) {
+            assert(path);
+            parent.addChild(path, this as any);
+        }
+
         if (!this.id && !id) {
             this.create({});
         }
         else if (id) {
-            this.id = id;
+            if (this.id) {
+                assert (id === this.id, 'singleNode初始化的id必须一致');
+            }
+            else {
+                this.id = id;
+            }
         }
     }
 

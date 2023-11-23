@@ -36,10 +36,6 @@ class Node extends Feature {
         this.modiIds = undefined;
         this.actions = actions;
         this.cascadeActions = cascadeActions;
-        if (parent) {
-            assert(path);
-            parent.addChild(path, this);
-        }
     }
     getEntity() {
         return this.entity;
@@ -134,12 +130,12 @@ const DEFAULT_PAGINATION = {
 };
 class ListNode extends Node {
     updates;
-    children;
+    children = {};
     filters;
     sorters;
     getTotal;
-    pagination;
-    sr;
+    pagination = DEFAULT_PAGINATION;
+    sr = {};
     syncHandler;
     setFiltersAndSortedApplied() {
         this.filters.forEach(ele => ele.applied = true);
@@ -279,7 +275,6 @@ class ListNode extends Node {
     }
     constructor(entity, schema, cache, relationAuth, projection, parent, path, filters, sorters, getTotal, pagination, actions, cascadeActions) {
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
-        this.children = {};
         this.filters = filters || [];
         this.sorters = sorters || [];
         this.getTotal = getTotal;
@@ -290,9 +285,12 @@ class ListNode extends Node {
             total: 0,
         } : DEFAULT_PAGINATION;
         this.updates = {};
-        this.sr = {};
         this.syncHandler = (records) => this.onCacheSync(records);
         this.cache.bindOnSync(this.syncHandler);
+        if (parent) {
+            assert(path);
+            parent.addChild(path, this);
+        }
     }
     getPagination() {
         return this.pagination;
@@ -760,11 +758,21 @@ class SingleNode extends Node {
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
         this.filters = filters;
+        // addChild有可能为本结点赋上id值，所以要先行
+        if (parent) {
+            assert(path);
+            parent.addChild(path, this);
+        }
         if (!this.id && !id) {
             this.create({});
         }
         else if (id) {
-            this.id = id;
+            if (this.id) {
+                assert(id === this.id, 'singleNode初始化的id必须一致');
+            }
+            else {
+                this.id = id;
+            }
         }
     }
     setFiltersAndSortedApplied() {
