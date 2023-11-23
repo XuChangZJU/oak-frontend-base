@@ -953,7 +953,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         this.children = {};
         this.filters = filters;
 
-        if (!id) {
+        if (!this.id) {
             // 不传id先假设是创建动作
             this.create({});
             // this.id = this.operation!.operation.data.id;
