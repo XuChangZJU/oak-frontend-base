@@ -1303,7 +1303,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 id: this.id,
             },
         });
-        const keys = k ? [k] : Object.keys(this.children);
+        const keys = k ? [k] : Object.keys(this.children || {});
         for (const k in keys) {
             const child = this.children[k]!;
             const rel = this.judgeRelation(k);
