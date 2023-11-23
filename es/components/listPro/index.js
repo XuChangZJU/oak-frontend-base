@@ -1,4 +1,5 @@
-import React, { createContext, useEffect, useState } from 'react';
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { createContext, useEffect, useState } from 'react';
 import { translateAttributes } from '../../utils/usefulFn';
 import List from '../list';
 import ToolBar from '../list/toolBar';
@@ -56,7 +57,7 @@ const ProList = (props) => {
         const totalStr = features.locales.t('total number of rows');
         return `${totalStr}：${total > 999 ? `${total} +` : total}`;
     };
-    return (<TableContext.Provider value={{
+    return (_jsx(TableContext.Provider, { value: {
             tableAttributes,
             entity: entity,
             schema,
@@ -65,28 +66,22 @@ const ProList = (props) => {
             onReset: () => {
                 initTableAttributes();
             },
-        }}>
-            <div className={Style.container}>
-                {!isMobile && (<ToolBar title={title} buttonGroup={buttonGroup} reload={() => {
-                onReload && onReload();
-            }}/>)}
-                {isMobile && <ButtonGroup items={buttonGroup}/>}
-                <List entity={entity} extraActions={extraActions} onAction={onAction} disabledOp={disabledOp} attributes={attributes} data={!disableSerialNumber
-            ? data?.map((ele, index) => {
-                if (tablePagination) {
-                    const total = tablePagination.total || 0;
-                    const pageSize = tablePagination.pageSize || 20; //条数
-                    const current = tablePagination.current || 1; //当前页
-                    ele['#'] =
-                        pageSize * (current - 1) +
-                            (index + 1);
-                }
-                return ele;
-            })
-            : data} loading={loading} tablePagination={Object.assign({
-            showTotal,
-        }, tablePagination)} rowSelection={rowSelection}/>
-            </div>
-        </TableContext.Provider>);
+        }, children: _jsxs("div", { className: Style.container, children: [!isMobile && (_jsx(ToolBar, { title: title, buttonGroup: buttonGroup, reload: () => {
+                        onReload && onReload();
+                    } })), isMobile && _jsx(ButtonGroup, { items: buttonGroup }), _jsx(List, { entity: entity, extraActions: extraActions, onAction: onAction, disabledOp: disabledOp, attributes: attributes, data: !disableSerialNumber
+                        ? data?.map((ele, index) => {
+                            if (tablePagination) {
+                                const total = tablePagination.total || 0;
+                                const pageSize = tablePagination.pageSize || 20; //条数
+                                const current = tablePagination.current || 1; //当前页
+                                ele['#'] =
+                                    pageSize * (current - 1) +
+                                        (index + 1);
+                            }
+                            return ele;
+                        })
+                        : data, loading: loading, tablePagination: Object.assign({
+                        showTotal,
+                    }, tablePagination), rowSelection: rowSelection })] }) }));
 };
 export default ProList;

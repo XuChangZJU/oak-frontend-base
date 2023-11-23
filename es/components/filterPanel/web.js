@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState } from 'react';
 import { Button, Space, Form, Badge, Row, Col } from 'antd';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import Filter from '../filter2';
@@ -62,9 +63,7 @@ export default function Render(props) {
     tfColumns.forEach((column, index) => {
         const { colSpan } = column;
         const colSpan2 = getSpan(colSpan || 1, mergedColumn);
-        const item = (<Col span={gridColumn * colSpan2}>
-                <Filter column={column} entity={entity} oakPath={oakFullpath}/>
-            </Col>);
+        const item = (_jsx(Col, { span: gridColumn * colSpan2, children: _jsx(Filter, { column: column, entity: entity, oakPath: oakFullpath }) }));
         if (index === 0) {
             firstItem = item;
         }
@@ -137,40 +136,18 @@ export default function Render(props) {
     const buttonItemLayout = formLayout === 'horizontal'
         ? { wrapperCol: { span: 18, offset: 6 } }
         : null;
-    items.push(<Col span={_gridColumn}>
-            <Form.Item {...buttonItemLayout}>
-                <Space className={Style.actionBox}>
-                    <Badge count={count}>
-                        <Button type="default" onClick={() => {
-            filterNames.forEach((ele) => removeNamedFilterByName(ele));
-            form.resetFields();
-            refresh();
-        }}>
-                            {t('common::reset')}
-                        </Button>
-                    </Badge>
-                    <Button type="primary" onClick={() => {
-            if (typeof onSearch === 'function') {
-                onSearch();
-                return;
-            }
-            refresh();
-        }}>
-                        {t('common::select')}
-                    </Button>
-                    {showExpandButton && (<Button type="link" onClick={() => {
-                setOpen(!open);
-            }}>
-                            <Space>
-                                {open ? t('common::shrink') : t('common::expand')}
-
-                                {open ? <UpOutlined /> : <DownOutlined />}
-                            </Space>
-                        </Button>)}
-                </Space>
-            </Form.Item>
-        </Col>);
-    return (<Form form={form} {...formItemLayout} layout={formLayout}>
-            <Row gutter={[16, 16]}>{items}</Row>
-        </Form>);
+    items.push(_jsx(Col, { span: _gridColumn, children: _jsx(Form.Item, { ...buttonItemLayout, children: _jsxs(Space, { className: Style.actionBox, children: [_jsx(Badge, { count: count, children: _jsx(Button, { type: "default", onClick: () => {
+                                filterNames.forEach((ele) => removeNamedFilterByName(ele));
+                                form.resetFields();
+                                refresh();
+                            }, children: t('common::reset') }) }), _jsx(Button, { type: "primary", onClick: () => {
+                            if (typeof onSearch === 'function') {
+                                onSearch();
+                                return;
+                            }
+                            refresh();
+                        }, children: t('common::select') }), showExpandButton && (_jsx(Button, { type: "link", onClick: () => {
+                            setOpen(!open);
+                        }, children: _jsxs(Space, { children: [open ? t('common::shrink') : t('common::expand'), open ? _jsx(UpOutlined, {}) : _jsx(DownOutlined, {})] }) }))] }) }) }));
+    return (_jsx(Form, { form: form, ...formItemLayout, layout: formLayout, children: _jsx(Row, { gutter: [16, 16], children: items }) }));
 }

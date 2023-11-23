@@ -6,6 +6,23 @@ export function createComponent(option, features) {
         scrollEvent = () => {
             this.checkReachBottom();
         };
+        handleResize() {
+            // TODO native跑到了再实现
+            // const size: WechatMiniprogram.Page.IResizeOption = {
+            //     size: {
+            //         windowHeight: window.innerHeight,
+            //         windowWidth: window.innerWidth,
+            //     },
+            // };
+            // const { resize } = this.oakOption.lifetimes || {};
+            // resize && resize(size);
+        }
+        registerResize() {
+            window.addEventListener('resize', this.handleResize);
+        }
+        unregisterResize() {
+            window.removeEventListener('resize', this.handleResize);
+        }
         registerPageScroll() {
             window.addEventListener('scroll', this.scrollEvent);
         }

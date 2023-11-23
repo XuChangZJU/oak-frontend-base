@@ -53,6 +53,26 @@ export function createComponent<
             this.checkReachBottom();
         };
 
+        private handleResize() {
+            // TODO native跑到了再实现
+            // const size: WechatMiniprogram.Page.IResizeOption = {
+            //     size: {
+            //         windowHeight: window.innerHeight,
+            //         windowWidth: window.innerWidth,
+            //     },
+            // };
+            // const { resize } = this.oakOption.lifetimes || {};
+            // resize && resize(size);
+        }
+
+        private registerResize() {
+            window.addEventListener('resize', this.handleResize);
+        }
+
+        private unregisterResize() {
+            window.removeEventListener('resize', this.handleResize);
+        }
+
         private registerPageScroll() {
             window.addEventListener('scroll', this.scrollEvent);
         }
@@ -67,7 +87,7 @@ export function createComponent<
             }
             const isCurrentReachBottom =
                 document.body.scrollHeight -
-                (window.innerHeight + window.scrollY) <=
+                    (window.innerHeight + window.scrollY) <=
                 DEFAULT_REACH_BOTTOM_DISTANCE;
 
             if (!this.isReachBottom && isCurrentReachBottom && option.isList) {
@@ -82,7 +102,7 @@ export function createComponent<
 
         async componentDidMount() {
             this.registerPageScroll();
-            await super.componentDidMount();                        
+            await super.componentDidMount();
         }
 
         componentWillUnmount(): void {
@@ -93,8 +113,8 @@ export function createComponent<
         render(): React.ReactNode {
             const { oakPullDownRefreshLoading } = this.state;
             const Render = super.render();
-            
-            return Render;      
+
+            return Render;
         }
     }
 }

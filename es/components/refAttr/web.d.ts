@@ -1,4 +1,3 @@
-import React from 'react';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
@@ -17,5 +16,5 @@ export default function render(props: WebComponentProps<ED, keyof EntityDict, fa
     pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
     onChange: (value: string[]) => void;
     schema: StorageSchema<EntityDict & BaseEntityDict>;
-}>): React.JSX.Element;
+}>): import("react/jsx-runtime").JSX.Element;
 export {};

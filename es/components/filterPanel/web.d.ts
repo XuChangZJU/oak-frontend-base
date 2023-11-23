@@ -1,4 +1,3 @@
-import React from 'react';
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 import { ColSpanType, ColumnProps } from '../../types/Filter';
@@ -19,5 +18,5 @@ export default function Render<ED2 extends ED>(props: WebComponentProps<ED, keyo
     width: Width;
 }, {
     getNamedFilters: () => Record<string, any>[];
-}>): React.JSX.Element | null;
+}>): import("react/jsx-runtime").JSX.Element | null;
 export {};

@@ -1,4 +1,4 @@
-import React from 'react';
+import { jsx as _jsx } from "react/jsx-runtime";
 import { withRouter, PullToRefresh } from './platforms/web';
 import { createComponent as createReactComponent } from './page.react';
 const DEFAULT_REACH_BOTTOM_DISTANCE = 50;
@@ -8,6 +8,22 @@ export function createComponent(option, features) {
         scrollEvent = () => {
             this.checkReachBottom();
         };
+        handleResize() {
+            const size = {
+                size: {
+                    windowHeight: window.innerHeight,
+                    windowWidth: window.innerWidth,
+                },
+            };
+            const { resize } = this.oakOption.lifetimes || {};
+            resize && resize(size);
+        }
+        registerResize() {
+            window.addEventListener('resize', this.handleResize);
+        }
+        unregisterResize() {
+            window.removeEventListener('resize', this.handleResize);
+        }
         registerPageScroll() {
             window.addEventListener('scroll', this.scrollEvent);
         }
@@ -30,10 +46,12 @@ export function createComponent(option, features) {
             this.isReachBottom = isCurrentReachBottom;
         }
         async componentDidMount() {
+            this.registerResize();
             this.registerPageScroll();
             await super.componentDidMount();
         }
         componentWillUnmount() {
+            this.unregisterResize();
             this.unregisterPageScroll();
             super.componentWillUnmount();
         }
@@ -41,7 +59,7 @@ export function createComponent(option, features) {
             const { oakPullDownRefreshLoading } = this.state;
             const Render = super.render();
             if (this.supportPullDownRefresh()) {
-                return (<PullToRefresh onRefresh={async () => {
+                return (_jsx(PullToRefresh, { onRefresh: async () => {
                         this.setState({
                             oakPullDownRefreshLoading: true,
                         });
@@ -49,7 +67,7 @@ export function createComponent(option, features) {
                         this.setState({
                             oakPullDownRefreshLoading: false,
                         });
-                    }} refreshing={oakPullDownRefreshLoading} distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE} indicator={{
+                    }, refreshing: oakPullDownRefreshLoading, distanceToRefresh: DEFAULT_REACH_BOTTOM_DISTANCE, indicator: {
                         activate: this.t('common::ptrActivate', {
                             '#oakModule': 'oak-frontend-base',
                         }),
@@ -62,9 +80,7 @@ export function createComponent(option, features) {
                         finish: this.t('common::ptrFinish', {
                             '#oakModule': 'oak-frontend-base',
                         }),
-                    }}>
-                        {Render}
-                    </PullToRefresh>);
+                    }, children: Render }));
             }
             return Render;
         }

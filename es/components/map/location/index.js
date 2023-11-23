@@ -1,3 +1,4 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import React, { useState, useRef, useEffect } from "react";
 import { Row, Col, Input, List, Empty, Spin, } from 'antd';
 import { SearchOutlined, CheckCircleFilled } from '@ant-design/icons';
@@ -30,67 +31,39 @@ export default function Location(props) {
         }
     }, [searchValue]);
     const center = currentPoi?.coordinate || props.coordinate;
-    const Locate = (<List className={Styles["location-list"]} header={<Input ref={searchRef} placeholder="请输入完整名称（如“浙江大学”）而非简称（如“浙大”）" value={searchValue} allowClear onChange={(e) => {
+    const Locate = (_jsx(List, { className: Styles["location-list"], header: _jsx(Input, { ref: searchRef, placeholder: "\u8BF7\u8F93\u5165\u5B8C\u6574\u540D\u79F0\uFF08\u5982\u201C\u6D59\u6C5F\u5927\u5B66\u201D\uFF09\u800C\u975E\u7B80\u79F0\uFF08\u5982\u201C\u6D59\u5927\u201D\uFF09", value: searchValue, allowClear: true, onChange: (e) => {
                 setSearchValue(e.target.value);
-            }} prefix={<SearchOutlined />} onFocus={() => {
+            }, prefix: _jsx(SearchOutlined, {}), onFocus: () => {
                 setMode('searchPoi');
-            }} onBlur={() => {
-            }}/>}>
-            {mode === 'searchPoi' && (<React.Fragment>
-                    {searchLoading ? (<div className={Styles['location-list-meta']}>
-                            <Spin delay={0} spinning size="default"/>
-                        </div>) : (pois?.length
+            }, onBlur: () => {
+            } }), children: mode === 'searchPoi' && (_jsx(React.Fragment, { children: searchLoading ? (_jsx("div", { className: Styles['location-list-meta'], children: _jsx(Spin, { delay: 0, spinning: true, size: "default" }) })) : (pois?.length
                 ? pois.map((poi, index) => {
-                    return (<div key={poi.id} onClick={() => {
+                    return (_jsx("div", { onClick: () => {
                             setCurrentPoi(poi);
                             props.onLocated({
                                 poiName: poi.detail,
                                 coordinate: poi.coordinate,
                                 areaId: poi.areaId,
                             });
-                        }}>
-                                        <List.Item actions={[
-                            <div style={{
-                                    width: 24,
-                                }}>
-                                                    {currentPoi?.id ===
-                                    poi.id && (<CheckCircleFilled className={Styles['location-list-checked']}/>)}
-                                                </div>,
-                        ]}>
-                                            <List.Item.Meta title={poi.detail}/>
-                                        </List.Item>
-                                    </div>);
+                        }, children: _jsx(List.Item, { actions: [
+                                _jsx("div", { style: {
+                                        width: 24,
+                                    }, children: currentPoi?.id ===
+                                        poi.id && (_jsx(CheckCircleFilled, { className: Styles['location-list-checked'] })) }),
+                            ], children: _jsx(List.Item.Meta, { title: poi.detail }) }) }, poi.id));
                 })
-                : (<div className={Styles['location-list-meta']}>
-                                    <Empty description={`没有${searchValue}相关的地名搜索结果`} image={Empty.PRESENTED_IMAGE_SIMPLE}/>
-                                </div>))}
-                </React.Fragment>)}
-        </List>);
+                : (_jsx("div", { className: Styles['location-list-meta'], children: _jsx(Empty, { description: `没有${searchValue}相关的地名搜索结果`, image: Empty.PRESENTED_IMAGE_SIMPLE }) }))) })) }));
     if (window.innerWidth > 480) {
-        return (<Row gutter={[16, 16]} style={{
+        return (_jsxs(Row, { gutter: [16, 16], style: {
                 width: '100%',
                 minHeight: 600,
-            }}>
-                <Col xs={24} sm={14}>
-                    <Map style={{ height: '100%' }} id="location-map" center={center} markers={center ? [center] : undefined}/>
-                </Col>
-                <Col xs={24} sm={10}>
-                    {Locate}
-                </Col>
-            </Row>);
+            }, children: [_jsx(Col, { xs: 24, sm: 14, children: _jsx(Map, { style: { height: '100%' }, id: "location-map", center: center, markers: center ? [center] : undefined }) }), _jsx(Col, { xs: 24, sm: 10, children: Locate })] }));
     }
-    return (<Col style={{
+    return (_jsxs(Col, { style: {
             width: '100%',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'stretch',
-        }}>
-            <Row>
-                <Map style={{ height: 400, width: '100%' }} id="location-map" center={center} markers={center ? [center] : undefined}/>
-            </Row>
-            <Row style={{ flex: 1, marginLeft: 5, marginRight: 5 }}>
-                {Locate}                
-            </Row>
-        </Col>);
+        }, children: [_jsx(Row, { children: _jsx(Map, { style: { height: 400, width: '100%' }, id: "location-map", center: center, markers: center ? [center] : undefined }) }), _jsx(Row, { style: { flex: 1, marginLeft: 5, marginRight: 5 }, children: Locate })] }));
 }

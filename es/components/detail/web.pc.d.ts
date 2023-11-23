@@ -1,4 +1,3 @@
-import React from 'react';
 import { Breakpoint } from 'antd';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../types/Page';
@@ -18,4 +17,4 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
     column: number | Record<Breakpoint, number>;
     renderData: AttrRender[];
     judgeAttributes: OakAbsAttrJudgeDef[];
-}, {}>): React.JSX.Element;
+}, {}>): import("react/jsx-runtime").JSX.Element;

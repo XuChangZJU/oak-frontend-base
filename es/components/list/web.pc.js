@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { Fragment as _Fragment, jsx as _jsx } from "react/jsx-runtime";
+import { useState, useEffect, useContext } from 'react';
 import { Table } from 'antd';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { get } from 'oak-domain/lib/utils/lodash';
@@ -43,7 +44,7 @@ export default function Render(props) {
                         const stateValue = get(row, ele.path);
                         let href = '';
                         if ([null, undefined, ''].includes(stateValue)) {
-                            return <></>;
+                            return _jsx(_Fragment, {});
                         }
                         const color = colorDict && colorDict[ele.entity]?.[ele.attr]?.[stateValue];
                         if (type === 'enum' && !color) {
@@ -52,7 +53,7 @@ export default function Render(props) {
                         if (type === 'link') {
                             href = getLinkUrl(ele.attribute, { oakId: row?.id });
                         }
-                        return (<TableCell color={color} value={value} type={type} linkUrl={href}/>);
+                        return (_jsx(TableCell, { color: color, value: value, type: type, linkUrl: href }));
                     }
                 };
                 if (width) {
@@ -78,26 +79,26 @@ export default function Render(props) {
                     render: (value, row) => {
                         const oakActions = row?.['#oakLegalActions'];
                         // assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
-                        return (<ActionBtn entity={entity} extraActions={extraActions} actions={oakActions || []} cascadeActions={row?.['#oakLegalCascadeActions']} onAction={(action, cascadeAction) => onAction && onAction(row, action, cascadeAction)}/>);
+                        return (_jsx(ActionBtn, { entity: entity, extraActions: extraActions, actions: oakActions || [], cascadeActions: row?.['#oakLegalCascadeActions'], onAction: (action, cascadeAction) => onAction && onAction(row, action, cascadeAction) }));
                     }
                 });
             }
             setTabelColumns(tableColumns);
         }
     }, [data, zhCNKeys, schema, tableAttributes]);
-    return (<Table rowKey="id" rowSelection={rowSelection?.type && {
+    return (_jsx(Table, { rowKey: "id", rowSelection: rowSelection?.type && {
             type: rowSelection?.type,
             selectedRowKeys,
             onChange: (selectedRowKeys, row, info) => {
                 rowSelection?.onChange &&
                     rowSelection?.onChange(selectedRowKeys, row, info);
             },
-        }} loading={loading} dataSource={data} columns={tableColumns} pagination={tablePagination} scroll={showScroll
+        }, loading: loading, dataSource: data, columns: tableColumns, pagination: tablePagination, scroll: showScroll
             ? {
                 scrollToFirstRowOnChange: true,
                 x: 1200,
             }
-            : {}} onRow={(record) => {
+            : {}, onRow: (record) => {
             return {
                 onClick: () => {
                     const index = selectedRowKeys.findIndex((ele) => ele === record.id);
@@ -118,5 +119,5 @@ export default function Render(props) {
                         rowSelection?.onChange(keys, row, { type: 'all' });
                 },
             };
-        }} showHeader={!hideHeader}></Table>);
+        }, showHeader: !hideHeader }));
 }

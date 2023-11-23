@@ -1,4 +1,4 @@
-import React from 'react';
+import { Fragment as _Fragment, jsx as _jsx } from "react/jsx-runtime";
 import { Input, Form, Select, DatePicker, } from 'antd';
 import dayjs from 'dayjs';
 import weekday from 'dayjs/plugin/weekday';
@@ -34,16 +34,14 @@ export default function Render(props) {
     }
     let V;
     if (column.render) {
-        return (<Form.Item label={label} name={name}>
-                <>{column.render}</>
-            </Form.Item>);
+        return (_jsx(Form.Item, { label: label, name: name, children: _jsx(_Fragment, { children: column.render }) }));
     }
     switch (viewType) {
         case 'Input': {
-            V = (<Input placeholder={placeholder || t('placeholder.input')} onChange={(e) => {
+            V = (_jsx(Input, { placeholder: placeholder || t('placeholder.input'), onChange: (e) => {
                     const val = e.target.value;
                     setFilterAndResetFilter(viewType, val);
-                }} allowClear onPressEnter={() => { }}/>);
+                }, allowClear: true, onPressEnter: () => { } }));
             break;
         }
         case 'Select': {
@@ -54,13 +52,13 @@ export default function Render(props) {
                 value: ele.value,
             }));
             const multiple = ['$in', '$nin'].includes(op || '');
-            V = (<Select mode={multiple ? 'multiple' : undefined} allowClear placeholder={placeholder || t('placeholder.select')} onChange={(value) => {
+            V = (_jsx(Select, { mode: multiple ? 'multiple' : undefined, allowClear: true, placeholder: placeholder || t('placeholder.select'), onChange: (value) => {
                     let value2 = multiple ? value : [value];
                     if (value === undefined || value === null) {
                         value2 = [];
                     }
                     setFilterAndResetFilter(viewType, value2);
-                }} options={options2}/>);
+                }, options: options2 }));
             break;
         }
         case 'DatePicker': {
@@ -68,19 +66,21 @@ export default function Render(props) {
             const { showTime = false } = dateProps || {};
             //assert(op, '选择时间，算子必须传入');
             const unitOfTime = 'day';
-            V = (<DatePicker placeholder={placeholder || t('placeholder.select')} style={{ width: '100%' }} format="YYYY-MM-DD" showTime={showTime} onChange={(date, dateString) => {
+            V = (_jsx(DatePicker, { placeholder: placeholder || t('placeholder.select'), style: { width: '100%' }, format: "YYYY-MM-DD", showTime: showTime, onChange: (date, dateString) => {
                     setFilterAndResetFilter(viewType, date);
-                }}/>);
+                } }));
             break;
         }
         case 'DatePicker.RangePicker': {
             const { dateProps } = column;
             const { showTime = false } = dateProps || {};
-            V = (<DatePicker.RangePicker 
+            V = (_jsx(DatePicker.RangePicker
             // placeholder={placeholder || t('placeholder.select')}
-            style={{ width: '100%' }} showTime={showTime} onChange={(dates, dateStrings) => {
+            , { 
+                // placeholder={placeholder || t('placeholder.select')}
+                style: { width: '100%' }, showTime: showTime, onChange: (dates, dateStrings) => {
                     setFilterAndResetFilter(viewType, dates);
-                }}/>);
+                } }));
             break;
         }
         case 'RefAttr': {
@@ -88,15 +88,13 @@ export default function Render(props) {
             const filter = getNamedFilter(name);
             const value = get(filter, getOp(column), '');
             const multiple = ['$in', '$nin'].includes(op || '');
-            V = (<RefAttr placeholder={placeholder || t('placeholder.select')} multiple={multiple} entityIds={value ? (multiple ? value : [value]) : []} pickerRender={Object.assign({}, column.refProps)} onChange={(ids) => {
+            V = (_jsx(RefAttr, { placeholder: placeholder || t('placeholder.select'), multiple: multiple, entityIds: value ? (multiple ? value : [value]) : [], pickerRender: Object.assign({}, column.refProps), onChange: (ids) => {
                     setFilterAndResetFilter(viewType, ids);
-                }}/>);
+                } }));
             break;
         }
     }
-    return (<Form.Item label={label} name={name}>
-            <>{V}</>
-        </Form.Item>);
+    return (_jsx(Form.Item, { label: label, name: name, children: _jsx(_Fragment, { children: V }) }));
 }
 function assertMessage(attr, attrType, op, ops) {
     return `attr为【${attr}】, 传入的算子【${op}】不支持，类型【${attrType}】只支持【${JSON.stringify(ops)}】`;

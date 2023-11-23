@@ -1,4 +1,4 @@
-import React from 'react';
+import { jsx as _jsx } from "react/jsx-runtime";
 import './web.less';
 export default function Render(props) {
     const { data } = props;
@@ -11,5 +11,5 @@ export default function Render(props) {
     if (className) {
         class_name += ' ' + className;
     }
-    return (<span className={class_name} style={Object.assign(style, size && { fontSize: size }, color && !isColor && { color })}></span>);
+    return (_jsx("span", { className: class_name, style: Object.assign(style, size && { fontSize: size }, color && !isColor && { color }) }));
 }

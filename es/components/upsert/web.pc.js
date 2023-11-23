@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import { useState } from 'react';
 import { Form, Input, InputNumber, Radio, Modal, Button, DatePicker, Space, Switch, } from 'antd';
 import OakIcon from '../icon';
 const { TextArea } = Input;
@@ -15,14 +16,14 @@ function makeAttrInput(attrRender, onValueChange, t, label) {
         case 'varchar':
         case 'char':
         case 'poiName': {
-            return (<Input allowClear={!required} placeholder={placeholder || `请输入${label}`} value={value} defaultValue={defaultValue} maxLength={maxLength} onChange={({ target: { value } }) => {
+            return (_jsx(Input, { allowClear: !required, placeholder: placeholder || `请输入${label}`, value: value, defaultValue: defaultValue, maxLength: maxLength, onChange: ({ target: { value } }) => {
                     onValueChange(value);
-                }}/>);
+                } }));
         }
         case 'text': {
-            return (<TextArea allowClear={!required} placeholder={`请输入${label}`} defaultValue={defaultValue} value={value} rows={6} maxLength={maxLength || 1000} onChange={({ target: { value } }) => {
+            return (_jsx(TextArea, { allowClear: !required, placeholder: `请输入${label}`, defaultValue: defaultValue, value: value, rows: 6, maxLength: maxLength || 1000, onChange: ({ target: { value } }) => {
                     onValueChange(value);
-                }}/>);
+                } }));
         }
         case 'int': {
             /* const SIGNED_THRESHOLDS = {
@@ -37,7 +38,7 @@ function makeAttrInput(attrRender, onValueChange, t, label) {
                 4: [0, 4294967295],
                 8: [0, Number.MAX_SAFE_INTEGER],
             }; */
-            return (<InputNumber min={min} max={max} keyboard={true} defaultValue={defaultValue} value={value} precision={0} onChange={(value) => onValueChange(value)}/>);
+            return (_jsx(InputNumber, { min: min, max: max, keyboard: true, defaultValue: defaultValue, value: value, precision: 0, onChange: (value) => onValueChange(value) }));
         }
         case 'decimal': {
             const precision = params?.precision || 10;
@@ -47,13 +48,13 @@ function makeAttrInput(attrRender, onValueChange, t, label) {
             const threshold = Math.pow(10, precision - scale);
             const max = threshold - scaleValue;     // 小数在这里可能会有bug
             const min = 0 - max; */
-            return (<InputNumber min={min} max={max} keyboard={true} defaultValue={defaultValue} value={value} precision={scale} step={scaleValue} onChange={(value) => onValueChange(value)}/>);
+            return (_jsx(InputNumber, { min: min, max: max, keyboard: true, defaultValue: defaultValue, value: value, precision: scale, step: scaleValue, onChange: (value) => onValueChange(value) }));
         }
         case 'money': {
             // money在数据上统一用分来存储
             const valueShowed = parseFloat((value / 100).toFixed(2));
             const defaultValueShowed = parseFloat((defaultValue / 100).toFixed(2));
-            return (<InputNumber min={0} keyboard={true} defaultValue={defaultValueShowed} value={valueShowed} precision={2} step={0.01} addonAfter="￥" onChange={(value) => {
+            return (_jsx(InputNumber, { min: 0, keyboard: true, defaultValue: defaultValueShowed, value: valueShowed, precision: 2, step: 0.01, addonAfter: "\uFFE5", onChange: (value) => {
                     if (value !== null) {
                         const v2 = Math.round(value * 100);
                         onValueChange(v2);
@@ -61,82 +62,64 @@ function makeAttrInput(attrRender, onValueChange, t, label) {
                     else {
                         onValueChange(value);
                     }
-                }}/>);
+                } }));
         }
         case 'datetime':
         case 'date':
         case 'time': {
             const mode = type === 'time' ? 'time' : 'date';
-            return (<DatePicker allowClear={!required} showTime={type === 'datetime'} placeholder={placeholder} format="YYYY-MM-DD HH:mm:ss" mode={mode} value={dayjs(value)} onChange={(value) => {
+            return (_jsx(DatePicker, { allowClear: !required, showTime: type === 'datetime', placeholder: placeholder, format: "YYYY-MM-DD HH:mm:ss", mode: mode, value: dayjs(value), onChange: (value) => {
                     if (value) {
                         onValueChange(value.valueOf());
                     }
                     else {
                         onValueChange(null);
                     }
-                }}/>);
+                } }));
         }
         case 'boolean': {
-            return (<Switch checkedChildren={<OakIcon name="right"/>} unCheckedChildren={<OakIcon name="close"/>} checked={value} onChange={(checked) => {
+            return (_jsx(Switch, { checkedChildren: _jsx(OakIcon, { name: "right" }), unCheckedChildren: _jsx(OakIcon, { name: "close" }), checked: value, onChange: (checked) => {
                     onValueChange(checked);
-                }}/>);
+                } }));
         }
         case 'enum': {
-            return (<Radio.Group value={value} onChange={({ target }) => onValueChange(target.value)}>
-                    {enumeration.map(({ label, value }) => (<Radio value={value}>{t(label)}</Radio>))}
-                </Radio.Group>);
+            return (_jsx(Radio.Group, { value: value, onChange: ({ target }) => onValueChange(target.value), children: enumeration.map(({ label, value }) => (_jsx(Radio, { value: value, children: t(label) }))) }));
         }
         case 'ref': {
-            return (<RefAttr multiple={false} entityId={value} pickerRender={attrRender} onChange={(value) => {
+            return (_jsx(RefAttr, { multiple: false, entityId: value, pickerRender: attrRender, onChange: (value) => {
                     onValueChange(value[0]);
-                }}/>);
+                } }));
         }
         case 'coordinate': {
             const { coordinate } = value || {};
             const { extra } = attrRender;
             const poiNameAttr = extra?.poiName || 'poiName';
             const areaIdAttr = extra?.areaId || 'areaId';
-            return (<>
-                    <Modal width="80vw" open={sl} closable={false} onCancel={() => setSl(false)} okText="确认" cancelText="取消" okButtonProps={{
-                    disabled: !poi,
-                }} onOk={() => {
-                    if (poi) {
-                        const { poiName, coordinate, areaId } = poi;
-                        onValueChange({
-                            type: 'point',
-                            coordinate,
-                        }, {
-                            [poiNameAttr]: poiName,
-                            [areaIdAttr]: areaId,
-                        });
-                    }
-                    setSl(false);
-                }}>
-                        <Location coordinate={coordinate} onLocated={(poi) => setPoi(poi)}/>
-                    </Modal>
-                    <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: '100%',
-                }}>
-                        <Space direction="vertical" size={8}>
-                            <Space align="center">
-                                <Button type="dashed" onClick={() => {
-                    setSl(true);
-                }}>
-                                    {value ? '重选位置' : '选择位置'}
-                                </Button>
-                            </Space>
-                            <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: '100%',
-                }}>
-                                <Map undragable={true} disableWheelZoom={true} style={{ height: 300 }} autoLocate={true} center={coordinate} markers={coordinate ? [coordinate] : undefined}/>
-                            </div>
-                        </Space>
-                    </div>
-                </>);
+            return (_jsxs(_Fragment, { children: [_jsx(Modal, { width: "80vw", open: sl, closable: false, onCancel: () => setSl(false), okText: "\u786E\u8BA4", cancelText: "\u53D6\u6D88", okButtonProps: {
+                            disabled: !poi,
+                        }, onOk: () => {
+                            if (poi) {
+                                const { poiName, coordinate, areaId } = poi;
+                                onValueChange({
+                                    type: 'point',
+                                    coordinate,
+                                }, {
+                                    [poiNameAttr]: poiName,
+                                    [areaIdAttr]: areaId,
+                                });
+                            }
+                            setSl(false);
+                        }, children: _jsx(Location, { coordinate: coordinate, onLocated: (poi) => setPoi(poi) }) }), _jsx("div", { style: {
+                            display: 'flex',
+                            flexDirection: 'column',
+                            width: '100%',
+                        }, children: _jsxs(Space, { direction: "vertical", size: 8, children: [_jsx(Space, { align: "center", children: _jsx(Button, { type: "dashed", onClick: () => {
+                                            setSl(true);
+                                        }, children: value ? '重选位置' : '选择位置' }) }), _jsx("div", { style: {
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        width: '100%',
+                                    }, children: _jsx(Map, { undragable: true, disableWheelZoom: true, style: { height: 300 }, autoLocate: true, center: coordinate, markers: coordinate ? [coordinate] : undefined }) })] }) })] }));
         }
         default: {
             throw new Error(`【Abstract Update】无法支持的数据类别${type}的渲染`);
@@ -146,8 +129,7 @@ function makeAttrInput(attrRender, onValueChange, t, label) {
 export default function render(props) {
     const { renderData = [], helps, entity } = props.data;
     const { update, t } = props.methods;
-    return (<Form labelCol={{ span: 4 }} layout="horizontal">
-            {renderData.map((ele) => {
+    return (_jsx(Form, { labelCol: { span: 4 }, layout: "horizontal", children: renderData.map((ele) => {
             // 因为i18n渲染机制的缘故，t必须放到这里来计算
             const { label, attr, type, required } = ele;
             let label2 = label;
@@ -165,21 +147,16 @@ export default function render(props) {
             //         label2 = t(`${entity}:attr.${attr}`);
             //     }
             // }
-            return (<Form.Item label={label2} rules={[
+            return (_jsx(Form.Item, { label: label2, rules: [
                     {
                         required: !!required,
                     },
-                ]} help={helps && helps[attr]} name={required ? attr : ''}>
-                        <>
-                            {makeAttrInput(ele, (value, extra) => {
-                    const { attr } = ele;
-                    update({
-                        [attr]: value,
-                        ...extra,
-                    });
-                }, t, label2)}
-                        </>
-                    </Form.Item>);
-        })}
-        </Form>);
+                ], help: helps && helps[attr], name: required ? attr : '', children: _jsx(_Fragment, { children: makeAttrInput(ele, (value, extra) => {
+                        const { attr } = ele;
+                        update({
+                            [attr]: value,
+                            ...extra,
+                        });
+                    }, t, label2) }) }));
+        }) }));
 }

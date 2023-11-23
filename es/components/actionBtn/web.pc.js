@@ -1,21 +1,18 @@
-import React, { useEffect } from 'react';
+import { jsx as _jsx, Fragment as _Fragment } from "react/jsx-runtime";
+import { useEffect } from 'react';
 import { Space, Button, Modal, } from 'antd';
 import Style from './web.module.less';
 const { confirm } = Modal;
 function ItemComponent(props) {
     const { label, type, onClick } = props;
     if (type === 'button') {
-        return (<Button onClick={() => onClick()}>
-                {label}
-            </Button>);
+        return (_jsx(Button, { onClick: () => onClick(), children: label }));
     }
-    return <a onClick={(e) => {
+    return _jsx("a", { onClick: (e) => {
             onClick();
             e.stopPropagation();
             return false;
-        }}>
-        {label}
-    </a>;
+        }, children: label });
 }
 export default function Render(props) {
     const { methods, data } = props;
@@ -25,13 +22,7 @@ export default function Render(props) {
     useEffect(() => {
         makeItems();
     }, [zhCNKeys, actions, cascadeActions, extraActions]);
-    return (<div className={Style.panelContainer}>
-            <Space align='center' size={12} style={{ width: '100%' }} wrap>
-                <>
-                    {items?.map((ele, index) => {
-            return (<ItemComponent label={ele.label} type="a" onClick={ele.onClick}/>);
-        })}
-                </>
-            </Space>
-        </div>);
+    return (_jsx("div", { className: Style.panelContainer, children: _jsx(Space, { align: 'center', size: 12, style: { width: '100%' }, wrap: true, children: _jsx(_Fragment, { children: items?.map((ele, index) => {
+                    return (_jsx(ItemComponent, { label: ele.label, type: "a", onClick: ele.onClick }));
+                }) }) }) }));
 }

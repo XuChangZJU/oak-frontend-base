@@ -1,4 +1,4 @@
-import React from 'react';
+import { jsx as _jsx } from "react/jsx-runtime";
 import { Empty } from 'antd';
 import AbstractList from '../list';
 export default function Render(props) {
@@ -9,14 +9,12 @@ export default function Render(props) {
             title: titleLabel,
         }];
     if (rows && rows.length) {
-        return (<AbstractList entity={entity} data={rows} loading={oakLoading} attributes={[titleLabel]} disabledOp={true} rowSelection={{
+        return (_jsx(AbstractList, { entity: entity, data: rows, loading: oakLoading, attributes: [titleLabel], disabledOp: true, rowSelection: {
                 type: multiple ? 'checkbox' : 'radio',
                 onChange: (selectRowKeys, selectedRows, info) => {
                     onSelect(selectedRows);
                 }
-            }}/>);
+            } }));
     }
-    return (<div>
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE}/>
-        </div>);
+    return (_jsx("div", { children: _jsx(Empty, { image: Empty.PRESENTED_IMAGE_SIMPLE }) }));
 }

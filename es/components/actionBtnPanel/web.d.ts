@@ -1,4 +1,3 @@
-import React from 'react';
 import { SpaceProps } from 'antd';
 import { WebComponentProps } from '../../types/Page';
 import { EntityDict } from 'oak-domain/lib/base-app-domain';
@@ -18,4 +17,4 @@ export default function Render(props: WebComponentProps<EntityDict, keyof Entity
         okText: string;
         cancelText: string;
     };
-}>): React.JSX.Element | null;
+}>): import("react/jsx-runtime").JSX.Element | null;

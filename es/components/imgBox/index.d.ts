@@ -1,4 +1,3 @@
-import React from 'react';
 type Props = {
     mode?: 'select';
     selected?: boolean;
@@ -10,5 +9,5 @@ type Props = {
     onClick?: () => void;
     type?: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down' | 'initial' | 'inherit';
 };
-declare function ImgBox(props: Props): React.JSX.Element;
+declare function ImgBox(props: Props): import("react/jsx-runtime").JSX.Element;
 export default ImgBox;

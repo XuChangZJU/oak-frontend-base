@@ -1,3 +1,4 @@
+import { jsx as _jsx } from "react/jsx-runtime";
 import React from 'react';
 // @ts-ignore
 import { useLocation, useParams } from 'react-router-dom';
@@ -82,8 +83,8 @@ const withRouter = (Component, { path, properties }) => {
             params = Object.assign(params, getParams(location, properties), routerParams);
             routeMatch = true;
         }
-        return (<Component {...rest} {...params} width={width} location={location} ref={forwardedRef} routeMatch={routeMatch}/>);
+        return (_jsx(Component, { ...rest, ...params, width: width, location: location, ref: forwardedRef, routeMatch: routeMatch }));
     };
-    return React.forwardRef((props, ref) => <ComponentWithRouterProp {...props} forwardedRef={ref}/>);
+    return React.forwardRef((props, ref) => _jsx(ComponentWithRouterProp, { ...props, forwardedRef: ref }));
 };
 export default withRouter;

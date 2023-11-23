@@ -1,3 +1,4 @@
+import { jsx as _jsx } from "react/jsx-runtime";
 import { assert } from 'oak-domain/lib/utils/assert';
 import React from 'react';
 import { get } from 'oak-domain/lib/utils/lodash';
@@ -616,11 +617,11 @@ export function createComponent(option, features) {
             if (this.oakOption.entity && !this.state.oakFullpath) {
                 return null;
             }
-            return (<Render methods={this.methodProps} data={{
+            return (_jsx(Render, { methods: this.methodProps, data: {
                     ...this.defaultProperties,
                     ...this.state,
                     ...this.props,
-                }}/>);
+                } }));
         }
     }
     ;

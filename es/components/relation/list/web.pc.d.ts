@@ -1,4 +1,3 @@
-import React from 'react';
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -10,5 +9,5 @@ export default function render(props: WebComponentProps<ED, 'relation', true, {
     onClicked: (relationId: string) => any;
 }, {
     setEntityFilter: (filter: string) => void;
-}>): React.JSX.Element | null;
+}>): import("react/jsx-runtime").JSX.Element | null;
 export {};
