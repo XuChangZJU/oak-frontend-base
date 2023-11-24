@@ -7,6 +7,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import {
     EntityDict,
 } from 'oak-domain/lib/types';
+import URL from 'url';
 
 export class Navigator extends Feature {
     history: BrowserHistory;
@@ -39,6 +40,98 @@ export class Navigator extends Feature {
         return this.namespace;
     }
 
+    private getCurrentUrl() {
+        const { pathname, search } = this.getLocation();
+        // 构建search
+        const search2 = this.constructSearch(search);
+        const url = URL.format({
+            pathname,
+            search: search2,
+        });
+
+        return url;
+    }
+
+    private constructSearch(
+        search?: string | null,
+        state?: Record<string, any>
+    ) {
+        let search2 = search;
+        if (state) {
+            for (const param in state) {
+                if (!search2) {
+                    search2 = '?';
+                }
+                if (
+                    state[param] !== undefined ||
+                    state[param] !== 'undefined'
+                ) {
+                    search2 += `&${param}=${
+                        typeof state[param] === 'string'
+                            ? state[param]
+                            : JSON.stringify(state[param])
+                    }`;
+                }
+            }
+        }
+        return search2;
+    }
+
+    private constructUrl(
+        url: string,
+        state?: Record<string, any>,
+        disableNamespace?: boolean
+    ) {
+        const urlParse = URL.parse(url, true);
+        const { pathname, search } = urlParse;
+
+        let pathname2: string;
+        if (disableNamespace) {
+            pathname2 = this.getPathname(pathname!);
+        } else {
+            pathname2 = this.getPathname(pathname!, this.namespace);
+        }
+        // 构建search
+        const search2 = this.constructSearch(search, state);
+        const url2 = URL.format({
+            pathname: pathname2,
+            search: search2,
+        });
+
+        return url2;
+    }
+
+    private constructNamespace(url: string, namespace?: string) {
+        if (namespace) {
+            const urlParse = URL.parse(url, true);
+            const { pathname, search } = urlParse;
+            let pathname2 = pathname;
+            if (namespace === '/') {
+                pathname2 = pathname;
+            } else if (pathname === namespace) {
+                pathname2 = pathname;
+            } else {
+                pathname2 = namespace + pathname;
+            }
+
+            const url2 = URL.format({
+                pathname: pathname2,
+                search,
+            });
+            return url2;
+        }
+        return url;
+    }
+
+    getPathname(pathname: string, namespace?: string) {
+        let pathname2 = pathname;
+        if (namespace) {
+            pathname2 = this.constructNamespace(pathname, namespace);
+            return pathname2;
+        }
+        return pathname2;
+    }
+
     async navigateTo<
         ED extends EntityDict & BaseEntityDict,
         T2 extends keyof ED
@@ -50,7 +143,8 @@ export class Navigator extends Feature {
         const { url, ...rest } = options;
 
         const url2 = this.constructUrl(url, rest, disableNamespace);
-        this.history.push(url2, state);
+        const oakFrom = this.getCurrentUrl();
+        this.history.push(url2, Object.assign({}, state, { oakFrom }));
     }
 
     async redirectTo<
@@ -64,7 +158,8 @@ export class Navigator extends Feature {
         const { url, ...rest } = options;
 
         const url2 = this.constructUrl(url, rest, disableNamespace);
-        this.history.replace(url2, state);
+        const oakFrom = this.getCurrentUrl();
+        this.history.replace(url2, Object.assign({}, state, { oakFrom }));
     }
 
     async switchTab<
@@ -75,61 +170,15 @@ export class Navigator extends Feature {
         state?: Record<string, any>,
         disableNamespace?: boolean
     ) {
-        console.warn(
-            '浏览器无switchTab，为了适配小程序，小程序redirectTo无法跳到tabBar页面'
-        );
+        console.error('浏览器无switchTab');
         const { url, ...rest } = options;
-        const url2 = this.constructUrl(url, options, disableNamespace);
-        this.history.replace(url2, state);
+        const url2 = this.constructUrl(url, rest, disableNamespace);
+        const oakFrom = this.getCurrentUrl();
+        this.history.replace(url2, Object.assign({}, state, { oakFrom }));
     }
 
     async navigateBack(delta?: number) {
         this.history.go(delta ? 0 - delta : -1);
-    }
-
-    private constructUrl(
-        url: string,
-        state?: Record<string, any>,
-        disableNamespace?: boolean
-    ) {
-        let url2 = url;
-
-        for (const param in state) {
-            const param2 = param as unknown as keyof typeof state;
-            if (state[param2] !== undefined) {
-                url2 += `${url2.includes('?') ? '&' : '?'}`;
-                url2 += `${param}=${
-                    typeof state[param2] === 'string'
-                        ? state[param2]
-                        : JSON.stringify(state[param2])
-                }`;
-            }
-        }
-        url2 = this.constructNamespace(url2, disableNamespace);
-        return url2;
-    }
-
-    private constructNamespace(url: string, disableNamespace?: boolean) {
-        let url2 = url;
-
-        if (!disableNamespace && this.namespace) {
-            // 处理this.namespace 前缀未设置“/”, 先置上“/”, 格式为 /console
-            const namespace = this.namespace.startsWith('/')
-                ? this.namespace
-                : `/${this.namespace}`;
-            const urls = url2.split('?');
-            const urls_0 = urls[0] || '';
-            if (namespace === '/') {
-                url2 = url2;
-            } else if (namespace !== '/' && urls_0 === '') {
-                url2 = namespace + url2;
-            } else if (namespace !== '/' && urls_0 === '/') {
-                url2 = namespace + url2.substring(1, url2.length);
-            } else {
-                url2 = namespace + (url2.startsWith('/') ? '' : '/') + url2;
-            }
-        }
-        return url2;
     }
 
     navigateBackOrRedirectTo<
