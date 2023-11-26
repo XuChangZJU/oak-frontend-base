@@ -17,6 +17,7 @@ export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends
     private language;
     private defaultLng;
     private i18n;
+    private initializeLng;
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, localStorage: LocalStorage, environment: Environment, defaultLng: string, makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string);
     private detectLanguange;
     private resetDataset;

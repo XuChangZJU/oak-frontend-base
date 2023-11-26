@@ -75,55 +75,52 @@ export class Cache<
         );
 
         this.getFullDataFn = getFullData;
+        
+        // 现在这个init变成了异步行为，不知道有没有影响。by Xc 20231126
         this.initSavedLogic();
-    }
-
-    private rebuildRefreshRows<T extends keyof ED>(entity: T, projection: ED[T]['Selection']['data'], result: Awaited<ReturnType<AD['select']>>) {
-        const { data } = result;
-        const rows = [] as Partial<ED['T']['Schema']>[];
-
-        // 重新建立
     }
 
     /**
      * 处理cache中需要缓存的数据
      */
-    private initSavedLogic() {
+    private async initSavedLogic() {
         const data: {
             [T in keyof ED]?: ED[T]['OpSchema'][];
         } = {};
-        this.savedEntities.forEach(
-            (entity) => {
-                // 加载缓存的数据项
-                const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity as string}`;
-                const cached = this.localStorage.load(key);
-                if (cached) {
-                    data[entity] = cached;
-                }
+        await Promise.all(
+            this.savedEntities.map(
+                async (entity) => {
+                    // 加载缓存的数据项
+                    const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity as string}`;
+                    const cached = await this.localStorage.load(key);
+                    if (cached) {
+                        data[entity] = cached;
+                    }
 
-                // 加载缓存的时间戳项
-                const key2 = `${LOCAL_STORAGE_KEYS.cacheRefreshRecord}:${entity as string}`;
-                const cachedTs = this.localStorage.load(key2);
-                if (cachedTs) {
-                    this.refreshRecords[entity] = cachedTs;
+                    // 加载缓存的时间戳项
+                    const key2 = `${LOCAL_STORAGE_KEYS.cacheRefreshRecord}:${entity as string}`;
+                    const cachedTs = await this.localStorage.load(key2);
+                    if (cachedTs) {
+                        this.refreshRecords[entity] = cachedTs;
+                    }
+                }
+            )
+        );
+        this.cacheStore.resetInitialData(data);
+        this.cacheStore.onCommit(
+            async (result) => {
+                const entities = Object.keys(result);
+                const referenced = intersection(entities, this.savedEntities);
+
+                if (referenced.length > 0) {
+                    const saved = this.cacheStore.getCurrentData(referenced);
+                    for (const entity in saved) {
+                        const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity as string}`;
+                        await this.localStorage.save(key, saved[entity]);
+                    }
                 }
             }
         );
-        this.cacheStore.resetInitialData(data);
-        this.cacheStore.onCommit((result) => {
-            const entities = Object.keys(result);
-            const referenced = intersection(entities, this.savedEntities);
-
-            if (referenced.length > 0) {
-                const saved = this.cacheStore.getCurrentData(referenced);
-                Object.keys(saved).forEach(
-                    (entity) => {
-                        const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity as string}`;
-                        this.localStorage.save(key, saved[entity]);
-                    }
-                )
-            }
-        });
     }
 
     getSchema() {
@@ -142,12 +139,12 @@ export class Cache<
         dontPublish?: true,
     ) {
         try {
-            this.refreshing ++;
+            this.refreshing++;
             const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
             if (opRecords) {
                 this.syncInner(opRecords);
             }
-            this.refreshing --;
+            this.refreshing--;
             callback && callback(result, opRecords);
             if (opRecords && opRecords.length > 0 && !dontPublish) {
                 this.publish();
@@ -159,7 +156,7 @@ export class Cache<
         }
         catch (e) {
             // 如果是数据不一致错误，这里可以让用户知道
-            this.refreshing --;
+            this.refreshing--;
             if (e instanceof OakException) {
                 const { opRecord } = e;
                 if (opRecord) {
@@ -236,7 +233,7 @@ export class Cache<
             );
 
             const gap2 = gap || this.keepFreshPeriod;
-            
+
             const now = Date.now();
             if (oldest < Number.MAX_SAFE_INTEGER && oldest > now - gap2) {
                 // 说明可以用localCache的数据，不用去请求
@@ -253,7 +250,7 @@ export class Cache<
                     data,
                 };
             }
-            else  {
+            else {
                 if (oldest > 0) {
                     // 说明key曾经都取过了，只取updateAt在oldest之后的数据
                     selection.filter = combineFilters(entity, this.getSchema(), [selection.filter, {
@@ -298,7 +295,7 @@ export class Cache<
                 total,
             };
         }
-        catch(err) {
+        catch (err) {
             undoFns && undoFns.forEach(
                 (fn) => fn()
             );
@@ -440,7 +437,7 @@ export class Cache<
         return;
     }
 
-    fetchRows(missedRows: Array<{ entity: keyof ED, selection: ED[keyof ED]['Selection']}>) {
+    fetchRows(missedRows: Array<{ entity: keyof ED, selection: ED[keyof ED]['Selection'] }>) {
         if (!this.refreshing) {
             if (process.env.NODE_ENV === 'development') {
                 console.warn('缓存被动去获取数据，请查看页面行为并加以优化', missedRows);
@@ -457,7 +454,7 @@ export class Cache<
             })
         }
     }
-    
+
     private getInner<T extends keyof ED>(
         entity: T,
         selection: ED[T]['Selection'],

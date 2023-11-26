@@ -1,4 +1,4 @@
-import { EntityDict, Aspect, Context, AspectWrapper } from 'oak-domain/lib/types';
+import { EntityDict, Aspect, Context, AspectWrapper, WebEnv, NativeEnv } from 'oak-domain/lib/types';
 import { Feature } from '../types/Feature';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -22,6 +22,16 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
     private defaultLng: string;
     private i18n: I18n;
 
+    private async initializeLng() {
+        const savedLng = await this.localStorage.load(LOCAL_STORAGE_KEYS.localeLng);
+        if (savedLng) {
+            this.language = savedLng;
+        }
+        else {
+            await this.detectLanguange();
+        }
+    }
+
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
         localStorage: LocalStorage,
@@ -34,14 +44,9 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         this.localStorage = localStorage;
         this.defaultLng = defaultLng;
         this.environment = environment;
-        const savedLng = localStorage.load(LOCAL_STORAGE_KEYS.localeLng);
-        if (savedLng) {
-            this.language = savedLng;
-        }
-        else {
-            this.language = defaultLng;
-            this.detectLanguange();
-        }
+        this.language = defaultLng;
+        // 也是异步行为，不知道是否有影响 by Xc
+        this.initializeLng();
         this.i18n = new I18n(undefined, {
             defaultLocale: defaultLng,
             locale: this.language,
@@ -67,7 +72,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         const env = await this.environment.getEnv();
         const { language } = env;
         this.language = language;
-        this.localStorage.save(LOCAL_STORAGE_KEYS.localeLng, language);
+        await this.localStorage.save(LOCAL_STORAGE_KEYS.localeLng, language);
     }
 
     private resetDataset() {

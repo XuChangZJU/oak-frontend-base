@@ -30,7 +30,6 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     private refreshRecords;
     private context?;
     constructor(storageSchema: StorageSchema<ED>, aspectWrapper: AspectWrapper<ED, Cxt, AD>, frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt, checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>, getFullData: () => any, localStorage: LocalStorage, savedEntities?: (keyof ED)[], keepFreshPeriod?: number);
-    private rebuildRefreshRows;
     /**
      * 处理cache中需要缓存的数据
      */

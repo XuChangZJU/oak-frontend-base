@@ -19,19 +19,19 @@ export class LocalStorage  extends Feature {
         }
     }
 
-    setKey(key: string) {
+    private setKey(key: string) {
         if (!this.keys[key]) {
             this.keys[key] = true;
         }
     }
 
-    unsetKey(key: string) {
+    private unsetKey(key: string) {
         if (this.keys[key]) {
             unset(this.keys, key);
         }
     }
 
-    save(key: string, item: any) {
+    async save(key: string, item: any) {
         this.setKey(key);
         switch (process.env.OAK_PLATFORM) {
             case 'wechatMp': {
@@ -48,7 +48,7 @@ export class LocalStorage  extends Feature {
         }
     }
 
-    load(key: string) {
+    async load(key: string) {
         this.setKey(key);
         switch (process.env.OAK_PLATFORM) {
             case 'wechatMp': {
@@ -67,7 +67,7 @@ export class LocalStorage  extends Feature {
         }
     }
 
-    clear() {
+    async clear() {
         this.keys = {};
         switch (process.env.OAK_PLATFORM) {
             case 'wechatMp': {
@@ -84,7 +84,7 @@ export class LocalStorage  extends Feature {
         }
     }
 
-    remove(key: string) {
+    async remove(key: string) {
         this.unsetKey(key);
         switch (process.env.OAK_PLATFORM) {
             case 'wechatMp': {
@@ -101,21 +101,21 @@ export class LocalStorage  extends Feature {
         }
     }
 
-    loadAll() {
+    async loadAll() {
         const data: Record<string, any> = {};
         for (const k in this.keys) {
             Object.assign(data, {
-                [k]: this.load(k),
+                [k]: await this.load(k),
             });
         }
 
         return data;
     }
 
-    resetAll(data: Record<string, any>) {
+   async  resetAll(data: Record<string, any>) {
         this.clear();
         for (const k in data) {
-            this.save(k, data[k]);
+            await this.save(k, data[k]);
         }
     }
 }

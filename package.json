@@ -12,6 +12,7 @@
     ],
     "dependencies": {
         "@fingerprintjs/fingerprintjs": "^4.0.0",
+        "@react-native-async-storage/async-storage": "^1.19.8",
         "dayjs": "^1.11.9",
         "echarts": "^5.4.2",
         "echarts-for-react": "^3.0.2",
@@ -23,6 +24,7 @@
         "oak-domain": "file:../oak-domain",
         "oak-memory-tree-store": "file:../oak-memory-tree-store",
         "ol": "^7.3.0",
+        "react-native-localize": "^3.0.4",
         "react-responsive": "^9.0.2",
         "rmc-pull-to-refresh": "^1.0.13",
         "socket.io-client": "^4.7.2",

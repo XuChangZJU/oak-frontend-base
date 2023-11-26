@@ -49,44 +49,12 @@ export function createComponent<
     >(option, features);
 
     class Component extends BaseComponent {
-        private scrollEvent = () => {
-            this.checkReachBottom();
-        };
-
-        private registerPageScroll() {
-            window.addEventListener('scroll', this.scrollEvent);
-        }
-
-        private unregisterPageScroll() {
-            window.removeEventListener('scroll', this.scrollEvent);
-        }
-
-        private checkReachBottom() {
-            if (!this.supportPullDownRefresh()) {
-                return;
-            }
-            const isCurrentReachBottom =
-                document.body.scrollHeight -
-                (window.innerHeight + window.scrollY) <=
-                DEFAULT_REACH_BOTTOM_DISTANCE;
-
-            if (!this.isReachBottom && isCurrentReachBottom && option.isList) {
-                this.isReachBottom = true;
-                // 执行触底事件
-                this.loadMore();
-                return;
-            }
-
-            this.isReachBottom = isCurrentReachBottom;
-        }
 
         async componentDidMount() {
-            this.registerPageScroll();
             await super.componentDidMount();                        
         }
 
         componentWillUnmount(): void {
-            this.unregisterPageScroll();
             super.componentWillUnmount();
         }
 
@@ -94,7 +62,9 @@ export function createComponent<
             const { oakPullDownRefreshLoading } = this.state;
             const Render = super.render();
             
-            return Render;      
+            return Render;
         }
     }
+
+    return Component as React.ComponentType<any>;
 }

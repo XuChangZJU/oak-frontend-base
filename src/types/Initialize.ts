@@ -1,4 +1,4 @@
-import { AsyncContext } from 'oak-domain';
+import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ActionDictOfEntityDict, CascadeRemoveDefDict, ColorDict, Importation, Exportation } from 'oak-domain/lib/types';
 import { AuthDeduceRelationMap, EntityDict } from 'oak-domain/lib/types/Entity';

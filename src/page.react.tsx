@@ -85,15 +85,18 @@ abstract class OakComponentBase<
     }
 
     save(key: string, item: any) {
-        this.features.localStorage.save(key, item);
+        return this.features.localStorage.save(key, item);
     }
 
     load(key: string) {
         return this.features.localStorage.load(key);
     }
 
-    clear() {
-        this.features.localStorage.clear();
+    clear(key?: string) {
+        if (key) {
+            return this.features.localStorage.remove(key);
+        }
+        return this.features.localStorage.clear();
     }
 
     setNotification(data: NotificationProps) {

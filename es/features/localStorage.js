@@ -26,7 +26,7 @@ export class LocalStorage extends Feature {
             unset(this.keys, key);
         }
     }
-    save(key, item) {
+    async save(key, item) {
         this.setKey(key);
         switch (process.env.OAK_PLATFORM) {
             case 'wechatMp': {
@@ -42,7 +42,7 @@ export class LocalStorage extends Feature {
             }
         }
     }
-    load(key) {
+    async load(key) {
         this.setKey(key);
         switch (process.env.OAK_PLATFORM) {
             case 'wechatMp': {
@@ -60,7 +60,7 @@ export class LocalStorage extends Feature {
             }
         }
     }
-    clear() {
+    async clear() {
         this.keys = {};
         switch (process.env.OAK_PLATFORM) {
             case 'wechatMp': {
@@ -76,7 +76,7 @@ export class LocalStorage extends Feature {
             }
         }
     }
-    remove(key) {
+    async remove(key) {
         this.unsetKey(key);
         switch (process.env.OAK_PLATFORM) {
             case 'wechatMp': {
@@ -92,19 +92,19 @@ export class LocalStorage extends Feature {
             }
         }
     }
-    loadAll() {
+    async loadAll() {
         const data = {};
         for (const k in this.keys) {
             Object.assign(data, {
-                [k]: this.load(k),
+                [k]: await this.load(k),
             });
         }
         return data;
     }
-    resetAll(data) {
+    async resetAll(data) {
         this.clear();
         for (const k in data) {
-            this.save(k, data[k]);
+            await this.save(k, data[k]);
         }
     }
 }

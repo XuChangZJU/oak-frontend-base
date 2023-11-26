@@ -330,9 +330,9 @@ export type OakCommonComponentMethods<
         pubEvent: (type: string, options?: any) => void;
         unsubAllEvents: (type: string) => void;
 
-        save: (key: string, item: any) => void;
-        load: (key: string) => any;
-        clear: () => void;
+        save: (key: string, item: any) => Promise<void>;
+        load: (key: string) => Promise<any>;
+        clear: (key?: string) => Promise<void>;
         setNotification: (data: NotificationProps) => void;
         consumeNotification: () => NotificationProps | undefined;
         setMessage: (data: MessageProps) => void;

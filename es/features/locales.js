@@ -11,20 +11,24 @@ export class Locales extends Feature {
     language;
     defaultLng;
     i18n;
+    async initializeLng() {
+        const savedLng = await this.localStorage.load(LOCAL_STORAGE_KEYS.localeLng);
+        if (savedLng) {
+            this.language = savedLng;
+        }
+        else {
+            await this.detectLanguange();
+        }
+    }
     constructor(cache, localStorage, environment, defaultLng, makeBridgeUrlFn) {
         super();
         this.cache = cache;
         this.localStorage = localStorage;
         this.defaultLng = defaultLng;
         this.environment = environment;
-        const savedLng = localStorage.load(LOCAL_STORAGE_KEYS.localeLng);
-        if (savedLng) {
-            this.language = savedLng;
-        }
-        else {
-            this.language = defaultLng;
-            this.detectLanguange();
-        }
+        this.language = defaultLng;
+        // 也是异步行为，不知道是否有影响 by Xc
+        this.initializeLng();
         this.i18n = new I18n(undefined, {
             defaultLocale: defaultLng,
             locale: this.language,
@@ -47,7 +51,7 @@ export class Locales extends Feature {
         const env = await this.environment.getEnv();
         const { language } = env;
         this.language = language;
-        this.localStorage.save(LOCAL_STORAGE_KEYS.localeLng, language);
+        await this.localStorage.save(LOCAL_STORAGE_KEYS.localeLng, language);
     }
     resetDataset() {
         const i18ns = this.cache.get('i18n', {

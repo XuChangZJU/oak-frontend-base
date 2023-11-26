@@ -23,10 +23,10 @@ async function initDataInStore<ED extends EntityDict & BaseEntityDict, Cxt exten
     store.resetInitialData(initialData, stat);
 }
 
-function getMaterializedData(loadFn: (key: string) => any) {
+async function getMaterializedData(loadFn: (key: string) => Promise<any>) {
     try {
-        const data = loadFn(LOCAL_STORAGE_KEYS.debugStore);
-        const stat = loadFn(LOCAL_STORAGE_KEYS.debugStoreStat);
+        const data = await loadFn(LOCAL_STORAGE_KEYS.debugStore);
+        const stat = await loadFn(LOCAL_STORAGE_KEYS.debugStoreStat);
         if (data && stat) {
             return {
                 data,
@@ -41,13 +41,13 @@ function getMaterializedData(loadFn: (key: string) => any) {
 
 let lastMaterializedVersion = 0;
 
-function materializeData(
+async function materializeData(
     data: any,
     stat: { create: number, update: number, remove: number, commit: number },
-    saveFn: (key: string, data: any) => void) {
+    saveFn: (key: string, data: any) => Promise<void>) {
     try {
-        saveFn(LOCAL_STORAGE_KEYS.debugStore, data);
-        saveFn(LOCAL_STORAGE_KEYS.debugStoreStat, stat);
+        await saveFn(LOCAL_STORAGE_KEYS.debugStore, data);
+        await saveFn(LOCAL_STORAGE_KEYS.debugStoreStat, stat);
         lastMaterializedVersion = stat.commit;
         console.log('物化数据', data);
     } catch (e) {
@@ -215,8 +215,8 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
     },
     actionDict: ActionDictOfEntityDict<ED>,
     authDeduceRelationMap: AuthDeduceRelationMap<ED>,
-    saveFn: (key: string, data: any) => void,
-    loadFn: (key: string) => any,
+    saveFn: (key: string, data: any) => Promise<void>,
+    loadFn: (key: string) => Promise<any>,
     selectFreeEntities?: (keyof ED)[],
     updateFreeDict?: {
         [A in keyof ED]?: string[];
@@ -234,31 +234,36 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
     assert(actionDict);
 
     // 如果没有物化数据则使用initialData初始化debugStore
-    const data = getMaterializedData(loadFn);
-    if (!data) {
-        initDataInStore(store, initialData!);
-        console.log('使用初始化数据建立debugStore', initialData);
-    }
-    else {
-        // 对static的对象，使用initialData，剩下的使用物化数据
-        for (const entity in initialData) {
-            if (storageSchema[entity].static) {
-                data.data[entity] = initialData[entity];
-            }
+    const loadInitialData = async () => {
+        const data = await getMaterializedData(loadFn);
+        if (!data) {
+            initDataInStore(store, initialData!);
+            console.log('使用初始化数据建立debugStore', initialData);
         }
-        initDataInStore(store, data.data, data.stat);
-        console.log('使用物化数据建立debugStore', data);
-    }
+        else {
+            // 对static的对象，使用initialData，剩下的使用物化数据
+            for (const entity in initialData) {
+                if (storageSchema[entity].static) {
+                    data.data[entity] = initialData[entity];
+                }
+            }
+            initDataInStore(store, data.data, data.stat);
+            console.log('使用物化数据建立debugStore', data);
+        }
+    };
+    loadInitialData();
     lastMaterializedVersion = store.getStat().commit;
 
     // 当store中有更新事务提交时，物化store数据
-    store.onCommit((result) => {
-        if (Object.keys(result).length > 0) {
-            const stat = store.getStat();
-            const data = store.getCurrentData();
-            materializeData(data, stat, saveFn);
+    store.onCommit(
+        async (result) => {
+            if (Object.keys(result).length > 0) {
+                const stat = store.getStat();
+                const data = store.getCurrentData();
+                await materializeData(data, stat, saveFn);
+            }
         }
-    });
+    );
 
     // 启动watcher
     initializeWatchers(store, contextBuilder, watchers);
