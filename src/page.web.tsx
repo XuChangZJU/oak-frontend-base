@@ -53,6 +53,25 @@ export function createComponent<
             this.checkReachBottom();
         };
 
+        private handleResize() {
+            const size: WechatMiniprogram.Page.IResizeOption = {
+                size: {
+                    windowHeight: window.innerHeight,
+                    windowWidth: window.innerWidth,
+                },
+            };
+            const { resize } = this.oakOption.lifetimes || {};
+            resize && resize(size);
+        }
+
+        private registerResize() {
+            window.addEventListener('resize', this.handleResize);
+        }
+
+        private unregisterResize() {
+            window.removeEventListener('resize', this.handleResize);
+        }
+
         private registerPageScroll() {
             window.addEventListener('scroll', this.scrollEvent);
         }
@@ -67,7 +86,7 @@ export function createComponent<
             }
             const isCurrentReachBottom =
                 document.body.scrollHeight -
-                (window.innerHeight + window.scrollY) <=
+                    (window.innerHeight + window.scrollY) <=
                 DEFAULT_REACH_BOTTOM_DISTANCE;
 
             if (!this.isReachBottom && isCurrentReachBottom && option.isList) {
@@ -81,11 +100,13 @@ export function createComponent<
         }
 
         async componentDidMount() {
+            this.registerResize();
             this.registerPageScroll();
-            await super.componentDidMount();                        
+            await super.componentDidMount();
         }
 
         componentWillUnmount(): void {
+            this.unregisterResize();
             this.unregisterPageScroll();
             super.componentWillUnmount();
         }
@@ -126,7 +147,7 @@ export function createComponent<
                     </PullToRefresh>
                 );
             }
-            return Render;      
+            return Render;
         }
     }
     return withRouter(Component, option);

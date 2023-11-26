@@ -50,6 +50,18 @@ export function createComponent<
 
     class Component extends BaseComponent {
 
+        private handleResize() {
+            // TODO native跑到了再实现
+            // const size: WechatMiniprogram.Page.IResizeOption = {
+            //     size: {
+            //         windowHeight: window.innerHeight,
+            //         windowWidth: window.innerWidth,
+            //     },
+            // };
+            // const { resize } = this.oakOption.lifetimes || {};
+            // resize && resize(size);
+        }
+        
         async componentDidMount() {
             await super.componentDidMount();                        
         }
@@ -60,8 +72,8 @@ export function createComponent<
 
         render(): React.ReactNode {
             const { oakPullDownRefreshLoading } = this.state;
-            const Render = super.render();
-            
+            const Render = super.render();            
+
             return Render;
         }
     }

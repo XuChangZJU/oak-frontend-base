@@ -1,4 +1,5 @@
 /// <reference types="wechat-miniprogram" />
+/// <reference types="wechat-miniprogram" />
 import { Aspect, EntityDict, CheckerType, AggregationResult, SubDataDef, OpRecord } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -106,6 +107,7 @@ export type OakComponentOption<IsList extends boolean, ED extends EntityDict & B
         error?(err: Error): void;
         show?(): void;
         hide?(): void;
+        resize?(size: WechatMiniprogram.Page.IResizeOption): void;
     };
     listeners: Record<string, (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>, prev: Record<string, any>, next: Record<string, any>) => void>;
 }> & Partial<{

@@ -280,6 +280,7 @@ export type OakComponentOption<
             error?(err: Error): void;
             show?(): void;
             hide?(): void;
+            resize?(size: WechatMiniprogram.Page.IResizeOption): void;
         };
         listeners: Record<string, (this: ComponentPublicThisType<
             ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod

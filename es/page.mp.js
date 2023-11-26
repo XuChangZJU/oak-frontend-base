@@ -614,6 +614,10 @@ export function createComponent(option, features) {
                 const { hide } = this.oakOption.lifetimes || {};
                 hide && hide.call(this);
             },
+            resize(size) {
+                const { resize } = this.oakOption.lifetimes || {};
+                resize && resize.call(this, size);
+            }
         },
         lifetimes: {
             created() {

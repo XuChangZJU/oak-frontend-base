@@ -8,6 +8,22 @@ export function createComponent(option, features) {
         scrollEvent = () => {
             this.checkReachBottom();
         };
+        handleResize() {
+            const size = {
+                size: {
+                    windowHeight: window.innerHeight,
+                    windowWidth: window.innerWidth,
+                },
+            };
+            const { resize } = this.oakOption.lifetimes || {};
+            resize && resize(size);
+        }
+        registerResize() {
+            window.addEventListener('resize', this.handleResize);
+        }
+        unregisterResize() {
+            window.removeEventListener('resize', this.handleResize);
+        }
         registerPageScroll() {
             window.addEventListener('scroll', this.scrollEvent);
         }
@@ -30,10 +46,12 @@ export function createComponent(option, features) {
             this.isReachBottom = isCurrentReachBottom;
         }
         async componentDidMount() {
+            this.registerResize();
             this.registerPageScroll();
             await super.componentDidMount();
         }
         componentWillUnmount() {
+            this.unregisterResize();
             this.unregisterPageScroll();
             super.componentWillUnmount();
         }
