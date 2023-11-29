@@ -184,7 +184,7 @@ class ListNode extends Node {
     }
     onCacheSync(records) {
         // 只需要处理当listNode为首页且插入/删除项满足条件的情况
-        if (this.loading || this.pagination.currentPage !== 1) {
+        if (this.loading || this.pagination.currentPage !== 0) {
             return;
         }
         let needReRender = false;
