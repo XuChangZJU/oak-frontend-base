@@ -1,15 +1,17 @@
-import React, { useContext, createElement } from 'react';
+import React, { useContext } from 'react';
 import { Feature } from '../../../types/Feature';
-
 
 const FeaturesContext = React.createContext<{ features: any }>({
     features: {},
 });
 
-const FeaturesProvider: React.FC<{
+type Props = {
     features: Record<string, Feature>;
     children: React.ReactNode;
-}> = ({ features, children }) => {
+};
+
+const FeaturesProvider = (props: Props) => {
+    const { features, children } = props;
     return (
         <FeaturesContext.Provider value={{ features }}>
             {children}

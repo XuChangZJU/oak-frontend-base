@@ -7,16 +7,18 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import {
     EntityDict,
 } from 'oak-domain/lib/types';
-import URL from 'url';
 
 export class Navigator extends Feature {
     history: BrowserHistory;
     namespace: string;
 
+    private base: string;
+
     constructor() {
         super();
         this.history = createBrowserHistory();
         this.namespace = '';
+        this.base = 'http://localhost'; // 使用URL解析链接时 相对路径需要使用构建一个完整链接
     }
 
     /**
@@ -40,14 +42,26 @@ export class Navigator extends Feature {
         return this.namespace;
     }
 
+    private urlParse(path: string) {
+        const urlParse = new URL(path, this.base);
+        return urlParse;
+    }
+
+    private urlFormat(url: URL) {
+        const urlParse = new URL(url, this.base);
+        const url2 = urlParse.toString();
+        return url2.replace(this.base, '');
+    }
+
     private getCurrentUrl() {
         const { pathname, search } = this.getLocation();
         // 构建search
         const search2 = this.constructSearch(search);
-        const url = URL.format({
-            pathname,
-            search: search2,
-        });
+        const urlParse = this.urlParse(pathname);
+        urlParse.pathname = pathname;
+        urlParse.search = search2;
+        urlParse.searchParams.delete('oakFrom'); //把上层传入的oakFrom排除
+        const url = this.urlFormat(urlParse);
 
         return url;
     }
@@ -56,25 +70,23 @@ export class Navigator extends Feature {
         search?: string | null,
         state?: Record<string, any>
     ) {
-        let search2 = search;
+        const searchParams = new URLSearchParams(search || '');
         if (state) {
             for (const param in state) {
-                if (!search2) {
-                    search2 = '?';
-                }
                 if (
                     state[param] !== undefined ||
                     state[param] !== 'undefined'
                 ) {
-                    search2 += `&${param}=${
+                    searchParams.set(
+                        param,
                         typeof state[param] === 'string'
                             ? state[param]
                             : JSON.stringify(state[param])
-                    }`;
+                    );
                 }
             }
         }
-        return search2;
+        return searchParams.toString();
     }
 
     private constructUrl(
@@ -82,7 +94,7 @@ export class Navigator extends Feature {
         state?: Record<string, any>,
         disableNamespace?: boolean
     ) {
-        const urlParse = URL.parse(url, true);
+        const urlParse = this.urlParse(url);
         const { pathname, search } = urlParse;
 
         let pathname2: string;
@@ -93,17 +105,16 @@ export class Navigator extends Feature {
         }
         // 构建search
         const search2 = this.constructSearch(search, state);
-        const url2 = URL.format({
-            pathname: pathname2,
-            search: search2,
-        });
+        urlParse.pathname = pathname2;
+        urlParse.search = search2;
+        const url2 = this.urlFormat(urlParse);
 
         return url2;
     }
 
     private constructNamespace(url: string, namespace?: string) {
         if (namespace) {
-            const urlParse = URL.parse(url, true);
+            const urlParse = this.urlParse(url);
             const { pathname, search } = urlParse;
             let pathname2 = pathname;
             if (namespace === '/') {
@@ -114,10 +125,8 @@ export class Navigator extends Feature {
                 pathname2 = namespace + pathname;
             }
 
-            const url2 = URL.format({
-                pathname: pathname2,
-                search,
-            });
+            urlParse.pathname = pathname2;
+            const url2 = this.urlFormat(urlParse);
             return url2;
         }
         return url;

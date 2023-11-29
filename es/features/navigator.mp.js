@@ -38,11 +38,11 @@ export class Navigator extends Feature {
         const options = currentPage.options; //如果要获取url中所带的参数可以查看options
         // 构建search
         const search2 = this.constructSearch('', options);
-        const fromUrl = URL.format({
+        const url2 = URL.format({
             pathname: url,
             search: search2,
         });
-        return fromUrl;
+        return url2;
     }
     constructSearch(search, state) {
         let search2 = search;

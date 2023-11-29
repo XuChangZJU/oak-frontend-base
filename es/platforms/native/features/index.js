@@ -2,7 +2,8 @@ import React, { useContext } from 'react';
 const FeaturesContext = React.createContext({
     features: {},
 });
-const FeaturesProvider = ({ features, children }) => {
+const FeaturesProvider = (props) => {
+    const { features, children } = props;
     return (<FeaturesContext.Provider value={{ features }}>
             {children}
         </FeaturesContext.Provider>);

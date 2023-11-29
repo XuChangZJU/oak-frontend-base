@@ -1,5 +1,6 @@
 import React from 'react';
-import { withRouter, PullToRefresh } from './platforms/web';
+import withRouter from './platforms/web/router/withRouter';
+import PullToRefresh from './platforms/web/PullToRefresh';
 import { createComponent as createReactComponent } from './page.react';
 const DEFAULT_REACH_BOTTOM_DISTANCE = 50;
 export function createComponent(option, features) {

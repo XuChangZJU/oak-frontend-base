@@ -1,45 +1,48 @@
 import React from 'react';
 // @ts-ignore
-import { useLocation, useParams } from 'react-router-dom';
-import { useWidth } from './../responsive';
+import { useNavigation, useRoute, RouteProp, ParamListBase } from '@react-navigation/native';
 
 import { assert } from 'oak-domain/lib/utils/assert';
 
-type Location = { state: Record<string, any>; search?: string | null };
 
-function getParams(location: Location, properties?: Record<string, any>) {
-    const { search, state } = location;
-    const props = getProps(search, properties);
+function getParams(
+    params: RouteProp<ParamListBase>['params'],
+    properties?: Record<string, any>
+) {
+    const props = getProps(params, properties);
 
-    return Object.assign({}, props, state);
+    return Object.assign({}, props);
 }
 
-function getProps(search?: Location['search'], properties?: Record<string, any>) {
-    if (!search) {
+function getProps(
+    params: RouteProp<ParamListBase>['params'],
+    properties?: Record<string, any>
+) {
+    let query: Record<string, any> = params as any;
+    if (!params || Object.keys(params).length === 0) {
         return;
     }
-    const searchParams = new URLSearchParams(search || '');
 
     const props = {};
 
-    for (const k of searchParams.keys()) {
+    for (const k in query) {
         if (properties && properties[k]) {
             switch (typeof properties[k]) {
                 case 'number': {
                     Object.assign(props, {
-                        [k]: Number(searchParams.get(k)),
+                        [k]: Number(query[k]),
                     });
                     break;
                 }
                 case 'boolean': {
                     Object.assign(props, {
-                        [k]: Boolean(searchParams.get(k)),
+                        [k]: Boolean(query[k]),
                     });
                     break;
                 }
                 case 'object': {
                     Object.assign(props, {
-                        [k]: JSON.parse(searchParams.get(k)!),
+                        [k]: JSON.parse(query[k]),
                     });
                     break;
                 }
@@ -49,7 +52,7 @@ function getProps(search?: Location['search'], properties?: Record<string, any>)
                         '传参只能是number/boolean/object/string四种类型'
                     );
                     Object.assign(props, {
-                        [k]: searchParams.get(k),
+                        [k]: query[k],
                     });
                 }
             }
@@ -57,13 +60,13 @@ function getProps(search?: Location['search'], properties?: Record<string, any>)
             switch (k) {
                 case 'oakDisablePulldownRefresh': {
                     Object.assign(props, {
-                        [k]: Boolean(searchParams.get(k)),
+                        [k]: Boolean(query[k]),
                     });
                     break;
                 }
                 default: {
                     Object.assign(props, {
-                        [k]: searchParams.get(k),
+                        [k]: query[k],
                     });
                 }
             }
@@ -74,34 +77,27 @@ function getProps(search?: Location['search'], properties?: Record<string, any>)
 
 const withRouter = (Component: React.ComponentType<any>, { path, properties }: { path?: string, properties?: Record<string, any> }) => {
     const ComponentWithRouterProp = (props: any) => {
-        const location = useLocation();
-        const routerParams = useParams(); // 取路由 xx/:abbr 通过这个函数取到
-        const width = useWidth();
+        const navigation = props.navigation;
+        const route = props.route;
+
+        const { params: routeParams } = route || {};
         const { forwardedRef, ...rest } = props;
 
         let params = {};
-        let routeMatch = false;
 
         /**
          * 由path来判定是否为Page。这里有个隐患，未来实现了keepAlive后，可能会影响到之前压栈的Page
          * 待测试。by Xc 20231102
          */
         if (path) {
-            params = Object.assign(
-                params,
-                getParams(location as Location, properties),
-                routerParams
-            );
-            routeMatch = true;
+            params = Object.assign(params, getParams(routeParams, properties));
         }
 
         return (
             <Component
                 {...rest}
                 {...params}
-                width={width}
                 ref={forwardedRef}
-                routeMatch={routeMatch}
             />
         );
     };

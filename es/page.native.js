@@ -1,23 +1,32 @@
+import { Dimensions } from 'react-native';
 import { createComponent as createReactComponent } from './page.react';
+import withRouter from './platforms/native/router/withRouter';
 const DEFAULT_REACH_BOTTOM_DISTANCE = 50;
 export function createComponent(option, features) {
     const BaseComponent = createReactComponent(option, features);
     class Component extends BaseComponent {
-        handleResize() {
-            // TODO native跑到了再实现
-            // const size: WechatMiniprogram.Page.IResizeOption = {
-            //     size: {
-            //         windowHeight: window.innerHeight,
-            //         windowWidth: window.innerWidth,
-            //     },
-            // };
-            // const { resize } = this.oakOption.lifetimes || {};
-            // resize && resize(size);
+        handleResize({ window, screen, }) {
+            const size = {
+                size: {
+                    windowHeight: window.height,
+                    windowWidth: window.width,
+                },
+            };
+            const { resize } = this.oakOption.lifetimes || {};
+            resize && resize(size);
+        }
+        registerResize() {
+            this.d = Dimensions.addEventListener('change', this.handleResize);
+        }
+        unregisterResize() {
+            this.d.remove();
         }
         async componentDidMount() {
+            this.registerResize();
             await super.componentDidMount();
         }
         componentWillUnmount() {
+            this.unregisterResize();
             super.componentWillUnmount();
         }
         render() {
@@ -26,5 +35,5 @@ export function createComponent(option, features) {
             return Render;
         }
     }
-    return Component;
+    return withRouter(Component, option);
 }

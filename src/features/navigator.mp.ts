@@ -54,11 +54,11 @@ export class Navigator extends Feature {
 
         // 构建search
         const search2 = this.constructSearch('', options);
-        const fromUrl = URL.format({
+        const url2 = URL.format({
             pathname: url,
             search: search2,
         });
-        return fromUrl;
+        return url2;
     }
 
     private constructSearch(
