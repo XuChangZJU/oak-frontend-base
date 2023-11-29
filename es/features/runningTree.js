@@ -187,7 +187,6 @@ class ListNode extends Node {
         if (this.loading || this.pagination.currentPage !== 0) {
             return;
         }
-        let needReRender = false;
         for (const record of records) {
             const { a } = record;
             switch (a) {
@@ -200,24 +199,22 @@ class ListNode extends Node {
                             d.forEach((dd) => {
                                 if (!filter || (!this.sr.hasOwnProperty(dd.id) && checkFilterContains(e, context, filter, {
                                     id: dd.id,
-                                }))) {
+                                }, true))) {
                                     this.sr[dd.id] = {}; // 如果有aggr怎么办，一般有aggr的页面不会出现这种情况，以后再说
                                     if (typeof this.pagination.total === 'number') {
                                         this.pagination.total += 1;
                                     }
-                                    needReRender = true;
                                 }
                             });
                         }
                         else {
                             if (!filter || (!this.sr.hasOwnProperty(d.id) && checkFilterContains(e, context, filter, {
                                 id: d.id,
-                            }))) {
+                            }, true))) {
                                 this.sr[d.id] = {}; // 如果有aggr怎么办，一般有aggr的页面不会出现这种情况，以后再说
                                 if (typeof this.pagination.total === 'number') {
                                     this.pagination.total += 1;
                                 }
-                                needReRender = true;
                             }
                         }
                         this.cache.commit();
@@ -230,7 +227,6 @@ class ListNode extends Node {
                         if (!f) {
                             this.sr = {};
                             this.pagination.total = 0;
-                            needReRender = true;
                         }
                         else if (f.id && typeof f.id === 'string') {
                             // 绝大多数删除情况
@@ -239,18 +235,16 @@ class ListNode extends Node {
                                 if (typeof this.pagination.total === 'number') {
                                     this.pagination.total -= 1;
                                 }
-                                needReRender = true;
                             }
                         }
                         else {
                             const context = this.cache.begin();
                             for (const id in this.sr) {
-                                if (!f || checkFilterContains(e, context, f, { id })) {
+                                if (!f || checkFilterContains(e, context, f, { id }, true)) {
                                     unset(this.sr, id);
                                     if (typeof this.pagination.total === 'number') {
                                         this.pagination.total -= 1;
                                     }
-                                    needReRender = true;
                                 }
                             }
                             this.cache.commit();
@@ -261,9 +255,6 @@ class ListNode extends Node {
                 default: {
                     break;
                 }
-            }
-            if (needReRender) {
-                break;
             }
         }
     }

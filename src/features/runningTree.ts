@@ -270,7 +270,6 @@ class ListNode<
         if (this.loading || this.pagination.currentPage !== 0) {
             return;
         }
-        let needReRender = false;
         for (const record of records) {
             const { a } = record;
             switch (a) {
@@ -284,12 +283,11 @@ class ListNode<
                                 (dd) => {
                                     if (!filter || (!this.sr.hasOwnProperty(dd.id) && checkFilterContains<ED, T, FrontCxt>(e, context, filter, {
                                         id: dd.id!,
-                                    }))) {
+                                    }, true))) {
                                         this.sr[dd.id] = {};        // 如果有aggr怎么办，一般有aggr的页面不会出现这种情况，以后再说
                                         if (typeof this.pagination.total === 'number') {
                                             this.pagination.total += 1;
                                         }
-                                        needReRender = true;
                                     }
                                 }
                             );
@@ -297,12 +295,11 @@ class ListNode<
                         else {
                             if (!filter || (!this.sr.hasOwnProperty(d.id) && checkFilterContains<ED, T, FrontCxt>(e, context, filter, {
                                 id: d.id!,
-                            }))) {
+                            }, true))) {
                                 this.sr[d.id] = {};        // 如果有aggr怎么办，一般有aggr的页面不会出现这种情况，以后再说
                                 if (typeof this.pagination.total === 'number') {
                                     this.pagination.total += 1;
                                 }
-                                needReRender = true;
                             }
                         }
                         this.cache.commit();
@@ -315,7 +312,6 @@ class ListNode<
                         if (!f) {
                             this.sr = {};
                             this.pagination.total = 0;
-                            needReRender = true;
                         }
                         else if (f.id && typeof f.id === 'string') {
                             // 绝大多数删除情况
@@ -324,18 +320,16 @@ class ListNode<
                                 if (typeof this.pagination.total === 'number') {
                                     this.pagination.total -= 1;
                                 }
-                                needReRender = true;
                             }
                         }
                         else {
                             const context = this.cache.begin();
                             for (const id in this.sr) {
-                                if (!f || checkFilterContains<ED, T, FrontCxt>(e, context, f, { id })) {
+                                if (!f || checkFilterContains<ED, T, FrontCxt>(e, context, f, { id }, true)) {
                                     unset(this.sr, id);
                                     if (typeof this.pagination.total === 'number') {
                                         this.pagination.total -= 1;
                                     }
-                                    needReRender = true;
                                 }
                             }
                             this.cache.commit();
@@ -346,9 +340,6 @@ class ListNode<
                 default: {
                     break;
                 }
-            }
-            if (needReRender) {
-                break;
             }
         }
     }
