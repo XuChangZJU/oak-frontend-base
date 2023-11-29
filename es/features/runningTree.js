@@ -220,7 +220,7 @@ class ListNode extends Node {
                                 needReRender = true;
                             }
                         }
-                        context.commit();
+                        this.cache.commit();
                     }
                     break;
                 }
@@ -253,7 +253,7 @@ class ListNode extends Node {
                                     needReRender = true;
                                 }
                             }
-                            context.commit();
+                            this.cache.commit();
                         }
                     }
                     break;

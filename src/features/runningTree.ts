@@ -305,7 +305,7 @@ class ListNode<
                                 needReRender = true;
                             }
                         }
-                        context.commit();
+                        this.cache.commit();
                     }
                     break;
                 }
@@ -338,7 +338,7 @@ class ListNode<
                                     needReRender = true;
                                 }
                             }
-                            context.commit();
+                            this.cache.commit();
                         }
                     }
                     break;
