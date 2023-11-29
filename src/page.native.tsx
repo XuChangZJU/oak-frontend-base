@@ -68,11 +68,16 @@ export function createComponent<
         }
 
         private registerResize() {
-            (this as any).d = Dimensions.addEventListener('change', this.handleResize) as EmitterSubscription;
+            (this as any).dimensionsSubscription = Dimensions.addEventListener(
+                'change',
+                this.handleResize
+            ) as EmitterSubscription;
         }
 
         private unregisterResize() {
-            ((this as any).d as EmitterSubscription).remove();
+            (
+                (this as any).dimensionsSubscription as EmitterSubscription
+            ).remove();
         }
 
         async componentDidMount() {

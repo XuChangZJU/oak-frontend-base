@@ -16,10 +16,10 @@ export function createComponent(option, features) {
             resize && resize(size);
         }
         registerResize() {
-            this.d = Dimensions.addEventListener('change', this.handleResize);
+            this.dimensionsSubscription = Dimensions.addEventListener('change', this.handleResize);
         }
         unregisterResize() {
-            this.d.remove();
+            this.dimensionsSubscription.remove();
         }
         async componentDidMount() {
             this.registerResize();
