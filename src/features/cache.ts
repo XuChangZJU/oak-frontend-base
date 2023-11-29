@@ -49,6 +49,7 @@ export class Cache<
         [T in keyof ED]?: Record<string, number>;
     } = {};
     private context?: FrontCxt;
+    private initPromise: Promise<void>;
 
     constructor(
         storageSchema: StorageSchema<ED>,
@@ -77,13 +78,15 @@ export class Cache<
         this.getFullDataFn = getFullData;
         
         // 现在这个init变成了异步行为，不知道有没有影响。by Xc 20231126
-        this.initSavedLogic();
+        this.initPromise = new Promise(
+            (resolve) => this.initSavedLogic(resolve)
+        );
     }
 
     /**
      * 处理cache中需要缓存的数据
      */
-    private async initSavedLogic() {
+    private async initSavedLogic(complete: () => void) {
         const data: {
             [T in keyof ED]?: ED[T]['OpSchema'][];
         } = {};
@@ -121,6 +124,11 @@ export class Cache<
                 }
             }
         );
+        complete();
+    }
+
+    async onInitialized() {
+        await this.initPromise;
     }
 
     getSchema() {
@@ -198,6 +206,17 @@ export class Cache<
         return () => undefined as void;
     }
 
+    /**
+     * 向服务器刷新数据
+     * @param entity 
+     * @param selection 
+     * @param option 
+     * @param callback 
+     * @param refreshOption 
+     * @returns 
+     * @description 支持增量更新，可以使用useLocalCache来将一些metadata级的数据本地缓存，减少更新次数。
+     * 使用增量更新这里要注意，传入的keys如果有一个key是首次更新，会导致所有的keys全部更新。使用模块自己保证这种情况不要出现
+     */
     async refresh<T extends keyof ED, OP extends CacheSelectOption>(
         entity: T,
         selection: ED[T]['Selection'],

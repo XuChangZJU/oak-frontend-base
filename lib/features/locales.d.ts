@@ -20,7 +20,8 @@ export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends
     private initializeLng;
     constructor(cache: Cache<ED, Cxt, FrontCxt, AD>, localStorage: LocalStorage, environment: Environment, defaultLng: string, makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string);
     private detectLanguange;
-    private resetDataset;
+    private reloadDataset;
+    private loadServerData;
     /**
      * 当发生key缺失时，向服务器请求最新的i18n数据，对i18n缓存数据的行为优化放在cache中统一进行
      * @param ns

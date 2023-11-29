@@ -29,11 +29,13 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     private getFullDataFn;
     private refreshRecords;
     private context?;
+    private initPromise;
     constructor(storageSchema: StorageSchema<ED>, aspectWrapper: AspectWrapper<ED, Cxt, AD>, frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt, checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>, getFullData: () => any, localStorage: LocalStorage, savedEntities?: (keyof ED)[], keepFreshPeriod?: number);
     /**
      * 处理cache中需要缓存的数据
      */
     private initSavedLogic;
+    onInitialized(): Promise<void>;
     getSchema(): StorageSchema<ED>;
     exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void, dontPublish?: true): Promise<{
         result: Awaited<ReturnType<AD[K]>>;
@@ -41,6 +43,17 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     }>;
     private saveRefreshRecord;
     private addRefreshRecord;
+    /**
+     * 向服务器刷新数据
+     * @param entity
+     * @param selection
+     * @param option
+     * @param callback
+     * @param refreshOption
+     * @returns
+     * @description 支持增量更新，可以使用useLocalCache来将一些metadata级的数据本地缓存，减少更新次数。
+     * 使用增量更新这里要注意，传入的keys如果有一个key是首次更新，会导致所有的keys全部更新。使用模块自己保证这种情况不要出现
+     */
     refresh<T extends keyof ED, OP extends CacheSelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, callback?: (result: Awaited<ReturnType<AD['select']>>) => void, refreshOption?: RefreshOption): Promise<{
         data: Partial<ED[T]["Schema"]>[];
         total?: undefined;

@@ -51,7 +51,7 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             defaultLocale: defaultLng,
             locale: this.language,
         });
-        this.resetDataset();
+        this.reloadDataset();
 
         // i18n miss的默认策略
         this.i18n.missingBehavior = 'loadData';
@@ -75,7 +75,8 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         await this.localStorage.save(LOCAL_STORAGE_KEYS.localeLng, language);
     }
 
-    private resetDataset() {
+    private async reloadDataset() {
+        await this.cache.onInitialized();
         const i18ns = this.cache.get('i18n', {
             data: {
                 id: 1,
@@ -98,16 +99,15 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             }
         );
         this.i18n.store(dataset);
+
+        if (i18ns.length > 0) {
+            // 启动时刷新数据策略
+            const nss = i18ns.map(ele => ele.namespace!);
+            await this.loadServerData(nss);
+        }
     }
 
-    /**
-     * 当发生key缺失时，向服务器请求最新的i18n数据，对i18n缓存数据的行为优化放在cache中统一进行
-     * @param ns 
-     */
-    private async loadData(key: Scope) {
-        assert(typeof key === 'string');
-        const [ ns ] = key.split('.');
-
+    private async loadServerData(nss: string[]) {
         const { data: newI18ns } = await this.cache.refresh('i18n', {
             data: {
                 id: 1,
@@ -118,13 +118,15 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
                 $$updateAt$$: 1,
             },
             filter: {
-                namespace: ns,
-            }
+                namespace: {
+                    $in: nss,
+                },
+            },
         }, undefined, undefined, {
             dontPublish: true,
             useLocalCache: {
-                keys: [ns],
-                gap: process.env.NODE_ENV === 'development' ? 60 * 1000 : 1200 * 1000,
+                keys: nss,
+                gap: process.env.NODE_ENV === 'development' ? 10 * 1000 : 3600 * 1000,
                 onlyReturnFresh: true,
             },
         });
@@ -146,7 +148,16 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             this.i18n.store(dataset);
             this.publish();
         }
+    }
+    /**
+     * 当发生key缺失时，向服务器请求最新的i18n数据，对i18n缓存数据的行为优化放在cache中统一进行
+     * @param ns 
+     */
+    private async loadData(key: Scope) {
+        assert(typeof key === 'string');
+        const [ ns ] = key.split('.');
 
+        await this.loadServerData([key]);
         if (!this.hasKey(key)) {
             console.warn(`命名空间${ns}中的${key}缺失且可能请求不到更新的数据`);
             if (process.env.NODE_ENV === 'development') {

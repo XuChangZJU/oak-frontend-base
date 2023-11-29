@@ -19,6 +19,7 @@ export class Cache extends Feature {
     getFullDataFn;
     refreshRecords = {};
     context;
+    initPromise;
     constructor(storageSchema, aspectWrapper, frontendContextBuilder, checkers, getFullData, localStorage, savedEntities, keepFreshPeriod) {
         super();
         this.aspectWrapper = aspectWrapper;
@@ -31,12 +32,12 @@ export class Cache extends Feature {
         checkers.forEach((checker) => this.cacheStore.registerChecker(checker));
         this.getFullDataFn = getFullData;
         // 现在这个init变成了异步行为，不知道有没有影响。by Xc 20231126
-        this.initSavedLogic();
+        this.initPromise = new Promise((resolve) => this.initSavedLogic(resolve));
     }
     /**
      * 处理cache中需要缓存的数据
      */
-    async initSavedLogic() {
+    async initSavedLogic(complete) {
         const data = {};
         await Promise.all(this.savedEntities.map(async (entity) => {
             // 加载缓存的数据项
@@ -64,6 +65,10 @@ export class Cache extends Feature {
                 }
             }
         });
+        complete();
+    }
+    async onInitialized() {
+        await this.initPromise;
     }
     getSchema() {
         return this.cacheStore.getSchema();
@@ -127,6 +132,17 @@ export class Cache extends Feature {
         }
         return () => undefined;
     }
+    /**
+     * 向服务器刷新数据
+     * @param entity
+     * @param selection
+     * @param option
+     * @param callback
+     * @param refreshOption
+     * @returns
+     * @description 支持增量更新，可以使用useLocalCache来将一些metadata级的数据本地缓存，减少更新次数。
+     * 使用增量更新这里要注意，传入的keys如果有一个key是首次更新，会导致所有的keys全部更新。使用模块自己保证这种情况不要出现
+     */
     async refresh(entity, selection, option, callback, refreshOption) {
         // todo 还要判定没有aggregation
         const { dontPublish, useLocalCache } = refreshOption || {};
