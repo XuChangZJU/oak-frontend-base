@@ -45,15 +45,6 @@ export class Navigator extends CommonNavigator {
         return url;
     }
 
-    getPathname(pathname: string, namespace?: string) {
-        let pathname2 = pathname;
-        if (namespace) {
-            pathname2 = this.constructNamespace(pathname, namespace);
-            return pathname2;
-        }
-        return pathname2;
-    }
-
     private getUrlAndProps<
         ED extends EntityDict & BaseEntityDict,
         T2 extends keyof ED

@@ -30,14 +30,6 @@ export class Navigator extends CommonNavigator {
         const url = this.urlFormat(urlParse);
         return url;
     }
-    getPathname(pathname, namespace) {
-        let pathname2 = pathname;
-        if (namespace) {
-            pathname2 = this.constructNamespace(pathname, namespace);
-            return pathname2;
-        }
-        return pathname2;
-    }
     getUrlAndProps(options, state, disableNamespace) {
         const { url, ...rest } = options;
         const url2 = this.constructUrl(url, rest, disableNamespace);

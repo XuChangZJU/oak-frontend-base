@@ -1,29 +1,22 @@
 import { assert } from 'oak-domain/lib/utils/assert';
-import URL from 'url';
 import { Feature } from '../types/Feature';
 import { OakNavigateToParameters } from '../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types';
+import { Navigator as CommonNavigator } from './navigator.common';
 
 type Location = {
     pathname: string;
-    state: unknown;
+    state?: Record<string, any>;
     key: string;
 };
 
-export class Navigator extends Feature {
-    namespace: string;
+export class Navigator extends CommonNavigator {
     history: WechatMiniprogram.Wx;
 
     constructor() {
         super();
         this.history = wx;
-        this.namespace = '';
-    }
-
-    setNamespace(namespace: string) {
-        this.namespace = namespace;
-        this.publish();
     }
 
     getLocation(): Location {
@@ -42,96 +35,19 @@ export class Navigator extends Feature {
         };
     }
 
-    getNamespace() {
-        return this.namespace;
-    }
-
     getCurrentUrl(needParams?: boolean) {
-        const pages = getCurrentPages(); //获取加载的页面
-        const currentPage = pages[pages.length - 1]; //获取当前页面的对象
-        const url = currentPage.route; //当前页面url
-        const options = currentPage.options; //如果要获取url中所带的参数可以查看options
+        const { pathname, state } = this.getLocation();
 
         if (!needParams) {
-            return url;
+            return pathname;
         }
         // 构建search
-        const search2 = this.constructSearch('', options);
-        const url2 = URL.format({
-            pathname: url,
-            search: search2,
-        });
-        return url2;
-    }
-
-    private constructSearch(
-        search?: string | null,
-        state?: Record<string, any>
-    ) {
-        let search2 = search;
-        if (state) {
-            for (const param in state) {
-                if (!search2) {
-                    search2 = '?';
-                }
-                if (
-                    state[param] !== undefined ||
-                    state[param] !== 'undefined'
-                ) {
-                    search2 += `&${param}=${
-                        typeof state[param] === 'string'
-                            ? state[param]
-                            : JSON.stringify(state[param])
-                    }`;
-                }
-            }
-        }
-        return search2;
-    }
-
-    private constructUrl(
-        url: string,
-        state?: Record<string, any>,
-        disableNamespace?: boolean
-    ) {
-        const urlParse = URL.parse(url, true);
-        const { pathname, search } = urlParse;
-        let pathname2: string;
-        if (disableNamespace) {
-            pathname2 = this.getPathname(pathname!);
-        } else {
-            pathname2 = this.getPathname(pathname!, this.namespace);
-        }
-
-        // 构建search
-        const search2 = this.constructSearch(search, state);
-        const url2 = URL.format({
-            pathname: pathname2,
-            search: search2,
-        });
-
-        return url2;
-    }
-
-    private constructNamespace(url: string, namespace?: string) {
-        if (namespace) {
-            const urlParse = URL.parse(url, true);
-            const { pathname, search } = urlParse;
-            let pathname2 = pathname;
-            if (namespace === '/') {
-                pathname2 = pathname;
-            } else if (pathname === namespace) {
-                pathname2 = pathname;
-            } else {
-                pathname2 = namespace + pathname;
-            }
-
-            const url2 = URL.format({
-                pathname: pathname2,
-                search,
-            });
-            return url2;
-        }
+        const search2 = this.constructSearch('', state);
+        const urlParse = this.urlParse(pathname);
+        urlParse.pathname = pathname;
+        urlParse.search = search2;
+        urlParse.searchParams.delete('oakFrom'); //把上层传入的oakFrom排除
+        const url = this.urlFormat(urlParse);
         return url;
     }
 

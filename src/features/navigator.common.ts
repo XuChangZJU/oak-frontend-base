@@ -2,6 +2,10 @@ import { Feature } from '../types/Feature';
 import { OakNavigateToParameters } from '../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types';
+import {
+    url as URL,
+    urlSearchParams as URLSearchParams,
+} from 'oak-domain/lib/utils/url';
 
 export class Navigator extends Feature {
     namespace: string;
@@ -29,7 +33,7 @@ export class Navigator extends Feature {
     }
 
     urlFormat(url: URL) {
-        const urlParse = new URL(url, this.base);
+        const urlParse = new URL(url.toString(), this.base);
         const url2 = urlParse.toString();
         return url2.replace(this.base, '');
     }

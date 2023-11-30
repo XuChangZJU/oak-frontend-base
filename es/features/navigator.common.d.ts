@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { Feature } from '../types/Feature';
 export declare class Navigator extends Feature {
     namespace: string;
@@ -5,7 +6,7 @@ export declare class Navigator extends Feature {
     constructor();
     setNamespace(namespace: string): void;
     getNamespace(): string;
-    urlParse(path: string): URL;
+    urlParse(path: string): import("url").URL;
     urlFormat(url: URL): string;
     constructSearch(search?: string | null, state?: Record<string, any>): string;
     constructUrl(url: string, state?: Record<string, any>, disableNamespace?: boolean): string;

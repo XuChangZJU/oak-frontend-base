@@ -1,4 +1,5 @@
 import { Feature } from '../types/Feature';
+import { url as URL, urlSearchParams as URLSearchParams, } from 'oak-domain/lib/utils/url';
 export class Navigator extends Feature {
     namespace;
     base;
@@ -19,7 +20,7 @@ export class Navigator extends Feature {
         return urlParse;
     }
     urlFormat(url) {
-        const urlParse = new URL(url, this.base);
+        const urlParse = new URL(url.toString(), this.base);
         const url2 = urlParse.toString();
         return url2.replace(this.base, '');
     }
