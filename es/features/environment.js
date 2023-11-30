@@ -3,7 +3,8 @@ import { getEnv } from '../utils/env/env';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { OakEnvInitializedFailure } from "../types/Exception";
 export class Environment extends Feature {
-    env;
+    fullEnv;
+    briefEnv;
     loading = false;
     constructor() {
         super();
@@ -12,9 +13,10 @@ export class Environment extends Feature {
     async initialize() {
         this.loading = true;
         try {
-            const env = await getEnv();
+            const { fullEnv, briefEnv } = await getEnv();
             this.loading = false;
-            this.env = env;
+            this.fullEnv = fullEnv;
+            this.briefEnv = briefEnv;
             this.publish();
         }
         catch (err) {
@@ -22,19 +24,22 @@ export class Environment extends Feature {
         }
     }
     async getEnv() {
-        if (this.env) {
-            return this.env;
+        if (this.fullEnv) {
+            return this.fullEnv;
         }
         else {
             assert(this.loading);
             return new Promise((resolve, reject) => {
                 const fn = this.subscribe(() => {
                     fn();
-                    assert(this.env);
-                    resolve(this.env);
+                    assert(this.fullEnv);
+                    resolve(this.fullEnv);
                 });
             });
         }
+    }
+    getBriefEnv() {
+        return this.briefEnv;
     }
 }
 ;

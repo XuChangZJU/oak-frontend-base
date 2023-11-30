@@ -127,7 +127,7 @@ export class Locales extends Feature {
     async loadData(key) {
         assert(typeof key === 'string');
         const [ns] = key.split('.');
-        await this.loadServerData([key]);
+        await this.loadServerData([ns]);
         if (!this.hasKey(key)) {
             console.warn(`命名空间${ns}中的${key}缺失且可能请求不到更新的数据`);
             if (process.env.NODE_ENV === 'development') {

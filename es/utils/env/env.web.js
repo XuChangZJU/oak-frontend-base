@@ -9,7 +9,7 @@ export async function getEnv() {
     // 有浏览器没有storage
     const [result /* , localStorageEnabled */] = await Promise.all([fp.get() /* , navigator.storage.persisted() */]);
     const { visitorId, components } = result;
-    return Object.assign(pick(components, [
+    const fullEnv = Object.assign(pick(components, [
         'platform',
         'timezone',
         'vendor',
@@ -20,4 +20,12 @@ export async function getEnv() {
         // localStorageEnabled,
         language: navigator.language,
     });
+    const briefEnv = {
+        system: `${fullEnv.platform.value}`,
+        explorer: `${fullEnv.vendor.value}/${fullEnv.vendorFlavors.value[0]}`,
+    };
+    return {
+        fullEnv,
+        briefEnv,
+    };
 }

@@ -1,6 +1,6 @@
 import { assert } from 'oak-domain/lib/utils/assert';
 import { cloneDeep, pull, unset, merge, uniq, omit } from "oak-domain/lib/utils/lodash";
-import { checkFilterContains, combineFilters, contains, repel, same } from "oak-domain/lib/store/filter";
+import { checkFilterContains, combineFilters } from "oak-domain/lib/store/filter";
 import { createOperationsFromModies } from 'oak-domain/lib/store/modi';
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, AspectWrapper, AuthDefDict, CascadeRelationItem, CascadeActionItem } from "oak-domain/lib/types";
@@ -168,14 +168,6 @@ abstract class Node<
         const attr2 = attr.split(':')[0];       // 处理attr:prev
         return judgeRelation(this.schema, this.entity, attr2);
     }
-
-    /* protected contains(filter: ED[T]['Selection']['filter'], conditionalFilter: ED[T]['Selection']['filter']) {
-        return contains(this.entity, this.schema, filter, conditionalFilter);
-    }
-
-    protected repel(filter1: ED[T]['Selection']['filter'], filter2: ED[T]['Selection']['filter']) {
-        return repel(this.entity, this.schema, filter1, filter2);
-    } */
 }
 
 const DEFAULT_PAGINATION: Pagination = {
