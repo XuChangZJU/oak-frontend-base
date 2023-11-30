@@ -46,12 +46,15 @@ export class Navigator extends Feature {
         return this.namespace;
     }
 
-    private getCurrentUrl() {
+    getCurrentUrl(needParams?: boolean) {
         const pages = getCurrentPages(); //获取加载的页面
         const currentPage = pages[pages.length - 1]; //获取当前页面的对象
         const url = currentPage.route; //当前页面url
         const options = currentPage.options; //如果要获取url中所带的参数可以查看options
 
+        if (!needParams) {
+            return url;
+        }
         // 构建search
         const search2 = this.constructSearch('', options);
         const url2 = URL.format({
@@ -152,24 +155,36 @@ export class Navigator extends Feature {
         return `/pages${pathname2}/index`;
     }
 
-    navigateTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+    private getUrlAndProps<
+        ED extends EntityDict & BaseEntityDict,
+        T2 extends keyof ED
+    >(
         options: { url: string } & OakNavigateToParameters<ED, T2>,
         state?: Record<string, any>,
         disableNamespace?: boolean
     ) {
         const { url, ...rest } = options;
-
         const oakFrom = this.getCurrentUrl();
-        const url2 = this.constructUrl(
-            url,
-            Object.assign({}, rest, state, {
-                oakFrom,
-            }),
-            disableNamespace
-        );
+        const state2 = Object.assign({}, rest, state, { oakFrom }) as Record<
+            string,
+            any
+        >;
+        const url2 = this.constructUrl(url, state2, disableNamespace);
+
+        return {
+            url: url2,
+        };
+    }
+
+    navigateTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(
+        options: { url: string } & OakNavigateToParameters<ED, T2>,
+        state?: Record<string, any>,
+        disableNamespace?: boolean
+    ) {
+        const { url } = this.getUrlAndProps(options, state, disableNamespace);
         return new Promise((resolve, reject) => {
             wx.navigateTo({
-                url: url2,
+                url: url,
                 success: () => resolve(undefined),
                 fail: (err) => reject(err),
             });
@@ -182,19 +197,11 @@ export class Navigator extends Feature {
         state?: Record<string, any>,
         disableNamespace?: boolean
     ) {
-        const { url, ...rest } = options;
-        const oakFrom = this.getCurrentUrl();
+        const { url } = this.getUrlAndProps(options, state, disableNamespace);
 
-        const url2 = this.constructUrl(
-            url,
-            Object.assign({}, rest, state, {
-                oakFrom,
-            }),
-            disableNamespace
-        );
         return new Promise((resolve, reject) => {
             wx.redirectTo({
-                url: url2,
+                url: url,
                 success: () => resolve(undefined),
                 fail: (err) => reject(err),
             });
@@ -207,18 +214,10 @@ export class Navigator extends Feature {
         state?: Record<string, any>,
         disableNamespace?: boolean
     ) {
-        const { url, ...rest } = options;
-        const oakFrom = this.getCurrentUrl();
-        const url2 = this.constructUrl(
-            url,
-            Object.assign({}, rest, state, {
-                oakFrom,
-            }),
-            disableNamespace
-        );
+        const { url } = this.getUrlAndProps(options, state, disableNamespace);
         return new Promise((resolve, reject) => {
             wx.switchTab({
-                url: url2,
+                url: url,
                 success: () => resolve(undefined),
                 fail: (err) => reject(err),
             });
