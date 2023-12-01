@@ -218,8 +218,7 @@ export type ComponentPublicThisType<
     TProperty extends DataOption = {},
     TMethod extends MethodOption = {},
     EMethod extends Record<string, Function> = {},
-    > = {
-        subscribed: Array<() => void>;
+    > = {        
         features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
         state: ComponentData<ED, T, FormedData, TData>;
         props: Readonly<ComponentProps<ED, T, IsList, TProperty>>;
@@ -241,7 +240,6 @@ export type ComponentFullThisType<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>
     > = {
-        subscribed: Array<() => void>;
         features: BasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt>>;
         state: OakComponentData<ED, T>;
         props: ComponentProps<ED, T, IsList, {}>;
@@ -324,8 +322,7 @@ export type OakCommonComponentMethods<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED
     > = {
-        unsubscribeAll: () => void;
-
+        // 这几个也待删除
         subEvent: (type: string, callback: Function) => void;
         unsubEvent: (type: string, callback: Function) => void;
         pubEvent: (type: string, options?: any) => void;

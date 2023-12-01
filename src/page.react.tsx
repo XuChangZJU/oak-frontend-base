@@ -1,6 +1,6 @@
 import { assert } from 'oak-domain/lib/utils/assert';
 import React from 'react';
-import { get } from 'oak-domain/lib/utils/lodash';
+import { get, pull } from 'oak-domain/lib/utils/lodash';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Action, Aspect, CheckerType, EntityDict, OpRecord, SubDataDef } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -60,11 +60,45 @@ abstract class OakComponentBase<
         TProperty,
         TMethod
     >;
-    subscribed: Array<() => void> = [];
+    featuresSubscribed: Array<{
+        name: string;
+        callback: (args?: any) => void;
+        unsubHandler?: () => void;        
+    }> = []
+
+    addFeatureSub(name: string, callback: (args?: any) => void) {
+        const unsubHandler = this.features[name]!.subscribe(callback);
+        this.featuresSubscribed.push({
+            name,
+            callback,
+            unsubHandler,
+        });
+    }
+
+    removeFeatureSub(name: string, callback: (args?: any) => void) {
+        const f = this.featuresSubscribed.find(
+            ele => ele.callback === callback && ele.name === name
+        )!;
+        pull(this.featuresSubscribed, f);
+        f.unsubHandler && f.unsubHandler();
+    }
 
     unsubscribeAll() {
-        this.subscribed.forEach(
-            ele => ele()
+        this.featuresSubscribed.forEach(
+            ele => {
+                assert(ele.unsubHandler);
+                ele.unsubHandler();
+                ele.unsubHandler = undefined;
+            }
+        );
+    }
+
+    subscribedAll() {
+        this.featuresSubscribed.forEach(
+            ele => {
+                assert(!ele.unsubHandler);
+                ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
+            }
         );
     }
     
@@ -828,13 +862,9 @@ export function createComponent<
 
 
         async componentDidMount() {
-            this.subscribed.push(
-                features.locales.subscribe(() => this.reRender())
-            );
+            this.addFeatureSub('locale', () => this.reRender);            
             if (option.entity) {
-                this.subscribed.push(
-                    features.cache.subscribe(() => this.reRender())
-                );
+                this.addFeatureSub('cache', () => this.reRender());
             }
             lifetimes?.attached && lifetimes.attached.call(this);
             const { oakPath } = this.props;
@@ -867,32 +897,24 @@ export function createComponent<
                 option.features.forEach(
                     ele => {
                         if (typeof ele === 'string') {
-                            this.subscribed.push(
-                                features[ele].subscribe(
-                                    () => this.reRender()
-                                )
-                            );
+                            this.addFeatureSub(ele, () => this.reRender());
                         }
                         else {
                             assert(typeof ele === 'object');
                             const { feature, behavior } = ele;
-                            this.subscribed.push(
-                                features[feature].subscribe(
-                                    () => {
-                                        switch (behavior) {
-                                            case 'reRender': {
-                                                this.reRender();
-                                                return;
-                                            }
-                                            default: {
-                                                assert(behavior === 'refresh');
-                                                this.refresh();
-                                                return;
-                                            }
-                                        }
+                            this.addFeatureSub(feature as string, () => {
+                                switch (behavior) {
+                                    case 'reRender': {
+                                        this.reRender();
+                                        return;
                                     }
-                                )
-                            );
+                                    default: {
+                                        assert(behavior === 'refresh');
+                                        this.refresh();
+                                        return;
+                                    }
+                                }
+                            });
                         }
                     }
                 );
@@ -900,9 +922,7 @@ export function createComponent<
         }
 
         componentWillUnmount() {
-            this.subscribed.forEach(
-                ele => ele()
-            );
+            this.unsubscribeAll();
             this.state.oakFullpath && (this.iAmThePage() || this.props.oakAutoUnmount) && destroyNode.call(this as any);
             lifetimes?.detached && lifetimes.detached.call(this);
             this.unmounted = true;

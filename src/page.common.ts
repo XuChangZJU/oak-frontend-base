@@ -30,7 +30,9 @@ export function onPathSet<
     T extends keyof ED,
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>>(
-        this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>,
+        this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt> & {
+            addFeatureSub: (name: string, callback: (args?: any) => void) => void;
+        },
         option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>): Partial<OakComponentData<ED, T>> {
     const { props, state } = this;
     const { oakPath, oakId } = props as ComponentProps<ED, T, true, {}>;
@@ -120,17 +122,12 @@ export function onPathSet<
             cascadeActions: cascadeActions && (() => cascadeActions.call(this)),
             getTotal: getTotal2,
         });
-        this.subscribed.push(
-            features.runningTree.subscribeNode(
-                (path2) => {
-                    // 父结点改变，子结点要重渲染
-                    if (this.state.oakFullpath?.includes(path2)) {
-                        this.reRender();
-                    }
-                },
-                oakPath2!
-            )
-        );
+        this.addFeatureSub('runningTree', (path2: string) => {
+            // 父结点改变，子结点要重渲染
+            if (this.state.oakFullpath?.includes(path2)) {
+                this.reRender();
+            }
+        });
 
         // 确保SetState生效，这里改成异步
         return {
@@ -143,16 +140,12 @@ export function onPathSet<
         features.runningTree.createNode({
             path: oakPath2 as string,
         });
-        this.subscribed.push(
-            features.runningTree.subscribeNode(
-                (path2) => {
-                    if (path2 === this.state.oakFullpath) {
-                        this.reRender();
-                    }
-                },
-                oakPath2!
-            )
-        );
+        this.addFeatureSub('runningTree', (path2: string) => {
+            // 父结点改变，子结点要重渲染
+            if (this.state.oakFullpath?.includes(path2)) {
+                this.reRender();
+            }
+        });
 
         return {
             oakFullpath: oakPath2,

@@ -1470,6 +1470,9 @@ export class RunningTree extends Feature {
             assert(!parent && !this.root[path]);
             this.root[path] = node;
         }
+        node.subscribe(() => {
+            this.publish(fullPath);
+        });
         return node;
     }
     checkSingleNodeIsModiNode(node) {
@@ -1537,6 +1540,7 @@ export class RunningTree extends Feature {
                 unset(this.root, path);
             }
             node.destroy();
+            node.clearSubscribes();
         }
     }
     getFreshValue(path) {
@@ -1839,18 +1843,5 @@ export class RunningTree extends Feature {
     }
     getRoot() {
         return this.root;
-    }
-    subscribeNode(callback, path) {
-        const node = this.findNode(path);
-        /**
-         * 当list上的结点更新路径时，会重复subscribe多条子路径结点，目前的数据结构不能支持在didUpdate的时候进行unsbscribe
-         * 这里先将path返回，由结点自主判定是否需要reRender
-         * by Xc 20230219
-         * 原先用的clearSubscribes，是假设没有结点共用路径，目前看来这个假设不成立
-         */
-        // node.clearSubscribes();
-        return node.subscribe(() => {
-            callback(path);
-        });
     }
 }

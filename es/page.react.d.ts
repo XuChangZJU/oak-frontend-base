@@ -25,8 +25,15 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         componentWillUnmount(): void;
         componentDidUpdate(prevProps: Record<string, any>, prevState: Record<string, any>): Promise<void>;
         render(): React.ReactNode;
-        subscribed: (() => void)[];
+        featuresSubscribed: {
+            name: string;
+            callback: (args?: any) => void;
+            unsubHandler?: (() => void) | undefined;
+        }[];
+        addFeatureSub(name: string, callback: (args?: any) => void): void;
+        removeFeatureSub(name: string, callback: (args?: any) => void): void;
         unsubscribeAll(): void;
+        subscribedAll(): void;
         subEvent(type: string, callback: Function): void;
         unsubEvent(type: string, callback: Function): void;
         pubEvent(type: string, options?: any): void;

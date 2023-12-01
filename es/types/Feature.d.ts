@@ -1,8 +1,8 @@
 export declare abstract class Feature {
-    callbacks: Array<() => any>;
+    callbacks: Array<(arg?: any) => any>;
     constructor();
-    subscribe(callback: () => any): () => void;
-    protected publish(): void;
+    subscribe(callback: (arg?: any) => any): () => void;
+    protected publish(arg?: any): void;
     clearSubscribes(): void;
 }
 /**

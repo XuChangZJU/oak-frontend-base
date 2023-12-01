@@ -79,12 +79,12 @@ export function onPathSet(option) {
             cascadeActions: cascadeActions && (() => cascadeActions.call(this)),
             getTotal: getTotal2,
         });
-        this.subscribed.push(features.runningTree.subscribeNode((path2) => {
+        this.addFeatureSub('runningTree', (path2) => {
             // 父结点改变，子结点要重渲染
             if (this.state.oakFullpath?.includes(path2)) {
                 this.reRender();
             }
-        }, oakPath2));
+        });
         // 确保SetState生效，这里改成异步
         return {
             oakEntity: entity2,
@@ -96,11 +96,12 @@ export function onPathSet(option) {
         features.runningTree.createNode({
             path: oakPath2,
         });
-        this.subscribed.push(features.runningTree.subscribeNode((path2) => {
-            if (path2 === this.state.oakFullpath) {
+        this.addFeatureSub('runningTree', (path2) => {
+            // 父结点改变，子结点要重渲染
+            if (this.state.oakFullpath?.includes(path2)) {
                 this.reRender();
             }
-        }, oakPath2));
+        });
         return {
             oakFullpath: oakPath2,
         };

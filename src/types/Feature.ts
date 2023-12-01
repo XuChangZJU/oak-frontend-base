@@ -4,22 +4,22 @@ const mCallbacks: Array<() => any> = [];
 let mActionStackDepth = 0;
 
 export abstract class Feature {
-    callbacks: Array<() => any>;
+    callbacks: Array<(arg?: any) => any>;
     
     constructor() {
         this.callbacks = [];
     }
 
-    subscribe(callback: () => any) {
+    subscribe(callback: (arg?: any) => any) {
         this.callbacks.push(callback);
         return () => {
             pull(this.callbacks, callback);
         }; 
     }
 
-    protected publish() {
+    protected publish(arg?: any) {
         this.callbacks.forEach(
-            ele => ele()
+            ele => ele(arg)
         );
     }
 

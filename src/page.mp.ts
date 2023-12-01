@@ -24,7 +24,7 @@ import { MessageProps } from './types/Message';
 import { NotificationProps } from './types/Notification';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
-import { cloneDeep } from 'oak-domain/lib/utils/lodash';
+import { cloneDeep, pull } from 'oak-domain/lib/utils/lodash';
 
 
 const OakProperties = {
@@ -86,7 +86,6 @@ const oakBehavior = Behavior<
             ADD & CommonAspectDict<EDD, Cxt>
         > &
             FDD;
-        subscribed: Array<() => void>;
         oakOption: OakComponentOption<
             boolean,
             EDD,
@@ -105,10 +104,6 @@ const oakBehavior = Behavior<
     methods: {
         t(key: string, params?: object) {
             return this.features.locales.t(key, params);
-        },
-
-        unsubscribeAll() {
-            this.subscribed.forEach((ele) => ele());
         },
 
         iAmThePage() {
@@ -851,6 +846,11 @@ export function createComponent<
             umounted: Boolean;
             prevState: Record<string, any>;
             state: Record<string, any>;
+            featuresSubscribed: Array<{
+                name: string;
+                callback: () => void;
+                unsubHandler?: () => void;        
+            }>
             props: {
                 oakId?: string;
                 oakPath?: string;
@@ -867,7 +867,6 @@ export function createComponent<
                 AD & CommonAspectDict<ED, Cxt>
             > &
                 FD;
-            subscribed: Array<() => void>;
             oakOption: OakComponentOption<
                 IsList,
                 ED,
@@ -882,7 +881,7 @@ export function createComponent<
                 TMethod
             >;
         }
-    >({
+    >({        
         externalClasses,
         behaviors: [oakBehavior],
         data:
@@ -927,6 +926,42 @@ export function createComponent<
                 }
             },
 
+            addFeatureSub(name: string, callback: (args?: any) => void) {
+                const unsubHandler = this.features[name]!.subscribe(callback);
+                this.featuresSubscribed.push({
+                    name,
+                    callback,
+                    unsubHandler,
+                });
+            },
+
+            removeFeatureSub(name: string, callback: (args?: any) => void) {
+                const f = this.featuresSubscribed.find(
+                    ele => ele.callback === callback && ele.name === name
+                )!;
+                pull(this.featuresSubscribed, f);
+                f.unsubHandler && f.unsubHandler();
+            },
+
+            unsubscribeAll() {
+                this.featuresSubscribed.forEach(
+                    ele => {
+                        assert(ele.unsubHandler);
+                        ele.unsubHandler();
+                        ele.unsubHandler = undefined;
+                    }
+                );
+            },
+
+            subscribedAll() {
+                this.featuresSubscribed.forEach(
+                    ele => {
+                        assert(!ele.unsubHandler);
+                        ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
+                    }
+                );
+            },
+
             ...restMethods,
         },
         observers,
@@ -935,10 +970,12 @@ export function createComponent<
                 const { show } = this.oakOption.lifetimes || {};
                 this.reRender();
                 show && show.call(this);
+                this.subscribedAll();
             },
             hide() {
                 const { hide } = this.oakOption.lifetimes || {};
                 hide && hide.call(this);
+                this.unsubscribedAll();
             },
             resize(size: WechatMiniprogram.Page.IResizeOption) {
                 const { resize } = this.oakOption.lifetimes || {};
@@ -961,7 +998,7 @@ export function createComponent<
                 };
                 this.oakOption = option;
                 this.features = features;
-                this.subscribed = [];
+                this.featuresSubscribed = [];
                 created && created.call(this);
             },
             attached() {
@@ -993,39 +1030,31 @@ export function createComponent<
                     }
                 }
                 this.umounted = false;
-                this.subscribed.push(
-                    features.locales.subscribe(() => this.reRender())
-                );
+                this.addFeatureSub('locales', () => this.reRender());
 
                 if (option.entity) {
-                    this.subscribed.push(
-                        features.cache.subscribe(() => this.reRender())
-                    );
+                    this.addFeatureSub('cache', () => this.reRender());
                 }
                 if (option.features) {
                     option.features.forEach((ele) => {
                         if (typeof ele === 'string') {
-                            this.subscribed.push(
-                                features[ele].subscribe(() => this.reRender())
-                            );
+                            this.addFeatureSub(ele, () => this.reRender());
                         } else {
                             assert(typeof ele === 'object');
                             const { feature, behavior } = ele;
-                            this.subscribed.push(
-                                features[feature].subscribe(() => {
-                                    switch (behavior) {
-                                        case 'reRender': {
-                                            this.reRender();
-                                            return;
-                                        }
-                                        default: {
-                                            assert(behavior === 'refresh');
-                                            this.refresh();
-                                            return;
-                                        }
+                            this.addFeatureSub(feature, () => {
+                                switch (behavior) {
+                                    case 'reRender': {
+                                        this.reRender();
+                                        return;
                                     }
-                                })
-                            );
+                                    default: {
+                                        assert(behavior === 'refresh');
+                                        this.refresh();
+                                        return;
+                                    }
+                                }
+                            });
                         }
                     });
                 }
