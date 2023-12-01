@@ -36,14 +36,14 @@ export class Navigator extends CommonNavigator {
     getLocation() {
         const route = this.history.getCurrentRoute()!;
         return {
-            pathname: route.name,
-            state: route.params,
+            pathname: route?.name,
+            state: route?.params,
         };
     }
 
     getState() {
         const { pathname, state } = this.getLocation();
-        const state2 = this.constructState(pathname, state);
+        const state2 = this.constructState(pathname!, state);
         return state2;
     }
 
