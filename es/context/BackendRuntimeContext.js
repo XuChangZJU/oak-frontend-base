@@ -2,6 +2,10 @@ import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 export class BackendRuntimeContext extends AsyncContext {
     subscriberId;
     be;
+    ns;
+    getNavigatorState() {
+        return this.ns;
+    }
     getSubscriberId() {
         return this.subscriberId;
     }
@@ -12,6 +16,7 @@ export class BackendRuntimeContext extends AsyncContext {
         return {
             sid: this.subscriberId,
             be: this.be,
+            ns: this.ns,
         };
     }
     async initialize(data) {
@@ -20,6 +25,9 @@ export class BackendRuntimeContext extends AsyncContext {
         }
         if (data?.be) {
             this.be = data.be;
+        }
+        if (data?.ns) {
+            this.ns = data.ns;
         }
     }
 }

@@ -7,6 +7,14 @@ import { BriefEnv } from 'oak-domain/lib/types/Environment';
 export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDict> extends AsyncContext<ED> {
     private subscriberId?: string;
     private be?: BriefEnv;
+    private ns?: {
+        pathname: string;
+        oakFrom: string;
+    }
+
+    getNavigatorState() {
+        return this.ns;
+    }
 
     getSubscriberId() {
         return this.subscriberId;
@@ -20,6 +28,7 @@ export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDi
         return {
             sid: this.subscriberId,
             be: this.be,
+            ns: this.ns,
         }
     }
 
@@ -29,6 +38,9 @@ export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDi
         }
         if (data?.be) {
             this.be = data.be;
+        }
+        if (data?.ns) {
+            this.ns = data.ns;
         }
     }
 }
