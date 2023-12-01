@@ -8,6 +8,10 @@ export declare class Navigator extends Feature {
     getNamespace(): string;
     urlParse(path: string): import("url").URL;
     urlFormat(url: URL): string;
+    constructState(pathname: string, state?: Record<string, any>, search?: string): {
+        pathname: string;
+        oakFrom: string;
+    };
     constructSearch(search?: string | null, state?: Record<string, any>): string;
     constructUrl(url: string, state?: Record<string, any>, disableNamespace?: boolean): string;
     constructNamespace(url: string, namespace?: string): string;

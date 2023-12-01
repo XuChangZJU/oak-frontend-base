@@ -15,7 +15,10 @@ export declare class Navigator extends CommonNavigator {
         pathname: string;
         state: Readonly<object | undefined>;
     };
-    getCurrentUrl(needParams?: boolean): string;
+    getState(): {
+        pathname: string;
+        oakFrom: string;
+    };
     private getUrlAndProps;
     navigateTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(options: {
         url: string;

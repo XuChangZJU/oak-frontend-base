@@ -24,6 +24,16 @@ export class Navigator extends Feature {
         const url2 = urlParse.toString();
         return url2.replace(this.base, '');
     }
+    constructState(pathname, state, search) {
+        // 构建search
+        const search2 = this.constructSearch(search, state);
+        const searchParams = new URLSearchParams(search2 || '');
+        const oakFrom = searchParams.get('oakFrom');
+        return {
+            pathname,
+            oakFrom,
+        };
+    }
     constructSearch(search, state) {
         const searchParams = new URLSearchParams(search || '');
         if (state) {

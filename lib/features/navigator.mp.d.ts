@@ -12,7 +12,10 @@ export declare class Navigator extends CommonNavigator {
     history: WechatMiniprogram.Wx;
     constructor();
     getLocation(): Location;
-    getCurrentUrl(needParams?: boolean): string;
+    getState(): {
+        pathname: string;
+        oakFrom: string;
+    };
     getPathname(pathname: string, namespace?: string): string;
     private getUrlAndProps;
     navigateTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(options: {

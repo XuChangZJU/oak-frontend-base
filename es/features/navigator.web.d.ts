@@ -12,7 +12,10 @@ export declare class Navigator extends CommonNavigator {
      */
     setHistory(history: BrowserHistory): void;
     getLocation(): import("history").Location;
-    getCurrentUrl(needParams?: boolean): string;
+    getState(): {
+        pathname: string;
+        oakFrom: string;
+    };
     private getUrlAndProps;
     navigateTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(options: {
         url: string;

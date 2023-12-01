@@ -1,7 +1,4 @@
 import { Feature } from '../types/Feature';
-import { OakNavigateToParameters } from '../types/Page';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict } from 'oak-domain/lib/types';
 import {
     url as URL,
     urlSearchParams as URLSearchParams,
@@ -36,6 +33,21 @@ export class Navigator extends Feature {
         const urlParse = new URL(url.toString(), this.base);
         const url2 = urlParse.toString();
         return url2.replace(this.base, '');
+    }
+
+    constructState(
+        pathname: string,
+        state?: Record<string, any>,
+        search?: string
+    ) {
+        // 构建search
+        const search2 = this.constructSearch(search, state);
+        const searchParams = new URLSearchParams(search2 || '');
+        const oakFrom = searchParams.get('oakFrom') as string;
+        return {
+            pathname,
+            oakFrom,
+        };
     }
 
     constructSearch(search?: string | null, state?: Record<string, any>) {

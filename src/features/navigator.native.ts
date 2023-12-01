@@ -1,5 +1,4 @@
 
-import { Feature } from '../types/Feature';
 import {
     OakNavigateToParameters,
 } from '../types/Page';
@@ -42,20 +41,10 @@ export class Navigator extends CommonNavigator {
         };
     }
 
-    getCurrentUrl(needParams?: boolean) {
+    getState() {
         const { pathname, state } = this.getLocation();
-        if (!needParams) {
-            return pathname;
-        }
-        // 构建search
-        const search2 = this.constructSearch('', state);
-        const urlParse = this.urlParse(pathname);
-        urlParse.pathname = pathname;
-        urlParse.search = search2;
-        urlParse.searchParams.delete('oakFrom'); //把上层传入的oakFrom排除
-        const url = this.urlFormat(urlParse);
-
-        return url;
+        const state2 = this.constructState(pathname, state);
+        return state2;
     }
 
     private getUrlAndProps<
@@ -68,11 +57,10 @@ export class Navigator extends CommonNavigator {
     ) {
         const { url, ...rest } = options;
         const url2 = this.constructUrl(url, undefined, disableNamespace);
-        const oakFrom = this.getCurrentUrl();
-        const state2 = Object.assign({}, rest, state, { oakFrom }) as Record<
-            string,
-            any
-        >;
+        const { pathname } = this.getLocation();
+        const state2 = Object.assign({}, rest, state, {
+            oakFrom: pathname,
+        }) as Record<string, any>;
 
         return {
             url: url2,
