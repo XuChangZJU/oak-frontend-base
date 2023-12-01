@@ -31,7 +31,7 @@ export class Navigator extends CommonNavigator {
     getState() {
         const { pathname, state, search } = this.getLocation();
         const state2 = this.constructState(
-            pathname,
+            pathname!,
             state as Record<string, any>,
             search
         );

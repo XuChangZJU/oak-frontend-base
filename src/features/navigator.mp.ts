@@ -19,14 +19,15 @@ export class Navigator extends CommonNavigator {
     }
 
     getLocation(): Location {
+        //初始化的时候
         const pages = getCurrentPages(); //获取加载的页面
         const currentPage = pages[pages.length - 1]; //获取当前页面的对象
-        const url = currentPage.route; //当前页面url
-        const options = currentPage.options; //如果要获取url中所带的参数可以查看options
-        const pathname = url
+        const url = currentPage?.route; //当前页面url
+        const options = currentPage?.options; //如果要获取url中所带的参数可以查看options
+        const pathname = url ? url
             .replace('/pages', '')
             .replace('pages', '')
-            .replace('/index', '');
+            .replace('/index', '') : '';
         return {
             pathname: pathname,
             state: options,
@@ -36,7 +37,7 @@ export class Navigator extends CommonNavigator {
 
     getState() {
         const { pathname, state } = this.getLocation();
-        const state2 = this.constructState(pathname, state);
+        const state2 = this.constructState(pathname!, state);
         return state2;
     }
 
