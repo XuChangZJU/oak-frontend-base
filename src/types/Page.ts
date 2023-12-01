@@ -322,6 +322,11 @@ export type OakCommonComponentMethods<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED
     > = {
+        addFeatureSub: (name: string, callback: (args?: any) => void) => void;
+        removeFeatureSub: (name: string, callback: (args?: any) => void) => void;
+        unsubscribeAll: () => void;
+        subscribeAll: () => void;
+
         // 这几个也待删除
         subEvent: (type: string, callback: Function) => void;
         unsubEvent: (type: string, callback: Function) => void;

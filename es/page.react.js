@@ -24,10 +24,11 @@ class OakComponentBase extends React.PureComponent {
             ele.unsubHandler = undefined;
         });
     }
-    subscribedAll() {
+    subscribeAll() {
         this.featuresSubscribed.forEach(ele => {
-            assert(!ele.unsubHandler);
-            ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
+            if (!ele.unsubHandler) {
+                ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
+            }
         });
     }
     subEvent(type, callback) {

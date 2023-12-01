@@ -33,7 +33,7 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         addFeatureSub(name: string, callback: (args?: any) => void): void;
         removeFeatureSub(name: string, callback: (args?: any) => void): void;
         unsubscribeAll(): void;
-        subscribedAll(): void;
+        subscribeAll(): void;
         subEvent(type: string, callback: Function): void;
         unsubEvent(type: string, callback: Function): void;
         pubEvent(type: string, options?: any): void;

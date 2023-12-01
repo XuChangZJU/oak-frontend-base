@@ -93,11 +93,12 @@ abstract class OakComponentBase<
         );
     }
 
-    subscribedAll() {
+    subscribeAll() {
         this.featuresSubscribed.forEach(
             ele => {
-                assert(!ele.unsubHandler);
-                ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
+                if (!ele.unsubHandler) {
+                    ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
+                }
             }
         );
     }

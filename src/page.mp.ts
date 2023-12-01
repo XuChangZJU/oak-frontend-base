@@ -79,6 +79,11 @@ const oakBehavior = Behavior<
             oakAutoUnmount?: boolean;
             oakDisablePulldownRefresh?: boolean;
         } & Record<string, any>;
+        featuresSubscribed: Array<{
+            name: string;
+            callback: () => void;
+            unsubHandler?: () => void;        
+        }>;
         features: BasicFeatures<
             EDD,
             Cxt,
@@ -104,6 +109,42 @@ const oakBehavior = Behavior<
     methods: {
         t(key: string, params?: object) {
             return this.features.locales.t(key, params);
+        },
+
+        addFeatureSub(name: string, callback: (args?: any) => void) {
+            const unsubHandler = this.features[name]!.subscribe(callback);
+            this.featuresSubscribed.push({
+                name,
+                callback,
+                unsubHandler,
+            });
+        },
+
+        removeFeatureSub(name: string, callback: (args?: any) => void) {
+            const f = this.featuresSubscribed.find(
+                ele => ele.callback === callback && ele.name === name
+            )!;
+            pull(this.featuresSubscribed, f);
+            f.unsubHandler && f.unsubHandler();
+        },
+
+        unsubscribeAll() {
+            this.featuresSubscribed.forEach(
+                ele => {
+                    assert(ele.unsubHandler);
+                    ele.unsubHandler();
+                    ele.unsubHandler = undefined;
+                }
+            );
+        },
+
+        subscribeAll() {
+            this.featuresSubscribed.forEach(
+                ele => {
+                    assert(!ele.unsubHandler);
+                    ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
+                }
+            );
         },
 
         iAmThePage() {
@@ -850,7 +891,7 @@ export function createComponent<
                 name: string;
                 callback: () => void;
                 unsubHandler?: () => void;        
-            }>
+            }>;
             props: {
                 oakId?: string;
                 oakPath?: string;
@@ -924,42 +965,6 @@ export function createComponent<
                         ? onReachBottom.call(this)
                         : this.loadMore());
                 }
-            },
-
-            addFeatureSub(name: string, callback: (args?: any) => void) {
-                const unsubHandler = this.features[name]!.subscribe(callback);
-                this.featuresSubscribed.push({
-                    name,
-                    callback,
-                    unsubHandler,
-                });
-            },
-
-            removeFeatureSub(name: string, callback: (args?: any) => void) {
-                const f = this.featuresSubscribed.find(
-                    ele => ele.callback === callback && ele.name === name
-                )!;
-                pull(this.featuresSubscribed, f);
-                f.unsubHandler && f.unsubHandler();
-            },
-
-            unsubscribedAll() {
-                this.featuresSubscribed.forEach(
-                    ele => {
-                        assert(ele.unsubHandler);
-                        ele.unsubHandler();
-                        ele.unsubHandler = undefined;
-                    }
-                );
-            },
-
-            subscribedAll() {
-                this.featuresSubscribed.forEach(
-                    ele => {
-                        assert(!ele.unsubHandler);
-                        ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
-                    }
-                );
             },
 
             ...restMethods,
