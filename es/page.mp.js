@@ -611,7 +611,7 @@ export function createComponent(option, features) {
                 pull(this.featuresSubscribed, f);
                 f.unsubHandler && f.unsubHandler();
             },
-            unsubscribeAll() {
+            unsubscribedAll() {
                 this.featuresSubscribed.forEach(ele => {
                     assert(ele.unsubHandler);
                     ele.unsubHandler();

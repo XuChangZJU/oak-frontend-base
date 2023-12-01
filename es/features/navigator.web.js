@@ -19,7 +19,12 @@ export class Navigator extends CommonNavigator {
     getState() {
         const { pathname, state, search } = this.getLocation();
         const state2 = this.constructState(pathname, state, search);
-        return state2;
+        return {
+            pathname: state2.pathname,
+            oakFrom: state2.oakFrom
+                ? decodeURIComponent(state2.oakFrom)
+                : '',
+        };
     }
     getUrlAndProps(options, state, disableNamespace) {
         const { url, ...rest } = options;

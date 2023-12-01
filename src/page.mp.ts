@@ -943,7 +943,7 @@ export function createComponent<
                 f.unsubHandler && f.unsubHandler();
             },
 
-            unsubscribeAll() {
+            unsubscribedAll() {
                 this.featuresSubscribed.forEach(
                     ele => {
                         assert(ele.unsubHandler);

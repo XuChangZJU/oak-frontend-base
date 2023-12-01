@@ -35,7 +35,12 @@ export class Navigator extends CommonNavigator {
             state as Record<string, any>,
             search
         );
-        return state2;
+        return {
+            pathname: state2.pathname,
+            oakFrom: state2.oakFrom
+                ? decodeURIComponent(state2.oakFrom)
+                : '',
+        };
     }
 
     private getUrlAndProps<
