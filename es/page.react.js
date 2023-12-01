@@ -543,7 +543,7 @@ export function createComponent(option, features) {
                 !oakDisablePulldownRefresh);
         }
         async componentDidMount() {
-            this.addFeatureSub('locale', () => this.reRender);
+            this.addFeatureSub('locales', () => this.reRender);
             if (option.entity) {
                 this.addFeatureSub('cache', () => this.reRender());
             }
