@@ -14,7 +14,7 @@ export function onPathSet(option) {
     if (entity) {
         // entity在node生命周期中不可可变，但sorter/filter/projection应当是运行时来决定
         const entity2 = entity instanceof Function ? entity.call(this) : entity;
-        const projection2 = typeof projection === 'function' ? projection.call(this) : projection;
+        const projection2 = typeof projection === 'function' ? () => projection.call(this) : projection;
         const filters2 = filters?.map((ele) => {
             const { filter, '#name': name } = ele;
             return {
