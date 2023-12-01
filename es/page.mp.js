@@ -632,12 +632,12 @@ export function createComponent(option, features) {
                 const { show } = this.oakOption.lifetimes || {};
                 this.reRender();
                 show && show.call(this);
-                this.subscribedAll();
+                this.subscribeAll();
             },
             hide() {
                 const { hide } = this.oakOption.lifetimes || {};
                 hide && hide.call(this);
-                this.unsubscribedAll();
+                this.unsubscribeAll();
             },
             resize(size) {
                 const { resize } = this.oakOption.lifetimes || {};
