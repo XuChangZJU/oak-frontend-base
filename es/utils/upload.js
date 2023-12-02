@@ -1,2 +1,2 @@
 export { Upload } from './upload.mp';
-console.log('不应该跑到这里');
+console.log('不应该跑到这里[features/upload]');
