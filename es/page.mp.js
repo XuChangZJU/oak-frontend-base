@@ -34,21 +34,22 @@ const oakBehavior = Behavior({
             });
         },
         removeFeatureSub(name, callback) {
-            const f = this.featuresSubscribed.find(ele => ele.callback === callback && ele.name === name);
+            const f = this.featuresSubscribed.find((ele) => ele.callback === callback && ele.name === name);
             pull(this.featuresSubscribed, f);
             f.unsubHandler && f.unsubHandler();
         },
         unsubscribeAll() {
-            this.featuresSubscribed.forEach(ele => {
+            this.featuresSubscribed.forEach((ele) => {
                 assert(ele.unsubHandler);
                 ele.unsubHandler();
                 ele.unsubHandler = undefined;
             });
         },
         subscribeAll() {
-            this.featuresSubscribed.forEach(ele => {
-                assert(!ele.unsubHandler);
-                ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
+            this.featuresSubscribed.forEach((ele) => {
+                if (!ele.unsubHandler) {
+                    ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
+                }
             });
         },
         iAmThePage() {

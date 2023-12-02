@@ -82,7 +82,7 @@ const oakBehavior = Behavior<
         featuresSubscribed: Array<{
             name: string;
             callback: () => void;
-            unsubHandler?: () => void;        
+            unsubHandler?: () => void;
         }>;
         features: BasicFeatures<
             EDD,
@@ -122,29 +122,28 @@ const oakBehavior = Behavior<
 
         removeFeatureSub(name: string, callback: (args?: any) => void) {
             const f = this.featuresSubscribed.find(
-                ele => ele.callback === callback && ele.name === name
+                (ele) => ele.callback === callback && ele.name === name
             )!;
             pull(this.featuresSubscribed, f);
             f.unsubHandler && f.unsubHandler();
         },
 
         unsubscribeAll() {
-            this.featuresSubscribed.forEach(
-                ele => {
-                    assert(ele.unsubHandler);
-                    ele.unsubHandler();
-                    ele.unsubHandler = undefined;
-                }
-            );
+            this.featuresSubscribed.forEach((ele) => {
+                assert(ele.unsubHandler);
+                ele.unsubHandler();
+                ele.unsubHandler = undefined;
+            });
         },
 
         subscribeAll() {
-            this.featuresSubscribed.forEach(
-                ele => {
-                    assert(!ele.unsubHandler);
-                    ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
+            this.featuresSubscribed.forEach((ele) => {
+                if (!ele.unsubHandler) {
+                    ele.unsubHandler = this.features[ele.name].subscribe(
+                        ele.callback
+                    );
                 }
-            );
+            });
         },
 
         iAmThePage() {
