@@ -20,10 +20,10 @@ export function createComponent(option, features) {
             resize && resize(size);
         }
         registerResize() {
-            window.addEventListener('resize', this.handleResize);
+            window.addEventListener('resize', this.handleResize.bind(this));
         }
         unregisterResize() {
-            window.removeEventListener('resize', this.handleResize);
+            window.removeEventListener('resize', this.handleResize.bind(this));
         }
         registerPageScroll() {
             window.addEventListener('scroll', this.scrollEvent);

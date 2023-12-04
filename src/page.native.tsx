@@ -70,7 +70,7 @@ export function createComponent<
         private registerResize() {
             (this as any).dimensionsSubscription = Dimensions.addEventListener(
                 'change',
-                this.handleResize
+                this.handleResize.bind(this)
             ) as EmitterSubscription;
         }
 

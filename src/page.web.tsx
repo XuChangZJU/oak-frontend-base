@@ -66,19 +66,19 @@ export function createComponent<
         }
 
         private registerResize() {
-            window.addEventListener('resize', this.handleResize);
+            window.addEventListener('resize', this.handleResize.bind(this));
         }
 
         private unregisterResize() {
-            window.removeEventListener('resize', this.handleResize);
+            window.removeEventListener('resize', this.handleResize.bind(this));
         }
 
         private registerPageScroll() {
-            window.addEventListener('scroll', this.scrollEvent);
+            window.addEventListener('scroll', this.scrollEvent.bind(this));
         }
 
         private unregisterPageScroll() {
-            window.removeEventListener('scroll', this.scrollEvent);
+            window.removeEventListener('scroll', this.scrollEvent.bind(this));
         }
 
         private checkReachBottom() {

@@ -27,11 +27,9 @@ export default function Render(props) {
     }, [zhCNKeys, actions, cascadeActions, extraActions]);
     return (<div className={Style.panelContainer}>
             <Space align='center' size={12} style={{ width: '100%' }} wrap>
-                <>
-                    {items?.map((ele, index) => {
-            return (<ItemComponent label={ele.label} type="a" onClick={ele.onClick}/>);
+                {items?.map((ele, index) => {
+            return (<ItemComponent key={ele.action} label={ele.label} type="a" onClick={ele.onClick}/>);
         })}
-                </>
             </Space>
         </div>);
 }
