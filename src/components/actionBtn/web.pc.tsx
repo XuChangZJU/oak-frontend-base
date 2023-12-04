@@ -87,17 +87,16 @@ export default function Render(
     return (
         <div className={Style.panelContainer}>
             <Space align='center' size={12} style={{ width: '100%' }} wrap>
-                <>
-                    {items?.map((ele, index: number) => {
-                        return (
-                            <ItemComponent
-                                label={ele.label}
-                                type="a"
-                                onClick={ele.onClick}
-                            />
-                        );
-                    })}
-                </>
+                {items?.map((ele, index: number) => {
+                    return (
+                        <ItemComponent
+                            key={ele.action}
+                            label={ele.label}
+                            type="a"
+                            onClick={ele.onClick}
+                        />
+                    );
+                })}
             </Space>
         </div>
     );
