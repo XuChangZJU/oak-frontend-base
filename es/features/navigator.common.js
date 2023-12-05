@@ -38,7 +38,7 @@ export class Navigator extends Feature {
         const searchParams = new URLSearchParams(search || '');
         if (state) {
             for (const param in state) {
-                if (state[param] !== undefined ||
+                if (state[param] !== undefined &&
                     state[param] !== 'undefined') {
                     searchParams.set(param, typeof state[param] === 'string'
                         ? state[param]

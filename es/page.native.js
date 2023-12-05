@@ -16,7 +16,7 @@ export function createComponent(option, features) {
             resize && resize(size);
         }
         registerResize() {
-            this.dimensionsSubscription = Dimensions.addEventListener('change', this.handleResize);
+            this.dimensionsSubscription = Dimensions.addEventListener('change', this.handleResize.bind(this));
         }
         unregisterResize() {
             this.dimensionsSubscription.remove();

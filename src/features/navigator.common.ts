@@ -55,7 +55,7 @@ export class Navigator extends Feature {
         if (state) {
             for (const param in state) {
                 if (
-                    state[param] !== undefined ||
+                    state[param] !== undefined &&
                     state[param] !== 'undefined'
                 ) {
                     searchParams.set(
