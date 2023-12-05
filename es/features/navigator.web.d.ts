@@ -1,20 +1,22 @@
 import { BrowserHistory } from 'history';
-import { Feature } from '../types/Feature';
 import { OakNavigateToParameters } from '../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict } from 'oak-domain/lib/types';
-export declare class Navigator extends Feature {
+import { Navigator as CommonNavigator } from './navigator.common';
+export declare class Navigator extends CommonNavigator {
     history: BrowserHistory;
-    namespace: string;
     constructor();
     /**
      * 必须使用这个方法注入history才能和react-router兼容
      * @param history
      */
     setHistory(history: BrowserHistory): void;
-    setNamespace(namespace: string): void;
     getLocation(): import("history").Location;
-    getNamespace(): string;
+    getState(): {
+        pathname: string;
+        oakFrom: string;
+    };
+    private getUrlAndProps;
     navigateTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(options: {
         url: string;
     } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean): Promise<void>;
@@ -25,8 +27,6 @@ export declare class Navigator extends Feature {
         url: string;
     } & OakNavigateToParameters<ED, T2>, state?: Record<string, any>, disableNamespace?: boolean): Promise<void>;
     navigateBack(delta?: number): Promise<void>;
-    private constructUrl;
-    private constructNamespace;
     navigateBackOrRedirectTo<ED extends EntityDict & BaseEntityDict, T2 extends keyof ED>(options: {
         url: string;
         isTabBar?: boolean;

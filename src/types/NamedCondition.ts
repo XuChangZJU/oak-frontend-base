@@ -6,6 +6,6 @@ export type NamedFilterItem<ED extends EntityDict, T extends keyof ED> = {
 };
 
 export type NamedSorterItem<ED extends EntityDict, T extends keyof ED> = {
-    sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | (() => NonNullable<ED[T]['Selection']['sorter']>[number] | undefined);
+    sorter: NonNullable<ED[T]['Selection']['sorter']>[number] | (() => ED[T]['Selection']['sorter'] | NonNullable<ED[T]['Selection']['sorter']>[number] | undefined);
     ['#name']?: string;
 };

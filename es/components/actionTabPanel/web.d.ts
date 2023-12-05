@@ -1,3 +1,4 @@
+import React from 'react';
 import { WebComponentProps } from '../../types/Page';
 import { EntityDict } from 'oak-domain/lib/base-app-domain';
 import { IMode, Item } from './type';
@@ -17,4 +18,4 @@ export default function Render(props: WebComponentProps<EntityDict, keyof Entity
         okText: string;
         cancelText: string;
     };
-}>): import("react/jsx-runtime").JSX.Element | null;
+}>): React.JSX.Element | null;

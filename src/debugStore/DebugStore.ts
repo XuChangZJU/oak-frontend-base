@@ -18,6 +18,9 @@ interface DebugStoreSelectOption extends TreeStoreSelectOption {
 export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>> extends TreeStore<ED> implements AsyncRowStore<ED, Cxt> {
     private executor: TriggerExecutor<ED, Cxt>;
     private relationAuth: RelationAuth<ED>;
+    private dataLoaded: boolean;
+    private dataLoadedLock: Promise<void>;
+    private dataLoadedLockUnlocker = () => undefined as void;
 
     constructor(
         storageSchema: StorageSchema<ED>,
@@ -29,6 +32,12 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         }
     ) {
         super(storageSchema);
+        this.dataLoaded = false;
+        this.dataLoadedLock = new Promise(
+            (resolve) => {
+                this.dataLoadedLockUnlocker = () => resolve();
+            }
+        );
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
         this.relationAuth = new RelationAuth(storageSchema, authDeduceRelationMap, selectFreeEntities, updateFreeDict);
     }
@@ -68,6 +77,9 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         context: Cxt,
         option: OP
     ) {
+        if (!this.dataLoaded) {
+            await this.dataLoadedLock;
+        }
         const autoCommit = !context.getCurrentTxnId();
         let result;
         if (autoCommit) {
@@ -99,6 +111,9 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
         context: Cxt,
         option: OP
     ) {
+        if (!this.dataLoaded) {
+            await this.dataLoadedLock;
+        }
         const autoCommit = !context.getCurrentTxnId();
         if (autoCommit) {
             await context.begin();
@@ -135,6 +150,9 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
     }
 
     async count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]["Selection"], "filter" | "count">, context: Cxt, option: OP): Promise<number> {
+        if (!this.dataLoaded) {
+            await this.dataLoadedLock;
+        }
         return super.countAsync(entity, selection, context, option);
     }
 
@@ -144,6 +162,19 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
 
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
         this.executor.registerChecker(checker);
+    }
+
+    resetInitialData(initialData: {
+        [T in keyof ED]?: Array<ED[T]['OpSchema']>;
+    }, stat?: {
+        create: number;
+        update: number;
+        remove: number;
+        commit: number;
+    }) {
+        super.resetInitialData(initialData, stat);
+        this.dataLoaded = true;
+        this.dataLoadedLockUnlocker();
     }
 }
 

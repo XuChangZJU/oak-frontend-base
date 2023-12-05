@@ -1,4 +1,4 @@
-import { EntityDict, Aspect, Context, AspectWrapper } from 'oak-domain/lib/types';
+import { EntityDict, Aspect, Context, AspectWrapper, WebEnv, NativeEnv } from 'oak-domain/lib/types';
 import { Feature } from '../types/Feature';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -22,6 +22,16 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
     private defaultLng: string;
     private i18n: I18n;
 
+    private async initializeLng() {
+        const savedLng = await this.localStorage.load(LOCAL_STORAGE_KEYS.localeLng);
+        if (savedLng) {
+            this.language = savedLng;
+        }
+        else {
+            await this.detectLanguange();
+        }
+    }
+
     constructor(
         cache: Cache<ED, Cxt, FrontCxt, AD>,
         localStorage: LocalStorage,
@@ -34,19 +44,14 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         this.localStorage = localStorage;
         this.defaultLng = defaultLng;
         this.environment = environment;
-        const savedLng = localStorage.load(LOCAL_STORAGE_KEYS.localeLng);
-        if (savedLng) {
-            this.language = savedLng;
-        }
-        else {
-            this.language = defaultLng;
-            this.detectLanguange();
-        }
+        this.language = defaultLng;
+        // 也是异步行为，不知道是否有影响 by Xc
+        this.initializeLng();
         this.i18n = new I18n(undefined, {
             defaultLocale: defaultLng,
             locale: this.language,
         });
-        this.resetDataset();
+        this.reloadDataset();
 
         // i18n miss的默认策略
         this.i18n.missingBehavior = 'loadData';
@@ -67,10 +72,11 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
         const env = await this.environment.getEnv();
         const { language } = env;
         this.language = language;
-        this.localStorage.save(LOCAL_STORAGE_KEYS.localeLng, language);
+        await this.localStorage.save(LOCAL_STORAGE_KEYS.localeLng, language);
     }
 
-    private resetDataset() {
+    private async reloadDataset() {
+        await this.cache.onInitialized();
         const i18ns = this.cache.get('i18n', {
             data: {
                 id: 1,
@@ -93,16 +99,15 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             }
         );
         this.i18n.store(dataset);
+
+        if (i18ns.length > 0) {
+            // 启动时刷新数据策略
+            const nss = i18ns.map(ele => ele.namespace!);
+            await this.loadServerData(nss);
+        }
     }
 
-    /**
-     * 当发生key缺失时，向服务器请求最新的i18n数据，对i18n缓存数据的行为优化放在cache中统一进行
-     * @param ns 
-     */
-    private async loadData(key: Scope) {
-        assert(typeof key === 'string');
-        const [ ns ] = key.split('.');
-
+    private async loadServerData(nss: string[]) {
         const { data: newI18ns } = await this.cache.refresh('i18n', {
             data: {
                 id: 1,
@@ -113,13 +118,15 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
                 $$updateAt$$: 1,
             },
             filter: {
-                namespace: ns,
-            }
-        }, undefined, undefined, undefined, {
+                namespace: {
+                    $in: nss,
+                },
+            },
+        }, undefined, undefined, {
             dontPublish: true,
             useLocalCache: {
-                keys: [ns],
-                gap: process.env.NODE_ENV === 'development' ? 60 * 1000 : 1200 * 1000,
+                keys: nss,
+                gap: process.env.NODE_ENV === 'development' ? 10 * 1000 : 3600 * 1000,
                 onlyReturnFresh: true,
             },
         });
@@ -141,7 +148,16 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
             this.i18n.store(dataset);
             this.publish();
         }
+    }
+    /**
+     * 当发生key缺失时，向服务器请求最新的i18n数据，对i18n缓存数据的行为优化放在cache中统一进行
+     * @param ns 
+     */
+    private async loadData(key: Scope) {
+        assert(typeof key === 'string');
+        const [ ns ] = key.split('.');
 
+        await this.loadServerData([ns]);
         if (!this.hasKey(key)) {
             console.warn(`命名空间${ns}中的${key}缺失且可能请求不到更新的数据`);
             if (process.env.NODE_ENV === 'development') {

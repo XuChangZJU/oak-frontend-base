@@ -1,2 +1,3 @@
-declare function ColumnSetting(): import("react/jsx-runtime").JSX.Element;
+import React from 'react';
+declare function ColumnSetting(): React.JSX.Element;
 export default ColumnSetting;

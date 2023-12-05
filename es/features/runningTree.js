@@ -1,6 +1,6 @@
 import { assert } from 'oak-domain/lib/utils/assert';
-import { cloneDeep, unset, merge, uniq } from "oak-domain/lib/utils/lodash";
-import { combineFilters } from "oak-domain/lib/store/filter";
+import { cloneDeep, unset, uniq } from "oak-domain/lib/utils/lodash";
+import { checkFilterContains, combineFilters } from "oak-domain/lib/store/filter";
 import { createOperationsFromModies } from 'oak-domain/lib/store/modi';
 import { judgeRelation } from "oak-domain/lib/store/relation";
 import { Feature } from '../types/Feature';
@@ -36,10 +36,6 @@ class Node extends Feature {
         this.modiIds = undefined;
         this.actions = actions;
         this.cascadeActions = cascadeActions;
-        if (parent) {
-            assert(path);
-            parent.addChild(path, this);
-        }
     }
     getEntity() {
         return this.entity;
@@ -127,30 +123,20 @@ class Node extends Feature {
     }
 }
 const DEFAULT_PAGINATION = {
-    currentPage: 1,
+    currentPage: 0,
     pageSize: 20,
-    append: true,
     more: true,
+    total: 0,
 };
 class ListNode extends Node {
-    children;
     updates;
+    children = {};
     filters;
     sorters;
-    pagination;
-    ids;
-    aggr;
+    getTotal;
+    pagination = DEFAULT_PAGINATION;
+    sr = {};
     syncHandler;
-    getChildPath(child) {
-        let idx = 0;
-        for (const k in this.children) {
-            if (this.children[k] === child) {
-                return k;
-            }
-            idx++;
-        }
-        assert(false);
-    }
     setFiltersAndSortedApplied() {
         this.filters.forEach(ele => ele.applied = true);
         this.sorters.forEach(ele => ele.applied = true);
@@ -197,73 +183,77 @@ class ListNode extends Node {
         }
     }
     onCacheSync(records) {
-        // 只需要处理insert
-        if (this.loading) {
+        // 只需要处理当listNode为首页且插入/删除项满足条件的情况
+        if (this.loading || this.pagination.currentPage !== 0) {
             return;
         }
-        if (!this.ids) {
-            return;
-        }
-        let needRefresh = false;
         for (const record of records) {
             const { a } = record;
             switch (a) {
                 case 'c': {
-                    const { e } = record;
+                    const { e, d } = record;
                     if (e === this.entity) {
-                        needRefresh = true;
+                        const context = this.cache.begin();
+                        const { filter } = this.constructSelection();
+                        if (d instanceof Array) {
+                            d.forEach((dd) => {
+                                if (!filter || (!this.sr.hasOwnProperty(dd.id) && checkFilterContains(e, context, filter, {
+                                    id: dd.id,
+                                }, true))) {
+                                    this.sr[dd.id] = {}; // 如果有aggr怎么办，一般有aggr的页面不会出现这种情况，以后再说
+                                    if (typeof this.pagination.total === 'number') {
+                                        this.pagination.total += 1;
+                                    }
+                                }
+                            });
+                        }
+                        else {
+                            if (!filter || (!this.sr.hasOwnProperty(d.id) && checkFilterContains(e, context, filter, {
+                                id: d.id,
+                            }, true))) {
+                                this.sr[d.id] = {}; // 如果有aggr怎么办，一般有aggr的页面不会出现这种情况，以后再说
+                                if (typeof this.pagination.total === 'number') {
+                                    this.pagination.total += 1;
+                                }
+                            }
+                        }
+                        this.cache.commit();
                     }
                     break;
                 }
                 case 'r': {
-                    const { e } = record;
+                    const { e, f } = record;
                     if (e === this.entity) {
-                        needRefresh = true;
+                        if (!f) {
+                            this.sr = {};
+                            this.pagination.total = 0;
+                        }
+                        else if (f.id && typeof f.id === 'string') {
+                            // 绝大多数删除情况
+                            if (this.sr.hasOwnProperty(f.id)) {
+                                unset(this.sr, f.id);
+                                if (typeof this.pagination.total === 'number') {
+                                    this.pagination.total -= 1;
+                                }
+                            }
+                        }
+                        else {
+                            const context = this.cache.begin();
+                            for (const id in this.sr) {
+                                if (!f || checkFilterContains(e, context, f, { id }, true)) {
+                                    unset(this.sr, id);
+                                    if (typeof this.pagination.total === 'number') {
+                                        this.pagination.total -= 1;
+                                    }
+                                }
+                            }
+                            this.cache.commit();
+                        }
                     }
                     break;
                 }
                 default: {
                     break;
-                }
-            }
-            if (needRefresh) {
-                break;
-            }
-        }
-        /**
-         * 这样处理可能会导致对B对象的删除或插入影响到A对象的list结果，当A的filter存在in B的查询时
-         * 典型的例子如userRelationList中对user的查询
-         * filter是： {
-                    id: {
-                        $in: {
-                            entity: `user${entityStr}`,
-                            data: {
-                                userId: 1,
-                            },
-                            filter: {
-                                [`${entity}Id`]: entityId,
-                            },
-                        },
-                    },
-                }
-            此时对userRelation的删除动作就会导致user不会被移出list
-         */
-        if (needRefresh) {
-            const { currentPage, pageSize } = this.pagination;
-            if (currentPage === 1) {
-                // 只有当前为第0页时才需要尝试刷新
-                const { filter, sorter } = this.constructSelection(true, false, true);
-                if ((!this.getParent() || this.getParent() instanceof VirtualNode || filter) && this.projection) {
-                    const result = this.cache.get(this.getEntity(), {
-                        data: {
-                            id: 1,
-                        },
-                        filter,
-                        sorter,
-                        indexFrom: 0,
-                        count: pageSize,
-                    }, true);
-                    this.ids = result.map((ele) => ele.id);
                 }
             }
         }
@@ -274,15 +264,25 @@ class ListNode extends Node {
             this.children[k].destroy();
         }
     }
-    constructor(entity, schema, cache, relationAuth, projection, parent, path, filters, sorters, pagination, actions, cascadeActions) {
+    constructor(entity, schema, cache, relationAuth, projection, parent, path, filters, sorters, getTotal, pagination, actions, cascadeActions) {
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
-        this.children = {};
         this.filters = filters || [];
         this.sorters = sorters || [];
-        this.pagination = pagination || DEFAULT_PAGINATION;
+        this.getTotal = getTotal;
+        this.sr = {};
+        this.pagination = pagination ? {
+            ...pagination,
+            currentPage: pagination.currentPage - 1,
+            more: true,
+            total: 0,
+        } : DEFAULT_PAGINATION;
         this.updates = {};
         this.syncHandler = (records) => this.onCacheSync(records);
         this.cache.bindOnSync(this.syncHandler);
+        if (parent) {
+            assert(path);
+            parent.addChild(path, this);
+        }
     }
     getPagination() {
         return this.pagination;
@@ -294,19 +294,20 @@ class ListNode extends Node {
             this.refresh();
         }
     }
-    getChild(path) {
-        return this.children[path];
-    }
-    getChildren() {
-        return this.children;
-    }
     addChild(path, node) {
         assert(!this.children[path]);
         // assert(path.length > 10, 'List的path改成了id');
         this.children[path] = node;
+        assert(this.sr); // listNode的子结点不可能在取得数据前就建立吧       by Xc
+        node.saveRefreshResult({
+            [path]: this.sr[path] || {},
+        });
     }
     removeChild(path) {
         unset(this.children, path);
+    }
+    getChild(path) {
+        return this.children[path];
     }
     getNamedFilters() {
         return this.filters;
@@ -318,7 +319,7 @@ class ListNode extends Node {
     setNamedFilters(filters, refresh) {
         this.filters = filters.map((ele) => Object.assign({}, ele, { applied: false }));
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -334,7 +335,7 @@ class ListNode extends Node {
             this.filters.push(Object.assign({}, filter, { applied: false }));
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -347,7 +348,7 @@ class ListNode extends Node {
             this.filters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -360,7 +361,7 @@ class ListNode extends Node {
             this.filters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -370,13 +371,13 @@ class ListNode extends Node {
         return this.sorters;
     }
     getNamedSorterByName(name) {
-        const sorter = this.sorters.find((ele) => ele['#name'] === name);
+        const sorter = this.sorters.find((ele) => ele && ele['#name'] === name);
         return sorter;
     }
     setNamedSorters(sorters, refresh) {
         this.sorters = sorters.map(ele => Object.assign({}, ele, { applied: false }));
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -392,7 +393,7 @@ class ListNode extends Node {
             this.sorters.push(Object.assign({}, sorter, { applied: false }));
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -405,7 +406,7 @@ class ListNode extends Node {
             this.sorters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -418,7 +419,7 @@ class ListNode extends Node {
             this.sorters.splice(fIndex, 1);
         }
         if (refresh) {
-            this.refresh(1, true);
+            this.refresh(0, false);
         }
         else {
             this.publish();
@@ -426,83 +427,20 @@ class ListNode extends Node {
     }
     getFreshValue() {
         /**
-         * 满足当前结点的数据应当是所有满足当前filter条件且ids在当前ids中的数据
-         * 但如果是当前事务create的行则例外（当前页面上正在create的数据）
-         *
-         * bug: 这里可能会造成不满足ids约束的行上发起fetch missed rows的操作，如果后台阻止了这样的row的返回值（加上了额外的条件filter）
-         * 返回空行，会造成无限发请求的严重bug
-         * 先修正为先取id，再取一次数据
-         *
-         * 修改memeory-tree，当属性缺失不再报missedRow，改回直接用filter去取数据的逻辑
-         *
+         * 现在简化情况，只取sr中有id的数据
          */
-        const { data, filter, sorter } = this.constructSelection(true, false, true);
-        if (filter || this.ids) {
-            // 如果有this.ids，则要取ids在这些当中的行，唯一的特例是若pageNumber为0（在第一页），则也要取createAt为1（自己建立的行）
-            const getRows = () => {
-                const { currentPage, pageSize } = this.pagination;
-                if (this.ids) {
-                    if (currentPage === 1) {
-                        const filter2 = combineFilters(this.entity, this.schema, [{
-                                $$createAt$$: 1,
-                            }, filter]);
-                        const result = this.cache.get(this.entity, {
-                            data,
-                            filter: {
-                                $or: [filter2, {
-                                        id: {
-                                            $in: this.ids,
-                                        },
-                                    }],
-                            },
-                            sorter,
-                        }, true);
-                        return result;
-                    }
-                    const result = this.cache.get(this.entity, {
-                        data,
-                        filter: {
-                            id: {
-                                $in: this.ids,
-                            },
-                        },
-                        sorter,
-                    }, true);
-                    return result;
-                }
-                const result = this.cache.get(this.entity, {
-                    data,
-                    filter,
-                    sorter,
-                    indexFrom: pageSize * (currentPage - 1),
-                    count: pageSize,
-                }, true);
-                return result;
-            };
-            const rows = getRows();
-            if (this.aggr) {
-                // 如果有聚合查询的结果，这里按理不应该有aggregate和create同时出现，但也以防万一
-                this.aggr.forEach((ele, idx) => {
-                    const id = this.ids[idx];
-                    assert(id);
-                    const row = rows.find(ele => ele.id === id);
-                    assert(id);
-                    merge(row, ele);
-                });
-            }
-            return rows;
-        }
-        return [];
-        /* const finalIds = result.filter(
-            ele => ele.$$createAt$$ === 1
-        ).map(ele => ele.id).concat(this.ids);
-        return this.cache.get(this.entity, {
+        const ids = Object.keys(this.sr);
+        const { data, sorter } = this.constructSelection(true, false, true);
+        const result = this.cache.get(this.entity, {
             data,
             filter: {
-                id: { $in: finalIds },
+                id: {
+                    $in: ids,
+                }
             },
             sorter,
-        }, this.isLoading()); */
+        }, true, this.sr);
+        return result;
     }
     addItem(item) {
         // 如果数据键值是一个空字符串则更新成null
@@ -520,6 +458,7 @@ class ListNode extends Node {
             action: 'create',
             data: Object.assign(item, { id }),
         };
+        this.sr[id] = {};
         this.setDirty();
         return id;
     }
@@ -528,7 +467,7 @@ class ListNode extends Node {
             this.updates[id].action === 'create') {
             // 如果是新增项，在这里抵消
             unset(this.updates, id);
-            this.removeChild(id);
+            unset(this.sr, id);
         }
         else {
             this.updates[id] = {
@@ -570,7 +509,6 @@ class ListNode extends Node {
                 });
             }
         }
-        // assert(Object.keys(this.children).length === 0, `更新子结点应该落在相应的component上`);
         if (this.children && this.children[id]) {
             // 实际中有这样的case出现，当使用actionButton时。先这样处理。by Xc 20230214
             return this.children[id].update(data, action);
@@ -599,15 +537,6 @@ class ListNode extends Node {
     updateItems(data, action) {
         for (const id in data) {
             this.updateItem(data[id], id, action);
-        }
-    }
-    getParentFilter(childNode) {
-        for (const id in this.children) {
-            if (this.children[id] === childNode) {
-                return {
-                    id,
-                };
-            }
         }
     }
     composeOperations() {
@@ -680,7 +609,7 @@ class ListNode extends Node {
         return cloneDeep(filters);
     }
     constructSelection(withParent, ignoreNewParent, ignoreUnapplied) {
-        const { sorters } = this;
+        const { sorters, getTotal } = this;
         const data = this.getProjection();
         assert(data, '取数据时找不到projection信息');
         const sorterArr = sorters.filter(ele => !ignoreUnapplied || ele.applied).map((ele) => {
@@ -689,23 +618,57 @@ class ListNode extends Node {
                 return sorter();
             }
             return sorter;
-        })
-            .filter((ele) => !!ele);
+        }).flat().filter((ele) => !!ele);
         const filters = this.constructFilters(withParent, ignoreNewParent, ignoreUnapplied);
         const filters2 = filters?.filter((ele) => !!ele);
         const filter = filters2 ? combineFilters(this.entity, this.schema, filters2) : undefined;
+        const { currentPage, pageSize } = this.pagination;
         return {
             data,
             filter,
             sorter: sorterArr,
+            total: getTotal,
+            indexFrom: currentPage * pageSize,
+            count: pageSize,
         };
     }
-    async refresh(pageNumber, getCount, append) {
+    /**
+     * 存留查询结果
+     */
+    saveRefreshResult(sr, append, currentPage) {
+        const { data, total } = sr;
+        if (data) {
+            this.pagination.more = Object.keys(data).length === this.pagination.pageSize;
+        }
+        if (currentPage) {
+            this.pagination.currentPage = currentPage;
+        }
+        if (typeof total === 'number') {
+            this.pagination.total = total;
+        }
+        if (append) {
+            this.sr = {
+                ...this.sr,
+                ...data,
+            };
+        }
+        else {
+            this.sr = data || {};
+        }
+        for (const k in this.children) {
+            const child = this.children[k];
+            child.saveRefreshResult({
+                [k]: this.sr[k] || {},
+            });
+        }
+        this.publish();
+    }
+    async refresh(pageNumber, append) {
         const { entity, pagination } = this;
         const { currentPage, pageSize, randomRange } = pagination;
-        const currentPage3 = typeof pageNumber === 'number' ? pageNumber - 1 : currentPage - 1;
+        const currentPage3 = typeof pageNumber === 'number' ? pageNumber : currentPage;
         assert(!randomRange || !currentPage3, 'list在访问数据时，如果设置了randomRange，则不应再有pageNumber');
-        const { data: projection, filter, sorter, } = this.constructSelection(true, true);
+        const { data: projection, filter, sorter, total, } = this.constructSelection(true, true);
         // 若不存在有效的过滤条件（若有父结点但却为空时，说明父结点是一个create动作，不用刷新），则不能刷新
         if ((!this.getParent() || this.getParent() instanceof VirtualNode || filter) && projection) {
             try {
@@ -713,7 +676,7 @@ class ListNode extends Node {
                 if (append) {
                     this.loadingMore = true;
                 }
-                this.publishRecursively();
+                this.publish();
                 await this.cache.refresh(entity, {
                     data: projection,
                     filter,
@@ -721,44 +684,28 @@ class ListNode extends Node {
                     indexFrom: currentPage3 * pageSize,
                     count: pageSize,
                     randomRange,
-                }, undefined, getCount, ({ ids, count, aggr }) => {
-                    this.pagination.currentPage = currentPage3 + 1;
-                    this.pagination.more = ids.length === pageSize;
+                    total: currentPage3 === 0 ? total : undefined,
+                }, undefined, (selectResult) => {
                     this.endLoading();
                     this.setFiltersAndSortedApplied();
                     if (append) {
                         this.loadingMore = false;
                     }
-                    if (getCount) {
-                        this.pagination.total = count;
-                    }
-                    if (append) {
-                        this.ids = (this.ids || []).concat(ids);
-                    }
-                    else {
-                        this.ids = ids;
-                    }
-                    if (append) {
-                        this.aggr = (this.aggr || []).concat(aggr || []);
-                    }
-                    else {
-                        this.aggr = aggr;
-                    }
+                    this.saveRefreshResult(selectResult, append, currentPage3);
                 });
-                this.publishRecursively();
             }
             catch (err) {
                 this.endLoading();
                 if (append) {
                     this.loadingMore = false;
                 }
-                this.publishRecursively();
+                this.publish();
                 throw err;
             }
         }
         else {
             // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
-            this.publishRecursively();
+            this.publish();
         }
     }
     async loadMore() {
@@ -768,10 +715,10 @@ class ListNode extends Node {
             return;
         }
         const currentPage2 = currentPage + 1;
-        await this.refresh(currentPage2, undefined, true);
+        await this.refresh(currentPage2, true);
     }
     setCurrentPage(currentPage, append) {
-        this.refresh(currentPage, undefined, append);
+        this.refresh(currentPage, append);
     }
     clean() {
         if (this.dirty) {
@@ -780,21 +727,13 @@ class ListNode extends Node {
             for (const k in this.children) {
                 this.children[k].clean();
             }
+            for (const k in originUpdates) {
+                if (originUpdates[k].action === 'create') {
+                    unset(this.sr, originUpdates[k].data.id);
+                }
+            }
             this.dirty = undefined;
             this.publish();
-        }
-    }
-    getChildOperation(child) {
-        let childId = '';
-        for (const k in this.children) {
-            if (this.children[k] === child) {
-                childId = k;
-                break;
-            }
-        }
-        assert(childId);
-        if (this.updates && this.updates[childId]) {
-            return this.updates[childId];
         }
     }
     // 查看这个list上所有数据必须遵守的限制
@@ -802,39 +741,34 @@ class ListNode extends Node {
         const filters = this.constructFilters(undefined, true, true);
         return combineFilters(this.entity, this.schema, filters || []);
     }
-    publishRecursively() {
-        this.publish();
-        for (const child in this.children) {
-            this.children[child].publishRecursively();
-        }
-    }
 }
 class SingleNode extends Node {
     id;
-    aggr;
+    sr;
     children;
     filters;
     operation;
     constructor(entity, schema, cache, relationAuth, projection, parent, path, id, filters, actions, cascadeActions) {
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
+        this.sr = {};
         this.filters = filters;
-        if (!id) {
-            // 不传id先假设是创建动作
+        // addChild有可能为本结点赋上id值，所以要先行
+        if (parent) {
+            assert(path);
+            parent.addChild(path, this);
+        }
+        if (!this.id && !id) {
             this.create({});
-            // this.id = this.operation!.operation.data.id;
         }
-        else {
-            this.id = id;
-        }
-    }
-    getChildPath(child) {
-        for (const k in this.children) {
-            if (child === this.children[k]) {
-                return k;
+        else if (id) {
+            if (this.id) {
+                assert(id === this.id, 'singleNode初始化的id必须一致');
+            }
+            else {
+                this.id = id;
             }
         }
-        assert(false);
     }
     setFiltersAndSortedApplied() {
         for (const k in this.children) {
@@ -920,6 +854,7 @@ class SingleNode extends Node {
     addChild(path, node) {
         assert(!this.children[path]);
         this.children[path] = node;
+        this.passRsToChild(path);
     }
     removeChild(path) {
         unset(this.children, path);
@@ -927,16 +862,15 @@ class SingleNode extends Node {
     getFreshValue() {
         const projection = this.getProjection(false);
         const id = this.getId();
-        if (projection) {
+        if (projection && id) {
             const result = this.cache.get(this.entity, {
                 data: projection,
                 filter: {
                     id,
                 },
-            }, true);
-            if (this.aggr) {
-                merge(result[0], this.aggr);
-            }
+            }, true, {
+                [id]: this.sr,
+            });
             return result[0];
         }
     }
@@ -1003,17 +937,20 @@ class SingleNode extends Node {
             }
         }
         // 处理外键，如果update的数据中有相应的外键，其子对象上的动作应当被clean掉
+        // 并将sr传递到子组件上
         for (const attr in data) {
             if (attr === 'entityId') {
                 assert(data.entity, '设置entityId时请将entity也传入');
                 if (this.children[data.entity]) {
                     this.children[data.entity].clean();
+                    this.passRsToChild(data.entity);
                 }
             }
             else if (this.schema[this.entity].attributes[attr]?.type === 'ref') {
                 const refKey = attr.slice(0, attr.length - 2);
                 if (this.children[refKey]) {
                     this.children[refKey].clean();
+                    this.passRsToChild(refKey);
                 }
             }
         }
@@ -1030,6 +967,7 @@ class SingleNode extends Node {
             },
         };
         this.operation = operation;
+        // 此时应如何处理children？除了clean之外似乎还应当unsetId？没想清楚
         this.setDirty();
     }
     setDirty() {
@@ -1091,14 +1029,14 @@ class SingleNode extends Node {
         }
     }
     getProjection(withDecendants) {
-        if (this.parent && this.parent instanceof ListNode) {
-            return this.parent.getProjection();
-        }
         const projection = super.getProjection();
         if (projection && withDecendants) {
             for (const k in this.children) {
-                if (k.indexOf(':') === -1) {
-                    const rel = this.judgeRelation(k);
+                if (projection[k] && process.env.NODE_ENV === 'development') {
+                    console.warn(`父结点都定义了${k}路径上的projection，和子结点产生冲突`);
+                }
+                if (!k.includes(MODI_NEXT_PATH_SUFFIX)) {
+                    const rel = this.judgeRelation(k.includes(':') ? k.split(':')[0] : k);
                     if (rel === 2) {
                         const subProjection = this.children[k].getProjection(true);
                         Object.assign(projection, {
@@ -1130,23 +1068,67 @@ class SingleNode extends Node {
         }
         return projection;
     }
-    async refresh() {
-        // SingleNode如果是ListNode的子结点，则不必refresh（优化，ListNode有义务负责子层对象的数据）
-        if (this.parent && this.parent instanceof ListNode && this.parent.getEntity() === this.getEntity()) {
-            this.publish();
-            return;
+    passRsToChild(k) {
+        /**
+         * 把返回的结果中的total和aggr相关的值下降到相关的子结点上去
+         */
+        const projection = this.getProjection(true);
+        const [value] = this.cache.get(this.entity, {
+            data: projection,
+            filter: {
+                id: this.id,
+            },
+        });
+        const keys = k ? [k] : Object.keys(this.children || {});
+        for (const k of keys) {
+            const child = this.children[k];
+            const rel = this.judgeRelation(k);
+            if (rel === 2) {
+                if (value?.entityId) {
+                    assert(child instanceof SingleNode);
+                    assert(value.entity === child.getEntity());
+                    child.saveRefreshResult({
+                        [value.entityId]: this.sr[k] || {},
+                    });
+                }
+            }
+            else if (typeof rel === 'string') {
+                if (value && value[`${k}Id`]) {
+                    assert(child instanceof SingleNode);
+                    assert(rel === child.getEntity());
+                    child.saveRefreshResult({
+                        [value[`${k}Id`]]: this.sr[k] || {},
+                    });
+                }
+            }
+            else {
+                assert(rel instanceof Array);
+                assert(child instanceof ListNode);
+                // assert(this.sr![k]);
+                child.saveRefreshResult(this.sr[k] || {});
+            }
         }
+    }
+    saveRefreshResult(data) {
+        const ids = Object.keys(data);
+        assert(ids.length === 1);
+        this.id = ids[0];
+        this.sr = data[ids[0]];
+        this.passRsToChild();
+        this.publish();
+    }
+    async refresh() {
         // SingleNode如果是非根结点，其id应该在第一次refresh的时候来确定        
         const projection = this.getProjection(true);
         const filter = this.getFilter();
         if (projection && filter) {
             this.startLoading();
-            this.publishRecursively();
+            this.publish();
             try {
-                const { data: [value] } = await this.cache.refresh(this.entity, {
+                await this.cache.refresh(this.entity, {
                     data: projection,
                     filter,
-                }, undefined, undefined, ({ aggr }) => {
+                }, undefined, (result) => {
                     // 刷新后所有的更新都应当被丢弃（子层上可能会自动建立了this.create动作） 这里可能会有问题 by Xc 20230329
                     if (this.schema[this.entity].toModi) {
                         // 对于modi对象，在此缓存modiIds
@@ -1164,22 +1146,21 @@ class SingleNode extends Node {
                             this.modiIds = rows.map(ele => ele.id);
                         }
                     }
-                    this.aggr = aggr && aggr[0];
+                    this.saveRefreshResult(result.data);
                     this.setFiltersAndSortedApplied();
                     this.endLoading();
                     //this.clean();
                 });
-                this.publishRecursively();
             }
             catch (err) {
                 this.endLoading();
-                this.publishRecursively();
+                this.publish();
                 throw err;
             }
         }
         else {
             // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
-            this.publishRecursively();
+            this.publish();
         }
     }
     clean() {
@@ -1223,114 +1204,50 @@ class SingleNode extends Node {
         for (const key in this.children) {
             if (childNode === this.children[key]) {
                 const rel = this.judgeRelation(key);
-                if (rel === 2) {
-                    assert(false, '当前SingleNode应该自主管理id');
-                    // 基于entity/entityId的多对一
-                    /*  if (value) {
-                         // 要么没有行(因为属性不全所以没有返回行，比如从list -> detail)；如果取到了行但此属性为空，则说明一定是singleNode到singleNode的create
-                         if (value?.entityId) {
-                             assert(value?.entity === this.children[key].getEntity());
-                             return {
-                                 id: value!.entityId!,
-                             };
-                         }
-                         return;
-                     }
-                     const filter = this.getFilter();
-                     if (filter) {
-                         return {
-                             id: {
-                                 $in: {
-                                     entity: this.entity,
-                                     data: {
-                                         entityId: 1,
-                                     },
-                                     filter: addFilterSegment(filter, {
-                                         entity: childNode.getEntity(),
-                                     }),
-                                 }
-                             },
-                         };
-                     } */
-                }
-                else if (typeof rel === 'string') {
-                    assert(false, '当前SingleNode应该自主管理id');
-                    /* if (value) {
-                        // 要么没有行(因为属性不全所以没有返回行，比如从list -> detail)；如果取到了行但此属性为空，则说明一定是singleNode到singleNode的create
-                        if (value && value[`${rel}Id`]) {
-                            return {
-                                id: value[`${rel}Id`],
-                            };
-                        }
-                        return;
+                assert(rel instanceof Array && !key.endsWith('$$aggr'));
+                if (rel[1]) {
+                    // 基于普通外键的一对多
+                    if (value) {
+                        return {
+                            [rel[1]]: value.id,
+                        };
                     }
                     const filter = this.getFilter();
                     if (filter) {
+                        if (filter.id && Object.keys(filter).length === 1) {
+                            return {
+                                [rel[1]]: filter.id,
+                            };
+                        }
                         return {
-                            id: {
-                                $in: {
-                                    entity: this.entity,
-                                    data: {
-                                        [`${rel}Id`]: 1,
-                                    },
-                                    filter,
-                                },
-                            },
+                            [rel[1].slice(0, rel[1].length - 2)]: filter,
                         };
-                    } */
+                    }
                 }
                 else {
-                    assert(rel instanceof Array && !key.endsWith('$$aggr'));
-                    if (rel[1]) {
-                        // 基于普通外键的一对多
-                        if (value) {
-                            return {
-                                [rel[1]]: value.id,
-                            };
-                        }
-                        const filter = this.getFilter();
-                        if (filter) {
-                            if (filter.id && Object.keys(filter).length === 1) {
-                                return {
-                                    [rel[1]]: filter.id,
-                                };
-                            }
-                            return {
-                                [rel[1].slice(0, rel[1].length - 2)]: filter,
-                            };
-                        }
+                    // 基于entity/entityId的一对多 
+                    if (value) {
+                        return {
+                            entity: this.entity,
+                            entityId: value.id,
+                        };
                     }
-                    else {
-                        // 基于entity/entityId的一对多 
-                        if (value) {
+                    const filter = this.getFilter();
+                    if (filter) {
+                        if (filter.id && Object.keys(filter).length === 1) {
                             return {
                                 entity: this.entity,
-                                entityId: value.id,
+                                entityId: filter.id,
                             };
                         }
-                        const filter = this.getFilter();
-                        if (filter) {
-                            if (filter.id && Object.keys(filter).length === 1) {
-                                return {
-                                    entity: this.entity,
-                                    entityId: filter.id,
-                                };
-                            }
-                            return {
-                                [this.entity]: filter,
-                            };
-                        }
+                        return {
+                            [this.entity]: filter,
+                        };
                     }
                 }
             }
         }
         return;
-    }
-    publishRecursively() {
-        this.publish();
-        for (const child in this.children) {
-            this.children[child].publishRecursively();
-        }
     }
 }
 class VirtualNode extends Feature {
@@ -1392,17 +1309,17 @@ class VirtualNode extends Feature {
     }
     async refresh() {
         this.loading = true;
-        this.publishRecursively();
+        this.publish();
         try {
             if (Object.keys(this.children).length > 0) {
                 await Promise.all(Object.keys(this.children).map(ele => this.children[ele].refresh()));
             }
             this.loading = false;
-            this.publishRecursively();
+            this.publish();
         }
         catch (err) {
             this.loading = false;
-            this.publishRecursively();
+            this.publish();
             throw err;
         }
     }
@@ -1439,7 +1356,7 @@ class VirtualNode extends Feature {
     }
     setExecuting(executing) {
         this.executing = executing;
-        this.publishRecursively();
+        this.publish();
     }
     isExecuting() {
         return this.executing;
@@ -1452,7 +1369,7 @@ class VirtualNode extends Feature {
             this.children[ele].clean();
         }
         this.dirty = false;
-        this.publishRecursively();
+        this.publish();
     }
     checkIfClean() {
         for (const k in this.children) {
@@ -1461,12 +1378,6 @@ class VirtualNode extends Feature {
             }
         }
         this.dirty = false;
-    }
-    publishRecursively() {
-        this.publish();
-        for (const child in this.children) {
-            this.children[child].publishRecursively();
-        }
     }
 }
 function analyzePath(path) {
@@ -1495,7 +1406,7 @@ export class RunningTree extends Feature {
         this.root = {};
     }
     createNode(options) {
-        const { entity, pagination, path: fullPath, filters, sorters, projection, isList, id, actions, cascadeActions, } = options;
+        const { entity, pagination, path: fullPath, filters, sorters, projection, isList, id, actions, cascadeActions, getTotal, } = options;
         let node;
         const { parent, path } = analyzePath(fullPath);
         const parentNode = parent ? this.findNode(parent) : undefined;
@@ -1544,7 +1455,7 @@ export class RunningTree extends Feature {
             if (isList) {
                 assert(!(parentNode instanceof ListNode));
                 // assert(projection, `页面没有定义投影「${path}」`);
-                node = new ListNode(entity, this.schema, this.cache, this.relationAuth, projection, parentNode, path, filters, sorters, pagination, actions, cascadeActions);
+                node = new ListNode(entity, this.schema, this.cache, this.relationAuth, projection, parentNode, path, filters, sorters, getTotal, pagination, actions, cascadeActions);
             }
             else {
                 node = new SingleNode(entity, this.schema, this.cache, this.relationAuth, projection, parentNode, // 过编译
@@ -1559,6 +1470,9 @@ export class RunningTree extends Feature {
             assert(!parent && !this.root[path]);
             this.root[path] = node;
         }
+        node.subscribe(() => {
+            this.publish(fullPath);
+        });
         return node;
     }
     checkSingleNodeIsModiNode(node) {
@@ -1621,14 +1535,12 @@ export class RunningTree extends Feature {
             if (parent instanceof SingleNode) {
                 parent.removeChild(childPath);
             }
-            else if (parent instanceof ListNode) {
-                parent.removeChild(childPath);
-            }
             else if (!parent) {
                 assert(this.root.hasOwnProperty(path));
                 unset(this.root, path);
             }
             node.destroy();
+            node.clearSubscribes();
         }
     }
     getFreshValue(path) {
@@ -1723,6 +1635,17 @@ export class RunningTree extends Feature {
         const node = this.findNode(path);
         return node ? node.isExecuting() : false;
     }
+    isListDescandent(path) {
+        const node = this.findNode(path);
+        let parent = node?.getParent();
+        while (parent) {
+            if (parent instanceof ListNode) {
+                return true;
+            }
+            parent = parent.getParent();
+        }
+        return false;
+    }
     async refresh(path) {
         /* if (path.includes(MODI_NEXT_PATH_SUFFIX)) {
             return;
@@ -1730,7 +1653,7 @@ export class RunningTree extends Feature {
         const node = this.findNode(path);
         if (!node?.isLoading()) {
             if (node instanceof ListNode) {
-                await node.refresh(1, true);
+                await node.refresh(0, false);
             }
             else if (node) {
                 await node.refresh();
@@ -1745,7 +1668,11 @@ export class RunningTree extends Feature {
     getPagination(path) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        return node.getPagination();
+        const pn = node.getPagination();
+        return {
+            ...pn,
+            currentPage: pn.currentPage + 1,
+        };
     }
     setId(path, id) {
         const node = this.findNode(path);
@@ -1780,7 +1707,7 @@ export class RunningTree extends Feature {
     setCurrentPage(path, currentPage) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
-        return node.setCurrentPage(currentPage);
+        return node.setCurrentPage(currentPage - 1);
     }
     getNamedFilters(path) {
         const node = this.findNode(path);
@@ -1916,18 +1843,5 @@ export class RunningTree extends Feature {
     }
     getRoot() {
         return this.root;
-    }
-    subscribeNode(callback, path) {
-        const node = this.findNode(path);
-        /**
-         * 当list上的结点更新路径时，会重复subscribe多条子路径结点，目前的数据结构不能支持在didUpdate的时候进行unsbscribe
-         * 这里先将path返回，由结点自主判定是否需要reRender
-         * by Xc 20230219
-         * 原先用的clearSubscribes，是假设没有结点共用路径，目前看来这个假设不成立
-         */
-        // node.clearSubscribes();
-        return node.subscribe(() => {
-            callback(path);
-        });
     }
 }

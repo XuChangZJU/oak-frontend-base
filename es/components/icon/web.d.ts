@@ -8,4 +8,4 @@ export default function Render(props: WebComponentProps<EntityDict, keyof Entity
     size?: string;
     className?: string;
     style?: React.CSSProperties;
-}, {}>): import("react/jsx-runtime").JSX.Element;
+}, {}>): React.JSX.Element;

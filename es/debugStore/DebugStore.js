@@ -6,8 +6,15 @@ import { RelationAuth } from "oak-domain/lib/store/RelationAuth";
 export class DebugStore extends TreeStore {
     executor;
     relationAuth;
+    dataLoaded;
+    dataLoadedLock;
+    dataLoadedLockUnlocker = () => undefined;
     constructor(storageSchema, contextBuilder, authDeduceRelationMap, selectFreeEntities, updateFreeDict) {
         super(storageSchema);
+        this.dataLoaded = false;
+        this.dataLoadedLock = new Promise((resolve) => {
+            this.dataLoadedLockUnlocker = () => resolve();
+        });
         this.executor = new TriggerExecutor((cxtString) => contextBuilder(cxtString)(this));
         this.relationAuth = new RelationAuth(storageSchema, authDeduceRelationMap, selectFreeEntities, updateFreeDict);
     }
@@ -38,6 +45,9 @@ export class DebugStore extends TreeStore {
         return result;
     }
     async operate(entity, operation, context, option) {
+        if (!this.dataLoaded) {
+            await this.dataLoadedLock;
+        }
         const autoCommit = !context.getCurrentTxnId();
         let result;
         if (autoCommit) {
@@ -63,6 +73,9 @@ export class DebugStore extends TreeStore {
         return result;
     }
     async select(entity, selection, context, option) {
+        if (!this.dataLoaded) {
+            await this.dataLoadedLock;
+        }
         const autoCommit = !context.getCurrentTxnId();
         if (autoCommit) {
             await context.begin();
@@ -95,6 +108,9 @@ export class DebugStore extends TreeStore {
         }
     }
     async count(entity, selection, context, option) {
+        if (!this.dataLoaded) {
+            await this.dataLoadedLock;
+        }
         return super.countAsync(entity, selection, context, option);
     }
     registerTrigger(trigger) {
@@ -102,5 +118,10 @@ export class DebugStore extends TreeStore {
     }
     registerChecker(checker) {
         this.executor.registerChecker(checker);
+    }
+    resetInitialData(initialData, stat) {
+        super.resetInitialData(initialData, stat);
+        this.dataLoaded = true;
+        this.dataLoadedLockUnlocker();
     }
 }

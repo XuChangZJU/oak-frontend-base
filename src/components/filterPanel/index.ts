@@ -5,10 +5,6 @@ import { getFilterName } from '../filter2/utils';
 import { RowWithActions, ReactComponentProps } from '../../types/Page';
 
 export default OakComponent({
-    entity() {
-        const { entity } = this.props;
-        return entity as keyof ED;
-    },
     isList: true,
     data: {
         isExpandContent: false,

@@ -6,10 +6,10 @@ import { generateNewIdAsync } from 'oak-domain/lib/utils/uuid';
 async function initDataInStore(store, initialData, stat) {
     store.resetInitialData(initialData, stat);
 }
-function getMaterializedData(loadFn) {
+async function getMaterializedData(loadFn) {
     try {
-        const data = loadFn(LOCAL_STORAGE_KEYS.debugStore);
-        const stat = loadFn(LOCAL_STORAGE_KEYS.debugStoreStat);
+        const data = await loadFn(LOCAL_STORAGE_KEYS.debugStore);
+        const stat = await loadFn(LOCAL_STORAGE_KEYS.debugStoreStat);
         if (data && stat) {
             return {
                 data,
@@ -23,10 +23,10 @@ function getMaterializedData(loadFn) {
     }
 }
 let lastMaterializedVersion = 0;
-function materializeData(data, stat, saveFn) {
+async function materializeData(data, stat, saveFn) {
     try {
-        saveFn(LOCAL_STORAGE_KEYS.debugStore, data);
-        saveFn(LOCAL_STORAGE_KEYS.debugStoreStat, stat);
+        await saveFn(LOCAL_STORAGE_KEYS.debugStore, data);
+        await saveFn(LOCAL_STORAGE_KEYS.debugStoreStat, stat);
         lastMaterializedVersion = stat.commit;
         console.log('物化数据', data);
     }
@@ -175,28 +175,31 @@ export function createDebugStore(storageSchema, contextBuilder, triggers, checke
     checkers.forEach(ele => store.registerChecker(ele));
     assert(actionDict);
     // 如果没有物化数据则使用initialData初始化debugStore
-    const data = getMaterializedData(loadFn);
-    if (!data) {
-        initDataInStore(store, initialData);
-        console.log('使用初始化数据建立debugStore', initialData);
-    }
-    else {
-        // 对static的对象，使用initialData，剩下的使用物化数据
-        for (const entity in initialData) {
-            if (storageSchema[entity].static) {
-                data.data[entity] = initialData[entity];
-            }
+    const loadInitialData = async () => {
+        const data = await getMaterializedData(loadFn);
+        if (!data) {
+            initDataInStore(store, initialData);
+            console.log('使用初始化数据建立debugStore', initialData);
         }
-        initDataInStore(store, data.data, data.stat);
-        console.log('使用物化数据建立debugStore', data);
-    }
+        else {
+            // 对static的对象，使用initialData，剩下的使用物化数据
+            for (const entity in initialData) {
+                if (storageSchema[entity].static) {
+                    data.data[entity] = initialData[entity];
+                }
+            }
+            initDataInStore(store, data.data, data.stat);
+            console.log('使用物化数据建立debugStore', data);
+        }
+    };
+    loadInitialData();
     lastMaterializedVersion = store.getStat().commit;
     // 当store中有更新事务提交时，物化store数据
-    store.onCommit((result) => {
+    store.onCommit(async (result) => {
         if (Object.keys(result).length > 0) {
             const stat = store.getStat();
             const data = store.getCurrentData();
-            materializeData(data, stat, saveFn);
+            await materializeData(data, stat, saveFn);
         }
     });
     // 启动watcher

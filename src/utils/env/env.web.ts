@@ -1,6 +1,6 @@
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { pick } from 'oak-domain/lib/utils/lodash';
-import { WebEnv } from 'oak-domain/lib/types/Environment';
+import { WebEnv, BriefEnv } from 'oak-domain/lib/types/Environment';
 
 /**
  * fingerprintJs当中的一些敏感项
@@ -12,7 +12,7 @@ export async function getEnv() {
     const [result/* , localStorageEnabled */] = await Promise.all([fp.get()/* , navigator.storage.persisted() */]);
 
     const { visitorId, components } = result;
-    return Object.assign(
+    const fullEnv = Object.assign(
         pick(components, [
             'platform',
             'timezone',
@@ -24,4 +24,14 @@ export async function getEnv() {
         // localStorageEnabled,
         language: navigator.language,
     }) as unknown as WebEnv;
+    
+    const briefEnv: BriefEnv = {
+        system: `${fullEnv.platform.value}`,
+        explorer: `${fullEnv.vendor.value}/${fullEnv.vendorFlavors.value[0]}`,
+    };
+
+    return {
+        fullEnv,
+        briefEnv,
+    };
 }

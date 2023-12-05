@@ -24,15 +24,12 @@ import { MessageProps } from './types/Message';
 import { NotificationProps } from './types/Notification';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
-import { cloneDeep } from 'oak-domain/lib/utils/lodash';
+import { cloneDeep, pull } from 'oak-domain/lib/utils/lodash';
 
 
 const OakProperties = {
     oakId: '',
     oakPath: '',
-    oakFilters: [],
-    oakSorters: [],
-    oakProjection: {},
     oakParentEntity: '',
     oakFrom: '',
     oakActions: '',
@@ -43,10 +40,6 @@ const OakProperties = {
 const OakPropertyTypes = {
     oakId: String,
     oakPath: String,
-    // 这几个不能写成Array或Object，小程序会初始化成空对象和空数组
-    oakFilters: null,
-    oakSorters: null,
-    oakProjection: null,
     oakParentEntity: String,
     oakFrom: String,
     oakActions: String,
@@ -74,21 +67,23 @@ const oakBehavior = Behavior<
             loadMissedLocales: (key: string) => void;
         },
     {
-        unmounted: false,
+        unmounted: false;
         prevState: Record<string, any>;
         state: Record<string, any>;
         props: {
             oakId?: string;
             oakPath?: string;
-            oakFilters?: string;
-            oakSorters?: string;
-            oakProjection?: string;
             oakParentEntity?: string;
             oakFrom?: string;
             oakActions?: string;
             oakAutoUnmount?: boolean;
             oakDisablePulldownRefresh?: boolean;
         } & Record<string, any>;
+        featuresSubscribed: Array<{
+            name: string;
+            callback: () => void;
+            unsubHandler?: () => void;
+        }>;
         features: BasicFeatures<
             EDD,
             Cxt,
@@ -96,7 +91,6 @@ const oakBehavior = Behavior<
             ADD & CommonAspectDict<EDD, Cxt>
         > &
             FDD;
-        subscribed: Array<() => void>;
         oakOption: OakComponentOption<
             boolean,
             EDD,
@@ -113,31 +107,43 @@ const oakBehavior = Behavior<
     }
 >({
     methods: {
-        setDisablePulldownRefresh(able) {
-            this.setState({
-                oakDisablePulldownRefresh: able,
-            });
-        },
         t(key: string, params?: object) {
             return this.features.locales.t(key, params);
         },
 
-        resolveInput(input: WechatMiniprogram.CustomEvent, keys) {
-            const { currentTarget, detail } = input;
-            const { dataset } = currentTarget;
-            const { value } = detail;
-            const result = {
-                dataset,
-                value,
-            };
-            if (keys) {
-                keys.forEach((k) =>
-                    Object.assign(result, {
-                        [k]: detail[k],
-                    })
-                );
-            }
-            return result;
+        addFeatureSub(name: string, callback: (args?: any) => void) {
+            const unsubHandler = this.features[name]!.subscribe(callback);
+            this.featuresSubscribed.push({
+                name,
+                callback,
+                unsubHandler,
+            });
+        },
+
+        removeFeatureSub(name: string, callback: (args?: any) => void) {
+            const f = this.featuresSubscribed.find(
+                (ele) => ele.callback === callback && ele.name === name
+            )!;
+            pull(this.featuresSubscribed, f);
+            f.unsubHandler && f.unsubHandler();
+        },
+
+        unsubscribeAll() {
+            this.featuresSubscribed.forEach((ele) => {
+                assert(ele.unsubHandler);
+                ele.unsubHandler();
+                ele.unsubHandler = undefined;
+            });
+        },
+
+        subscribeAll() {
+            this.featuresSubscribed.forEach((ele) => {
+                if (!ele.unsubHandler) {
+                    ele.unsubHandler = this.features[ele.name].subscribe(
+                        ele.callback
+                    );
+                }
+            });
         },
 
         iAmThePage() {
@@ -173,7 +179,10 @@ const oakBehavior = Behavior<
             ) => {
                 if (data.hasOwnProperty(property)) {
                     let value = data[property];
-                    if (typeof data[property] === 'string' && type !== 'string') {
+                    if (
+                        typeof data[property] === 'string' &&
+                        type !== 'string'
+                    ) {
                         switch (type) {
                             case 'boolean': {
                                 value = new Boolean(data[property]);
@@ -183,7 +192,7 @@ const oakBehavior = Behavior<
                                 value = new Number(data[property]);
                                 break;
                             }
-                            case 'object':{
+                            case 'object': {
                                 value = JSON.parse(data[property]);
                                 break;
                             }
@@ -204,7 +213,11 @@ const oakBehavior = Behavior<
             if (properties) {
                 for (const key in properties) {
                     if (query[key]) {
-                        assignProps(query, key, typeof properties[key] as 'string');
+                        assignProps(
+                            query,
+                            key,
+                            typeof properties[key] as 'string'
+                        );
                     }
                 }
             }
@@ -213,7 +226,9 @@ const oakBehavior = Behavior<
                     assignProps(
                         query,
                         key,
-                        typeof OakProperties[key as keyof typeof OakProperties] as 'string'
+                        typeof OakProperties[
+                            key as keyof typeof OakProperties
+                        ] as 'string'
                     );
                 }
             }
@@ -258,15 +273,18 @@ const oakBehavior = Behavior<
         },
 
         save(key: string, item: any) {
-            this.features.localStorage.save(key, item);
+            return this.features.localStorage.save(key, item);
         },
 
         load(key: string) {
             return this.features.localStorage.load(key);
         },
 
-        clear() {
-            this.features.localStorage.clear();
+        clear(key?: string) {
+            if (key) {
+                return this.features.localStorage.remove(key);
+            }
+            return this.features.localStorage.clear();
         },
 
         setNotification(data: NotificationProps) {
@@ -309,7 +327,9 @@ const oakBehavior = Behavior<
         },
 
         isDirty(path) {
-            return this.features.runningTree.isDirty(path || this.state.oakFullpath);
+            return this.features.runningTree.isDirty(
+                path || this.state.oakFullpath
+            );
         },
 
         execute(action, messageProps, path) {
@@ -325,20 +345,20 @@ const oakBehavior = Behavior<
 
         checkOperation(entity, action, data, filter, checkerTypes) {
             if (checkerTypes?.includes('relation')) {
-                return this.features.relationAuth.checkRelation(
-                    entity,
-                    {
+                return (
+                    this.features.relationAuth.checkRelation(entity, {
                         action,
                         data,
                         filter,
-                    } as Omit<EDD[keyof EDD]['Operation'], 'id'>
-                ) && this.features.cache.checkOperation(
-                    entity,
-                    action,
-                    data,
-                    filter,
-                    checkerTypes
-                )
+                    } as Omit<EDD[keyof EDD]['Operation'], 'id'>) &&
+                    this.features.cache.checkOperation(
+                        entity,
+                        action,
+                        data,
+                        filter,
+                        checkerTypes
+                    )
+                );
             }
             return this.features.cache.checkOperation(
                 entity,
@@ -363,7 +383,7 @@ const oakBehavior = Behavior<
             return this.features.runningTree.getOperations(path2);
         },
 
-        refresh() {
+        async refresh() {
             return refresh.call(this as any);
         },
 
@@ -461,7 +481,11 @@ const oakBehavior = Behavior<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            this.features.runningTree.setNamedSorters(path2, namedSorters, refresh);
+            this.features.runningTree.setNamedSorters(
+                path2,
+                namedSorters,
+                refresh
+            );
         },
 
         getSorters(path) {
@@ -494,7 +518,13 @@ const oakBehavior = Behavior<
                 );
                 if (sorter?.sorter) {
                     if (typeof sorter.sorter === 'function') {
-                        return sorter.sorter();
+                        const sortItem = sorter.sorter();
+                        // 要支持自定义sorter函数返回完整的sorter，但这种sorter应当确保是无名的不被查找
+                        assert(
+                            !(sortItem instanceof Array),
+                            '不应该有非item的sorter被查找'
+                        );
+                        return sortItem;
                     }
                     return sorter.sorter;
                 }
@@ -564,10 +594,7 @@ const oakBehavior = Behavior<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.addItem(
-                path2,
-                data
-            );
+            return this.features.runningTree.addItem(path2, data);
         },
         updateItem(data, id, action, path) {
             const path2 = path
@@ -584,10 +611,7 @@ const oakBehavior = Behavior<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.removeItem(
-                path2,
-                id
-            );
+            return this.features.runningTree.removeItem(path2, id);
         },
         recoverItem(id, path) {
             const path2 = path
@@ -612,21 +636,14 @@ const oakBehavior = Behavior<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.update(
-                path2,
-                data,
-                action
-            );
+            return this.features.runningTree.update(path2, data, action);
         },
 
         create(data, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.create(
-                path2,
-                data
-            );
+            return this.features.runningTree.create(path2, data);
         },
 
         remove(path) {
@@ -660,12 +677,15 @@ const oakBehavior = Behavior<
 
         unSubData(ids) {
             return this.features.subscriber.unsub(ids);
-        }
+        },
     },
     observers: {
         oakPath(data) {
             if (data && data !== this.state.oakFullpath) {
-                const pathState = onPathSet.call(this as any, this.oakOption as any);
+                const pathState = onPathSet.call(
+                    this as any,
+                    this.oakOption as any
+                );
                 if (this.unmounted) {
                     return;
                 }
@@ -679,7 +699,15 @@ const oakBehavior = Behavior<
                             this.oakOption.lifetimes?.ready.call(this);
 
                         const { oakFullpath } = this.state;
-                        if (oakFullpath) {
+                        if (
+                            oakFullpath &&
+                            !this.features.runningTree.checkIsModiNode(
+                                oakFullpath
+                            ) &&
+                            !this.features.runningTree.isListDescandent(
+                                oakFullpath
+                            )
+                        ) {
                             this.refresh();
                         } else {
                             this.reRender();
@@ -698,33 +726,6 @@ const oakBehavior = Behavior<
                 }
             }
         },
-        /* oakFilters(data) {
-            if (data !== this.props.oakFilters) {
-                // 如果oakFilters被置空或重置，会完全重置当前结点上所有的nameFilter并重取数据。这个逻辑可能有问题，对oakFilters要慎用
-                if (!data) {
-                    this.setNamedFilters([], true);
-                }
-                else {
-                    const namedFilters = JSON.parse(data);
-                    this.setNamedFilters(namedFilters, true);
-                }
-            }
-        },
-        oakSorters(data) {
-            if (data !== this.props.oakSorters) {
-                // 如果oakSorters被置空或重置，会完全重置当前结点上所有的nameSorter并重取数据。这个逻辑可能有问题，对oakSorter要慎用
-                if (!data) {
-                    this.setNamedSorters([], true);
-                }
-                else {
-                    const namedSorters = JSON.parse(data);
-                    this.setNamedSorters(namedSorters, true);
-                }
-            }
-        },
-        oakProjection(data) {
-            assert(data === this.props.oakProjection, 'oakProjection暂不支持变化');
-        } */
     },
 });
 
@@ -885,12 +886,14 @@ export function createComponent<
             umounted: Boolean;
             prevState: Record<string, any>;
             state: Record<string, any>;
+            featuresSubscribed: Array<{
+                name: string;
+                callback: () => void;
+                unsubHandler?: () => void;        
+            }>;
             props: {
                 oakId?: string;
                 oakPath?: string;
-                oakFilters?: string;
-                oakSorters?: string;
-                oakProjection?: string;
                 oakParentEntity?: string;
                 oakFrom?: string;
                 oakActions?: string;
@@ -904,7 +907,6 @@ export function createComponent<
                 AD & CommonAspectDict<ED, Cxt>
             > &
                 FD;
-            subscribed: Array<() => void>;
             oakOption: OakComponentOption<
                 IsList,
                 ED,
@@ -919,7 +921,7 @@ export function createComponent<
                 TMethod
             >;
         }
-    >({
+    >({        
         externalClasses,
         behaviors: [oakBehavior],
         data:
@@ -972,11 +974,17 @@ export function createComponent<
                 const { show } = this.oakOption.lifetimes || {};
                 this.reRender();
                 show && show.call(this);
+                this.subscribeAll();
             },
             hide() {
                 const { hide } = this.oakOption.lifetimes || {};
                 hide && hide.call(this);
+                this.unsubscribeAll();
             },
+            resize(size: WechatMiniprogram.Page.IResizeOption) {
+                const { resize } = this.oakOption.lifetimes || {};
+                resize && resize.call(this, size);
+            }
         },
         lifetimes: {
             created() {
@@ -994,7 +1002,7 @@ export function createComponent<
                 };
                 this.oakOption = option;
                 this.features = features;
-                this.subscribed = [];
+                this.featuresSubscribed = [];
                 created && created.call(this);
             },
             attached() {
@@ -1026,47 +1034,37 @@ export function createComponent<
                     }
                 }
                 this.umounted = false;
-                this.subscribed.push(
-                    features.locales.subscribe(() => this.reRender())
-                );
+                this.addFeatureSub('locales', () => this.reRender());
 
                 if (option.entity) {
-                    this.subscribed.push(
-                        features.cache.subscribe(() => this.reRender())
-                    );
+                    this.addFeatureSub('cache', () => this.reRender());
                 }
                 if (option.features) {
                     option.features.forEach((ele) => {
                         if (typeof ele === 'string') {
-                            this.subscribed.push(
-                                features[ele].subscribe(() => this.reRender())
-                            );
+                            this.addFeatureSub(ele, () => this.reRender());
                         } else {
                             assert(typeof ele === 'object');
                             const { feature, behavior } = ele;
-                            this.subscribed.push(
-                                features[feature].subscribe(() => {
-                                    switch (behavior) {
-                                        case 'reRender': {
-                                            this.reRender();
-                                            return;
-                                        }
-                                        default: {
-                                            assert(behavior === 'refresh');
-                                            this.refresh();
-                                            return;
-                                        }
+                            this.addFeatureSub(feature, () => {
+                                switch (behavior) {
+                                    case 'reRender': {
+                                        this.reRender();
+                                        return;
                                     }
-                                })
-                            );
+                                    default: {
+                                        assert(behavior === 'refresh');
+                                        this.refresh();
+                                        return;
+                                    }
+                                }
+                            });
                         }
                     });
                 }
 
-                if (
-                    this.props.oakPath ||
-                    (this.iAmThePage() && this.oakOption.path)
-                ) {
+                if (this.props.oakPath ||
+                    (this.iAmThePage() && this.oakOption.path)) {
                     const pathState = onPathSet.call(
                         this as any,
                         this.oakOption as any
@@ -1076,7 +1074,7 @@ export function createComponent<
                     }
                     this.setState(pathState as any, () => {
                         const { oakFullpath } = this.state;
-                        if (oakFullpath) {
+                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && !features.runningTree.isListDescandent(oakFullpath)) {
                             this.refresh();
                         } else {
                             this.reRender();
@@ -1089,7 +1087,7 @@ export function createComponent<
                 attached && attached.call(this);
             },
             detached() {
-                this.subscribed.forEach((ele) => ele());
+                this.unsubscribeAll();
                 this.state.oakFullpath &&
                     (this.iAmThePage() || this.props.oakAutoUnmount) &&
                     destroyNode.call(this as any);

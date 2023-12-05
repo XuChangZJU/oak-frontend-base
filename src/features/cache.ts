@@ -49,6 +49,7 @@ export class Cache<
         [T in keyof ED]?: Record<string, number>;
     } = {};
     private context?: FrontCxt;
+    private initPromise: Promise<void>;
 
     constructor(
         storageSchema: StorageSchema<ED>,
@@ -75,48 +76,59 @@ export class Cache<
         );
 
         this.getFullDataFn = getFullData;
-        this.initSavedLogic();
+        
+        // 现在这个init变成了异步行为，不知道有没有影响。by Xc 20231126
+        this.initPromise = new Promise(
+            (resolve) => this.initSavedLogic(resolve)
+        );
     }
 
     /**
      * 处理cache中需要缓存的数据
      */
-    private initSavedLogic() {
+    private async initSavedLogic(complete: () => void) {
         const data: {
             [T in keyof ED]?: ED[T]['OpSchema'][];
         } = {};
-        this.savedEntities.forEach(
-            (entity) => {
-                // 加载缓存的数据项
-                const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity as string}`;
-                const cached = this.localStorage.load(key);
-                if (cached) {
-                    data[entity] = cached;
-                }
+        await Promise.all(
+            this.savedEntities.map(
+                async (entity) => {
+                    // 加载缓存的数据项
+                    const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity as string}`;
+                    const cached = await this.localStorage.load(key);
+                    if (cached) {
+                        data[entity] = cached;
+                    }
 
-                // 加载缓存的时间戳项
-                const key2 = `${LOCAL_STORAGE_KEYS.cacheRefreshRecord}:${entity as string}`;
-                const cachedTs = this.localStorage.load(key2);
-                if (cachedTs) {
-                    this.refreshRecords[entity] = cachedTs;
+                    // 加载缓存的时间戳项
+                    const key2 = `${LOCAL_STORAGE_KEYS.cacheRefreshRecord}:${entity as string}`;
+                    const cachedTs = await this.localStorage.load(key2);
+                    if (cachedTs) {
+                        this.refreshRecords[entity] = cachedTs;
+                    }
+                }
+            )
+        );
+        this.cacheStore.resetInitialData(data);
+        this.cacheStore.onCommit(
+            async (result) => {
+                const entities = Object.keys(result);
+                const referenced = intersection(entities, this.savedEntities);
+
+                if (referenced.length > 0) {
+                    const saved = this.cacheStore.getCurrentData(referenced);
+                    for (const entity in saved) {
+                        const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity as string}`;
+                        await this.localStorage.save(key, saved[entity]);
+                    }
                 }
             }
         );
-        this.cacheStore.resetInitialData(data);
-        this.cacheStore.onCommit((result) => {
-            const entities = Object.keys(result);
-            const referenced = intersection(entities, this.savedEntities);
+        complete();
+    }
 
-            if (referenced.length > 0) {
-                const saved = this.cacheStore.getCurrentData(referenced);
-                Object.keys(saved).forEach(
-                    (entity) => {
-                        const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity as string}`;
-                        this.localStorage.save(key, saved[entity]);
-                    }
-                )
-            }
-        });
+    async onInitialized() {
+        await this.initPromise;
     }
 
     getSchema() {
@@ -135,12 +147,12 @@ export class Cache<
         dontPublish?: true,
     ) {
         try {
-            this.refreshing ++;
+            this.refreshing++;
             const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
             if (opRecords) {
                 this.syncInner(opRecords);
             }
-            this.refreshing --;
+            this.refreshing--;
             callback && callback(result, opRecords);
             if (opRecords && opRecords.length > 0 && !dontPublish) {
                 this.publish();
@@ -152,7 +164,7 @@ export class Cache<
         }
         catch (e) {
             // 如果是数据不一致错误，这里可以让用户知道
-            this.refreshing --;
+            this.refreshing--;
             if (e instanceof OakException) {
                 const { opRecord } = e;
                 if (opRecord) {
@@ -194,11 +206,21 @@ export class Cache<
         return () => undefined as void;
     }
 
+    /**
+     * 向服务器刷新数据
+     * @param entity 
+     * @param selection 
+     * @param option 
+     * @param callback 
+     * @param refreshOption 
+     * @returns 
+     * @description 支持增量更新，可以使用useLocalCache来将一些metadata级的数据本地缓存，减少更新次数。
+     * 使用增量更新这里要注意，传入的keys如果有一个key是首次更新，会导致所有的keys全部更新。使用模块自己保证这种情况不要出现
+     */
     async refresh<T extends keyof ED, OP extends CacheSelectOption>(
         entity: T,
         selection: ED[T]['Selection'],
         option?: OP,
-        getCount?: true,
         callback?: (result: Awaited<ReturnType<AD['select']>>) => void,
         refreshOption?: RefreshOption,
     ) {
@@ -230,7 +252,7 @@ export class Cache<
             );
 
             const gap2 = gap || this.keepFreshPeriod;
-            
+
             const now = Date.now();
             if (oldest < Number.MAX_SAFE_INTEGER && oldest > now - gap2) {
                 // 说明可以用localCache的数据，不用去请求
@@ -247,7 +269,7 @@ export class Cache<
                     data,
                 };
             }
-            else  {
+            else {
                 if (oldest > 0) {
                     // 说明key曾经都取过了，只取updateAt在oldest之后的数据
                     selection.filter = combineFilters(entity, this.getSchema(), [selection.filter, {
@@ -264,16 +286,15 @@ export class Cache<
         }
 
         try {
-            const { result: { ids, count, aggr } } = await this.exec('select', {
+            const { result: { data: sr, total } } = await this.exec('select', {
                 entity,
                 selection,
                 option,
-                getCount,
             }, callback, dontPublish);
 
             let filter2: ED[T]['Selection']['filter'] = {
                 id: {
-                    $in: ids,
+                    $in: Object.keys(sr),
                 }
             };
 
@@ -284,19 +305,16 @@ export class Cache<
             const selection2 = Object.assign({}, selection, {
                 filter: filter2,
             });
-            const data = this.get(entity, selection2);
-            if (aggr) {
-                merge(data, aggr);
-            }
+            const data = this.get(entity, selection2, undefined, sr);
             if (useLocalCache) {
                 this.saveRefreshRecord(entity);
             }
             return {
-                data: data as Partial<ED[T]['Schema']>[],
-                count,
+                data,
+                total,
             };
         }
-        catch(err) {
+        catch (err) {
             undoFns && undoFns.forEach(
                 (fn) => fn()
             );
@@ -438,7 +456,7 @@ export class Cache<
         return;
     }
 
-    fetchRows(missedRows: Array<{ entity: keyof ED, selection: ED[keyof ED]['Selection']}>) {
+    fetchRows(missedRows: Array<{ entity: keyof ED, selection: ED[keyof ED]['Selection'] }>) {
         if (!this.refreshing) {
             if (process.env.NODE_ENV === 'development') {
                 console.warn('缓存被动去获取数据，请查看页面行为并加以优化', missedRows);
@@ -454,40 +472,6 @@ export class Cache<
                 }
             })
         }
-    }
-
-    /**
-     * getById可以处理当本行不在缓存中的自动取
-     * @attention 这里如果访问了一个id不存在的行（被删除？），可能会陷入无限循环。如果遇到了再处理
-     * @param entity 
-     * @param data 
-     * @param id 
-     * @param allowMiss 
-     */
-    getById<T extends keyof ED>(
-        entity: T,
-        data: ED[T]['Selection']['data'],
-        id: string,
-        allowMiss?: boolean
-    ): Partial<ED[T]['Schema']> | undefined {
-        const result = this.getInner(entity, {
-            data, 
-            filter: {
-                id,
-            },
-        }, allowMiss);
-        if (result.length === 0 && !allowMiss) {
-            this.fetchRows([{
-                entity,
-                selection: {
-                    data, 
-                    filter: {
-                        id,
-                    },
-                }
-            }]);
-        }
-        return result[0];
     }
 
     private getInner<T extends keyof ED>(
@@ -529,12 +513,70 @@ export class Cache<
         }
     }
 
+    /**
+     * 把select的结果merge到sr中，因为select有可能存在aggr数据，在这里必须要使用合并后的结果
+     * sr的数据结构不好规范化描述，参见common-aspect中的select接口
+     * @param entity 
+     * @param rows 
+     * @param sr 
+     */
+    mergeSelectResult<T extends keyof ED>(entity: T, rows: Partial<ED[T]['Schema']>[], sr: Record<string, any>) {
+        const mergeSingleRow = (e: keyof ED, r: Partial<ED[keyof ED]['Schema']>, sr2: Record<string, any>) => {
+            for (const k in sr2) {
+                if (k.endsWith('$$aggr')) {
+                    Object.assign(r, {
+                        [k]: sr2[k],
+                    });
+                }
+                else if (r[k]) {
+                    const rel = this.judgeRelation(e, k);
+                    if (rel === 2) {
+                        mergeSingleRow(k, r[k]!, sr2[k]);
+                    }
+                    else if (typeof rel === 'string') {
+                        mergeSingleRow(rel, r[k]!, sr2[k]);
+                    }
+                    else {
+                        assert(rel instanceof Array);
+                        assert((r[k] as any) instanceof Array)
+                        const { data } = sr2[k];
+                        this.mergeSelectResult(rel[0], r[k]!, data);
+                    }
+                }
+            }
+        };
+
+        rows.forEach(
+            (row) => {
+                const { id } = row;
+                if (sr[id!]) {
+                    mergeSingleRow(entity, row, sr[id!]);
+                }
+            }
+        );
+    }
+
     get<T extends keyof ED>(
         entity: T,
         selection: ED[T]['Selection'],
-        allowMiss?: boolean
+        allowMiss?: boolean,
+        sr?: Record<string, any>
     ) {
-        return this.getInner(entity, selection, allowMiss);
+        const rows = this.getInner(entity, selection, allowMiss);
+
+        if (sr) {
+            this.mergeSelectResult(entity, rows, sr);
+        }
+        return rows;
+    }
+
+    getById<T extends keyof ED>(entity: T, projection: ED[T]['Selection']['data'], id: string, allowMiss?: boolean) {
+        return this.getInner(entity, {
+            data: projection,
+            filter: {
+                id,
+            },
+        }, allowMiss);
     }
 
     judgeRelation(entity: keyof ED, attr: string) {

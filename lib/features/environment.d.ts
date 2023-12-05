@@ -1,9 +1,11 @@
 import { Feature } from "../types/Feature";
-import { WebEnv, WechatMpEnv } from 'oak-domain/lib/types/Environment';
+import { NativeEnv, WebEnv, WechatMpEnv, BriefEnv } from 'oak-domain/lib/types/Environment';
 export declare class Environment extends Feature {
-    env?: WebEnv | WechatMpEnv;
+    fullEnv?: WebEnv | WechatMpEnv | NativeEnv;
+    briefEnv?: BriefEnv;
     loading: boolean;
     constructor();
     private initialize;
-    getEnv(): Promise<WebEnv | WechatMpEnv>;
+    getEnv(): Promise<WebEnv | WechatMpEnv | NativeEnv>;
+    getBriefEnv(): BriefEnv | undefined;
 }

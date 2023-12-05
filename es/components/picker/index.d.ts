@@ -9,5 +9,15 @@ declare const _default: (props: import("../..").ReactComponentProps<import("oak-
     }]) => void;
     title: (row: RowWithActions<ED, keyof ED>) => string;
     titleLabel: string;
+    filter: {
+        [K: string]: any;
+    } | undefined;
+    sorter: {
+        $attr: {
+            [K: string]: any;
+        };
+        $direction?: "asc" | "desc" | undefined;
+    }[] | undefined;
+    projection: {};
 }>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;

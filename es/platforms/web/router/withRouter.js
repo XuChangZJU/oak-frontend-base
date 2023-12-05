@@ -1,50 +1,44 @@
-import { jsx as _jsx } from "react/jsx-runtime";
 import React from 'react';
 // @ts-ignore
 import { useLocation, useParams } from 'react-router-dom';
 import { useWidth } from './../responsive';
-import URL from 'url';
 import { assert } from 'oak-domain/lib/utils/assert';
 function getParams(location, properties) {
     const { search, state } = location;
-    const query = getQuery(search, properties);
-    return Object.assign({}, query, state);
+    const props = getProps(search, properties);
+    return Object.assign({}, props, state);
 }
-function getQuery(url, properties) {
-    let query = {};
-    if (!url) {
-        return query;
+function getProps(search, properties) {
+    if (!search) {
+        return;
     }
-    const parseUrl = URL.parse(url, true);
-    if (parseUrl.query) {
-        query = parseUrl.query;
-    }
-    const query2 = {};
-    for (const k in query) {
+    const searchParams = new URLSearchParams(search || '');
+    const props = {};
+    for (const k of searchParams.keys()) {
         if (properties && properties[k]) {
             switch (typeof properties[k]) {
                 case 'number': {
-                    Object.assign(query2, {
-                        [k]: Number(query[k]),
+                    Object.assign(props, {
+                        [k]: Number(searchParams.get(k)),
                     });
                     break;
                 }
                 case 'boolean': {
-                    Object.assign(query2, {
-                        [k]: Boolean(query[k]),
+                    Object.assign(props, {
+                        [k]: Boolean(searchParams.get(k)),
                     });
                     break;
                 }
                 case 'object': {
-                    Object.assign(query2, {
-                        [k]: JSON.parse(query[k]),
+                    Object.assign(props, {
+                        [k]: JSON.parse(searchParams.get(k)),
                     });
                     break;
                 }
                 default: {
                     assert(typeof properties[k] === 'string', '传参只能是number/boolean/object/string四种类型');
-                    Object.assign(query2, {
-                        [k]: query[k],
+                    Object.assign(props, {
+                        [k]: searchParams.get(k),
                     });
                 }
             }
@@ -52,29 +46,20 @@ function getQuery(url, properties) {
         else {
             switch (k) {
                 case 'oakDisablePulldownRefresh': {
-                    Object.assign(query2, {
-                        [k]: Boolean(query[k]),
+                    Object.assign(props, {
+                        [k]: Boolean(searchParams.get(k)),
                     });
-                    break;
-                }
-                case 'oakProjection':
-                case 'oakSorters':
-                case 'oakFilters': {
-                    Object.assign(query2, {
-                        [k]: JSON.parse(query[k]),
-                    });
-                    break;
                     break;
                 }
                 default: {
-                    Object.assign(query2, {
-                        [k]: query[k],
+                    Object.assign(props, {
+                        [k]: searchParams.get(k),
                     });
                 }
             }
         }
     }
-    return query2;
+    return props;
 }
 const withRouter = (Component, { path, properties }) => {
     const ComponentWithRouterProp = (props) => {
@@ -92,8 +77,8 @@ const withRouter = (Component, { path, properties }) => {
             params = Object.assign(params, getParams(location, properties), routerParams);
             routeMatch = true;
         }
-        return (_jsx(Component, { ...rest, ...params, width: width, location: location, ref: forwardedRef, routeMatch: routeMatch }));
+        return (<Component {...rest} {...params} width={width} ref={forwardedRef} routeMatch={routeMatch}/>);
     };
-    return React.forwardRef((props, ref) => _jsx(ComponentWithRouterProp, { ...props, forwardedRef: ref }));
+    return React.forwardRef((props, ref) => <ComponentWithRouterProp {...props} forwardedRef={ref}/>);
 };
 export default withRouter;

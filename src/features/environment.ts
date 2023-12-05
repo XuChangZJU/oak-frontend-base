@@ -1,11 +1,12 @@
 import { Feature } from "../types/Feature";
-import { WebEnv, WechatMpEnv } from 'oak-domain/lib/types/Environment';
+import { NativeEnv, WebEnv, WechatMpEnv, BriefEnv } from 'oak-domain/lib/types/Environment';
 import { getEnv } from '../utils/env/env';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { OakEnvInitializedFailure } from "../types/Exception";
 
 export class Environment extends Feature {
-    env?: WebEnv | WechatMpEnv;
+    fullEnv?: WebEnv | WechatMpEnv | NativeEnv;
+    briefEnv?: BriefEnv;
     loading = false;
 
     constructor() {
@@ -17,9 +18,10 @@ export class Environment extends Feature {
     private async initialize() {
         this.loading = true;
         try {
-            const env = await getEnv();
+            const { fullEnv, briefEnv } = await getEnv();
             this.loading = false;
-            this.env = env;
+            this.fullEnv = fullEnv;
+            this.briefEnv = briefEnv;
             this.publish();
         }
         catch (err) {
@@ -27,9 +29,9 @@ export class Environment extends Feature {
         }
     }
 
-    async getEnv(): Promise<WebEnv | WechatMpEnv> {
-        if (this.env) {
-            return this.env;
+    async getEnv(): Promise<WebEnv | WechatMpEnv | NativeEnv> {
+        if (this.fullEnv) {
+            return this.fullEnv;
         }
         else {
             assert(this.loading);
@@ -38,12 +40,16 @@ export class Environment extends Feature {
                     const fn = this.subscribe(
                         () => {
                             fn();
-                            assert(this.env);
-                            resolve(this.env);
+                            assert(this.fullEnv);
+                            resolve(this.fullEnv);
                         }
                     )
                 }
             );
         }
+    }
+
+    getBriefEnv() {
+        return this.briefEnv;
     }
 };

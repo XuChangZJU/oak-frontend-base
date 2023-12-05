@@ -1,5 +1,4 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { SettingOutlined, VerticalAlignBottomOutlined, VerticalAlignTopOutlined, } from '@ant-design/icons';
 import { Popover, Space, Tooltip, Tree, Button } from 'antd';
 import Style from './index.module.less';
@@ -9,15 +8,29 @@ import { useFeatures } from '../../../platforms/web';
 function ListItem(props) {
     const features = useFeatures();
     const { disabled, title, onSelect, showToBottom, showToTop, onMoveTop, onMoveBottom, } = props;
-    return (_jsxs("div", { className: Style.listItemView, onClick: onSelect, children: [_jsx("div", { className: Style.listItemTitle, children: title }), !disabled ? (_jsxs("div", { className: Style.listIconView, children: [_jsx(Tooltip, { title: features.locales.t('leftPin'), children: showToTop && (_jsx("div", { className: Style.listIcon, onClick: (e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                onMoveTop();
-                            }, children: _jsx(VerticalAlignTopOutlined, {}) })) }), _jsx(Tooltip, { title: features.locales.t('rightPin'), children: showToBottom && (_jsx("div", { className: Style.listIcon, onClick: (e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                onMoveBottom();
-                            }, children: _jsx(VerticalAlignBottomOutlined, {}) })) })] })) : null] }));
+    return (<div className={Style.listItemView} onClick={onSelect}>
+            <div className={Style.listItemTitle}>{title}</div>
+            {!disabled ? (<div className={Style.listIconView}>
+                    <Tooltip title={features.locales.t('leftPin')}>
+                        {showToTop && (<div className={Style.listIcon} onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    onMoveTop();
+                }}>
+                                <VerticalAlignTopOutlined />
+                            </div>)}
+                    </Tooltip>
+                    <Tooltip title={features.locales.t('rightPin')}>
+                        {showToBottom && (<div className={Style.listIcon} onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    onMoveBottom();
+                }}>
+                                <VerticalAlignBottomOutlined />
+                            </div>)}
+                    </Tooltip>
+                </div>) : null}
+        </div>);
 }
 function ColumnSetting() {
     const features = useFeatures();
@@ -71,7 +84,7 @@ function ColumnSetting() {
             setTableAttributes([...tableAttributes]);
         }
     };
-    const listDom = (_jsx(Tree, { itemHeight: 24, draggable: true, checkable: true, onDrop: (info) => {
+    const listDom = (<Tree itemHeight={24} draggable={true} checkable={true} onDrop={(info) => {
             const dropKey = info.node.key;
             const dragKey = info.dragNode.key;
             const { dropPosition, dropToGap } = info;
@@ -79,9 +92,20 @@ function ColumnSetting() {
                 ? dropPosition + 1
                 : dropPosition;
             move(dragKey, dropKey, position);
-        }, blockNode: true, onCheck: (checkedKeys, e) => {
+        }} blockNode onCheck={(checkedKeys, e) => {
             onCheck(e.node);
-        }, titleRender: (node) => (_jsx(ListItem, { disabled: node.disabled, title: node.title, nodeKey: node.key, showToTop: node.keyIndex !== 0, showToBottom: node.keyIndex !== treeData.length - 1, onSelect: () => onCheck(node), onMoveTop: () => move(node.key, treeData[0].key, 0), onMoveBottom: () => move(node.key, treeData[treeData.length - 1].key, treeData.length + 1) })), checkedKeys: checkedKeys, showLine: false, treeData: treeData }));
-    return (_jsx(Popover, { arrow: false, title: _jsxs("div", { className: Style.titleView, children: [_jsx("strong", { children: features.locales.t('columnSetting') }), _jsx(Button, { type: "link", onClick: onReset, children: features.locales.t('common::reset') })] }), trigger: "click", placement: "bottomRight", content: _jsx(Space, { children: listDom }), children: _jsx(Tooltip, { title: features.locales.t('columnSetting'), children: _jsx("div", { className: Style.iconBox, children: _jsx(SettingOutlined, {}) }) }) }));
+        }} titleRender={(node) => (<ListItem disabled={node.disabled} title={node.title} nodeKey={node.key} showToTop={node.keyIndex !== 0} showToBottom={node.keyIndex !== treeData.length - 1} onSelect={() => onCheck(node)} onMoveTop={() => move(node.key, treeData[0].key, 0)} onMoveBottom={() => move(node.key, treeData[treeData.length - 1].key, treeData.length + 1)}/>)} checkedKeys={checkedKeys} showLine={false} treeData={treeData}/>);
+    return (<Popover arrow={false} title={<div className={Style.titleView}>
+                    <strong>{features.locales.t('columnSetting')}</strong>
+                    <Button type="link" onClick={onReset}>
+                        {features.locales.t('common::reset')}
+                    </Button>
+                </div>} trigger="click" placement="bottomRight" content={<Space>{listDom}</Space>}>
+            <Tooltip title={features.locales.t('columnSetting')}>
+                <div className={Style.iconBox}>
+                    <SettingOutlined />
+                </div>
+            </Tooltip>
+        </Popover>);
 }
 export default ColumnSetting;

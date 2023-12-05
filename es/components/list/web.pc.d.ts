@@ -1,3 +1,4 @@
+import React from 'react';
 import { TableProps } from 'antd';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../types/Page';
@@ -21,4 +22,4 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
     i18n: any;
     hideHeader?: boolean;
     judgeAttributes: OakAbsAttrJudgeDef[];
-}, {}>): import("react/jsx-runtime").JSX.Element;
+}, {}>): React.JSX.Element;

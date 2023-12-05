@@ -14,7 +14,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     protected entity: T;
     protected schema: StorageSchema<ED>;
     protected projection?: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
-    protected parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
+    protected parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>;
     protected dirty?: boolean;
     protected cache: Cache<ED, Cxt, FrontCxt, AD>;
     protected loading: number;
@@ -24,12 +24,11 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     private actions?;
     private cascadeActions?;
     private relationAuth;
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     });
     getEntity(): T;
     getSchema(): StorageSchema<ED>;
-    protected abstract getChildPath(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): string;
     abstract checkIfClean(): void;
     /**
      * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
@@ -45,21 +44,20 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     isLoadingMore(): boolean;
     isExecuting(): boolean;
     setExecuting(executing: boolean): void;
-    getParent(): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD> | undefined;
+    getParent(): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD> | undefined;
     protected getProjection(): ED[T]['Selection']['data'] | undefined;
     setProjection(projection: ED[T]['Selection']['data']): void;
     protected judgeRelation(attr: string): string | 0 | 1 | string[] | 2;
 }
 declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
-    private children;
     private updates;
+    private children;
     private filters;
     private sorters;
+    private getTotal?;
     private pagination;
-    private ids;
-    private aggr?;
+    private sr;
     private syncHandler;
-    getChildPath(child: SingleNode<ED, T, Cxt, FrontCxt, AD>): string;
     setFiltersAndSortedApplied(): void;
     setLoading(loading: number): void;
     setUnloading(loading: number): void;
@@ -68,15 +66,14 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     checkIfClean(): void;
     onCacheSync(records: OpRecord<ED>[]): void;
     destroy(): void;
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], pagination?: Pagination, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, filters?: NamedFilterItem<ED, T>[], sorters?: NamedSorterItem<ED, T>[], getTotal?: number, pagination?: Pick<Pagination, 'currentPage' | 'pageSize' | 'randomRange'>, actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     });
     getPagination(): Pagination;
     setPagination(pagination: Pagination, dontRefresh?: boolean): void;
-    getChild(path: string): SingleNode<ED, T, Cxt, FrontCxt, AD> | undefined;
-    getChildren(): Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     addChild(path: string, node: SingleNode<ED, T, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
+    getChild(path: string): SingleNode<ED, T, Cxt, FrontCxt, AD>;
     getNamedFilters(): (NamedFilterItem<ED, T> & {
         applied?: boolean | undefined;
     })[];
@@ -111,7 +108,6 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
      */
     updateItem(data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action']): void;
     updateItems(data: Record<string, ED[T]['Update']['data']>, action?: ED[T]['Action']): void;
-    getParentFilter(childNode: SingleNode<ED, T, Cxt, FrontCxt, AD>): ED[T]['Selection']['filter'] | undefined;
     composeOperations(): Array<{
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
@@ -122,25 +118,29 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
         data: ED[T]["Selection"]["data"];
         filter: ED[T]["Selection"]["filter"] | undefined;
         sorter: ED[T]["Selection"]["sorter"];
+        total: number | undefined;
+        indexFrom: number;
+        count: number;
     };
-    refresh(pageNumber?: number, getCount?: true, append?: boolean): Promise<void>;
+    /**
+     * 存留查询结果
+     */
+    saveRefreshResult(sr: Awaited<ReturnType<AD['select']>>, append?: boolean, currentPage?: number): void;
+    refresh(pageNumber?: number, append?: boolean): Promise<void>;
     loadMore(): Promise<void>;
     setCurrentPage(currentPage: number, append?: boolean): void;
     clean(): void;
-    getChildOperation(child: SingleNode<ED, T, Cxt, FrontCxt, AD>): ED[T]["CreateSingle"] | ED[T]["Update"] | ED[T]["Remove"] | undefined;
     getIntrinsticFilters(): ED[T]["Selection"]["filter"] | undefined;
-    publishRecursively(): void;
 }
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?;
-    private aggr?;
+    private sr;
     private children;
     private filters?;
     private operation?;
-    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>, path?: string, id?: string, filters?: NamedFilterItem<ED, T>[], actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
+    constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD>, path?: string, id?: string, filters?: NamedFilterItem<ED, T>[], actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     });
-    protected getChildPath(child: Node<ED, keyof ED, Cxt, FrontCxt, AD>): string;
     setFiltersAndSortedApplied(): void;
     setLoading(loading: number): void;
     setUnloading(loading: number): void;
@@ -167,6 +167,8 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
         operation: ED[keyof ED]['Operation'];
     }> | undefined;
     getProjection(withDecendants?: boolean): ED[T]["Selection"]["data"] | undefined;
+    private passRsToChild;
+    saveRefreshResult(data: Record<string, any>): void;
     refresh(): Promise<void>;
     clean(): void;
     private getFilter;
@@ -177,8 +179,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
      * @param disableOperation
      * @returns
      */
-    getParentFilter<T2 extends keyof ED>(childNode: Node<ED, keyof ED, Cxt, FrontCxt, AD>, ignoreNewParent?: boolean): ED[T2]['Selection']['filter'] | undefined;
-    publishRecursively(): void;
+    getParentFilter<T2 extends keyof ED>(childNode: ListNode<ED, keyof ED, Cxt, FrontCxt, AD>, ignoreNewParent?: boolean): ED[T2]['Selection']['filter'] | undefined;
 }
 declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
     private dirty;
@@ -205,14 +206,14 @@ declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends As
     isLoading(): boolean;
     clean(): void;
     checkIfClean(): void;
-    publishRecursively(): void;
 }
 export type CreateNodeOptions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     path: string;
     entity?: T;
     isList?: boolean;
+    getTotal?: number;
     projection?: ED[T]['Selection']['data'] | (() => ED[T]['Selection']['data']);
-    pagination?: Pagination;
+    pagination?: Pick<Pagination, 'currentPage' | 'pageSize' | 'randomRange'>;
     filters?: NamedFilterItem<ED, T>[];
     sorters?: NamedSorterItem<ED, T>[];
     beforeExecute?: (operations: ED[T]['Operation'][]) => Promise<void>;
@@ -248,6 +249,7 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     isLoading(path: string): boolean | undefined;
     isLoadingMore(path: string): boolean | undefined;
     isExecuting(path: string): boolean;
+    isListDescandent(path: string): boolean;
     refresh(path: string): Promise<void>;
     loadMore(path: string): Promise<void>;
     getPagination(path: string): Pagination;
@@ -291,6 +293,5 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     }>;
     clean(path: string): void;
     getRoot(): Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
-    subscribeNode(callback: (path: string) => any, path: string): () => void;
 }
 export {};

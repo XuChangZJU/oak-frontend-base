@@ -1,3 +1,4 @@
+import React from 'react';
 import { ButtonProps } from 'antd';
 type buttonProps = {
     label: string;
@@ -9,5 +10,5 @@ type ToolBarProps = {
     buttonGroup?: buttonProps[];
     reload: () => void;
 };
-declare function ToolBar(props: ToolBarProps): import("react/jsx-runtime").JSX.Element;
+declare function ToolBar(props: ToolBarProps): React.JSX.Element;
 export default ToolBar;

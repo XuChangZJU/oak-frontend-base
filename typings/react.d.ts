@@ -1,12 +1,13 @@
 /// <reference types="node" />
 /// <reference types="react" />
 /// <reference types="react-dom" />
+/// <reference types="react-native" />
 
 declare namespace NodeJS {
 	interface ProcessEnv {
         readonly NODE_ENV: 'development' | 'production' | 'test' | 'staging';
         readonly PUBLIC_URL: string;
-        readonly OAK_PLATFORM: 'web' | 'wechatMp' | 'server';
+        readonly OAK_PLATFORM: 'web' | 'wechatMp' | 'server' | 'native';
     }
 }
 
@@ -77,6 +78,11 @@ declare module '*.module.less' {
 		readonly [key: string]: string;
 	};
 	export default classes;
+}
+
+// for react-native
+declare module '*.native.less' {
+	export default StyleProp<any>;
 }
 
 /**

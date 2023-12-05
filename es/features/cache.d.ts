@@ -29,11 +29,13 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     private getFullDataFn;
     private refreshRecords;
     private context?;
+    private initPromise;
     constructor(storageSchema: StorageSchema<ED>, aspectWrapper: AspectWrapper<ED, Cxt, AD>, frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt, checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>, getFullData: () => any, localStorage: LocalStorage, savedEntities?: (keyof ED)[], keepFreshPeriod?: number);
     /**
      * 处理cache中需要缓存的数据
      */
     private initSavedLogic;
+    onInitialized(): Promise<void>;
     getSchema(): StorageSchema<ED>;
     exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void, dontPublish?: true): Promise<{
         result: Awaited<ReturnType<AD[K]>>;
@@ -41,12 +43,23 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     }>;
     private saveRefreshRecord;
     private addRefreshRecord;
-    refresh<T extends keyof ED, OP extends CacheSelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, getCount?: true, callback?: (result: Awaited<ReturnType<AD['select']>>) => void, refreshOption?: RefreshOption): Promise<{
+    /**
+     * 向服务器刷新数据
+     * @param entity
+     * @param selection
+     * @param option
+     * @param callback
+     * @param refreshOption
+     * @returns
+     * @description 支持增量更新，可以使用useLocalCache来将一些metadata级的数据本地缓存，减少更新次数。
+     * 使用增量更新这里要注意，传入的keys如果有一个key是首次更新，会导致所有的keys全部更新。使用模块自己保证这种情况不要出现
+     */
+    refresh<T extends keyof ED, OP extends CacheSelectOption>(entity: T, selection: ED[T]['Selection'], option?: OP, callback?: (result: Awaited<ReturnType<AD['select']>>) => void, refreshOption?: RefreshOption): Promise<{
         data: Partial<ED[T]["Schema"]>[];
-        count?: undefined;
+        total?: undefined;
     } | {
         data: Partial<ED[T]["Schema"]>[];
-        count: number | undefined;
+        total: number | undefined;
     }>;
     aggregate<T extends keyof ED, OP extends SelectOption>(entity: T, aggregation: ED[T]['Aggregation'], option?: OP): Promise<ReturnType<AD["aggregate"]>>;
     operate<T extends keyof ED, OP extends OperateOption>(entity: T, operation: ED[T]['Operation'] | ED[T]['Operation'][], option?: OP, callback?: (result: Awaited<ReturnType<AD['operate']>>) => void): Promise<{
@@ -75,17 +88,17 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         entity: keyof ED;
         selection: ED[keyof ED]['Selection'];
     }>): void;
-    /**
-     * getById可以处理当本行不在缓存中的自动取
-     * @attention 这里如果访问了一个id不存在的行（被删除？），可能会陷入无限循环。如果遇到了再处理
-     * @param entity
-     * @param data
-     * @param id
-     * @param allowMiss
-     */
-    getById<T extends keyof ED>(entity: T, data: ED[T]['Selection']['data'], id: string, allowMiss?: boolean): Partial<ED[T]['Schema']> | undefined;
     private getInner;
-    get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], allowMiss?: boolean): Partial<ED[T]["Schema"]>[];
+    /**
+     * 把select的结果merge到sr中，因为select有可能存在aggr数据，在这里必须要使用合并后的结果
+     * sr的数据结构不好规范化描述，参见common-aspect中的select接口
+     * @param entity
+     * @param rows
+     * @param sr
+     */
+    mergeSelectResult<T extends keyof ED>(entity: T, rows: Partial<ED[T]['Schema']>[], sr: Record<string, any>): void;
+    get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], allowMiss?: boolean, sr?: Record<string, any>): Partial<ED[T]["Schema"]>[];
+    getById<T extends keyof ED>(entity: T, projection: ED[T]['Selection']['data'], id: string, allowMiss?: boolean): Partial<ED[T]["Schema"]>[];
     judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | string[] | 2;
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;

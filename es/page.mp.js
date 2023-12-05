@@ -1,13 +1,10 @@
 /// <reference path="../node_modules/@types/wechat-miniprogram/index.d.ts" />
 import { assert } from 'oak-domain/lib/utils/assert';
 import { onPathSet, reRender, refresh, loadMore, execute, destroyNode, } from './page.common';
-import { cloneDeep } from 'oak-domain/lib/utils/lodash';
+import { cloneDeep, pull } from 'oak-domain/lib/utils/lodash';
 const OakProperties = {
     oakId: '',
     oakPath: '',
-    oakFilters: [],
-    oakSorters: [],
-    oakProjection: {},
     oakParentEntity: '',
     oakFrom: '',
     oakActions: '',
@@ -17,10 +14,6 @@ const OakProperties = {
 const OakPropertyTypes = {
     oakId: String,
     oakPath: String,
-    // 这几个不能写成Array或Object，小程序会初始化成空对象和空数组
-    oakFilters: null,
-    oakSorters: null,
-    oakProjection: null,
     oakParentEntity: String,
     oakFrom: String,
     oakActions: String,
@@ -29,28 +22,35 @@ const OakPropertyTypes = {
 };
 const oakBehavior = Behavior({
     methods: {
-        setDisablePulldownRefresh(able) {
-            this.setState({
-                oakDisablePulldownRefresh: able,
-            });
-        },
         t(key, params) {
             return this.features.locales.t(key, params);
         },
-        resolveInput(input, keys) {
-            const { currentTarget, detail } = input;
-            const { dataset } = currentTarget;
-            const { value } = detail;
-            const result = {
-                dataset,
-                value,
-            };
-            if (keys) {
-                keys.forEach((k) => Object.assign(result, {
-                    [k]: detail[k],
-                }));
-            }
-            return result;
+        addFeatureSub(name, callback) {
+            const unsubHandler = this.features[name].subscribe(callback);
+            this.featuresSubscribed.push({
+                name,
+                callback,
+                unsubHandler,
+            });
+        },
+        removeFeatureSub(name, callback) {
+            const f = this.featuresSubscribed.find((ele) => ele.callback === callback && ele.name === name);
+            pull(this.featuresSubscribed, f);
+            f.unsubHandler && f.unsubHandler();
+        },
+        unsubscribeAll() {
+            this.featuresSubscribed.forEach((ele) => {
+                assert(ele.unsubHandler);
+                ele.unsubHandler();
+                ele.unsubHandler = undefined;
+            });
+        },
+        subscribeAll() {
+            this.featuresSubscribed.forEach((ele) => {
+                if (!ele.unsubHandler) {
+                    ele.unsubHandler = this.features[ele.name].subscribe(ele.callback);
+                }
+            });
         },
         iAmThePage() {
             const pages = getCurrentPages();
@@ -78,7 +78,8 @@ const oakBehavior = Behavior({
             const assignProps = (data, property, type) => {
                 if (data.hasOwnProperty(property)) {
                     let value = data[property];
-                    if (typeof data[property] === 'string' && type !== 'string') {
+                    if (typeof data[property] === 'string' &&
+                        type !== 'string') {
                         switch (type) {
                             case 'boolean': {
                                 value = new Boolean(data[property]);
@@ -153,13 +154,16 @@ const oakBehavior = Behavior({
             this.features.eventBus.unsubAll(type);
         },
         save(key, item) {
-            this.features.localStorage.save(key, item);
+            return this.features.localStorage.save(key, item);
         },
         load(key) {
             return this.features.localStorage.load(key);
         },
-        clear() {
-            this.features.localStorage.clear();
+        clear(key) {
+            if (key) {
+                return this.features.localStorage.remove(key);
+            }
+            return this.features.localStorage.clear();
         },
         setNotification(data) {
             this.features.notification.setNotification(data);
@@ -205,11 +209,12 @@ const oakBehavior = Behavior({
         },
         checkOperation(entity, action, data, filter, checkerTypes) {
             if (checkerTypes?.includes('relation')) {
-                return this.features.relationAuth.checkRelation(entity, {
+                return (this.features.relationAuth.checkRelation(entity, {
                     action,
                     data,
                     filter,
-                }) && this.features.cache.checkOperation(entity, action, data, filter, checkerTypes);
+                }) &&
+                    this.features.cache.checkOperation(entity, action, data, filter, checkerTypes));
             }
             return this.features.cache.checkOperation(entity, action, data, filter, checkerTypes);
         },
@@ -225,7 +230,7 @@ const oakBehavior = Behavior({
                 : this.state.oakFullpath;
             return this.features.runningTree.getOperations(path2);
         },
-        refresh() {
+        async refresh() {
             return refresh.call(this);
         },
         loadMore() {
@@ -323,7 +328,10 @@ const oakBehavior = Behavior({
                 const sorter = this.features.runningTree.getNamedSorterByName(path2, name);
                 if (sorter?.sorter) {
                     if (typeof sorter.sorter === 'function') {
-                        return sorter.sorter();
+                        const sortItem = sorter.sorter();
+                        // 要支持自定义sorter函数返回完整的sorter，但这种sorter应当确保是无名的不被查找
+                        assert(!(sortItem instanceof Array), '不应该有非item的sorter被查找');
+                        return sortItem;
                     }
                     return sorter.sorter;
                 }
@@ -441,7 +449,7 @@ const oakBehavior = Behavior({
         },
         unSubData(ids) {
             return this.features.subscriber.unsub(ids);
-        }
+        },
     },
     observers: {
         oakPath(data) {
@@ -457,7 +465,9 @@ const oakBehavior = Behavior({
                         this.oakOption.lifetimes?.ready &&
                             this.oakOption.lifetimes?.ready.call(this);
                         const { oakFullpath } = this.state;
-                        if (oakFullpath) {
+                        if (oakFullpath &&
+                            !this.features.runningTree.checkIsModiNode(oakFullpath) &&
+                            !this.features.runningTree.isListDescandent(oakFullpath)) {
                             this.refresh();
                         }
                         else {
@@ -474,33 +484,6 @@ const oakBehavior = Behavior({
                 }
             }
         },
-        /* oakFilters(data) {
-            if (data !== this.props.oakFilters) {
-                // 如果oakFilters被置空或重置，会完全重置当前结点上所有的nameFilter并重取数据。这个逻辑可能有问题，对oakFilters要慎用
-                if (!data) {
-                    this.setNamedFilters([], true);
-                }
-                else {
-                    const namedFilters = JSON.parse(data);
-                    this.setNamedFilters(namedFilters, true);
-                }
-            }
-        },
-        oakSorters(data) {
-            if (data !== this.props.oakSorters) {
-                // 如果oakSorters被置空或重置，会完全重置当前结点上所有的nameSorter并重取数据。这个逻辑可能有问题，对oakSorter要慎用
-                if (!data) {
-                    this.setNamedSorters([], true);
-                }
-                else {
-                    const namedSorters = JSON.parse(data);
-                    this.setNamedSorters(namedSorters, true);
-                }
-            }
-        },
-        oakProjection(data) {
-            assert(data === this.props.oakProjection, 'oakProjection暂不支持变化');
-        } */
     },
 });
 function translateListeners(listeners) {
@@ -650,11 +633,17 @@ export function createComponent(option, features) {
                 const { show } = this.oakOption.lifetimes || {};
                 this.reRender();
                 show && show.call(this);
+                this.subscribeAll();
             },
             hide() {
                 const { hide } = this.oakOption.lifetimes || {};
                 hide && hide.call(this);
+                this.unsubscribeAll();
             },
+            resize(size) {
+                const { resize } = this.oakOption.lifetimes || {};
+                resize && resize.call(this, size);
+            }
         },
         lifetimes: {
             created() {
@@ -672,7 +661,7 @@ export function createComponent(option, features) {
                 };
                 this.oakOption = option;
                 this.features = features;
-                this.subscribed = [];
+                this.featuresSubscribed = [];
                 created && created.call(this);
             },
             attached() {
@@ -705,19 +694,19 @@ export function createComponent(option, features) {
                     }
                 }
                 this.umounted = false;
-                this.subscribed.push(features.locales.subscribe(() => this.reRender()));
+                this.addFeatureSub('locales', () => this.reRender());
                 if (option.entity) {
-                    this.subscribed.push(features.cache.subscribe(() => this.reRender()));
+                    this.addFeatureSub('cache', () => this.reRender());
                 }
                 if (option.features) {
                     option.features.forEach((ele) => {
                         if (typeof ele === 'string') {
-                            this.subscribed.push(features[ele].subscribe(() => this.reRender()));
+                            this.addFeatureSub(ele, () => this.reRender());
                         }
                         else {
                             assert(typeof ele === 'object');
                             const { feature, behavior } = ele;
-                            this.subscribed.push(features[feature].subscribe(() => {
+                            this.addFeatureSub(feature, () => {
                                 switch (behavior) {
                                     case 'reRender': {
                                         this.reRender();
@@ -729,7 +718,7 @@ export function createComponent(option, features) {
                                         return;
                                     }
                                 }
-                            }));
+                            });
                         }
                     });
                 }
@@ -741,7 +730,7 @@ export function createComponent(option, features) {
                     }
                     this.setState(pathState, () => {
                         const { oakFullpath } = this.state;
-                        if (oakFullpath) {
+                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && !features.runningTree.isListDescandent(oakFullpath)) {
                             this.refresh();
                         }
                         else {
@@ -755,7 +744,7 @@ export function createComponent(option, features) {
                 attached && attached.call(this);
             },
             detached() {
-                this.subscribed.forEach((ele) => ele());
+                this.unsubscribeAll();
                 this.state.oakFullpath &&
                     (this.iAmThePage() || this.props.oakAutoUnmount) &&
                     destroyNode.call(this);

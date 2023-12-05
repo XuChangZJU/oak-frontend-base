@@ -3,6 +3,23 @@ export default OakComponent({
         const { entity } = this.props;
         return entity;
     },
+    projection() {
+        return this.props.projection;
+    },
+    filters: [
+        {
+            filter() {
+                return this.props.filter;
+            }
+        },
+    ],
+    sorters: [
+        {
+            sorter() {
+                return this.props.sorter;
+            }
+        }
+    ],
     formData({ data = [] }) {
         const { title } = this.props;
         return {
@@ -16,5 +33,8 @@ export default OakComponent({
         onSelect: (() => undefined),
         title: (() => ''),
         titleLabel: '',
+        filter: [],
+        sorter: [],
+        projection: {},
     },
 });

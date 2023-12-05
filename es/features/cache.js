@@ -1,5 +1,5 @@
 import { Feature } from '../types/Feature';
-import { merge, pull, intersection } from 'oak-domain/lib/utils/lodash';
+import { pull, intersection } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { OakRowUnexistedException, OakException, OakUserException } from 'oak-domain/lib/types/Exception';
 import { assert } from 'oak-domain/lib/utils/assert';
@@ -19,6 +19,7 @@ export class Cache extends Feature {
     getFullDataFn;
     refreshRecords = {};
     context;
+    initPromise;
     constructor(storageSchema, aspectWrapper, frontendContextBuilder, checkers, getFullData, localStorage, savedEntities, keepFreshPeriod) {
         super();
         this.aspectWrapper = aspectWrapper;
@@ -30,39 +31,44 @@ export class Cache extends Feature {
         this.localStorage = localStorage;
         checkers.forEach((checker) => this.cacheStore.registerChecker(checker));
         this.getFullDataFn = getFullData;
-        this.initSavedLogic();
+        // 现在这个init变成了异步行为，不知道有没有影响。by Xc 20231126
+        this.initPromise = new Promise((resolve) => this.initSavedLogic(resolve));
     }
     /**
      * 处理cache中需要缓存的数据
      */
-    initSavedLogic() {
+    async initSavedLogic(complete) {
         const data = {};
-        this.savedEntities.forEach((entity) => {
+        await Promise.all(this.savedEntities.map(async (entity) => {
             // 加载缓存的数据项
             const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity}`;
-            const cached = this.localStorage.load(key);
+            const cached = await this.localStorage.load(key);
             if (cached) {
                 data[entity] = cached;
             }
             // 加载缓存的时间戳项
             const key2 = `${LOCAL_STORAGE_KEYS.cacheRefreshRecord}:${entity}`;
-            const cachedTs = this.localStorage.load(key2);
+            const cachedTs = await this.localStorage.load(key2);
             if (cachedTs) {
                 this.refreshRecords[entity] = cachedTs;
             }
-        });
+        }));
         this.cacheStore.resetInitialData(data);
-        this.cacheStore.onCommit((result) => {
+        this.cacheStore.onCommit(async (result) => {
             const entities = Object.keys(result);
             const referenced = intersection(entities, this.savedEntities);
             if (referenced.length > 0) {
                 const saved = this.cacheStore.getCurrentData(referenced);
-                Object.keys(saved).forEach((entity) => {
+                for (const entity in saved) {
                     const key = `${LOCAL_STORAGE_KEYS.cacheSaved}:${entity}`;
-                    this.localStorage.save(key, saved[entity]);
-                });
+                    await this.localStorage.save(key, saved[entity]);
+                }
             }
         });
+        complete();
+    }
+    async onInitialized() {
+        await this.initPromise;
     }
     getSchema() {
         return this.cacheStore.getSchema();
@@ -126,7 +132,18 @@ export class Cache extends Feature {
         }
         return () => undefined;
     }
-    async refresh(entity, selection, option, getCount, callback, refreshOption) {
+    /**
+     * 向服务器刷新数据
+     * @param entity
+     * @param selection
+     * @param option
+     * @param callback
+     * @param refreshOption
+     * @returns
+     * @description 支持增量更新，可以使用useLocalCache来将一些metadata级的数据本地缓存，减少更新次数。
+     * 使用增量更新这里要注意，传入的keys如果有一个key是首次更新，会导致所有的keys全部更新。使用模块自己保证这种情况不要出现
+     */
+    async refresh(entity, selection, option, callback, refreshOption) {
         // todo 还要判定没有aggregation
         const { dontPublish, useLocalCache } = refreshOption || {};
         const onlyReturnFresh = refreshOption?.useLocalCache?.onlyReturnFresh;
@@ -179,15 +196,14 @@ export class Cache extends Feature {
             }
         }
         try {
-            const { result: { ids, count, aggr } } = await this.exec('select', {
+            const { result: { data: sr, total } } = await this.exec('select', {
                 entity,
                 selection,
                 option,
-                getCount,
             }, callback, dontPublish);
             let filter2 = {
                 id: {
-                    $in: ids,
+                    $in: Object.keys(sr),
                 }
             };
             if (undoFns.length > 0 && !onlyReturnFresh) {
@@ -196,16 +212,13 @@ export class Cache extends Feature {
             const selection2 = Object.assign({}, selection, {
                 filter: filter2,
             });
-            const data = this.get(entity, selection2);
-            if (aggr) {
-                merge(data, aggr);
-            }
+            const data = this.get(entity, selection2, undefined, sr);
             if (useLocalCache) {
                 this.saveRefreshRecord(entity);
             }
             return {
-                data: data,
-                count,
+                data,
+                total,
             };
         }
         catch (err) {
@@ -334,34 +347,6 @@ export class Cache extends Feature {
             });
         }
     }
-    /**
-     * getById可以处理当本行不在缓存中的自动取
-     * @attention 这里如果访问了一个id不存在的行（被删除？），可能会陷入无限循环。如果遇到了再处理
-     * @param entity
-     * @param data
-     * @param id
-     * @param allowMiss
-     */
-    getById(entity, data, id, allowMiss) {
-        const result = this.getInner(entity, {
-            data,
-            filter: {
-                id,
-            },
-        }, allowMiss);
-        if (result.length === 0 && !allowMiss) {
-            this.fetchRows([{
-                    entity,
-                    selection: {
-                        data,
-                        filter: {
-                            id,
-                        },
-                    }
-                }]);
-        }
-        return result[0];
-    }
     getInner(entity, selection, allowMiss) {
         let autoCommit = false;
         if (!this.context) {
@@ -394,8 +379,59 @@ export class Cache extends Feature {
             }
         }
     }
-    get(entity, selection, allowMiss) {
-        return this.getInner(entity, selection, allowMiss);
+    /**
+     * 把select的结果merge到sr中，因为select有可能存在aggr数据，在这里必须要使用合并后的结果
+     * sr的数据结构不好规范化描述，参见common-aspect中的select接口
+     * @param entity
+     * @param rows
+     * @param sr
+     */
+    mergeSelectResult(entity, rows, sr) {
+        const mergeSingleRow = (e, r, sr2) => {
+            for (const k in sr2) {
+                if (k.endsWith('$$aggr')) {
+                    Object.assign(r, {
+                        [k]: sr2[k],
+                    });
+                }
+                else if (r[k]) {
+                    const rel = this.judgeRelation(e, k);
+                    if (rel === 2) {
+                        mergeSingleRow(k, r[k], sr2[k]);
+                    }
+                    else if (typeof rel === 'string') {
+                        mergeSingleRow(rel, r[k], sr2[k]);
+                    }
+                    else {
+                        assert(rel instanceof Array);
+                        assert(r[k] instanceof Array);
+                        const { data } = sr2[k];
+                        this.mergeSelectResult(rel[0], r[k], data);
+                    }
+                }
+            }
+        };
+        rows.forEach((row) => {
+            const { id } = row;
+            if (sr[id]) {
+                mergeSingleRow(entity, row, sr[id]);
+            }
+        });
+    }
+    get(entity, selection, allowMiss, sr) {
+        const rows = this.getInner(entity, selection, allowMiss);
+        if (sr) {
+            this.mergeSelectResult(entity, rows, sr);
+        }
+        return rows;
+    }
+    getById(entity, projection, id, allowMiss) {
+        return this.getInner(entity, {
+            data: projection,
+            filter: {
+                id,
+            },
+        }, allowMiss);
     }
     judgeRelation(entity, attr) {
         return this.cacheStore.judgeRelation(entity, attr);

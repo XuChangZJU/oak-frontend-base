@@ -12,6 +12,9 @@ interface DebugStoreSelectOption extends TreeStoreSelectOption {
 export declare class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>> extends TreeStore<ED> implements AsyncRowStore<ED, Cxt> {
     private executor;
     private relationAuth;
+    private dataLoaded;
+    private dataLoadedLock;
+    private dataLoadedLockUnlocker;
     constructor(storageSchema: StorageSchema<ED>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>, authDeduceRelationMap: AuthDeduceRelationMap<ED>, selectFreeEntities?: (keyof ED)[], updateFreeDict?: {
         [A in keyof ED]?: string[];
     });
@@ -26,5 +29,13 @@ export declare class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt exte
     count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]["Selection"], "filter" | "count">, context: Cxt, option: OP): Promise<number>;
     registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>): void;
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>): void;
+    resetInitialData(initialData: {
+        [T in keyof ED]?: Array<ED[T]['OpSchema']>;
+    }, stat?: {
+        create: number;
+        update: number;
+        remove: number;
+        commit: number;
+    }): void;
 }
 export {};

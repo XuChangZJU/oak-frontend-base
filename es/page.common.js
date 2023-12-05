@@ -5,74 +5,86 @@ import { combineFilters } from 'oak-domain/lib/store/filter';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
 export function onPathSet(option) {
     const { props, state } = this;
-    const { oakPath, oakProjection, oakFilters, oakSorters, oakId } = props;
-    const { entity, path, projection, isList, filters, sorters, pagination } = option;
+    const { oakPath, oakId } = props;
+    const { entity, path, projection, isList, filters, sorters, pagination, getTotal } = option;
     const { features } = this;
     const oakPath2 = oakPath || path;
     assert(oakPath2);
     assert(!oakPath || !path);
     if (entity) {
+        // entity在node生命周期中不可可变，但sorter/filter/projection应当是运行时来决定
         const entity2 = entity instanceof Function ? entity.call(this) : entity;
-        const filters2 = [];
-        if (oakFilters) {
-            // 这里在跳页面的时候用this.navigate应该可以限制传过来的filter的格式
-            const oakFilters2 = typeof oakFilters === 'string' ? JSON.parse(oakFilters) : oakFilters;
-            filters2.push(...oakFilters2);
-        }
-        if (filters) {
-            for (const ele of filters) {
-                const { filter, '#name': name } = ele;
-                filters2.push({
-                    filter: typeof filter === 'function'
-                        ? () => filter.call(this)
-                        : filter,
-                    ['#name']: name,
-                });
-            }
-        }
-        let proj = oakProjection && (typeof oakProjection === 'string' ? JSON.parse(oakProjection) : oakProjection);
-        if (!proj && projection) {
-            proj = typeof projection === 'function'
-                ? () => projection.call(this)
-                : projection;
-        }
-        let sorters2 = [];
-        if (oakSorters) {
-            // 这里在跳页面的时候用this.navigate应该可以限制传过来的sorter的格式
-            const oakSorters2 = typeof oakSorters === 'string' ? JSON.parse(oakSorters) : oakSorters;
-            sorters2.push(...oakSorters2);
-        }
-        else if (sorters) {
-            for (const ele of sorters) {
-                const { sorter, '#name': name } = ele;
-                sorters2.push({
-                    sorter: typeof sorter === 'function'
-                        ? () => sorter.call(this)
-                        : sorter,
-                    ['#name']: name,
-                });
-            }
-        }
+        const projection2 = typeof projection === 'function' ? () => projection.call(this) : projection;
+        const filters2 = filters?.map((ele) => {
+            const { filter, '#name': name } = ele;
+            return {
+                filter: typeof filter === 'function' ? () => filter.call(this) : filter,
+                ['#name']: name,
+            };
+        });
+        const sorters2 = sorters?.map((ele) => {
+            const { sorter, '#name': name } = ele;
+            return {
+                sorter: typeof sorter === 'function'
+                    ? () => sorter.call(this)
+                    : sorter,
+                ['#name']: name,
+            };
+        });
         assert(oakPath2, '没有正确的path信息，请检查是否配置正确');
         const { actions, cascadeActions } = option;
+        // 在这里适配宽窄屏处理getTotal，不到运行时处理了 by Xc
+        let getTotal2;
+        if (getTotal) {
+            const { width } = this.props;
+            if (typeof getTotal === 'object') {
+                const { max, deviceWidth } = getTotal;
+                switch (deviceWidth) {
+                    case 'all': {
+                        getTotal2 = max;
+                        break;
+                    }
+                    case 'mobile':
+                        {
+                            if (width === 'xs') {
+                                getTotal2 = max;
+                            }
+                            break;
+                        }
+                    case 'pc':
+                    default: {
+                        if (width !== 'xs') {
+                            getTotal2 = max;
+                        }
+                        break;
+                    }
+                }
+            }
+            else {
+                if (width !== 'xs') {
+                    getTotal2 = getTotal;
+                }
+            }
+        }
         features.runningTree.createNode({
             path: oakPath2,
             entity: entity2,
             isList,
-            projection: proj,
+            projection: projection2,
             pagination: pagination,
             filters: filters2,
             sorters: sorters2,
             id: oakId,
             actions: typeof actions === 'function' ? () => actions.call(this) : actions,
             cascadeActions: cascadeActions && (() => cascadeActions.call(this)),
+            getTotal: getTotal2,
         });
-        this.subscribed.push(features.runningTree.subscribeNode((path2) => {
+        this.addFeatureSub('runningTree', (path2) => {
             // 父结点改变，子结点要重渲染
             if (this.state.oakFullpath?.includes(path2)) {
                 this.reRender();
             }
-        }, oakPath2));
+        });
         // 确保SetState生效，这里改成异步
         return {
             oakEntity: entity2,
@@ -84,11 +96,12 @@ export function onPathSet(option) {
         features.runningTree.createNode({
             path: oakPath2,
         });
-        this.subscribed.push(features.runningTree.subscribeNode((path2) => {
-            if (path2 === this.state.oakFullpath) {
+        this.addFeatureSub('runningTree', (path2) => {
+            // 父结点改变，子结点要重渲染
+            if (this.state.oakFullpath?.includes(path2)) {
                 this.reRender();
             }
-        }, oakPath2));
+        });
         return {
             oakFullpath: oakPath2,
         };
@@ -309,7 +322,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                     }
                 }
             }
-        }, undefined, undefined, undefined, {
+        }, undefined, undefined, {
             useLocalCache: {
                 keys: destEntities,
                 gap: process.env.NODE_ENV === 'development' ? 60 * 1000 : 1200 * 1000,
@@ -328,8 +341,7 @@ export function reRender(option, extra) {
         /**
          * 这里的pullDownRefresh处理的应该有问题，先不动。to wangkejun.  By Xc 20230201
          */
-        const oakLoading = !this.pullDownRefresh && this.features.runningTree.isLoading(this.state.oakFullpath);
-        const oakPullDownRefreshLoading = !!this.pullDownRefresh && this.features.runningTree.isLoading(this.state.oakFullpath);
+        const oakLoading = this.features.runningTree.isLoading(this.state.oakFullpath);
         const oakLoadingMore = this.features.runningTree.isLoadingMore(this.state.oakFullpath);
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
         const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
@@ -374,7 +386,6 @@ export function reRender(option, extra) {
             oakLoading,
             oakLoadingMore,
             oakExecuting,
-            oakPullDownRefreshLoading,
         });
         if (extra) {
             Object.assign(data, extra);

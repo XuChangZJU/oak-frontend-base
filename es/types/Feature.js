@@ -12,8 +12,8 @@ export class Feature {
             pull(this.callbacks, callback);
         };
     }
-    publish() {
-        this.callbacks.forEach(ele => ele());
+    publish(arg) {
+        this.callbacks.forEach(ele => ele(arg));
     }
     clearSubscribes() {
         this.callbacks = [];

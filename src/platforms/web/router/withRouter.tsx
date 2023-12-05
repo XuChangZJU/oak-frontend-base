@@ -3,84 +3,73 @@ import React from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useWidth } from './../responsive';
 
-import URL from 'url';
 import { assert } from 'oak-domain/lib/utils/assert';
 
-type Location = { state: Record<string, any>; search: string };
+type Location = { state: Record<string, any>; search?: string | null };
 
 function getParams(location: Location, properties?: Record<string, any>) {
     const { search, state } = location;
-    const query = getQuery(search, properties);
+    const props = getProps(search, properties);
 
-    return Object.assign({}, query, state);
+    return Object.assign({}, props, state);
 }
 
-function getQuery(url: string, properties?: Record<string, any>) {
-    let query: Record<string, any> = {};
-    if (!url) {
-        return query;
+function getProps(search?: Location['search'], properties?: Record<string, any>) {
+    if (!search) {
+        return;
     }
-    const parseUrl = URL.parse(url, true);
-    if (parseUrl.query) {
-        query = parseUrl.query;
-    }
-    const query2 = {};
+    const searchParams = new URLSearchParams(search || '');
 
-    for (const k in query) {
+    const props = {};
+
+    for (const k of searchParams.keys()) {
         if (properties && properties[k]) {
             switch (typeof properties[k]) {
                 case 'number': {
-                    Object.assign(query2, {
-                        [k]: Number(query[k]),
+                    Object.assign(props, {
+                        [k]: Number(searchParams.get(k)),
                     });
                     break;
                 }
                 case 'boolean': {
-                    Object.assign(query2, {
-                        [k]: Boolean(query[k]),
+                    Object.assign(props, {
+                        [k]: Boolean(searchParams.get(k)),
                     });
                     break;
                 }
                 case 'object': {
-                    Object.assign(query2, {
-                        [k]: JSON.parse(query[k]),
+                    Object.assign(props, {
+                        [k]: JSON.parse(searchParams.get(k)!),
                     });
                     break;
                 }
                 default: {
-                    assert(typeof properties[k] === 'string', '传参只能是number/boolean/object/string四种类型');
-                    Object.assign(query2, {
-                        [k]: query[k],
-                    })
+                    assert(
+                        typeof properties[k] === 'string',
+                        '传参只能是number/boolean/object/string四种类型'
+                    );
+                    Object.assign(props, {
+                        [k]: searchParams.get(k),
+                    });
                 }
             }
-        }
-        else {
+        } else {
             switch (k) {
                 case 'oakDisablePulldownRefresh': {
-                    Object.assign(query2, {
-                        [k]: Boolean(query[k]),
+                    Object.assign(props, {
+                        [k]: Boolean(searchParams.get(k)),
                     });
-                    break;
-                }
-                case 'oakProjection':
-                case 'oakSorters':
-                case 'oakFilters': {
-                    Object.assign(query2, {
-                        [k]: JSON.parse(query[k]),
-                    });
-                    break;
                     break;
                 }
                 default: {
-                    Object.assign(query2, {
-                        [k]: query[k],
-                    })
+                    Object.assign(props, {
+                        [k]: searchParams.get(k),
+                    });
                 }
             }
         }
     }
-    return query2;
+    return props;
 }
 
 const withRouter = (Component: React.ComponentType<any>, { path, properties }: { path?: string, properties?: Record<string, any> }) => {
@@ -111,7 +100,6 @@ const withRouter = (Component: React.ComponentType<any>, { path, properties }: {
                 {...rest}
                 {...params}
                 width={width}
-                location={location}
                 ref={forwardedRef}
                 routeMatch={routeMatch}
             />

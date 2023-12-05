@@ -1,6 +1,6 @@
 {
     "name": "oak-frontend-base",
-    "version": "3.0.5",
+    "version": "4.0.0",
     "description": "oak框架中前端与业务逻辑无关的平台部分",
     "author": {
         "name": "XuChang"
@@ -12,6 +12,8 @@
     ],
     "dependencies": {
         "@fingerprintjs/fingerprintjs": "^4.0.0",
+        "@react-native-async-storage/async-storage": "^1.19.8",
+        "@react-navigation/native": "^6.1.9",
         "dayjs": "^1.11.9",
         "echarts": "^5.4.2",
         "echarts-for-react": "^3.0.2",
@@ -19,14 +21,14 @@
         "history": "^5.3.0",
         "i18n-js": "^4.3.0",
         "node-schedule": "^2.1.1",
-        "oak-common-aspect": "^2.2.2",
-        "oak-domain": "^3.0.4",
-        "oak-memory-tree-store": "^3.0.3",
+        "oak-common-aspect": "^2.3.3",
+        "oak-domain": "^4.0.0",
+        "oak-memory-tree-store": "^3.1.1",
         "ol": "^7.3.0",
+        "react-native-localize": "^3.0.4",
         "react-responsive": "^9.0.2",
         "rmc-pull-to-refresh": "^1.0.13",
         "socket.io-client": "^4.7.2",
-        "url": "^0.11.0",
         "uuid": "^8.3.2",
         "weapp.socket.io": "^2.2.1"
     },
@@ -37,6 +39,7 @@
         "antd-mobile-icons": ">=0.3.0",
         "react": ">=18.2.0",
         "react-dom": ">=18.1.0",
+        "react-native": "^0.72.7",
         "react-router-dom": ">=6.3.0"
     },
     "devDependencies": {

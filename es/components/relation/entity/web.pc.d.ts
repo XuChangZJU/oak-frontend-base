@@ -1,3 +1,4 @@
+/// <reference types="react" />
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { WebComponentProps } from '../../../types/Page';
@@ -16,5 +17,5 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
 }, {
     onActionsSelected: (actions: string[]) => void;
     onRelationsSelected: (relationIds: string[]) => void;
-}>): import("react/jsx-runtime").JSX.Element;
+}>): import("react").JSX.Element;
 export {};
