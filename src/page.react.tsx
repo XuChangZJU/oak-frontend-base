@@ -918,7 +918,7 @@ export function createComponent<
                                     }
                                 }
                                 else if (callback) {
-                                    callback();
+                                    callback.call(this as any);
                                 }
                                 else {
                                     this.reRender();

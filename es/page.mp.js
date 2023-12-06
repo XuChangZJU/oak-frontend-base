@@ -722,7 +722,7 @@ export function createComponent(option, features) {
                                 });
                             }
                             else if (callback) {
-                                callback();
+                                callback.call(this);
                             }
                             else {
                                 this.reRender();
