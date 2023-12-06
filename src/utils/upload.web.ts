@@ -19,7 +19,7 @@ export class Upload {
             method: 'POST',
         };
 
-        const json = await (await fetch(uploadUrl, options)).json();
-        return json;
+        const result = await fetch(uploadUrl, options);
+        return result;
     }
 }
