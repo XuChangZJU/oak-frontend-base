@@ -110,7 +110,8 @@ type FeatureDef<
     AD extends Record<string, Aspect<ED, Cxt>>,
     FD extends Record<string, Feature>> = (keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>)) | {
         feature: keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>);
-        behavior: 'reRender' | 'refresh';
+        behavior?: 'reRender' | 'refresh';
+        callback?: () => void;
     };
 
 interface ComponentOption<

@@ -1045,20 +1045,28 @@ export function createComponent<
                             this.addFeatureSub(ele, () => this.reRender());
                         } else {
                             assert(typeof ele === 'object');
-                            const { feature, behavior } = ele;
-                            this.addFeatureSub(feature, () => {
-                                switch (behavior) {
-                                    case 'reRender': {
-                                        this.reRender();
-                                        return;
+                            const { feature, behavior, callback } = ele;
+                            if (behavior) {
+                                this.addFeatureSub(feature, () => {
+                                    switch (behavior) {
+                                        case 'reRender': {
+                                            this.reRender();
+                                            return;
+                                        }
+                                        default: {
+                                            assert(behavior === 'refresh');
+                                            this.refresh();
+                                            return;
+                                        }
                                     }
-                                    default: {
-                                        assert(behavior === 'refresh');
-                                        this.refresh();
-                                        return;
-                                    }
-                                }
-                            });
+                                });
+                            }
+                            else if (callback) {
+                                callback();
+                            }
+                            else {
+                                this.reRender();
+                            }
                         }
                     });
                 }

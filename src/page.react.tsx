@@ -902,18 +902,26 @@ export function createComponent<
                         }
                         else {
                             assert(typeof ele === 'object');
-                            const { feature, behavior } = ele;
+                            const { feature, behavior, callback } = ele;
                             this.addFeatureSub(feature as string, () => {
-                                switch (behavior) {
-                                    case 'reRender': {
-                                        this.reRender();
-                                        return;
+                                if (behavior) {
+                                    switch (behavior) {
+                                        case 'reRender': {
+                                            this.reRender();
+                                            return;
+                                        }
+                                        default: {
+                                            assert(behavior === 'refresh');
+                                            this.refresh();
+                                            return;
+                                        }
                                     }
-                                    default: {
-                                        assert(behavior === 'refresh');
-                                        this.refresh();
-                                        return;
-                                    }
+                                }
+                                else if (callback) {
+                                    callback();
+                                }
+                                else {
+                                    this.reRender();
                                 }
                             });
                         }
