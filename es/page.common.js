@@ -326,6 +326,13 @@ function checkActionsAndCascadeEntities(rows, option) {
             useLocalCache: {
                 keys: destEntities,
                 gap: process.env.NODE_ENV === 'development' ? 60 * 1000 : 1200 * 1000,
+                onlyReturnFresh: true,
+            },
+            dontPublish: true,
+        }).then(({ data }) => {
+            // 这里利用cache的缓存行为，如果没有返回新的actionAuth数据就不用再reRender了
+            if (data.length > 0) {
+                this.reRender();
             }
         });
     }
