@@ -9,7 +9,7 @@ export class Upload {
             body: formData2,
             method: 'POST',
         };
-        const json = await (await fetch(uploadUrl, options)).json();
-        return json;
+        const result = await fetch(uploadUrl, options);
+        return result;
     }
 }
