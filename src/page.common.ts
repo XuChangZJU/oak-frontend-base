@@ -109,6 +109,13 @@ export function onPathSet<
                 }
             }
         }
+        else {
+            // 不设置的默认情况，宽屏取100窄屏不取
+            const { width } = this.props;
+            if (width !== 'xs') {
+                getTotal2 = 100;
+            }
+        }
         features.runningTree.createNode({
             path: oakPath2,
             entity: entity2,
