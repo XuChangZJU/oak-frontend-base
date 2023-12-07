@@ -183,7 +183,7 @@ class ListNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Node<ED, T, Cxt, FrontCxt, AD> {
+> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private updates: Record<
         string,
         ED[T]['CreateSingle']
@@ -379,7 +379,7 @@ class ListNode<
 
         this.syncHandler = (records) => this.onCacheSync(records);
         this.cache.bindOnSync(this.syncHandler);
-        
+
         if (parent) {
             assert(path);
             parent.addChild(path, this as any);
@@ -397,7 +397,7 @@ class ListNode<
             this.refresh();
         }
     }
-    
+
     addChild(path: string, node: SingleNode<ED, T, Cxt, FrontCxt, AD>) {
         assert(!this.children[path]);
         // assert(path.length > 10, 'List的path改成了id');
@@ -796,7 +796,7 @@ class ListNode<
         if (data) {
             this.pagination.more = Object.keys(data).length === this.pagination.pageSize;
         }
-        if (currentPage) {
+        if (typeof currentPage === 'number') {
             this.pagination.currentPage = currentPage;
         }
         if (typeof total === 'number') {
@@ -849,7 +849,7 @@ class ListNode<
                         indexFrom: currentPage3 * pageSize,
                         count: pageSize,
                         randomRange,
-                        total:  currentPage3 === 0 ? total : undefined,
+                        total: currentPage3 === 0 ? total : undefined,
                     },
                     undefined,
                     (selectResult) => {
@@ -954,7 +954,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         else if (id) {
             if (this.id) {
-                assert (id === this.id, 'singleNode初始化的id必须一致');
+                assert(id === this.id, 'singleNode初始化的id必须一致');
             }
             else {
                 this.id = id;
@@ -1177,7 +1177,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             },
         };
         this.operation = operation;
-        
+
         // 此时应如何处理children？除了clean之外似乎还应当unsetId？没想清楚
         this.setDirty();
     }
@@ -1323,12 +1323,12 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 }
             }
             else {
-                assert (rel instanceof Array);
+                assert(rel instanceof Array);
                 assert(child instanceof ListNode);
                 // assert(this.sr![k]);
                 child.saveRefreshResult(this.sr![k] || {});
             }
-        }        
+        }
     }
 
     saveRefreshResult(data: Record<string, any>) {
@@ -1489,7 +1489,7 @@ class VirtualNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private dirty: boolean;
     private executing: boolean;
     private loading = false;
@@ -1671,7 +1671,7 @@ export class RunningTree<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-    > extends Feature {
+> extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
     private root: Record<
@@ -2031,7 +2031,7 @@ export class RunningTree<
         if (!node?.isLoading()) {
             if (node instanceof ListNode) {
                 await node.refresh(0, false);
-            } 
+            }
             else if (node) {
                 await node.refresh();
             }
@@ -2050,7 +2050,7 @@ export class RunningTree<
         const pn = node.getPagination();
         return {
             ...pn,
-            currentPage: pn.currentPage + 1,            
+            currentPage: pn.currentPage + 1,
         } as Pagination;
     }
 

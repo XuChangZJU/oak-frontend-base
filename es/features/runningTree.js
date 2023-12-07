@@ -640,7 +640,7 @@ class ListNode extends Node {
         if (data) {
             this.pagination.more = Object.keys(data).length === this.pagination.pageSize;
         }
-        if (currentPage) {
+        if (typeof currentPage === 'number') {
             this.pagination.currentPage = currentPage;
         }
         if (typeof total === 'number') {
