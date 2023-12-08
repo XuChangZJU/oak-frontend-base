@@ -1,0 +1,21 @@
+.default {
+    margin:8px;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+}
+
+.pagination {
+    :global {
+        .ant-pagination-next {
+            cursor: pointer !important
+        }
+    }
+}
+.paginationNoMore {
+    :global {
+        .ant-pagination-next {
+            cursor: not-allowed !important
+        }
+    }
+}
