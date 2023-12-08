@@ -149,11 +149,11 @@ export class Cache<
         try {
             this.refreshing++;
             const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
+            callback && callback(result, opRecords);
             if (opRecords) {
                 this.syncInner(opRecords);
             }
             this.refreshing--;
-            callback && callback(result, opRecords);
             if (opRecords && opRecords.length > 0 && !dontPublish) {
                 this.publish();
             }
