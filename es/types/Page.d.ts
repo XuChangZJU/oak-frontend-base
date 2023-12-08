@@ -1,6 +1,6 @@
 /// <reference types="wechat-miniprogram" />
 /// <reference types="wechat-miniprogram" />
-import { Aspect, EntityDict, CheckerType, AggregationResult, SubDataDef, OpRecord } from "oak-domain/lib/types";
+import { Aspect, EntityDict, CheckerType, AggregationResult } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
@@ -76,8 +76,8 @@ export type MiniprogramStyleMethods = {
     clearAnimation(selector: string, options?: WechatMiniprogram.Component.ClearAnimationOptions, callback?: () => void): void;
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 };
-export type ComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, TProperty extends DataOption> = IsList extends true ? OakListComponentProperties<ED, T> & OakComponentProperties<ED, T> & Partial<TProperty> : OakComponentProperties<ED, T> & Partial<TProperty>;
-export type ReactComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, TProperty extends DataOption> = ComponentProps<ED, T, IsList, TProperty> & {
+export type ComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, TProperty extends DataOption> = OakComponentProperties<ED, T> & Partial<TProperty>;
+export type ReactComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, TProperty extends DataOption> = ComponentProps<ED, T, TProperty> & {
     className?: string;
     style?: Record<string, any>;
 };
@@ -85,14 +85,14 @@ export type ComponentData<ED extends EntityDict & BaseEntityDict, T extends keyo
 export type ComponentPublicThisType<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, IsList extends boolean, TData extends Record<string, any> = {}, TProperty extends DataOption = {}, TMethod extends MethodOption = {}, EMethod extends Record<string, Function> = {}> = {
     features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     state: ComponentData<ED, T, FormedData, TData>;
-    props: Readonly<ComponentProps<ED, T, IsList, TProperty>>;
+    props: Readonly<ComponentProps<ED, T, TProperty>>;
     setState: (data: Partial<ComponentData<ED, T, FormedData, TData>>, callback?: () => void) => void;
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 } & TMethod & EMethod & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
 export type ComponentFullThisType<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>> = {
     features: BasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt>>;
     state: OakComponentData<ED, T>;
-    props: ComponentProps<ED, T, IsList, {}>;
+    props: ComponentProps<ED, T, {}>;
     setState: (data: Partial<OakComponentData<ED, T>>, callback?: () => void) => void;
     triggerEvent: <DetailType = any>(name: string, detail?: DetailType, options?: WechatMiniprogram.Component.TriggerEventOption) => void;
 } & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
@@ -115,8 +115,8 @@ export type OakComponentOption<IsList extends boolean, ED extends EntityDict & B
         options?: Partial<WechatMiniprogram.Component.ComponentOptions> | undefined;
     };
 }> & ThisType<ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>>;
-export type OakComponentProperties<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<{
-    width?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+type OakComponentProperties<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<{
+    width: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
     oakPath: string;
     oakId: string;
     oakFrom: string;
@@ -125,6 +125,7 @@ export type OakComponentProperties<ED extends EntityDict & BaseEntityDict, T ext
     oakAutoUnmount: boolean;
     oakActions: string;
     oakCascadeActions: string;
+    oakFilters: Array<ED[T]['Selection']['filter']>;
 }>;
 export type OakListComponentProperties<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<{}>;
 export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
@@ -169,8 +170,8 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
     }[] | undefined;
     refresh: () => Promise<void>;
     aggregate: (aggregation: ED[T]['Aggregation']) => Promise<AggregationResult<ED[T]['Schema']>>;
-    subData: (data: SubDataDef<ED, keyof ED>[], callback?: (records: OpRecord<ED>[], ids: string[]) => void) => Promise<void>;
-    unSubData: (ids: string[]) => Promise<void>;
+    subDataEvents: (events: string[]) => Promise<void>;
+    unsubDataEvents: (events: string[]) => Promise<void>;
 };
 export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     setId: (id: string) => void;

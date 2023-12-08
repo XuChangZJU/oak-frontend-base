@@ -24,12 +24,7 @@ export class SubScriber<
         url: string;
         path: string;
     }>;
-    private subDataMap: Record<
-        string,
-        {
-            callback?: (records: OpRecord<ED>[], ids: string[]) => void,
-        } & SubDataDef<ED, keyof ED>
-    > = {};
+    private events: string[] = [];
     
     private url?: string;
     private path?: string;
@@ -89,9 +84,6 @@ export class SubScriber<
         
         this.socket = io(url, {
             path,
-            extraHeaders: {
-                'oak-cxt': context.toString(),
-            },
         });
         const socket = this.socket!;
         return new Promise((resolve, reject) => {
@@ -108,33 +100,26 @@ export class SubScriber<
                     this.emit('disconnect');
                     socket.removeAllListeners();
 
-                    if (Object.keys(this.subDataMap).length > 0) {
+                    if (this.events.length > 0) {
                         this.connect();
                     }
                 });
 
                 socket.on('data', (opRecords: OpRecord<ED>[], ids: string[]) => {
                     this.cache.sync(opRecords);
-                    ids.forEach(
-                        (id) => {
-                            this.subDataMap[id] && this.subDataMap[id].callback && this.subDataMap[id].callback!(opRecords, ids)
-                        }
-                    );
                 });
 
-                socket.on('error', (errString) => {
+                socket.on('error', (errString: string) => {
                     console.error(errString);
                     this.message.setMessage({
                         type: 'error',
                         title: '服务器subscriber抛出异常',
+                        content: errString,
                     });
                 })
 
-                if (Object.keys(this.subDataMap).length > 0) {
-                    const data = Object.values(this.subDataMap).map(
-                        ele => omit(ele, 'callback')
-                    );
-                    socket.emit('sub', data);
+                if (this.events.length > 0) {
+                    socket.emit('sub', this.events);
                     resolve(undefined);
                 }
                 else {
@@ -162,21 +147,13 @@ export class SubScriber<
         });
     }
 
-    async sub(
-        data: SubDataDef<ED, keyof ED>[],
-        callback?: (records: OpRecord<ED>[], ids: string[]) => void
-    ): Promise<void> {
-        data.forEach(({ entity, id, filter }) => {
+    async sub(events: string[]): Promise<void> {
+        events.forEach((event) => {
             assert(
-                !this.subDataMap[id],
-                `[subscriber]注册回调的id${id}发生重复`
+                !this.events.includes(event),
+                `[subscriber]注册回调的id${event}发生重复`
             );
-            this.subDataMap[id] = {
-                callback,
-                entity,
-                id,
-                filter,
-            };
+            this.events.push(event);
         });
 
         if (this.socketState === 'unconnected') {
@@ -185,7 +162,7 @@ export class SubScriber<
         else if (this.socketState === 'connected') {
             return new Promise(
                 (resolve, reject) => {
-                    this.socket!.emit('sub', data, (result: string) => {
+                    this.socket!.emit('sub', events, (result: string) => {
                         if (result) {
                             this.message.setMessage({
                                 type: 'error',
@@ -203,15 +180,12 @@ export class SubScriber<
         }
     }
 
-    async unsub(ids: string[]) {
-        ids.forEach((id) => unset(this.subDataMap, id));
+    async unsub(events: string[]) {
+        events.forEach((event) => pull(this.events, event));
 
         if (this.socketState === 'connected') {
-            this.socket!.emit('unsub', ids);
-        }
-
-        if (this.socketState !== 'unconnected') {
-            if (Object.keys(this.subDataMap).length === 0) {
+            this.socket!.emit('unsub', events);
+            if (this.events.length === 0) {
                 this.socket!.disconnect();
                 this.socket!.removeAllListeners();
                 this.socketState = 'unconnected';

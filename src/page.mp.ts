@@ -8,7 +8,6 @@ import { Feature } from './types/Feature';
 import {
     DataOption,
     MethodOption,
-    ComponentProps,
     OakCommonComponentMethods,
     OakComponentOption,
     OakListComponentMethods,
@@ -671,12 +670,12 @@ const oakBehavior = Behavior<
             this.features.locales.loadMissedLocale(key);
         },
 
-        subData(data, callback) {
-            return this.features.subscriber.sub(data, callback);
+        subDataEvents(events) {
+            return this.features.subscriber.sub(events);
         },
 
-        unSubData(ids) {
-            return this.features.subscriber.unsub(ids);
+        unsubDataEvents(events) {
+            return this.features.subscriber.unsub(events);
         },
     },
     observers: {

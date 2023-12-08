@@ -42,7 +42,7 @@ abstract class OakComponentBase<
     TProperty extends DataOption,
     TMethod extends MethodOption
 > extends React.PureComponent<
-    ComponentProps<ED, T, IsList, TProperty>,
+    ComponentProps<ED, T, TProperty>,
     ComponentData<ED, T, FormedData, TData>
 > {
     abstract features: FD &
@@ -565,12 +565,12 @@ abstract class OakComponentBase<
         }
     }
 
-    subData(data: SubDataDef<ED, keyof ED>[], callback?: (records: OpRecord<ED>[], ids: string[]) => void) {
-        return this.features.subscriber.sub(data, callback);
+    subDataEvents(events: string[]) {
+        return this.features.subscriber.sub(events);
     }
 
-    unSubData(ids: string[]) {
-        return this.features.subscriber.unsub(ids);
+    unsubDataEvents(events: string[]) {
+        return this.features.subscriber.unsub(events);
     }
 }
 
@@ -668,7 +668,7 @@ export function createComponent<
         defaultProperties: Record<string, any>;
         unmounted: boolean = false;
 
-        constructor(props: ComponentProps<ED, T, IsList, TProperty>) {
+        constructor(props: ComponentProps<ED, T, TProperty>) {
             super(props);
             const methodProps: Record<WebComponentCommonMethodNames, Function> =
             {

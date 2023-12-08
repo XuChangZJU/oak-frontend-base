@@ -1116,11 +1116,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                     action: action || 'update',
                     data,
                 };
-                Object.assign(operation, {
-                    filter: {
-                        id: this.id,
-                    },
-                });
                 this.operation = operation;
             }
             else {
@@ -1172,9 +1167,6 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             id: generateNewId(),
             action: 'remove',
             data: {},
-            filter: {
-                id: this.id,
-            },
         };
         this.operation = operation;
 
@@ -1185,14 +1177,10 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     setDirty(): void {
         if (!this.operation) {
             // 这种情况是下面的子结点setDirty引起的连锁设置
-            assert(this.id);
             this.operation = {
                 id: generateNewId(),
-                action: 'update',
+                action: this.id ? 'update' : 'create',
                 data: {},
-                filter: {
-                    id: this.id,
-                }
             }
         }
         super.setDirty();
@@ -1206,6 +1194,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             const operation = this.operation && cloneDeep(this.operation);
 
             if (operation) {
+                operation.filter = this.getFilter();
                 for (const ele in this.children) {
                     const ele2 = ele.includes(':') ? ele.slice(0, ele.indexOf(':')) : ele;
                     const child = this.children[ele];
@@ -1406,16 +1395,23 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             return;
         }
 
-        // singleNode的filter可以优化权限的判断范围
-        let filter: ED[T]['Selection']['filter'] = {
-            id: this.id,
-        };
-        if (this.filters) {
-            filter = combineFilters(this.entity, this.schema, this.filters.map(
-                ele => typeof ele.filter === 'function' ? ele.filter() : ele.filter
-            ).concat(filter));
+        // singleNode增加一些限定的filter可以优化后台权限的判断范围和一些trigger的条件
+        // 如果没有this.id则不返回，避免一些奇怪的边界（比如execute以后refresh）
+        if (this.id) {
+            let filter: ED[T]['Selection']['filter'] = {
+                id: this.id,
+            };
+            if (this.filters) {
+                filter = combineFilters(this.entity, this.schema, this.filters.map(
+                    ele => typeof ele.filter === 'function' ? ele.filter() : ele.filter
+                ).concat(filter));
+            }
+            if (this.parent && this.parent instanceof ListNode && this.parent.getEntity() === this.entity) {
+                const { filter: parentFilter} = this.parent.constructSelection(true, true, true);
+                filter = combineFilters(this.entity, this.schema, [filter, parentFilter]);
+            }
+            return filter;
         }
-        return filter;
     }
 
     getIntrinsticFilters() {

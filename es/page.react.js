@@ -334,11 +334,11 @@ class OakComponentBase extends React.PureComponent {
             this.features.runningTree.setCurrentPage(path2, currentPage);
         }
     }
-    subData(data, callback) {
-        return this.features.subscriber.sub(data, callback);
+    subDataEvents(events) {
+        return this.features.subscriber.sub(events);
     }
-    unSubData(ids) {
-        return this.features.subscriber.unsub(ids);
+    unsubDataEvents(events) {
+        return this.features.subscriber.unsub(events);
     }
 }
 function translateListeners(listeners) {

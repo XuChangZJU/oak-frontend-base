@@ -7,6 +7,7 @@ export declare abstract class BackendRuntimeContext<ED extends EntityDict & Base
     private subscriberId?;
     private be?;
     private ns?;
+    eventOperationMap: Record<string, string[]>;
     getNavigatorState(): {
         pathname: string;
         oakFrom: string;
@@ -15,4 +16,10 @@ export declare abstract class BackendRuntimeContext<ED extends EntityDict & Base
     getBriefEnvironment(): BriefEnv | undefined;
     protected getSerializedData(): SerializedData;
     initialize(data?: SerializedData): Promise<void>;
+    /**
+     * 未来可以支持在event中带id的占位符，到saveOpRecord时再动态注入 by Xc
+     * @param operationId
+     * @param event
+     */
+    saveOperationToEvent(operationId: string, event: string): void;
 }
