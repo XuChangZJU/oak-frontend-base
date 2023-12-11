@@ -1180,7 +1180,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             this.operation = {
                 id: generateNewId(),
                 action: this.id ? 'update' : 'create',
-                data: {},
+                data: {}, getFilter
             }
         }
         super.setDirty();
@@ -1407,7 +1407,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 ).concat(filter));
             }
             if (this.parent && this.parent instanceof ListNode && this.parent.getEntity() === this.entity) {
-                const { filter: parentFilter} = this.parent.constructSelection(true, true, true);
+                const { filter: parentFilter } = this.parent.constructSelection(true, true, true);
                 filter = combineFilters(this.entity, this.schema, [filter, parentFilter]);
             }
             return filter;
