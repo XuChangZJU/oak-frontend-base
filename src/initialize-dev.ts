@@ -50,8 +50,8 @@ export function initialize<
     triggers: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     watchers: Array<Watcher<ED, keyof ED, Cxt>>,
-    timers: Array<Timer<ED, Cxt>>,
-    startRoutines: Array<Routine<ED, Cxt>>,
+    timers: Array<Timer<ED, keyof ED, Cxt>>,
+    startRoutines: Array<Routine<ED, keyof ED, Cxt>>,
     initialData: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },

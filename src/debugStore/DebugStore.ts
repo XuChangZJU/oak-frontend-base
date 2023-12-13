@@ -1,4 +1,4 @@
-import { AggregationResult, AuthDeduceRelationMap, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
+import { AggregationResult, AuthDeduceRelationMap, EntityDict, OperationResult, SelectOption, TxnOption } from "oak-domain/lib/types";
 import { TreeStore, TreeStoreOperateOption, TreeStoreSelectOption } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { TriggerExecutor } from 'oak-domain/lib/store/TriggerExecutor';
@@ -81,7 +81,7 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
             await this.dataLoadedLock;
         }
         const autoCommit = !context.getCurrentTxnId();
-        let result;
+        let result: OperationResult<ED>;
         if (autoCommit) {
             await context.begin();
         }
