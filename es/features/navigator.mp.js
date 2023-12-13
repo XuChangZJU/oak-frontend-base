@@ -25,12 +25,7 @@ export class Navigator extends CommonNavigator {
     getState() {
         const { pathname, state } = this.getLocation();
         const state2 = this.constructState(pathname, state);
-        return {
-            pathname: state2.pathname,
-            oakFrom: state2.oakFrom
-                ? decodeURIComponent(state2.oakFrom)
-                : '',
-        };
+        return state2;
     }
     getPathname(pathname, namespace) {
         if (!/^\/{1}/.test(pathname)) {

@@ -4,8 +4,9 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import Style from './index.module.less';
 export default function Render(props) {
     const { style, className, oakPagination, oakFullpath, total1, showQuickJumper, size, responsive, role, totalBoundaryShowSizeChanger, rootClassName, showTotal, } = props.data;
-    const { t, setPageSize, setCurrentPage, setTotal } = props.methods;
+    const { t, setPageSize, setCurrentPage, setTotal, setPage, setMessage } = props.methods;
     const { pageSize, total, currentPage, more } = oakPagination || {};
+    // const [inputPage, setInputPage] = useState(1);
     const itemRender = (_, type, originalElement) => {
         if (type === 'prev') {
             return <a><LeftOutlined /></a>;
@@ -26,5 +27,29 @@ export default function Render(props) {
         }} onChange={(page, pageSize) => {
             setCurrentPage(page);
         }}/>
+                {/* <div>
+            <InputNumber
+                onChange={(value: number) => {
+                    setInputPage(value)
+                }} />
+            <Button onClick={() => {
+                if (more) {
+                    setPage(inputPage)
+                    setCurrentPage(inputPage);
+                } else {
+                    if ((inputPage * pageSize!) > total1) {
+                        setMessage({
+                            type: 'warning',
+                            content: "没有更多数据了!"
+                        })
+                        return
+                    }
+                    setPage(inputPage)
+                    setCurrentPage(inputPage);
+                }
+
+            }}>跳转</Button>
+        </div> */}
+
             </div>));
 }

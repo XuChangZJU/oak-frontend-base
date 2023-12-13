@@ -1180,7 +1180,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             this.operation = {
                 id: generateNewId(),
                 action: this.id ? 'update' : 'create',
-                data: {}, getFilter
+                data: {},
             }
         }
         super.setDirty();

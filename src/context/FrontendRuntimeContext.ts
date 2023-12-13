@@ -15,7 +15,7 @@ export type SerializedData = {
     be?: BriefEnv;
     ns?: {
         pathname: string;
-        oakFrom: string;
+        oakFrom?: string;
     };
 };
 

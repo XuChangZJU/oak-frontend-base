@@ -10,7 +10,7 @@ export declare abstract class BackendRuntimeContext<ED extends EntityDict & Base
     eventOperationMap: Record<string, string[]>;
     getNavigatorState(): {
         pathname: string;
-        oakFrom: string;
+        oakFrom?: string | undefined;
     } | undefined;
     getSubscriberId(): string | undefined;
     getBriefEnvironment(): BriefEnv | undefined;

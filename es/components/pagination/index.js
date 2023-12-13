@@ -36,6 +36,17 @@ export default OakComponent({
                     // return
                 }
             }
-        }
+        },
+        // async setPage(value: number) {
+        //     const { oakPagination, total1 } = this.state;
+        //     const { pageSize, total, currentPage, more } = oakPagination || {};
+        //     if (value && pageSize) {
+        //         if ((value * pageSize) > total1) {
+        //             this.setState({ total1: value * pageSize })
+        //         }
+        //         // else {
+        //         // }
+        //     }
+        // }
     }
 });

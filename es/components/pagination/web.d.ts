@@ -24,5 +24,6 @@ export default function Render(props: WebComponentProps<ED, keyof ED, true, Pagi
     onShowSizeChange?: (current: number, size: number) => void;
     itemRender?: (page: number, type: 'page' | 'prev' | 'next' | 'jump-prev' | 'jump-next', element: React.ReactNode) => React.ReactNode;
     setTotal: () => void;
+    setPage: (value: number) => void;
 }>): "" | React.JSX.Element | undefined;
 export {};
