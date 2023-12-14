@@ -129,9 +129,10 @@ const oakBehavior = Behavior<
 
         unsubscribeAll() {
             this.featuresSubscribed.forEach((ele) => {
-                assert(ele.unsubHandler);
-                ele.unsubHandler();
-                ele.unsubHandler = undefined;
+                if (ele.unsubHandler) {
+                    ele.unsubHandler();
+                    ele.unsubHandler = undefined;
+                }
             });
         },
 
