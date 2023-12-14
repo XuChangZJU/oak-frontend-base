@@ -6,7 +6,7 @@ export class Navigator extends Feature {
     constructor() {
         super();
         this.namespace = '';
-        this.base = 'http://localhost'; // 使用URL解析链接时 相对路径需要使用构建一个完整链接
+        this.base = 'http://oaklocalhost'; // 使用URL解析链接时 相对路径需要使用构建一个完整链接
     }
     setNamespace(namespace) {
         this.namespace = namespace;
@@ -22,7 +22,9 @@ export class Navigator extends Feature {
     urlFormat(url) {
         const urlParse = new URL(url.toString(), this.base);
         let url2 = urlParse.toString();
-        url2 = decodeURIComponent(url2);
+        if (process.env.OAK_PLATFORM !== 'web') {
+            url2 = decodeURIComponent(url2)
+        }
         return url2.replace(this.base, '');
     }
     constructState(pathname, state, search) {
