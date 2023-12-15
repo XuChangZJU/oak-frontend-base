@@ -944,14 +944,23 @@ export function createComponent<
                 if (
                     !this.state.oakLoading &&
                     this.iAmThePage() &&
-                    !this.state.oakDisablePulldownRefresh &&
+                    //!this.state.oakDisablePulldownRefresh &&
                     !this.props.oakDisablePulldownRefresh
                 ) {
-                    await (onPullDownRefresh
+                    try {
+                        await (onPullDownRefresh
                         ? onPullDownRefresh.call(this)
                         : this.refresh());
+                        await wx.stopPullDownRefresh();
+                    }
+                    catch(err) {
+                        await wx.stopPullDownRefresh();
+                        throw err;
+                    }
                 }
-                await wx.stopPullDownRefresh();
+                else {
+                    await wx.stopPullDownRefresh();
+                }
             },
 
             async onReachBottom() {
@@ -972,8 +981,8 @@ export function createComponent<
         pageLifetimes: {
             show() {
                 const { show } = this.oakOption.lifetimes || {};
-                this.reRender();
                 show && show.call(this);
+                this.reRender();
                 this.subscribeAll();
             },
             hide() {

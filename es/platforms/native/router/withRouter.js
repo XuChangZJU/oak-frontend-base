@@ -71,7 +71,7 @@ const withRouter = (Component, { path, properties }) => {
         if (path) {
             params = Object.assign(params, getParams(routeParams, properties));
         }
-        return (<Component {...rest} {...params} ref={forwardedRef}/>);
+        return (<Component {...rest} {...params}  width="xs" ref={forwardedRef}/>);
     };
     return React.forwardRef((props, ref) => <ComponentWithRouterProp {...props} forwardedRef={ref}/>);
 };

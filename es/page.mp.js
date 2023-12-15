@@ -609,13 +609,22 @@ export function createComponent(option, features) {
             async onPullDownRefresh() {
                 if (!this.state.oakLoading &&
                     this.iAmThePage() &&
-                    !this.state.oakDisablePulldownRefresh &&
+                    //!this.state.oakDisablePulldownRefresh &&
                     !this.props.oakDisablePulldownRefresh) {
-                    await (onPullDownRefresh
-                        ? onPullDownRefresh.call(this)
-                        : this.refresh());
+                    try {
+                        await (onPullDownRefresh
+                            ? onPullDownRefresh.call(this)
+                            : this.refresh());
+                        await wx.stopPullDownRefresh();
+                    }
+                    catch (err) {
+                        await wx.stopPullDownRefresh();
+                        throw err;
+                    }
                 }
-                await wx.stopPullDownRefresh();
+                else {
+                    await wx.stopPullDownRefresh();
+                }
             },
             async onReachBottom() {
                 if (!this.state.oakLoadingMore &&
@@ -632,8 +641,8 @@ export function createComponent(option, features) {
         pageLifetimes: {
             show() {
                 const { show } = this.oakOption.lifetimes || {};
-                this.reRender();
                 show && show.call(this);
+                this.reRender();
                 this.subscribeAll();
             },
             hide() {

@@ -97,6 +97,7 @@ const withRouter = (Component: React.ComponentType<any>, { path, properties }: {
             <Component
                 {...rest}
                 {...params}
+                width="xs"
                 ref={forwardedRef}
             />
         );
