@@ -79,8 +79,6 @@ export class SubScriber<
 
         const url = this.url!;
         const path = this.path!;
-        const context = this.cache.begin();
-        this.cache.commit();
         
         this.socket = io(url, {
             path,
