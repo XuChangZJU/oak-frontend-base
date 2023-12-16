@@ -14,7 +14,7 @@ export type SerializedData = {
     be?: BriefEnv;
     ns?: {
         pathname: string;
-        oakFrom: string;
+        oakFrom?: string;
     };
 };
 export declare abstract class FrontendRuntimeContext<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends SyncContext<ED> {

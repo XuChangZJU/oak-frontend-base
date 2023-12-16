@@ -1,6 +1,6 @@
 {
     "name": "oak-frontend-base",
-    "version": "4.0.1",
+    "version": "4.0.2",
     "description": "oak框架中前端与业务逻辑无关的平台部分",
     "author": {
         "name": "XuChang"
@@ -22,10 +22,12 @@
         "i18n-js": "^4.3.0",
         "node-schedule": "^2.1.1",
         "oak-common-aspect": "^2.2.3",
-        "oak-domain": "^4.0.0",
-        "oak-memory-tree-store": "^3.1.1",
+        "oak-domain": "^4.0.1",
+        "oak-memory-tree-store": "^3.1.2",
         "ol": "^7.3.0",
+        "react-native-device-info": "^10.12.0",
         "react-native-localize": "^3.0.4",
+        "react-native-toast-notifications": "^3.4.0",
         "react-responsive": "^9.0.2",
         "rmc-pull-to-refresh": "^1.0.13",
         "socket.io-client": "^4.7.2",
@@ -58,6 +60,7 @@
         "@types/node-schedule": "^2.1.0",
         "@types/react": "^18.2.34",
         "@types/react-dom": "^18.2.14",
+        "@types/react-native": "^0.72.8",
         "@types/uuid": "^9.0.6",
         "@types/wechat-miniprogram": "^3.4.5",
         "antd": "5.11.0",
@@ -84,7 +87,7 @@
         "copy-wxml": "copyfiles -u 1 src/**/*.wxml es/",
         "build": "tsc -p tsconfig.lib.json && tsc -p tsconfig.es.json && npm run copy-js && npm run copy-less && npm run copy-wxs && npm run copy-svg && npm run copy-xml && npm run copy-wxml && npm run copy-json",
         "test": "ts-node ./test/test.ts",
-        "prepare": "rimraf node_modules/react & rimraf node_modules/react-dom & rimraf node_modules/react-router & rimraf node_modules/react-router-dom",
+        "prepare": "rimraf node_modules/react & rimraf node_modules/react-native &  rimraf node_modules/react-dom & rimraf node_modules/react-router & rimraf node_modules/react-router-dom",
         "remove-antd": "rimraf node_modules/antd & rimraf node_modules/antd-mobile & rimraf node_modules/@ant-design & rimraf node_modules/antd-mobile-icons & rimraf node_modules/antd-mobile-v5-count"
     },
     "main": "lib/index",

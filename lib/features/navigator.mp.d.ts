@@ -14,7 +14,7 @@ export declare class Navigator extends CommonNavigator {
     getLocation(): Location;
     getState(): {
         pathname: string;
-        oakFrom: string;
+        oakFrom: string | undefined;
     };
     getPathname(pathname: string, namespace?: string): string;
     private getUrlAndProps;

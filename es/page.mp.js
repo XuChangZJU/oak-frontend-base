@@ -40,9 +40,10 @@ const oakBehavior = Behavior({
         },
         unsubscribeAll() {
             this.featuresSubscribed.forEach((ele) => {
-                assert(ele.unsubHandler);
-                ele.unsubHandler();
-                ele.unsubHandler = undefined;
+                if (ele.unsubHandler) {
+                    ele.unsubHandler();
+                    ele.unsubHandler = undefined;
+                }
             });
         },
         subscribeAll() {
@@ -444,11 +445,11 @@ const oakBehavior = Behavior({
         loadMissedLocales(key) {
             this.features.locales.loadMissedLocale(key);
         },
-        subData(data, callback) {
-            return this.features.subscriber.sub(data, callback);
+        subDataEvents(events) {
+            return this.features.subscriber.sub(events);
         },
-        unSubData(ids) {
-            return this.features.subscriber.unsub(ids);
+        unsubDataEvents(events) {
+            return this.features.subscriber.unsub(events);
         },
     },
     observers: {
@@ -608,13 +609,22 @@ export function createComponent(option, features) {
             async onPullDownRefresh() {
                 if (!this.state.oakLoading &&
                     this.iAmThePage() &&
-                    !this.state.oakDisablePulldownRefresh &&
+                    //!this.state.oakDisablePulldownRefresh &&
                     !this.props.oakDisablePulldownRefresh) {
-                    await (onPullDownRefresh
-                        ? onPullDownRefresh.call(this)
-                        : this.refresh());
+                    try {
+                        await (onPullDownRefresh
+                            ? onPullDownRefresh.call(this)
+                            : this.refresh());
+                        await wx.stopPullDownRefresh();
+                    }
+                    catch (err) {
+                        await wx.stopPullDownRefresh();
+                        throw err;
+                    }
                 }
-                await wx.stopPullDownRefresh();
+                else {
+                    await wx.stopPullDownRefresh();
+                }
             },
             async onReachBottom() {
                 if (!this.state.oakLoadingMore &&
@@ -631,8 +641,8 @@ export function createComponent(option, features) {
         pageLifetimes: {
             show() {
                 const { show } = this.oakOption.lifetimes || {};
-                this.reRender();
                 show && show.call(this);
+                this.reRender();
                 this.subscribeAll();
             },
             hide() {
@@ -705,20 +715,28 @@ export function createComponent(option, features) {
                         }
                         else {
                             assert(typeof ele === 'object');
-                            const { feature, behavior } = ele;
-                            this.addFeatureSub(feature, () => {
-                                switch (behavior) {
-                                    case 'reRender': {
-                                        this.reRender();
-                                        return;
+                            const { feature, behavior, callback } = ele;
+                            if (behavior) {
+                                this.addFeatureSub(feature, () => {
+                                    switch (behavior) {
+                                        case 'reRender': {
+                                            this.reRender();
+                                            return;
+                                        }
+                                        default: {
+                                            assert(behavior === 'refresh');
+                                            this.refresh();
+                                            return;
+                                        }
                                     }
-                                    default: {
-                                        assert(behavior === 'refresh');
-                                        this.refresh();
-                                        return;
-                                    }
-                                }
-                            });
+                                });
+                            }
+                            else if (callback) {
+                                callback.call(this);
+                            }
+                            else {
+                                this.reRender();
+                            }
                         }
                     });
                 }

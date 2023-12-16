@@ -1,4 +1,4 @@
-import { AggregationResult, AuthDeduceRelationMap, EntityDict, SelectOption, TxnOption } from "oak-domain/lib/types";
+import { AggregationResult, AuthDeduceRelationMap, EntityDict, OperationResult, SelectOption, TxnOption } from "oak-domain/lib/types";
 import { TreeStore, TreeStoreOperateOption, TreeStoreSelectOption } from 'oak-memory-tree-store';
 import { StorageSchema, Trigger, Checker } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
@@ -23,8 +23,8 @@ export declare class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt exte
     begin(option?: TxnOption): Promise<string>;
     commit(txnId: string): Promise<void>;
     rollback(txnId: string): Promise<void>;
-    protected cascadeUpdateAsync<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: AsyncContext<ED>, option: OP): Promise<import("oak-domain/lib/types").OperationResult<ED>>;
-    operate<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: Cxt, option: OP): Promise<import("oak-domain/lib/types").OperationResult<ED>>;
+    protected cascadeUpdateAsync<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: AsyncContext<ED>, option: OP): Promise<OperationResult<ED>>;
+    operate<T extends keyof ED, OP extends DebugStoreOperateOption>(entity: T, operation: ED[T]['Operation'], context: Cxt, option: OP): Promise<OperationResult<ED>>;
     select<T extends keyof ED, OP extends DebugStoreSelectOption>(entity: T, selection: ED[T]['Selection'], context: Cxt, option: OP): Promise<Partial<ED[T]["Schema"]>[]>;
     count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]["Selection"], "filter" | "count">, context: Cxt, option: OP): Promise<number>;
     registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>): void;

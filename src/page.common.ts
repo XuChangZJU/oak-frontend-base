@@ -35,7 +35,7 @@ export function onPathSet<
         },
         option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>): Partial<OakComponentData<ED, T>> {
     const { props, state } = this;
-    const { oakPath, oakId } = props as ComponentProps<ED, T, true, {}>;
+    const { oakPath, oakId, oakFilters } = props as ComponentProps<ED, T, {}>;
     const { entity, path, projection, isList, filters, sorters, pagination, getTotal } = option;
     const { features } = this;
 
@@ -46,7 +46,7 @@ export function onPathSet<
         // entity在node生命周期中不可可变，但sorter/filter/projection应当是运行时来决定
         const entity2 = entity instanceof Function ? entity.call(this) : entity;
         const projection2 = typeof projection === 'function' ? () => projection.call(this) : projection;
-        const filters2 = filters?.map(
+        let filters2: NamedFilterItem<ED, T>[] | undefined = filters?.map(
             (ele) => {
                 const { filter, '#name': name } = ele;
                 return {
@@ -55,6 +55,22 @@ export function onPathSet<
                 }
             }
         );
+        if (oakFilters) {
+            if (filters2) {
+                filters2.push(oakFilters.map(
+                    ele => ({
+                        filter: ele
+                    })
+                ));
+            }
+            else {
+                filters2 = oakFilters.map(
+                    ele => ({
+                        filter: ele
+                    })
+                );
+            }
+        }
         const sorters2 = sorters?.map(
             (ele) => {
                 const { sorter, '#name': name } = ele;
@@ -107,6 +123,13 @@ export function onPathSet<
                 if (width !== 'xs') {
                     getTotal2 = getTotal;
                 }
+            }
+        }
+        else {
+            // 不设置的默认情况，宽屏取100窄屏不取
+            const { width } = this.props;
+            if (width !== 'xs') {
+                getTotal2 = 100;
             }
         }
         features.runningTree.createNode({
@@ -399,8 +422,17 @@ function checkActionsAndCascadeEntities<
             useLocalCache: {
                 keys: destEntities as string[],
                 gap: process.env.NODE_ENV === 'development' ? 60 * 1000 : 1200 * 1000,
+                onlyReturnFresh: true,
+            },
+            dontPublish: true,
+        }).then(
+            ({ data }) => {
+                // 这里利用cache的缓存行为，如果没有返回新的actionAuth数据就不用再reRender了
+                if (data.length > 0) {
+                    this.reRender();
+                }
             }
-        });
+        );
     }
 
     return legalActions;

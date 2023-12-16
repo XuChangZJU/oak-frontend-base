@@ -2,13 +2,14 @@ import { scheduleJob } from 'node-schedule';
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 import { DebugStore } from './DebugStore';
 import {
-    Checker, Trigger, StorageSchema, EntityDict, ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, Routine, Timer, AuthDeduceRelationMap
+    Checker, Trigger, StorageSchema, EntityDict, ActionDictOfEntityDict, Watcher, BBWatcher, WBWatcher, Routine, Timer, AuthDeduceRelationMap, FreeTimer, FreeRoutine, OperationResult
 } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
 import { assert } from 'oak-domain/lib/utils/assert';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { generateNewIdAsync } from 'oak-domain/lib/utils/uuid';
+import { ED } from '..';
 
 async function initDataInStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
     store: DebugStore<ED, Cxt>,
@@ -88,6 +89,53 @@ export function clearMaterializedData() {
     }
 }
 
+async function execWatcher<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
+    store: DebugStore<ED, Cxt>,
+    watcher: Watcher<ED, keyof ED, Cxt>,
+    context: Cxt
+    ) {
+    await context.begin();
+    try {
+        if (watcher.hasOwnProperty('actionData')) {
+            const { entity, action, filter, actionData } = <BBWatcher<ED, keyof ED>>watcher;
+            const filter2 = typeof filter === 'function' ? await (filter as Function)() : filter;
+            const data = typeof actionData === 'function' ? await (actionData as Function)() : actionData;        // 这里有个奇怪的编译错误，不理解 by Xc
+            const result = await store.operate(entity, {
+                id: await generateNewIdAsync(),
+                action,
+                data,
+                filter: filter2
+            }, context, {
+                dontCollect: true,
+            });
+            await context.commit();
+            return result;
+        }
+        else {
+            const { entity, projection, fn, filter } = <WBWatcher<ED, keyof ED, Cxt>>watcher;
+            const filter2 = typeof filter === 'function' ? await (filter as Function)() : filter;
+            const projection2 = typeof projection === 'function' ? await (projection as Function)() : projection;
+            const rows = await store.select(entity, {
+                data: projection2 as any,
+                filter: filter2,
+            }, context, {
+                dontCollect: true,
+                blockTrigger: true,
+            });
+
+            let result: OperationResult<ED> = {};
+            if (rows.length > 0) {
+                result = await fn(context, rows);                
+            }
+            await context.commit();
+            return result;
+        }
+    }
+    catch (err) {
+        await context.rollback();
+    }
+}
+
 /**
  * 在debug环境上创建watcher
  * @param store 
@@ -102,45 +150,12 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
         const start = Date.now();
         const context = await contextBuilder()(store);
         for (const w of watchers) {
-            await context.begin();
             try {
-                if (w.hasOwnProperty('actionData')) {
-                    const { entity, action, filter, actionData } = <BBWatcher<ED, keyof ED>>w;
-                    const filter2 = typeof filter === 'function' ? await (filter as Function)() : filter;
-                    const data = typeof actionData === 'function' ? await (actionData as Function)() : actionData;        // 这里有个奇怪的编译错误，不理解 by Xc
-                    const result = await store.operate(entity, {
-                        id: await generateNewIdAsync(),
-                        action,
-                        data,
-                        filter: filter2
-                    }, context, {
-                        dontCollect: true,
-                    });
-
-                    console.log(`执行了watcher【${w.name}】，结果是：`, result);
-                }
-                else {
-                    const { entity, projection, fn, filter } = <WBWatcher<ED, keyof ED, Cxt>>w;
-                    const filter2 = typeof filter === 'function' ? await (filter as Function)() : filter;
-                    const projection2 = typeof projection === 'function' ? await (projection as Function)() : projection;
-                    const rows = await store.select(entity, {
-                        data: projection2 as any,
-                        filter: filter2,
-                    }, context, {
-                        dontCollect: true,
-                        blockTrigger: true,
-                    });
-
-                    if (rows.length > 0) {
-                        const result = await fn(context, rows);
-                        console.log(`执行了watcher【${w.name}】，结果是：`, result);
-                    }
-                }
-                await context.commit();
+                const result = await execWatcher(store, w, context);
+                console.log(`执行了watcher【${w.name}】成功，结果是：`, result);
             }
             catch (err) {
-                await context.rollback();
-                console.error(`执行了watcher【${w.name}】，发生错误：`, err);
+                console.error(`尝试执行watcher【${w.name}】，发生错误：`, err);                
             }
         }
         const duration = Date.now() - start;
@@ -153,7 +168,7 @@ function initializeWatchers<ED extends EntityDict & BaseEntityDict, Cxt extends 
 }
 
 function initializeTimers<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
-    store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>, timers: Array<Timer<ED, Cxt>>
+    store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>, timers: Array<Timer<ED, keyof ED, Cxt>>
 ) {
     if (process.env.OAK_PLATFORM === 'wechatMp') {
         const { platform } = wx.getSystemInfoSync();
@@ -163,41 +178,60 @@ function initializeTimers<ED extends EntityDict & BaseEntityDict, Cxt extends As
         }
     }
     for (const timer of timers) {
-        const { cron, fn, name } = timer;
+        const { cron, name } = timer;
         scheduleJob(name, cron, async (date) => {
             const start = Date.now();
             const context = await contextBuilder()(store);
-            await context.begin();
             console.log(`定时器【${name}】开始执行，时间是【${date.toLocaleTimeString()}】`);
             try {
-                const result = await fn(context);
+                let result = {};
+                if (timer.hasOwnProperty('entity')) {
+                    result = (await execWatcher(store, timer as Watcher<ED, keyof ED, Cxt>, context))!;
+                }
+                else {
+                    const { timer: timerFn } = timer as FreeTimer<ED, Cxt>;
+                    result = await timerFn(context);
+                }
                 console.log(`定时器【${name}】执行完成，耗时${Date.now() - start}毫秒，结果是【${result}】`);
-                await context.commit();
             }
             catch (err) {
                 console.warn(`定时器【${name}】执行失败，耗时${Date.now() - start}毫秒，错误是`, err);
-                await context.rollback();
             }
         })
     }
 }
 
 async function doRoutines<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
-    store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>, routines: Array<Routine<ED, Cxt>>
+    store: DebugStore<ED, Cxt>, contextBuilder: (cxtString?: string) => (store: DebugStore<ED, Cxt>) => Promise<Cxt>, routines: Array<Routine<ED, keyof ED, Cxt>>
 ) {
     for (const routine of routines) {
-        const { name, fn } = routine;
-        const context = await contextBuilder()(store);
-        const start = Date.now();
-        await context.begin();
-        try {
-            const result = await fn(context);
-            console.log(`例程【${name}】执行完成，耗时${Date.now() - start}毫秒，结果是【${result}】`);
-            await context.commit();
+        if (routine.hasOwnProperty('entity')) {
+            const { name } = routine;
+            const context = await contextBuilder()(store);
+            const start = Date.now();
+            try {
+                const result = execWatcher(store, routine as Watcher<ED, keyof ED, Cxt>, context);
+                console.log(`例程【${name}】执行完成，耗时${Date.now() - start}毫秒，结果是`, result);
+            }
+            catch (err) {
+                console.warn(`例程【${name}】执行失败，耗时${Date.now() - start}毫秒，错误是`, err);
+            }
         }
-        catch (err) {
-            console.warn(`例程【${name}】执行失败，耗时${Date.now() - start}毫秒，错误是`, err);
-            await context.rollback();
+        else {
+            const { name, routine: routineFn } = routine as FreeRoutine<ED, Cxt>;
+            const context = await contextBuilder()(store);
+
+            const start = Date.now();
+            await context.begin();
+            try {
+                const result = await routineFn(context);
+                console.log(`例程【${name}】执行完成，耗时${Date.now() - start}毫秒，结果是`, result);
+                await context.commit();
+            }
+            catch (err) {
+                console.warn(`例程【${name}】执行失败，耗时${Date.now() - start}毫秒，错误是`, err);
+                await context.rollback();
+            }
         }
     }
 }
@@ -208,8 +242,8 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
     triggers: Array<Trigger<ED, keyof ED, Cxt>>,
     checkers: Array<Checker<ED, keyof ED, Cxt>>,
     watchers: Array<Watcher<ED, keyof ED, Cxt>>,
-    timers: Array<Timer<ED, Cxt>>,
-    startRoutines: Array<Routine<ED, Cxt>>,
+    timers: Array<Timer<ED, keyof ED, Cxt>>,
+    startRoutines: Array<Routine<ED, keyof ED, Cxt>>,
     initialData: {
         [T in keyof ED]?: Array<ED[T]['OpSchema']>;
     },

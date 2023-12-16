@@ -10,7 +10,7 @@ export declare class Navigator extends Feature {
     urlFormat(url: URL): string;
     constructState(pathname: string, state?: Record<string, any>, search?: string): {
         pathname: string;
-        oakFrom: string;
+        oakFrom: string | undefined;
     };
     constructSearch(search?: string | null, state?: Record<string, any>): string;
     constructUrl(url: string, state?: Record<string, any>, disableNamespace?: boolean): string;

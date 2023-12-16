@@ -334,11 +334,11 @@ class OakComponentBase extends React.PureComponent {
             this.features.runningTree.setCurrentPage(path2, currentPage);
         }
     }
-    subData(data, callback) {
-        return this.features.subscriber.sub(data, callback);
+    subDataEvents(events) {
+        return this.features.subscriber.sub(events);
     }
-    unSubData(ids) {
-        return this.features.subscriber.unsub(ids);
+    unsubDataEvents(events) {
+        return this.features.subscriber.unsub(events);
     }
 }
 function translateListeners(listeners) {
@@ -579,18 +579,26 @@ export function createComponent(option, features) {
                     }
                     else {
                         assert(typeof ele === 'object');
-                        const { feature, behavior } = ele;
+                        const { feature, behavior, callback } = ele;
                         this.addFeatureSub(feature, () => {
-                            switch (behavior) {
-                                case 'reRender': {
-                                    this.reRender();
-                                    return;
+                            if (behavior) {
+                                switch (behavior) {
+                                    case 'reRender': {
+                                        this.reRender();
+                                        return;
+                                    }
+                                    default: {
+                                        assert(behavior === 'refresh');
+                                        this.refresh();
+                                        return;
+                                    }
                                 }
-                                default: {
-                                    assert(behavior === 'refresh');
-                                    this.refresh();
-                                    return;
-                                }
+                            }
+                            else if (callback) {
+                                callback.call(this);
+                            }
+                            else {
+                                this.reRender();
                             }
                         });
                     }

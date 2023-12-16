@@ -9,8 +9,10 @@ export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDi
     private be?: BriefEnv;
     private ns?: {
         pathname: string;
-        oakFrom: string;
+        oakFrom?: string;
     }
+    // 本map中记录了要求推送event到客户端的operaion
+    eventOperationMap: Record<string, string[]> = {};
 
     getNavigatorState() {
         return this.ns;
@@ -41,6 +43,20 @@ export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDi
         }
         if (data?.ns) {
             this.ns = data.ns;
+        }
+    }
+
+    /**
+     * 未来可以支持在event中带id的占位符，到saveOpRecord时再动态注入 by Xc
+     * @param operationId 
+     * @param event 
+     */
+    saveOperationToEvent(operationId: string, event: string) {
+        if (this.eventOperationMap[event]) {
+            this.eventOperationMap[event].push(operationId);
+        }
+        else {
+            this.eventOperationMap[event] = [operationId];
         }
     }
 }

@@ -104,13 +104,21 @@ export type RowWithActions<
     };
 
 type FeatureDef<
+    IsList extends boolean,
     ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends Record<string, Aspect<ED, Cxt>>,
-    FD extends Record<string, Feature>> = (keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>)) | {
+    FD extends Record<string, Feature>,    
+    FormedData extends Record<string, any>,
+    TData extends DataOption,
+    TProperty extends DataOption,
+    TMethod extends Record<string, Function>,
+    EMethod extends Record<string, Function> = {},> = (keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>)) | {
         feature: keyof (FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>);
-        behavior: 'reRender' | 'refresh';
+        behavior?: 'reRender' | 'refresh';
+        callback?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => void;
     };
 
 interface ComponentOption<
@@ -134,7 +142,7 @@ interface ComponentOption<
     } | number;
     entity?: T | ((this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => T);
     path?: string;
-    features?: FeatureDef<ED, Cxt, FrontCxt, AD, FD>[];
+    features?: FeatureDef<IsList, ED, T, Cxt, FrontCxt, AD, FD, FormedData, TData, TProperty, TMethod, EMethod>[];
     cascadeActions?: (this: ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>) => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     },
@@ -185,15 +193,14 @@ export type MiniprogramStyleMethods = {
 export type ComponentProps<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    IsList extends boolean, TProperty extends DataOption> = IsList extends true ?
-    OakListComponentProperties<ED, T> & OakComponentProperties<ED, T> & Partial<TProperty> :
-    OakComponentProperties<ED, T> & Partial<TProperty>;
+    TProperty extends DataOption> = OakComponentProperties<ED, T> & Partial<TProperty>;
 
 // 为react声明当组件所用的，增加了className等常用项
 export type ReactComponentProps<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
-    IsList extends boolean, TProperty extends DataOption> = ComponentProps<ED, T, IsList, TProperty> & {
+    IsList extends boolean, 
+    TProperty extends DataOption> = ComponentProps<ED, T, TProperty> & {
         className?: string;
         style?: Record<string, any>;
     };
@@ -221,7 +228,7 @@ export type ComponentPublicThisType<
     > = {        
         features: FD & BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
         state: ComponentData<ED, T, FormedData, TData>;
-        props: Readonly<ComponentProps<ED, T, IsList, TProperty>>;
+        props: Readonly<ComponentProps<ED, T, TProperty>>;
         setState: (
             data: Partial<ComponentData<ED, T, FormedData, TData>>,
             callback?: () => void,
@@ -242,7 +249,7 @@ export type ComponentFullThisType<
     > = {
         features: BasicFeatures<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt>>;
         state: OakComponentData<ED, T>;
-        props: ComponentProps<ED, T, IsList, {}>;
+        props: ComponentProps<ED, T, {}>;
         setState: (
             data: Partial<OakComponentData<ED, T>>,
             callback?: () => void,
@@ -292,10 +299,10 @@ export type OakComponentOption<
     }> & ThisType<ComponentPublicThisType<ED, T, Cxt, FrontCxt, AD, FD, FormedData, IsList, TData, TProperty, TMethod, EMethod>>;
 
 
-export type OakComponentProperties<
+type OakComponentProperties<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED> = Partial<{
-        width?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';     // 判断屏幕宽度，暂时只能放在这儿  by Xc
+        width: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';     // 判断屏幕宽度，暂时只能放在这儿  by Xc
         oakPath: string;
         oakId: string;
         oakFrom: string;
@@ -304,6 +311,7 @@ export type OakComponentProperties<
         oakAutoUnmount: boolean;
         oakActions: string;
         oakCascadeActions: string;
+        oakFilters: Array<ED[T]['Selection']['filter']>;
     }>;
 
 export type OakListComponentProperties<
@@ -390,8 +398,8 @@ export type OakCommonComponentMethods<
         aggregate: (
             aggregation: ED[T]['Aggregation']
         ) => Promise<AggregationResult<ED[T]['Schema']>>;
-        subData: (data: SubDataDef<ED, keyof ED>[], callback?: (records: OpRecord<ED>[], ids: string[]) => void) => Promise<void>;
-        unSubData: (ids: string[]) => Promise<void>;
+        subDataEvents: (events: string[]) => Promise<void>;
+        unsubDataEvents: (events: string[]) => Promise<void>;
     };
 
 export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {

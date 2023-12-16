@@ -1,6 +1,6 @@
 import React from 'react';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { Aspect, CheckerType, EntityDict, OpRecord, SubDataDef } from 'oak-domain/lib/types';
+import { Aspect, CheckerType, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
@@ -11,7 +11,7 @@ import { NotificationProps } from './types/Notification';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 export declare function createComponent<IsList extends boolean, ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>, FormedData extends Record<string, any>, TData extends Record<string, any> = {}, TProperty extends DataOption = {}, TMethod extends Record<string, Function> = {}>(option: OakComponentOption<IsList, ED, T, Cxt, FrontCxt, AD, FD, FormedData, TData, TProperty, TMethod>, features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD): {
-    new (props: ComponentProps<ED, T, IsList, TProperty>): {
+    new (props: ComponentProps<ED, T, TProperty>): {
         features: BasicFeatures<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>> & FD;
         oakOption: OakComponentOption<IsList, ED, T, Cxt, FrontCxt, AD, FD, FormedData, TData, TProperty, TMethod>;
         isReachBottom: boolean;
@@ -94,25 +94,25 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         getPagination(path?: string | undefined): import(".").Pagination | undefined;
         setPageSize(pageSize: number, path?: string | undefined): void;
         setCurrentPage(currentPage: number, path?: string | undefined): void;
-        subData(data: SubDataDef<ED, keyof ED>[], callback?: ((records: OpRecord<ED>[], ids: string[]) => void) | undefined): Promise<void>;
-        unSubData(ids: string[]): Promise<void>;
+        subDataEvents(events: string[]): Promise<void>;
+        unsubDataEvents(events: string[]): Promise<void>;
         context: unknown;
-        setState<K extends keyof TData | keyof FormedData | keyof import("./types/Page").OakComponentData<ED, T>>(state: ComponentData<ED, T, FormedData, TData> | ((prevState: Readonly<ComponentData<ED, T, FormedData, TData>>, props: Readonly<ComponentProps<ED, T, IsList, TProperty>>) => ComponentData<ED, T, FormedData, TData> | Pick<ComponentData<ED, T, FormedData, TData>, K> | null) | Pick<ComponentData<ED, T, FormedData, TData>, K> | null, callback?: (() => void) | undefined): void;
+        setState<K extends keyof TData | keyof FormedData | keyof import("./types/Page").OakComponentData<ED, T>>(state: ComponentData<ED, T, FormedData, TData> | ((prevState: Readonly<ComponentData<ED, T, FormedData, TData>>, props: Readonly<ComponentProps<ED, T, TProperty>>) => ComponentData<ED, T, FormedData, TData> | Pick<ComponentData<ED, T, FormedData, TData>, K> | null) | Pick<ComponentData<ED, T, FormedData, TData>, K> | null, callback?: (() => void) | undefined): void;
         forceUpdate(callback?: (() => void) | undefined): void;
-        readonly props: Readonly<ComponentProps<ED, T, IsList, TProperty>>;
+        readonly props: Readonly<ComponentProps<ED, T, TProperty>>;
         state: Readonly<ComponentData<ED, T, FormedData, TData>>;
         refs: {
             [key: string]: React.ReactInstance;
         };
-        shouldComponentUpdate?(nextProps: Readonly<ComponentProps<ED, T, IsList, TProperty>>, nextState: Readonly<ComponentData<ED, T, FormedData, TData>>, nextContext: any): boolean;
+        shouldComponentUpdate?(nextProps: Readonly<ComponentProps<ED, T, TProperty>>, nextState: Readonly<ComponentData<ED, T, FormedData, TData>>, nextContext: any): boolean;
         componentDidCatch?(error: Error, errorInfo: React.ErrorInfo): void;
-        getSnapshotBeforeUpdate?(prevProps: Readonly<ComponentProps<ED, T, IsList, TProperty>>, prevState: Readonly<ComponentData<ED, T, FormedData, TData>>): any;
+        getSnapshotBeforeUpdate?(prevProps: Readonly<ComponentProps<ED, T, TProperty>>, prevState: Readonly<ComponentData<ED, T, FormedData, TData>>): any;
         componentWillMount?(): void;
         UNSAFE_componentWillMount?(): void;
-        componentWillReceiveProps?(nextProps: Readonly<ComponentProps<ED, T, IsList, TProperty>>, nextContext: any): void;
-        UNSAFE_componentWillReceiveProps?(nextProps: Readonly<ComponentProps<ED, T, IsList, TProperty>>, nextContext: any): void;
-        componentWillUpdate?(nextProps: Readonly<ComponentProps<ED, T, IsList, TProperty>>, nextState: Readonly<ComponentData<ED, T, FormedData, TData>>, nextContext: any): void;
-        UNSAFE_componentWillUpdate?(nextProps: Readonly<ComponentProps<ED, T, IsList, TProperty>>, nextState: Readonly<ComponentData<ED, T, FormedData, TData>>, nextContext: any): void;
+        componentWillReceiveProps?(nextProps: Readonly<ComponentProps<ED, T, TProperty>>, nextContext: any): void;
+        UNSAFE_componentWillReceiveProps?(nextProps: Readonly<ComponentProps<ED, T, TProperty>>, nextContext: any): void;
+        componentWillUpdate?(nextProps: Readonly<ComponentProps<ED, T, TProperty>>, nextState: Readonly<ComponentData<ED, T, FormedData, TData>>, nextContext: any): void;
+        UNSAFE_componentWillUpdate?(nextProps: Readonly<ComponentProps<ED, T, TProperty>>, nextState: Readonly<ComponentData<ED, T, FormedData, TData>>, nextContext: any): void;
     };
     contextType?: React.Context<any> | undefined;
 };
