@@ -1,8 +1,8 @@
 /// <reference types="react" />
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { ButtonProps } from 'antd';
 export type RenderWidth = 1 | 2 | 3 | 4;
-export type ButtonType = 'link' | 'default' | 'text' | 'primary' | 'dashed' | 'danger';
 export type OakActionBtnProps = {
     label: string;
     action: string;
@@ -130,7 +130,7 @@ export type onActionFnDef = (row: any, action: string, cascadeAction?: CascadeAc
 export type ListButtonProps = {
     label: string;
     show?: boolean;
-    type?: ButtonType;
+    type?: ButtonProps['type'];
     icon?: React.ReactNode;
     onClick: () => void;
 };
