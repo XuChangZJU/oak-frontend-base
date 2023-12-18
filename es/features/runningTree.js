@@ -1696,7 +1696,7 @@ export class RunningTree extends Feature {
         // 切换分页pageSize就重新设置
         return node.setPagination({
             pageSize,
-            currentPage: 1,
+            currentPage: 0,
             more: true,
         });
     }
