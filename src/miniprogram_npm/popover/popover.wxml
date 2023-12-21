@@ -1,6 +1,3 @@
-<view
-  wx:if='{{visible}}'
-  class='popover-view {{vertical}} {{align}}'
-  style='width:{{pw}}px;height:{{ph}}px;left:{{px}}px;top:{{py}}px;'>
-  <slot />
+<view wx:if='{{visible}}' class='popover-view {{vertical}} {{align}}' style='width:{{pw}}px;height:{{ph}}px;left:{{px}}px;top:{{py}}px;'>
+    <slot />
 </view>

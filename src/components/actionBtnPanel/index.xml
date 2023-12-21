@@ -4,7 +4,7 @@
             <view id='more' class="more" catchtap="handleMoreClick">
                 更多
             </view>
-            <popover id='popover'>
+            <popover id='popover' class="morePopover" fixed="{{fixed}}">
                 <block wx:for="{{ moreItems }}" wx:key="index">
                     <popover-item hasline catchtap='handleClick' data-type="popover" data-item="{{ item }}">{{ item.text }}</popover-item>
                 </block>
@@ -15,7 +15,7 @@
         <view class="btn-container">
 
             <block wx:for="{{ newItems }}" wx:key="index">
-                <l-button plain="{{true}}" shape="{{ item.buttonProps.shape || 'square'  }}" catchtap="handleClick" data-item="{{ item }}">
+                <l-button plain="{{true}}" shape="{{ item.buttonProps.shape || 'square'  }}" catchtap="handleClick" data-item="{{ item }}" type="{{item.color}}">
       {{item.text}}
                 </l-button>
             </block>
