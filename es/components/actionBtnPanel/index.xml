@@ -15,7 +15,7 @@
         <view class="btn-container">
 
             <block wx:for="{{ newItems }}" wx:key="index">
-                <l-button plain="{{true}}" shape="{{ item.buttonProps.shape || 'square'  }}" catchtap="handleClick" data-item="{{ item }}" type="{{item.color}}">
+                <l-button plain="{{item.plain}}" shape="{{ item.buttonProps.shape || 'square'  }}" catchtap="handleClick" data-item="{{ item }}" type="{{item.color || 'default'}}">
       {{item.text}}
                 </l-button>
             </block>

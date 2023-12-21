@@ -15,5 +15,5 @@ export type Item = {
     onClick?: (item: Item) => void | Promise<void>;
     buttonProps?: Omit<ButtonProps, 'onClick'>;
     show?: boolean;
-    fixed?: boolean;
+    plain?: boolean;
 };
