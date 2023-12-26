@@ -81,10 +81,7 @@ const withRouter = (Component: React.ComponentType<any>, { path, properties }: {
         const route = props.route;
 
         const { params: routeParams } = route || {};
-        const { forwardedRef, ...rest } = props;
-
         let params = {};
-
         /**
          * 由path来判定是否为Page。这里有个隐患，未来实现了keepAlive后，可能会影响到之前压栈的Page
          * 待测试。by Xc 20231102
@@ -93,16 +90,9 @@ const withRouter = (Component: React.ComponentType<any>, { path, properties }: {
             params = Object.assign(params, getParams(routeParams, properties));
         }
 
-        return (
-            <Component
-                {...rest}
-                {...params}
-                width="xs"
-                ref={forwardedRef}
-            />
-        );
+        return <Component {...props} {...params} width="xs" />;
     };
-    return React.forwardRef((props, ref) => <ComponentWithRouterProp {...props} forwardedRef={ref} />);
+    return ComponentWithRouterProp;
 };
 
 export default withRouter;

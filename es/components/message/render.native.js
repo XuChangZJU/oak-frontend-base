@@ -48,7 +48,6 @@ export default function Render(props) {
                 type: type,
                 placement: placement,
                 duration: data.duration || 4000,
-                animationType: 'zoom-in',
             });
         }
     }, [data]);
