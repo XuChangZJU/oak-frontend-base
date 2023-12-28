@@ -944,21 +944,30 @@ export function createComponent<
                 if (
                     !this.state.oakLoading &&
                     this.iAmThePage() &&
-                    //!this.state.oakDisablePulldownRefresh &&
-                    !this.props.oakDisablePulldownRefresh
+                    !this.props.oakDisablePulldownRefresh &&
+                    !this.state.oakPullDownRefreshLoading
                 ) {
                     try {
-                        await (onPullDownRefresh
-                        ? onPullDownRefresh.call(this)
-                        : this.refresh());
+                        this.setState({
+                            oakPullDownRefreshLoading: true as any,
+                        });
+                        await(
+                            onPullDownRefresh
+                                ? onPullDownRefresh.call(this)
+                                : this.refresh()
+                        );
+                        this.setState({
+                            oakPullDownRefreshLoading: false as any,
+                        });
                         await wx.stopPullDownRefresh();
-                    }
-                    catch(err) {
+                    } catch (err) {
+                        this.setState({
+                            oakPullDownRefreshLoading: false as any,
+                        });
                         await wx.stopPullDownRefresh();
                         throw err;
                     }
-                }
-                else {
+                } else {
                     await wx.stopPullDownRefresh();
                 }
             },

@@ -5,6 +5,7 @@ export default OakComponent({
         items: [],
         mode: 'cell',
         column: 3,
+        fixed: false,
     },
     data: {
         commonAction: [

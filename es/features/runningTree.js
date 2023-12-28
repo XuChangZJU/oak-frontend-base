@@ -1080,6 +1080,9 @@ class SingleNode extends Node {
                         [value.entityId]: this.sr[k] || {},
                     });
                 }
+                else if (value && value.entityId === undefined && process.env.NODE_ENV === 'development') {
+                    console.warn(`singleNode 的子路径「${k}」上没有找到相应的entityId值，可能是取数据不全，请检查`);
+                }
             }
             else if (typeof rel === 'string') {
                 if (value && value[`${k}Id`]) {
@@ -1088,6 +1091,9 @@ class SingleNode extends Node {
                     child.saveRefreshResult({
                         [value[`${k}Id`]]: this.sr[k] || {},
                     });
+                }
+                else if (value && value[`${k}Id`] === undefined && process.env.NODE_ENV === 'development') {
+                    console.warn(`singleNode 的子路径「${k}」上没有找到相应的${k}Id值，可能是取数据不全，请检查`);
                 }
             }
             else {
@@ -1696,7 +1702,7 @@ export class RunningTree extends Feature {
         // 切换分页pageSize就重新设置
         return node.setPagination({
             pageSize,
-            currentPage: 1,
+            currentPage: 0,
             more: true,
         });
     }

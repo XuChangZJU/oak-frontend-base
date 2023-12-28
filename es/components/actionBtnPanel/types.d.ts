@@ -4,6 +4,7 @@ export type Item = {
     icon?: string | React.ReactNode;
     label?: string;
     action?: string;
+    color?: 'warning' | 'success' | 'error' | 'default';
     type?: 'a' | 'button';
     alerted?: boolean;
     alertTitle?: string;
@@ -14,4 +15,5 @@ export type Item = {
     onClick?: (item: Item) => void | Promise<void>;
     buttonProps?: Omit<ButtonProps, 'onClick'>;
     show?: boolean;
+    plain?: boolean;
 };

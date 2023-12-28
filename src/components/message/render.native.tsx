@@ -54,7 +54,6 @@ export default function Render(props: { data: { data: MessageProps } }) {
                 type: type,
                 placement: placement,
                 duration: data.duration || 4000,
-                animationType: 'zoom-in',
             });
         }
     }, [data]);

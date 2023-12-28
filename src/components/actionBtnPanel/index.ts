@@ -8,6 +8,7 @@ export default OakComponent({
         items: [] as Item[],
         mode: 'cell' as 'cell' | 'table-cell',
         column: 3,
+        fixed: false,
     },
     data: {
         commonAction: [

@@ -456,11 +456,8 @@ export function reRender<
         );
 
         const oakDirty = this.features.runningTree.isDirty(this.state.oakFullpath);
-        /**
-         * 这里的pullDownRefresh处理的应该有问题，先不动。to wangkejun.  By Xc 20230201
-         */
-        const oakLoading = this.features.runningTree.isLoading(this.state.oakFullpath);
         const oakLoadingMore = this.features.runningTree.isLoadingMore(this.state.oakFullpath);
+        const oakLoading = !oakLoadingMore && this.features.runningTree.isLoading(this.state.oakFullpath);
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
         const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
 

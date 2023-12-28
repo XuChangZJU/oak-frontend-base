@@ -119,13 +119,20 @@ export function createComponent<
                 return (
                     <PullToRefresh
                         onRefresh={async () => {
-                            this.setState({
-                                oakPullDownRefreshLoading: true as any,
-                            });
-                            await this.refresh();
-                            this.setState({
-                                oakPullDownRefreshLoading: false as any,
-                            });
+                            try {
+                                 this.setState({
+                                     oakPullDownRefreshLoading: true as any,
+                                 });
+                                await this.refresh();
+                                this.setState({
+                                    oakPullDownRefreshLoading: false as any,
+                                });
+                            } catch (err) {
+                                this.setState({
+                                    oakPullDownRefreshLoading: false as any,
+                                });
+                                throw err;
+                            }
                         }}
                         refreshing={oakPullDownRefreshLoading}
                         distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE}

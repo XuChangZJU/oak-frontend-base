@@ -27,6 +27,10 @@ Component({
         align: '',
     },
 
+    properties: {
+        fixed: false,
+    },
+
     methods: {
         onDisplay: function (e) {
             let self = this;
@@ -39,7 +43,7 @@ Component({
                 wx.createSelectorQuery()
                     .selectViewport()
                     .scrollOffset((view) => {
-                        let { pw, ph, px, py, vertical, align } = self.data;
+                        let { pw, ph, px, py, vertical, align, fixed } = self.data;
 
                         ph = self.getItemsHeight();
 
@@ -68,7 +72,7 @@ Component({
                             py = view.scrollTop + e.bottom + trangleHeight;
                         } else {
                             vertical = 'top';
-                            py = view.scrollTop + e.top - ph - trangleHeight;
+                            py = fixed ? (- ph) : (view.scrollTop + e.top - ph - trangleHeight);
                         }
                         self.setData({
                             visible: true,
@@ -77,6 +81,7 @@ Component({
                             ph: ph,
                             vertical: vertical,
                             align: align,
+                            fixed: fixed,
                         });
                     })
                     .exec();

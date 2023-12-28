@@ -5,5 +5,6 @@ declare const _default: (props: import("../..").ReactComponentProps<import("oak-
     items: Item[];
     mode: "cell" | "table-cell";
     column: number;
+    fixed: boolean;
 }>) => import("react").ReactElement<any, string | import("react").JSXElementConstructor<any>>;
 export default _default;

@@ -61,13 +61,21 @@ export function createComponent(option, features) {
             const Render = super.render();
             if (this.supportPullDownRefresh()) {
                 return (<PullToRefresh onRefresh={async () => {
-                        this.setState({
-                            oakPullDownRefreshLoading: true,
-                        });
-                        await this.refresh();
-                        this.setState({
-                            oakPullDownRefreshLoading: false,
-                        });
+                        try {
+                            this.setState({
+                                oakPullDownRefreshLoading: true,
+                            });
+                            await this.refresh();
+                            this.setState({
+                                oakPullDownRefreshLoading: false,
+                            });
+                        }
+                        catch (err) {
+                            this.setState({
+                                oakPullDownRefreshLoading: false,
+                            });
+                            throw err;
+                        }
                     }} refreshing={oakPullDownRefreshLoading} distanceToRefresh={DEFAULT_REACH_BOTTOM_DISTANCE} indicator={{
                         activate: this.t('common::ptrActivate', {
                             '#oakModule': 'oak-frontend-base',
