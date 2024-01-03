@@ -70,7 +70,7 @@ const withRouter = (Component, { path, properties }) => {
         if (path) {
             params = Object.assign(params, getParams(routeParams, properties));
         }
-        return <Component {...props} {...params} width="xs" />;
+        return <Component {...props} {...params} width="xs"/>;
     };
     return ComponentWithRouterProp;
 };

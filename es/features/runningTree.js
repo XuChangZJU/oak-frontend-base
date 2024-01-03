@@ -654,6 +654,15 @@ class ListNode extends Node {
         }
         else {
             this.sr = data || {};
+            // 如果有addItem，在这里不能丢。by Xc;
+            if (this.updates) {
+                for (const k in this.updates) {
+                    if (this.updates[k].action === 'create') {
+                        const { id } = this.updates[k].data;
+                        this.sr[id] = {};
+                    }
+                }
+            }
         }
         for (const k in this.children) {
             const child = this.children[k];
