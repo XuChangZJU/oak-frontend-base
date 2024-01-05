@@ -61,4 +61,9 @@ export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDi
             this.eventOperationMap[event] = [operationId];
         }
     }
+
+    async commit(): Promise<void> {
+        this.eventOperationMap = {};
+        return super.commit();
+    }
 }

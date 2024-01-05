@@ -47,4 +47,8 @@ export class BackendRuntimeContext extends AsyncContext {
             this.eventOperationMap[event] = [operationId];
         }
     }
+    async commit() {
+        this.eventOperationMap = {};
+        return super.commit();
+    }
 }
