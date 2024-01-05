@@ -51,4 +51,8 @@ export class BackendRuntimeContext extends AsyncContext {
         this.eventOperationMap = {};
         return super.commit();
     }
+    async rollback() {
+        this.eventOperationMap = {};
+        return super.rollback();
+    }
 }

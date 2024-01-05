@@ -23,4 +23,5 @@ export declare abstract class BackendRuntimeContext<ED extends EntityDict & Base
      */
     saveOperationToEvent(operationId: string, event: string): void;
     commit(): Promise<void>;
+    rollback(): Promise<void>;
 }

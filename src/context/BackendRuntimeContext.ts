@@ -66,4 +66,9 @@ export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDi
         this.eventOperationMap = {};
         return super.commit();
     }
+
+    async rollback(): Promise<void> {
+        this.eventOperationMap = {};
+        return super.rollback();
+    }
 }
