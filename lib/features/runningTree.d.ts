@@ -191,6 +191,7 @@ declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends As
     setDirty(): void;
     setFiltersAndSortedApplied(): void;
     addChild(path: string, child: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>): void;
+    removeChild(path: string): void;
     getChild(path: string): VirtualNode<ED, Cxt, FrontCxt, AD> | SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     getParent(): undefined;
     destroy(): void;

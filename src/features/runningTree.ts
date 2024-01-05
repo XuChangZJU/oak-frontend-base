@@ -1544,6 +1544,9 @@ class VirtualNode<
             }
         }
     }
+    removeChild(path: string) {
+        unset(this.children, path);
+    }
     getChild(path: string) {
         return this.children[path];
     }
@@ -1883,7 +1886,7 @@ export class RunningTree<
         if (node) {
             const childPath = path.slice(path.lastIndexOf('.') + 1);
             const parent = node.getParent();
-            if (parent instanceof SingleNode) {
+            if (parent) {
                 parent.removeChild(childPath);
             } else if (!parent) {
                 assert(this.root.hasOwnProperty(path));

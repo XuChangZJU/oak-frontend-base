@@ -1301,6 +1301,9 @@ class VirtualNode extends Feature {
             }
         }
     }
+    removeChild(path) {
+        unset(this.children, path);
+    }
     getChild(path) {
         return this.children[path];
     }
@@ -1543,7 +1546,7 @@ export class RunningTree extends Feature {
         if (node) {
             const childPath = path.slice(path.lastIndexOf('.') + 1);
             const parent = node.getParent();
-            if (parent instanceof SingleNode) {
+            if (parent) {
                 parent.removeChild(childPath);
             }
             else if (!parent) {
