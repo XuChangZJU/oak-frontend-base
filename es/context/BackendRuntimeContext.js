@@ -1,4 +1,5 @@
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
+import assert from 'assert';
 export class BackendRuntimeContext extends AsyncContext {
     subscriberId;
     be;
@@ -39,6 +40,7 @@ export class BackendRuntimeContext extends AsyncContext {
      */
     saveOperationToEvent(operationId, event) {
         if (this.eventOperationMap[event]) {
+            assert(!this.eventOperationMap[event].includes(operationId)); // 一个operation不可能被save两次
             this.eventOperationMap[event].push(operationId);
         }
         else {

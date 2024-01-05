@@ -3,6 +3,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/types/Entity';
 import { AsyncContext, AsyncRowStore } from 'oak-domain/lib/store/AsyncRowStore';
 import { SerializedData } from './FrontendRuntimeContext';
 import { BriefEnv } from 'oak-domain/lib/types/Environment';
+import assert from 'assert';
 
 export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDict> extends AsyncContext<ED> {
     private subscriberId?: string;
@@ -53,6 +54,7 @@ export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDi
      */
     saveOperationToEvent(operationId: string, event: string) {
         if (this.eventOperationMap[event]) {
+            assert(!this.eventOperationMap[event].includes(operationId));       // 一个operation不可能被save两次
             this.eventOperationMap[event].push(operationId);
         }
         else {

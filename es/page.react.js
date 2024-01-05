@@ -22,7 +22,7 @@ class OakComponentBase extends React.PureComponent {
             if (ele.unsubHandler) {
                 ele.unsubHandler();
                 ele.unsubHandler = undefined;
-            } 
+            }
         });
     }
     subscribeAll() {
