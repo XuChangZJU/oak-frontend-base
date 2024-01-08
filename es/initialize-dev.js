@@ -37,10 +37,14 @@ export function initialize(storageSchema, frontendContextBuilder, backendContext
             const contextBackend = await backendContextBuilder(str)(debugStore);
             await contextBackend.begin();
             let result;
+            let { opRecords } = contextBackend;
+            let message;
             try {
                 result = await aspectDict2[name](cloneDeep(params), contextBackend);
-                await contextBackend.commit();
                 await contextBackend.refineOpRecords();
+                opRecords = contextBackend.opRecords;
+                message = contextBackend.getMessage();
+                await contextBackend.commit();
             }
             catch (err) {
                 await contextBackend.rollback();
@@ -48,8 +52,8 @@ export function initialize(storageSchema, frontendContextBuilder, backendContext
             }
             return {
                 result,
-                opRecords: contextBackend.opRecords,
-                message: contextBackend.getMessage(),
+                opRecords: opRecords,
+                message,
             };
         },
     };

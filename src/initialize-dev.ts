@@ -98,18 +98,22 @@ export function initialize<
             const contextBackend = await backendContextBuilder(str)(debugStore);
             await contextBackend.begin();
             let result;
+            let { opRecords } = contextBackend;
+            let message: string | undefined;
             try {
                 result = await aspectDict2[name](cloneDeep(params), contextBackend);
-                await contextBackend.commit();
                 await contextBackend.refineOpRecords();
+                opRecords = contextBackend.opRecords; 
+                message = contextBackend.getMessage();
+                await contextBackend.commit();
             } catch (err) {
                 await contextBackend.rollback();
                 throw err;
             }
             return {
                 result,
-                opRecords: contextBackend.opRecords,
-                message: contextBackend.getMessage(),
+                opRecords: opRecords,
+                message,
             };
         },
     };
