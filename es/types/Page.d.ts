@@ -126,7 +126,7 @@ type OakComponentProperties<ED extends EntityDict & BaseEntityDict, T extends ke
     oakActions: string;
     oakCascadeActions: string;
     oakFilters: Array<ED[T]['Selection']['filter']>;
-}>;
+} & React.RefAttributes<HTMLElement>>;
 export type OakListComponentProperties<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<{}>;
 export type OakNavigateToParameters<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
     oakId?: string;
