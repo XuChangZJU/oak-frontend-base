@@ -13,7 +13,7 @@ export default function Render(props) {
     const { t, getNamedFilter, setFilterAndResetFilter, } = props.methods;
     const name = getFilterName(column);
     const filter = getNamedFilter(name);
-    const { op, attr, placeholder, label: _label } = column;
+    const { op, attr, placeholder, label: _label, value } = column;
     // ready中根据attrType判断得到的viewType,不存在viewType直接返回null
     if (!viewType) {
         return null;
@@ -54,7 +54,7 @@ export default function Render(props) {
                 value: ele.value,
             }));
             const multiple = ['$in', '$nin'].includes(op || '');
-            V = (<Select mode={multiple ? 'multiple' : undefined} allowClear placeholder={placeholder || t('placeholder.select')} onChange={(value) => {
+            V = (<Select mode={multiple ? 'multiple' : undefined} allowClear placeholder={placeholder || t('placeholder.select')} value={value} onChange={(value) => {
                     let value2 = multiple ? value : [value];
                     if (value === undefined || value === null) {
                         value2 = [];
