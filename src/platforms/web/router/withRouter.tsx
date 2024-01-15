@@ -72,7 +72,15 @@ function getProps(search?: Location['search'], properties?: Record<string, any>)
     return props;
 }
 
-const withRouter = (Component: React.ComponentType<any>, { path, properties }: { path?: string, properties?: Record<string, any> }) => {
+type OakComponentProperties = {
+    path?: string;
+    properties?: Record<string, any>;
+};
+
+const withRouter = (
+    Component: React.ComponentType<any>,
+    { path, properties }: OakComponentProperties
+) => {
     const ComponentWithRouterProp = (props: any) => {
         const location = useLocation();
         const routerParams = useParams(); // 取路由 xx/:abbr 通过这个函数取到
@@ -105,7 +113,9 @@ const withRouter = (Component: React.ComponentType<any>, { path, properties }: {
             />
         );
     };
-    return React.forwardRef((props, ref) => <ComponentWithRouterProp {...props} forwardedRef={ref} />);
+    return React.forwardRef((props, ref) => (
+        <ComponentWithRouterProp {...props} forwardedRef={ref} />
+    ));
 };
 
 export default withRouter;

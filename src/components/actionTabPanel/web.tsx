@@ -10,8 +10,6 @@ import OakIcon from '../icon';
 import classNames from 'classnames';
 import Style from './web.module.less';
 import { IMode, Item } from './type';
-const { confirm } = Modal;
-
 
 function ItemComponent(
     props: Item & {
@@ -183,7 +181,10 @@ export default function Render(
                     <div className={Style.tabView}>
                         {tabNums.map((tabNum, index) => {
                             return (
-                                <div className={Style.btnContainer}>
+                                <div
+                                    key={`tab${index}`}
+                                    className={Style.btnContainer}
+                                >
                                     {newItems
                                         .filter(
                                             (btn, index2) =>
@@ -199,24 +200,21 @@ export default function Render(
                                             } else {
                                                 text = getActionName(action);
                                             }
-                                            let onClick = async () => {
+                                            let onClick2 = async () => {
                                                 if (ele.onClick) {
                                                     ele.onClick(ele);
                                                     return;
                                                 }
                                             };
                                             if (ele.alerted) {
-                                                onClick = async () => {
+                                                onClick2 = async () => {
                                                     const {
                                                         title,
                                                         content,
                                                         okText,
                                                         cancelText,
-                                                    } =
-                                                        getAlertOptions(
-                                                            ele
-                                                        );
-                                                    confirm({
+                                                    } = getAlertOptions(ele);
+                                                    Modal.confirm({
                                                         title,
                                                         content,
                                                         okText,
@@ -257,7 +255,7 @@ export default function Render(
                                                 >
                                                     <ItemComponent
                                                         {...ele}
-                                                        onClick={onClick}
+                                                        onClick={onClick2}
                                                         mode={mode}
                                                         text={text}
                                                     />
