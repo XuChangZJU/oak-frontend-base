@@ -27,7 +27,7 @@ export default function Render(
         {
             width: 'xl' | 'lg' | 'md' | 'sm' | 'xs';
             loading: boolean;
-            extraActions: OakExtraActionProps[];
+            extraActions: OakExtraActionProps[] | ((row: any) => OakExtraActionProps[]);
             entity: string;
             schema: StorageSchema<EntityDict & BaseEntityDict>;
             attributes: OakAbsAttrDef[],
@@ -132,10 +132,17 @@ export default function Render(
                     render: (value: any, row: any) => {
                         const oakActions = row?.['#oakLegalActions'] as string[];
                         // assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
+                        let extraActions2: OakExtraActionProps[];
+                        if (typeof extraActions === 'function') {
+                            extraActions2 =  extraActions(row);
+                        }
+                        else {
+                            extraActions2 = extraActions;
+                        }
                         return (
                             <ActionBtn
                                 entity={entity}
-                                extraActions={extraActions}
+                                extraActions={extraActions2}
                                 actions={oakActions || []}
                                 cascadeActions={row?.['#oakLegalCascadeActions']}
                                 onAction={(action: string, cascadeAction: CascadeActionProps) => onAction && onAction(row, action, cascadeAction)}
