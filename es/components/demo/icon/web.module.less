@@ -1,0 +1,45 @@
+.container {
+  display: flex;
+  padding: 30px 0px;
+  width: 900px;
+  margin: 0 auto;
+  background-color: #fff;
+}
+
+.dibBox {
+  list-style-type: none;
+  list-style-image: none;
+  display: block;
+
+  overflow: hidden;
+
+  li {
+    width: 100px;
+    margin-bottom: 10px;
+    margin-right: 20px;
+    text-align: center;
+    list-style: none !important;
+    cursor: pointer;
+  }
+
+  .dib {
+    display: inline-block;
+    vertical-align: top;
+    font-size: 12px;
+    letter-spacing: normal;
+    word-spacing: normal;
+    line-height: inherit;
+
+    .name {
+      color: #666;
+    }
+
+    .iconBox {
+      height: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}

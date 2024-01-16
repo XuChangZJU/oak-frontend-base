@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-import { Space, Button, Modal, } from 'antd';
+import { Space, Button } from 'antd';
 import Style from './web.module.less';
-const { confirm } = Modal;
 function ItemComponent(props) {
     const { label, type, onClick } = props;
     if (type === 'button') {
