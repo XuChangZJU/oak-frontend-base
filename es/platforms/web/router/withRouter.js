@@ -79,6 +79,6 @@ const withRouter = (Component, { path, properties }) => {
         }
         return (<Component {...rest} {...params} width={width} ref={forwardedRef} routeMatch={routeMatch}/>);
     };
-    return React.forwardRef((props, ref) => <ComponentWithRouterProp {...props} forwardedRef={ref}/>);
+    return React.forwardRef((props, ref) => (<ComponentWithRouterProp {...props} forwardedRef={ref}/>));
 };
 export default withRouter;

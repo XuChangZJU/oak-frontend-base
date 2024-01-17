@@ -8,7 +8,7 @@ export default OakComponent({
     isList: false,
     properties: {
         entity: '' as keyof ED,
-        extraActions: [] as OakExtraActionProps[],
+        extraActions: [] as OakExtraActionProps[] | ((row: any) => OakExtraActionProps[]),
         onAction: (() => undefined) as Function,
         disabledOp: false,
         attributes: [] as OakAbsAttrDef[],
@@ -92,7 +92,7 @@ export default OakComponent({
         false,
         {
             entity: T2;
-            extraActions: OakExtraActionProps[];
+            extraActions: OakExtraActionProps[] | ((row: ED2[T2]['Schema']) => OakExtraActionProps[]);
             onAction: onActionFnDef;
             disabledOp: boolean;
             attributes: OakAbsAttrDef[];

@@ -36,8 +36,6 @@ export default OakComponent({
             })
         }
     },
-    listeners: {
-    },
     methods: {
         makeItems(isMobile?: boolean) {
             const { schema } = this.state;

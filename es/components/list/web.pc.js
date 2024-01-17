@@ -78,7 +78,14 @@ export default function Render(props) {
                     render: (value, row) => {
                         const oakActions = row?.['#oakLegalActions'];
                         // assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
-                        return (<ActionBtn entity={entity} extraActions={extraActions} actions={oakActions || []} cascadeActions={row?.['#oakLegalCascadeActions']} onAction={(action, cascadeAction) => onAction && onAction(row, action, cascadeAction)}/>);
+                        let extraActions2;
+                        if (typeof extraActions === 'function') {
+                            extraActions2 = extraActions(row);
+                        }
+                        else {
+                            extraActions2 = extraActions;
+                        }
+                        return (<ActionBtn entity={entity} extraActions={extraActions2} actions={oakActions || []} cascadeActions={row?.['#oakLegalCascadeActions']} onAction={(action, cascadeAction) => onAction && onAction(row, action, cascadeAction)}/>);
                     }
                 });
             }

@@ -9,7 +9,7 @@ import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, OakAbsAttrJudgeDef }
 export default function Render(props: WebComponentProps<EntityDict & BaseEntityDict, keyof EntityDict, false, {
     width: 'xl' | 'lg' | 'md' | 'sm' | 'xs';
     loading: boolean;
-    extraActions: OakExtraActionProps[];
+    extraActions: OakExtraActionProps[] | ((row: any) => OakExtraActionProps[]);
     entity: string;
     schema: StorageSchema<EntityDict & BaseEntityDict>;
     attributes: OakAbsAttrDef[];

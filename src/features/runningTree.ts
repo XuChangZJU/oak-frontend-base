@@ -3,7 +3,7 @@ import { cloneDeep, pull, unset, merge, uniq, omit } from "oak-domain/lib/utils/
 import { checkFilterContains, combineFilters } from "oak-domain/lib/store/filter";
 import { createOperationsFromModies } from 'oak-domain/lib/store/modi';
 import { judgeRelation } from "oak-domain/lib/store/relation";
-import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, AspectWrapper, AuthDefDict, CascadeRelationItem, CascadeActionItem } from "oak-domain/lib/types";
+import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, AspectWrapper, AuthDefDict, CascadeRelationItem, CascadeActionItem, UpdateOpResult } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 
@@ -326,6 +326,55 @@ class ListNode<
                             }
                             this.cache.commit();
                         }
+                    }
+                    break;
+                }
+                case 'u': {
+                    /**
+                     * update有可能将原本满足condition的行变成不满足，也可能将原本不满足的行变成满足
+                     */
+                    const { e, f } = record as UpdateOpResult<ED, T>;
+                    if (e === this.entity) {
+                        const filters = this.constructFilters(true, true, true);
+                        if (filters) {
+                            // rows是f中满足当前list条件的行
+                            const rows = this.cache.get(this.entity, {
+                                data: {
+                                    id: 1,
+                                },
+                                filter: combineFilters(this.entity, this.cache.getSchema(), [f, ...filters]),
+                            });
+
+                            const ids = Object.keys(this.sr);
+                            if (ids.length > 0) {
+                                // ids中可能有的行因为这次update不再满足了
+                                const rows2 = this.cache.get(this.entity, {
+                                    data: {
+                                        id: 1,
+                                    },
+                                    filter: combineFilters(this.entity, this.cache.getSchema(), [
+                                        { id: { $in: ids }},
+                                        ...filters
+                                    ])
+                                });
+                                
+                                ids.forEach(
+                                    (id) => {
+                                        if (!rows2.find(ele => ele.id === id)) {
+                                            unset(this.sr, id);
+                                        }
+                                    }
+                                );
+                            }
+                            rows.forEach(
+                                (row) => {
+                                    if (!this.sr[row.id!]) {
+                                        this.sr[row.id!] = {};
+                                    }
+                                }
+                            );
+                        }
+                        // 如果原来没有filter反而不用处理，因为更新不会影响原来的sr
                     }
                     break;
                 }

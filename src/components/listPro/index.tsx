@@ -24,7 +24,7 @@ type Props<ED2 extends ED, T extends keyof ED2> = {
     buttonGroup?: ListButtonProps[];
     onReload?: () => void;
     entity: T;
-    extraActions?: OakExtraActionProps[];
+    extraActions?: OakExtraActionProps[] | ((row: any) => OakExtraActionProps[]);
     onAction?: onActionFnDef;
     disabledOp?: boolean;
     attributes: OakAbsAttrDef[];

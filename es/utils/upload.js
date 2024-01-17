@@ -1,2 +1,5 @@
-export { Upload } from './upload.mp';
-console.log('不应该跑到这里[utils/upload]');
+export class Upload {
+    async uploadFile(file, name, uploadUrl, formData, autoInform) {
+        console.warn('server不会调用此函数');
+    }
+}

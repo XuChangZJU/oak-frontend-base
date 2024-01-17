@@ -1,9 +1,9 @@
 import React from 'react';
-import { ActionDef, WebComponentProps } from '../../types/Page';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { ED, OakExtraActionProps } from '../../types/AbstractComponent';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
+import { ActionDef, WebComponentProps } from '../../types/Page';
+import { ED, OakExtraActionProps } from '../../types/AbstractComponent';
 import { CascadeActionProps } from '../../types/AbstractComponent';
 type CascadeActionDef = {
     [K in keyof EntityDict[keyof EntityDict]['Schema']]?: ActionDef<EntityDict & BaseEntityDict, keyof EntityDict>[];

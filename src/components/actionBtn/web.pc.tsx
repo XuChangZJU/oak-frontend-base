@@ -1,19 +1,13 @@
 import React, { useEffect } from 'react';
-import {
-    Space,
-    Button,
-    Modal,
-} from 'antd';
-import { ActionDef, WebComponentProps } from '../../types/Page';
+import { Space, Button } from 'antd';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { ED, OakExtraActionProps } from '../../types/AbstractComponent';
-
 import { EntityDict } from 'oak-domain/lib/types/Entity';
-import Style from './web.module.less';
-import { resolvePath } from '../../utils/usefulFn';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
+
+import { ActionDef, WebComponentProps } from '../../types/Page';
+import { ED, OakExtraActionProps } from '../../types/AbstractComponent';
 import { CascadeActionProps } from '../../types/AbstractComponent';
-const { confirm } = Modal;
+import Style from './web.module.less';
 
 type Item = {
     label: string;

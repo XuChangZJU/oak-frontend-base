@@ -27,6 +27,7 @@ export type ValueType = string | boolean | number | Array<Dayjs> | Dayjs | null 
 export type ColumnProps<ED extends BaseEntityDict & EntityDict, T extends keyof ED> = {
     attr: string;
     label?: string;
+    value?: any;
     placeholder?: string;
     op?: Ops;
     onChange?: (value: any) => void;
