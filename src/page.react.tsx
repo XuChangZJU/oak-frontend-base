@@ -864,7 +864,7 @@ export function createComponent<
 
 
         async componentDidMount() {
-            this.addFeatureSub('locales', () => this.reRender);            
+            this.addFeatureSub('locales', () => this.reRender());            
             if (option.entity) {
                 this.addFeatureSub('cache', () => this.reRender());
             }
