@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Button, Space, Drawer, Modal, Tooltip } from 'antd';
-import { WebComponentProps } from '../../../types/Page';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
-import Style from './web.module.less';
+import { WebComponentProps } from '../../../types/Page';
+import { ED } from '../../../types/AbstractComponent';
 import OakIcon from '../../icon';
 import IconDemo from '../../demo/icon';
-import { ED } from '../../../types/AbstractComponent';
+import Style from './web.module.less';
 
 export default function render(
     props: WebComponentProps<

@@ -1,6 +1,6 @@
 import React from 'react';
-import { WebComponentProps } from '../../../types/Page';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
+import { WebComponentProps } from '../../../types/Page';
 import { ED } from '../../../types/AbstractComponent';
 export default function render(props: WebComponentProps<ED, keyof EntityDict, true, {
     placement: 'top' | 'bottom' | 'left' | 'right';

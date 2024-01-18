@@ -1,0 +1,12 @@
+<view class="block block--bottom">
+    <view class="btn-box">
+        <l-grid row-num="{{rowNum}}">
+            <block wx:for="{{actionss}}" wx:key="index">
+                <l-grid-item bind:linitemtap="onClickMp" data-index="{{index}}" key="{{index}}" slot="{{index}}">
+                    <oak-icon class="image" name="{{item.icon.name}}" type="{{item.icon.type}}" size="{{iconSize || 40}}" slot="image" />
+                    <text class='label'>{{item.label}}</text>
+                </l-grid-item>
+            </block>
+        </l-grid>
+    </view>
+</view>
