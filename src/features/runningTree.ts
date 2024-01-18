@@ -1192,10 +1192,13 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         else {
             const operation = this.operation;
-            assert(['create', 'update', action].includes(operation.action));
+            // assert(['create', 'update', action].includes(operation.action));
             Object.assign(operation.data, data);
             if (action && operation.action !== action) {
-                operation.action = action;
+                if (operation.action !== 'update') {
+                    // 暂时以后来者为准
+                    operation.action = action;
+                }
             }
         }
 
@@ -2284,7 +2287,10 @@ export class RunningTree<
         return operations;
     }
 
-    async execute<T extends keyof ED>(path: string, action?: ED[T]['Action']) {
+    async execute<T extends keyof ED>(path: string, action?: ED[T]['Action'], opers?: Array<{
+        entity: keyof ED,
+        operation: ED[keyof ED]['Operation'],
+    }>) {
         const node = this.findNode(path)!;
         if (action) {
             if (node instanceof SingleNode) {
@@ -2294,11 +2300,14 @@ export class RunningTree<
                 assert(false); // 对list的整体action等遇到了再实现
             }
         }
-        assert(node.isDirty());
+        // assert(node.isDirty());
 
         node.setExecuting(true);
         try {
-            const operations = node.composeOperations()!;
+            const operations = node.composeOperations() || [];
+            if (opers) {
+                operations.push(...opers);
+            }
 
             // 这里理论上virtualNode下面也可以有多个不同的entity的组件，但实际中不应当出现这样的设计
             if (operations.length > 0) {

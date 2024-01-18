@@ -977,10 +977,13 @@ class SingleNode extends Node {
         }
         else {
             const operation = this.operation;
-            assert(['create', 'update', action].includes(operation.action));
+            // assert(['create', 'update', action].includes(operation.action));
             Object.assign(operation.data, data);
             if (action && operation.action !== action) {
-                operation.action = action;
+                if (operation.action !== 'update') {
+                    // 暂时以后来者为准
+                    operation.action = action;
+                }
             }
         }
         // 处理外键，如果update的数据中有相应的外键，其子对象上的动作应当被clean掉
@@ -1844,7 +1847,7 @@ export class RunningTree extends Feature {
         const operations = node?.composeOperations();
         return operations;
     }
-    async execute(path, action) {
+    async execute(path, action, opers) {
         const node = this.findNode(path);
         if (action) {
             if (node instanceof SingleNode) {
@@ -1855,10 +1858,13 @@ export class RunningTree extends Feature {
                 assert(false); // 对list的整体action等遇到了再实现
             }
         }
-        assert(node.isDirty());
+        // assert(node.isDirty());
         node.setExecuting(true);
         try {
-            const operations = node.composeOperations();
+            const operations = node.composeOperations() || [];
+            if (opers) {
+                operations.push(...opers);
+            }
             // 这里理论上virtualNode下面也可以有多个不同的entity的组件，但实际中不应当出现这样的设计
             if (operations.length > 0) {
                 const entities = uniq(operations.filter((ele) => !!ele).map((ele) => ele.entity));

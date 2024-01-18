@@ -286,7 +286,10 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
         entity: keyof ED;
         operation: ED[keyof ED]["Operation"];
     }[] | undefined;
-    execute<T extends keyof ED>(path: string, action?: ED[T]['Action']): Promise<{
+    execute<T extends keyof ED>(path: string, action?: ED[T]['Action'], opers?: Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
+    }>): Promise<{
         result: Awaited<ReturnType<AD["operate"]>>;
         message: string | null | undefined;
     } | {
