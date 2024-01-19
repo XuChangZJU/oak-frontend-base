@@ -131,13 +131,13 @@ export default function Render(
                     align: 'left',
                     title: '操作',
                     key: 'operation',
-                    width: 280,
+                    width: 140,
                     render: (value: any, row: any) => {
                         const oakActions = row?.['#oakLegalActions'] as string[];
                         // assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
                         let extraActions2: OakExtraActionProps[];
                         if (typeof extraActions === 'function') {
-                            extraActions2 =  extraActions(row);
+                            extraActions2 = extraActions(row);
                         }
                         else {
                             extraActions2 = extraActions;
@@ -177,9 +177,9 @@ export default function Render(
             scroll={
                 showScroll
                     ? {
-                          scrollToFirstRowOnChange: true,
-                          x: 1200,
-                      }
+                        scrollToFirstRowOnChange: true,
+                        x: 1200,
+                    }
                     : {}
             }
             onRow={(record) => {

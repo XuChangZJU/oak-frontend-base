@@ -77,7 +77,7 @@ export default function Render(props) {
                     align: 'left',
                     title: '操作',
                     key: 'operation',
-                    width: 280,
+                    width: 140,
                     render: (value, row) => {
                         const oakActions = row?.['#oakLegalActions'];
                         // assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')

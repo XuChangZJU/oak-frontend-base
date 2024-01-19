@@ -40,6 +40,7 @@ const ProList = (props) => {
                         attrType: 'number',
                         attr: '#',
                         entity: entity,
+                        width:100,
                     },
                     show: true,
                     disabled: true,
