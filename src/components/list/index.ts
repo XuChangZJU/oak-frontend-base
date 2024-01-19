@@ -1,15 +1,17 @@
-import { CardDef, ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
+import { ED, OakAbsAttrDef, onActionFnDef, OakExtraActionProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
 import { analyzeAttrMobileForCard, translateAttributes } from '../../utils/usefulFn';
 import { assert } from 'oak-domain/lib/utils/assert';
-import { TableProps, PaginationProps } from 'antd';
+import { TableProps } from 'antd';
 import { RowWithActions, ReactComponentProps } from '../../types/Page';
 
 export default OakComponent({
     isList: false,
     properties: {
         entity: '' as keyof ED,
-        extraActions: [] as OakExtraActionProps[] | ((row: any) => OakExtraActionProps[]),
-        onAction: (() => undefined) as Function,
+        extraActions: [] as
+            | OakExtraActionProps[]
+            | ((row: RowWithActions<ED, keyof ED>) => OakExtraActionProps[]),
+        onAction: (() => {}) as Function,
         disabledOp: false,
         attributes: [] as OakAbsAttrDef[],
         data: [] as RowWithActions<ED, keyof ED>[],
@@ -40,7 +42,7 @@ export default OakComponent({
         return {};
     },
     data: {
-        converter: (data: any) => <any>[],
+        converter: (data: RowWithActions<ED, keyof ED>[]) => <any>[],
         judgeAttributes: [] as OakAbsAttrJudgeDef[],
     },
     listeners: {
@@ -62,9 +64,13 @@ export default OakComponent({
                 schema,
                 entity,
                 ttt,
-                attributes!,
+                attributes!
             );
-            const judgeAttributes = translateAttributes(schema, entity, attributes!);
+            const judgeAttributes = translateAttributes(
+                schema,
+                entity,
+                attributes!
+            );
             this.setState({
                 converter,
                 schema,
@@ -92,7 +98,9 @@ export default OakComponent({
         false,
         {
             entity: T2;
-            extraActions: OakExtraActionProps[] | ((row: ED2[T2]['Schema']) => OakExtraActionProps[]);
+            extraActions:
+                | OakExtraActionProps[]
+                | ((row: ED2[T2]['Schema']) => OakExtraActionProps[]);
             onAction: onActionFnDef;
             disabledOp: boolean;
             attributes: OakAbsAttrDef[];

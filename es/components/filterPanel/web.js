@@ -62,7 +62,7 @@ export default function Render(props) {
     tfColumns.forEach((column, index) => {
         const { colSpan } = column;
         const colSpan2 = getSpan(colSpan || 1, mergedColumn);
-        const item = (<Col span={gridColumn * colSpan2}>
+        const item = (<Col key={`c_filterPanel_col_${index}`} span={gridColumn * colSpan2}>
                 <Filter column={column} entity={entity} oakPath={oakFullpath}/>
             </Col>);
         if (index === 0) {
@@ -120,7 +120,7 @@ export default function Render(props) {
         }
     }
     else {
-        if (width === 'xs') {
+        if (width === 'xs' && !!firstItem) {
             items.push(firstItem);
         }
     }
@@ -137,7 +137,7 @@ export default function Render(props) {
     const buttonItemLayout = formLayout === 'horizontal'
         ? { wrapperCol: { span: 18, offset: 6 } }
         : null;
-    items.push(<Col span={_gridColumn}>
+    items.push(<Col key={`c_filterPanel_buttons`} span={_gridColumn}>
             <Form.Item {...buttonItemLayout}>
                 <Space className={Style.actionBox}>
                     <Badge count={count}>
@@ -162,7 +162,9 @@ export default function Render(props) {
                 setOpen(!open);
             }}>
                             <Space>
-                                {open ? t('common::shrink') : t('common::expand')}
+                                {open
+                ? t('common::shrink')
+                : t('common::expand')}
 
                                 {open ? <UpOutlined /> : <DownOutlined />}
                             </Space>

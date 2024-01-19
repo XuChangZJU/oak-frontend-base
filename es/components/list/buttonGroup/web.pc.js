@@ -1,12 +1,15 @@
 import React from 'react';
 import { Space, Button } from 'antd';
 export default function Render(props) {
-    const { methods, data: oakData } = props;
-    const { items } = oakData;
-    // 为了i18更新时能够重新渲染
+    const { methods, data } = props;
+    const { items } = data;
+    if (!items || items.length === 0) {
+        return null;
+    }
     return (<Space>
-            {items.filter((ele) => ele.show).map((ele) => (<Button type={ele.type} onClick={ele.onClick}>
-                    {ele.label}
-                </Button>))}
+            {items?.filter((ele) => ele.show)
+            .map((ele, index) => (<Button key={`c_buttonGroup_${index}`} type={ele.type} onClick={ele.onClick}>
+                        {ele.label}
+                    </Button>))}
         </Space>);
 }
