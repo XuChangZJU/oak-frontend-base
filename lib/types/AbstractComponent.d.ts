@@ -29,6 +29,7 @@ export type OakAbsDerivedAttrDef = {
     span?: number;
     type?: 'image' | 'link' | DataType | 'ref';
     linkUrl?: string;
+    render?: (row: any) => React.ReactNode | undefined;
 };
 export type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
 export type OakAbsAttrJudgeDef = {

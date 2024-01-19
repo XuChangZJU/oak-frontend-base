@@ -93,6 +93,9 @@ export default function Render(
                     title,
                     align,
                     render: (v: string, row: any) => {
+                        if (typeof ele.attribute !== 'string' && ele.attribute.render) {
+                            return ele.attribute.render(row);
+                        }
                         const value = getValue(row, ele.path, ele.entity, ele.attr, ele.attrType, t);
                         const stateValue = get(row, ele.path);
                         let href = '';
