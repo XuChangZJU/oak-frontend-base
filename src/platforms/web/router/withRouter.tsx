@@ -23,7 +23,7 @@ function getProps(search?: Location['search'], properties?: Record<string, any>)
     const props = {};
 
     for (const k of searchParams.keys()) {
-        if (properties && properties[k]) {
+        if (properties && properties.hasOwnProperty(k)) {
             switch (typeof properties[k]) {
                 case 'number': {
                     Object.assign(props, {
@@ -33,7 +33,7 @@ function getProps(search?: Location['search'], properties?: Record<string, any>)
                 }
                 case 'boolean': {
                     Object.assign(props, {
-                        [k]: Boolean(searchParams.get(k)),
+                        [k]: searchParams.get(k) === 'true' ? true : false,
                     });
                     break;
                 }

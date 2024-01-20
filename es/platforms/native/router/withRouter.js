@@ -11,7 +11,7 @@ function getProps(params, properties) {
     }
     const props = {};
     for (const k in query) {
-        if (properties && properties[k]) {
+        if (properties && properties.hasOwnProperty(k)) {
             switch (typeof properties[k]) {
                 case 'number': {
                     Object.assign(props, {
