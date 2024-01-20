@@ -134,6 +134,7 @@ export default function Render(
                             {...ele}
                             onClick={ele.onClick2}
                             text={ele.text}
+                            key={`c_ItemComponent_${index}`}
                         />
                     );
                 })}
@@ -187,7 +188,7 @@ export default function Render(
                             {...ele}
                             onClick={ele.onClick2}
                             text={ele.text}
-                            key={`ItemComponent${index}`}
+                            key={`c_ItemComponent_${index}`}
                         />
                     );
                 })}

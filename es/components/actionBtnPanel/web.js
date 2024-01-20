@@ -79,7 +79,7 @@ export default function Render(props) {
     if (mode === 'table-cell') {
         return (<Space {...spaceProps}>
                 {newItems?.map((ele, index) => {
-                return (<ItemComponent {...ele} onClick={ele.onClick2} text={ele.text}/>);
+                return (<ItemComponent {...ele} onClick={ele.onClick2} text={ele.text} key={`c_ItemComponent_${index}`}/>);
             })}
 
                 {moreItems && moreItems.length > 0 && (<Dropdown menu={{
@@ -111,7 +111,7 @@ export default function Render(props) {
                 </Dropdown>)}
             <Space {...spaceProps}>
                 {newItems?.map((ele, index) => {
-            return (<ItemComponent type="button" {...ele} onClick={ele.onClick2} text={ele.text} key={`ItemComponent${index}`}/>);
+            return (<ItemComponent type="button" {...ele} onClick={ele.onClick2} text={ele.text} key={`c_ItemComponent_${index}`}/>);
         })}
             </Space>
         </div>);
