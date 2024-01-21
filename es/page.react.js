@@ -22,7 +22,7 @@ class OakComponentBase extends React.PureComponent {
             if (ele.unsubHandler) {
                 ele.unsubHandler();
                 ele.unsubHandler = undefined;
-            } 
+            }
         });
     }
     subscribeAll() {
@@ -544,7 +544,7 @@ export function createComponent(option, features) {
                 !oakDisablePulldownRefresh);
         }
         async componentDidMount() {
-            this.addFeatureSub('locales', () => this.reRender);
+            this.addFeatureSub('locales', () => this.reRender());
             if (option.entity) {
                 this.addFeatureSub('cache', () => this.reRender());
             }

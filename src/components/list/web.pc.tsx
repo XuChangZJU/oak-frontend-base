@@ -27,7 +27,7 @@ export default function Render(
         {
             width: 'xl' | 'lg' | 'md' | 'sm' | 'xs';
             loading: boolean;
-            extraActions: OakExtraActionProps[];
+            extraActions: OakExtraActionProps[] | ((row: any) => OakExtraActionProps[]);
             entity: string;
             schema: StorageSchema<EntityDict & BaseEntityDict>;
             attributes: OakAbsAttrDef[],
@@ -93,6 +93,9 @@ export default function Render(
                     title,
                     align,
                     render: (v: string, row: any) => {
+                        if (typeof ele.attribute !== 'string' && ele.attribute.render) {
+                            return ele.attribute.render(row);
+                        }
                         const value = getValue(row, ele.path, ele.entity, ele.attr, ele.attrType, t);
                         const stateValue = get(row, ele.path);
                         let href = '';
@@ -128,14 +131,21 @@ export default function Render(
                     align: 'left',
                     title: '操作',
                     key: 'operation',
-                    width: 280,
+                    width: 140,
                     render: (value: any, row: any) => {
                         const oakActions = row?.['#oakLegalActions'] as string[];
                         // assert(!!oakActions, '行数据中不存在#oakLegalActions, 请禁用(disableOp:true)或添加actions')
+                        let extraActions2: OakExtraActionProps[];
+                        if (typeof extraActions === 'function') {
+                            extraActions2 = extraActions(row);
+                        }
+                        else {
+                            extraActions2 = extraActions;
+                        }
                         return (
                             <ActionBtn
                                 entity={entity}
-                                extraActions={extraActions}
+                                extraActions={extraActions2}
                                 actions={oakActions || []}
                                 cascadeActions={row?.['#oakLegalCascadeActions']}
                                 onAction={(action: string, cascadeAction: CascadeActionProps) => onAction && onAction(row, action, cascadeAction)}
@@ -167,9 +177,9 @@ export default function Render(
             scroll={
                 showScroll
                     ? {
-                          scrollToFirstRowOnChange: true,
-                          x: 1200,
-                      }
+                        scrollToFirstRowOnChange: true,
+                        x: 1200,
+                    }
                     : {}
             }
             onRow={(record) => {

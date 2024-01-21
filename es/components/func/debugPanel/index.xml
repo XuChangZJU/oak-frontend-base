@@ -1,0 +1,22 @@
+<view bind:tap="handlePopup" class="btn-popup">
+    <oak-icon name="packup" ></oak-icon>
+</view>
+<l-arc-popup show="{{visible}}" l-class="arc-popup">
+    <view class="block block--bottom">
+        <view class="btn-box">
+            <l-button type="default" l-class="btn-item" l-label-class="btn-item-label" size="mini" shape="semicircle" bind:lintap="printRunningTree">
+                R
+            </l-button>
+            <l-button type="default" l-class="btn-item" size="mini" shape="semicircle" bind:lintap="printDebugStore">
+                S
+            </l-button>
+            <l-button type="default" l-class="btn-item" size="mini" shape="semicircle" bind:lintap="printCachedStore">
+                C
+            </l-button>
+            <l-button type="warning" l-class="btn-item" size="mini" shape="semicircle" bind:lintap="showDialog">
+                Reset
+            </l-button>
+        </view>
+    </view>
+</l-arc-popup>
+<l-dialog show="{{dialogVisible}}" title="重置数据" content="重置后，原来的数据不可恢复" bind:linclose="closeDialog"  bind:lincancel="closeDialog" bind:linconfirm="handleReset" />

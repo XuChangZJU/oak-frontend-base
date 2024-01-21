@@ -15,7 +15,7 @@ function getProps(search, properties) {
     const searchParams = new URLSearchParams(search || '');
     const props = {};
     for (const k of searchParams.keys()) {
-        if (properties && properties[k]) {
+        if (properties && properties.hasOwnProperty(k)) {
             switch (typeof properties[k]) {
                 case 'number': {
                     Object.assign(props, {
@@ -25,7 +25,7 @@ function getProps(search, properties) {
                 }
                 case 'boolean': {
                     Object.assign(props, {
-                        [k]: Boolean(searchParams.get(k)),
+                        [k]: searchParams.get(k) === 'true' ? true : false,
                     });
                     break;
                 }
@@ -79,6 +79,6 @@ const withRouter = (Component, { path, properties }) => {
         }
         return (<Component {...rest} {...params} width={width} ref={forwardedRef} routeMatch={routeMatch}/>);
     };
-    return React.forwardRef((props, ref) => <ComponentWithRouterProp {...props} forwardedRef={ref}/>);
+    return React.forwardRef((props, ref) => (<ComponentWithRouterProp {...props} forwardedRef={ref}/>));
 };
 export default withRouter;

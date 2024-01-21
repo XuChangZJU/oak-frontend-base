@@ -13,7 +13,7 @@ import { RelationAuth } from './relationAuth';
 interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     name: string;
     entity: T;
-    action: ED[T]['Action'];
+    action: ED[T]['Action'] | ED[T]['Action'][];
     paths: string[];
 }
 
@@ -60,13 +60,13 @@ export class ContextMenuFactory<
                     }
                     return;
                 }
-                const pathhh = path.split('.');
+                const pathArr = path.split('.');
 
                 const judgeIter = (
                     e2: keyof ED,
                     idx: number
                 ): true | undefined | ED[keyof ED]['Selection']['filter'] => {
-                    const attr = pathhh[idx];
+                    const attr = pathArr[idx];
                     const rel = judgeRelation(schema, e2, attr);
                     let e3 = e2;
                     if (typeof rel === 'string') {
@@ -77,7 +77,7 @@ export class ContextMenuFactory<
                         assert(rel instanceof Array);
                         e3 = rel[0];
                     }
-                    if (idx === pathhh.length - 1) {
+                    if (idx === pathArr.length - 1) {
                         if (e3 === 'user') {
                             // 用user连接说明一定满足
                             return true;
@@ -85,7 +85,7 @@ export class ContextMenuFactory<
                         if (e3 === entity) {
                             const filter: ED[keyof ED]['Selection']['filter'] =
                                 {};
-                            const paths2 = pathhh.slice(0, pathhh.length - 1);
+                            const paths2 = pathArr.slice(0, pathArr.length - 1);
                             if (rel === 2) {
                                 set(filter, paths2.concat('entity'), entity);
                                 set(
@@ -140,6 +140,42 @@ export class ContextMenuFactory<
                             return true;
                         }
                         // relationAuth和其它的checker现在分开判断
+                        let result = false;
+                        if (action instanceof Array) {
+                            for (let i = 0; i < action.length; i++) {
+                                // action有一个满足就行了
+                                const checkResult =
+                                    this.relationAuth.checkRelation(
+                                        destEntity,
+                                        {
+                                            action: action[i],
+                                            data: undefined as any,
+                                            filter,
+                                        } as Omit<
+                                            ED[keyof ED]['Operation'],
+                                            'id'
+                                        >
+                                    ) &&
+                                    this.cache.checkOperation(
+                                        destEntity,
+                                        action[i],
+                                        undefined,
+                                        filter,
+                                        [
+                                            'logical',
+                                            'relation',
+                                            'logicalRelation',
+                                            'row',
+                                        ]
+                                    );
+
+                                if (checkResult) {
+                                    result = checkResult;
+                                    break;
+                                }
+                            }
+                            return result;
+                        }
                         return (
                             this.relationAuth.checkRelation(destEntity, {
                                 action,

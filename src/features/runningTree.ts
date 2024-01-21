@@ -3,7 +3,7 @@ import { cloneDeep, pull, unset, merge, uniq, omit } from "oak-domain/lib/utils/
 import { checkFilterContains, combineFilters } from "oak-domain/lib/store/filter";
 import { createOperationsFromModies } from 'oak-domain/lib/store/modi';
 import { judgeRelation } from "oak-domain/lib/store/relation";
-import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, AspectWrapper, AuthDefDict, CascadeRelationItem, CascadeActionItem } from "oak-domain/lib/types";
+import { EntityDict, StorageSchema, OpRecord, CreateOpResult, RemoveOpResult, AspectWrapper, AuthDefDict, CascadeRelationItem, CascadeActionItem, UpdateOpResult } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 
@@ -326,6 +326,55 @@ class ListNode<
                             }
                             this.cache.commit();
                         }
+                    }
+                    break;
+                }
+                case 'u': {
+                    /**
+                     * update有可能将原本满足condition的行变成不满足，也可能将原本不满足的行变成满足
+                     */
+                    const { e, f } = record as UpdateOpResult<ED, T>;
+                    if (e === this.entity) {
+                        const filters = this.constructFilters(true, true, true);
+                        if (filters) {
+                            // rows是f中满足当前list条件的行
+                            const rows = this.cache.get(this.entity, {
+                                data: {
+                                    id: 1,
+                                },
+                                filter: combineFilters(this.entity, this.cache.getSchema(), [f, ...filters]),
+                            });
+
+                            const ids = Object.keys(this.sr);
+                            if (ids.length > 0) {
+                                // ids中可能有的行因为这次update不再满足了
+                                const rows2 = this.cache.get(this.entity, {
+                                    data: {
+                                        id: 1,
+                                    },
+                                    filter: combineFilters(this.entity, this.cache.getSchema(), [
+                                        { id: { $in: ids }},
+                                        ...filters
+                                    ])
+                                });
+                                
+                                ids.forEach(
+                                    (id) => {
+                                        if (!rows2.find(ele => ele.id === id)) {
+                                            unset(this.sr, id);
+                                        }
+                                    }
+                                );
+                            }
+                            rows.forEach(
+                                (row) => {
+                                    if (!this.sr[row.id!]) {
+                                        this.sr[row.id!] = {};
+                                    }
+                                }
+                            );
+                        }
+                        // 如果原来没有filter反而不用处理，因为更新不会影响原来的sr
                     }
                     break;
                 }
@@ -810,6 +859,16 @@ class ListNode<
         }
         else {
             this.sr = data || {};
+
+            // 如果有addItem，在这里不能丢。by Xc;
+            if (this.updates) {
+                for (const k in this.updates) {
+                    if (this.updates[k].action === 'create') {
+                        const { id } = this.updates[k].data;
+                        this.sr[id!] = {};
+                    }
+                }
+            }
         }
         for (const k in this.children) {
             const child = this.children[k];
@@ -1133,10 +1192,13 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
         else {
             const operation = this.operation;
-            assert(['create', 'update', action].includes(operation.action));
+            // assert(['create', 'update', action].includes(operation.action));
             Object.assign(operation.data, data);
             if (action && operation.action !== action) {
-                operation.action = action;
+                if (operation.action !== 'update') {
+                    // 暂时以后来者为准
+                    operation.action = action;
+                }
             }
         }
 
@@ -1534,6 +1596,9 @@ class VirtualNode<
             }
         }
     }
+    removeChild(path: string) {
+        unset(this.children, path);
+    }
     getChild(path: string) {
         return this.children[path];
     }
@@ -1873,7 +1938,7 @@ export class RunningTree<
         if (node) {
             const childPath = path.slice(path.lastIndexOf('.') + 1);
             const parent = node.getParent();
-            if (parent instanceof SingleNode) {
+            if (parent) {
                 parent.removeChild(childPath);
             } else if (!parent) {
                 assert(this.root.hasOwnProperty(path));
@@ -2222,7 +2287,10 @@ export class RunningTree<
         return operations;
     }
 
-    async execute<T extends keyof ED>(path: string, action?: ED[T]['Action']) {
+    async execute<T extends keyof ED>(path: string, action?: ED[T]['Action'], opers?: Array<{
+        entity: keyof ED,
+        operation: ED[keyof ED]['Operation'],
+    }>) {
         const node = this.findNode(path)!;
         if (action) {
             if (node instanceof SingleNode) {
@@ -2232,11 +2300,14 @@ export class RunningTree<
                 assert(false); // 对list的整体action等遇到了再实现
             }
         }
-        assert(node.isDirty());
+        // assert(node.isDirty());
 
         node.setExecuting(true);
         try {
-            const operations = node.composeOperations()!;
+            const operations = node.composeOperations() || [];
+            if (opers) {
+                operations.push(...opers);
+            }
 
             // 这里理论上virtualNode下面也可以有多个不同的entity的组件，但实际中不应当出现这样的设计
             if (operations.length > 0) {

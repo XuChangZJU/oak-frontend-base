@@ -3,7 +3,6 @@ import {
     Space,
     Button,
     Modal,
-    ButtonProps,
     SpaceProps,
     Dropdown,
     Typography,
@@ -12,7 +11,6 @@ import { WebComponentProps } from '../../types/Page';
 import { EntityDict } from 'oak-domain/lib/base-app-domain';
 import Style from './web.module.less';
 import { Item } from './types';
-const { confirm } = Modal;
 
 function ItemComponent(
     props: Item & {
@@ -88,7 +86,7 @@ export default function Render(
                     onClick = async () => {
                         const { title, content, okText, cancelText } =
                             getAlertOptions(ele);
-                        confirm({
+                        Modal.confirm({
                             title,
                             content,
                             okText,
@@ -136,6 +134,7 @@ export default function Render(
                             {...ele}
                             onClick={ele.onClick2}
                             text={ele.text}
+                            key={`c_ItemComponent_${index}`}
                         />
                     );
                 })}
@@ -189,6 +188,7 @@ export default function Render(
                             {...ele}
                             onClick={ele.onClick2}
                             text={ele.text}
+                            key={`c_ItemComponent_${index}`}
                         />
                     );
                 })}

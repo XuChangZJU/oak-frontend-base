@@ -191,6 +191,7 @@ declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends As
     setDirty(): void;
     setFiltersAndSortedApplied(): void;
     addChild(path: string, child: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>): void;
+    removeChild(path: string): void;
     getChild(path: string): VirtualNode<ED, Cxt, FrontCxt, AD> | SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     getParent(): undefined;
     destroy(): void;
@@ -285,7 +286,10 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
         entity: keyof ED;
         operation: ED[keyof ED]["Operation"];
     }[] | undefined;
-    execute<T extends keyof ED>(path: string, action?: ED[T]['Action']): Promise<{
+    execute<T extends keyof ED>(path: string, action?: ED[T]['Action'], opers?: Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
+    }>): Promise<{
         result: Awaited<ReturnType<AD["operate"]>>;
         message: string | null | undefined;
     } | {

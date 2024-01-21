@@ -3,33 +3,30 @@ import React from 'react';
 import { FloatButton } from 'antd';
 
 import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { ListButtonProps } from '../../../types/AbstractComponent';
+import { ListButtonProps, ED } from '../../../types/AbstractComponent';
 import { WebComponentProps } from '../../../types/Page';
 
 import {
     BarsOutlined,
 } from '@ant-design/icons';
-type ED = EntityDict & BaseEntityDict;
 
 export default function Render(
     props: WebComponentProps<
-        EntityDict & BaseEntityDict,
+        ED,
         keyof EntityDict,
         false,
         {
             items: ListButtonProps[];
         },
-        {
-        }
+        {}
     >
 ) {
     const { methods, data } = props;
-    const { t } = methods;
-    const {
-       items
-    } = data;
-    if (items && items.length === 1) {
+    const { items } = data;
+    if (!items || items.length === 0) {
+        return null;
+    }
+    if (items?.length === 1) {
         const item = items[0];
         return (
             <FloatButton
@@ -40,18 +37,19 @@ export default function Render(
                 description={item.icon ? null : item.label}
                 onClick={() => item.onClick()}
             />
-        )
+        );
     }
     return (
         <FloatButton.Group
-            shape='circle'
+            shape="circle"
             trigger="click"
             type="primary"
             style={{ right: 24 }}
             icon={<BarsOutlined />}
         >
-            {items && items.map((ele) => (
+            {items?.map((ele, index) => (
                 <FloatButton
+                    key={`c_buttonGroup_${index}`}
                     icon={ele.icon}
                     description={ele.icon ? null : ele.label}
                     onClick={() => ele.onClick()}

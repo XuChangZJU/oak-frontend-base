@@ -118,7 +118,7 @@ export default OakComponent({
             }
         },
         getItemsByMp() {
-            const { oakLegalActions, items, column } = this.state;
+            const { items, column } = this.state;
             const items2 = items
                 .filter((ele: any) => {
                     const { show } = ele;

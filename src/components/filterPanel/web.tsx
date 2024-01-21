@@ -111,7 +111,7 @@ export default function Render<ED2 extends ED>(
     );
     const count = filters2?.length || 0; //查询条件个数
 
-    const items: any = [];
+    const items: React.JSX.Element[] = [];
     let rowSum = 0;
     let rowSum2 = 0;
     let rows2 = 1;
@@ -122,7 +122,10 @@ export default function Render<ED2 extends ED>(
         const colSpan2 = getSpan(colSpan || 1, mergedColumn);
 
         const item = (
-            <Col span={gridColumn * colSpan2}>
+            <Col
+                key={`c_filterPanel_col_${index}`}
+                span={gridColumn * colSpan2}
+            >
                 <Filter
                     column={column as ColumnProps<ED, keyof ED>}
                     entity={entity}
@@ -183,7 +186,7 @@ export default function Render<ED2 extends ED>(
             _gridColumn = gridColumn * (mergedColumn - rowSum);
         }
     } else {
-        if (width === 'xs') {
+        if (width === 'xs' && !!firstItem) {
             items.push(firstItem);
         }
     }
@@ -204,7 +207,7 @@ export default function Render<ED2 extends ED>(
             ? { wrapperCol: { span: 18, offset: 6 } }
             : null;
     items.push(
-        <Col span={_gridColumn}>
+        <Col key={`c_filterPanel_buttons`} span={_gridColumn}>
             <Form.Item {...buttonItemLayout}>
                 <Space className={Style.actionBox}>
                     <Badge count={count}>
@@ -241,7 +244,9 @@ export default function Render<ED2 extends ED>(
                             }}
                         >
                             <Space>
-                                {open ? t('common::shrink') : t('common::expand')}
+                                {open
+                                    ? t('common::shrink')
+                                    : t('common::expand')}
 
                                 {open ? <UpOutlined /> : <DownOutlined />}
                             </Space>

@@ -170,7 +170,7 @@ const oakBehavior = Behavior<
              * 小程序以props传递数据，和以页面间参数传递数据的处理不一样，都在这里处理
              * 目前处理的还不是很完善，在实际处理中再做
              */
-            const { properties, path } = this.oakOption;
+            const { properties } = this.oakOption;
             const dataResolved: Record<string, any> = {};
             const assignProps = (
                 data: Record<string, any>,
@@ -236,24 +236,6 @@ const oakBehavior = Behavior<
             if (Object.keys(dataResolved).length > 0) {
                 this.setState(dataResolved);
             }
-            // if (this.props.oakPath || (this.iAmThePage() && path)) {
-            //     const pathState = onPathSet.call(this as any, this.oakOption as any);
-            //     if (this.unmounted) {
-            //         return;
-            //     }
-            //     this.setState(pathState as any, () => {
-            //         const { oakFullpath } = this.state;
-            //         if (oakFullpath) {
-            //             this.refresh();
-            //         }
-            //         else {
-            //             this.reRender();
-            //         }
-            //     });
-            // }
-            // else if(!this.oakOption.entity) {
-            //     this.reRender();
-            // }
         },
 
         subEvent(type: string, callback: Function) {

@@ -1,16 +1,7 @@
 import React, {useEffect} from 'react';
-import {
-    Space,
-    Button,
-    Modal,
-    Divider,
-    Popover,
-    Typography,
-} from 'antd';
-import {
-  MoreOutlined,
-} from '@ant-design/icons';
-import { ActionDef, WebComponentProps } from '../../types/Page';
+import { Space, Button, Divider, Popover, Typography } from 'antd';
+import { MoreOutlined } from '@ant-design/icons';
+import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 
 import { EntityDict } from 'oak-domain/lib/types/Entity';
@@ -67,8 +58,8 @@ export default function Render(
                     placement='topRight'
                     content={
                         <Space direction="vertical">
-                            {moreItems.map((ele) => (
-                                <Button size="small" type="link" onClick={ele.onClick}>
+                            {moreItems.map((ele, index) => (
+                                <Button key={`btn${index}`} size="small" type="link" onClick={ele.onClick}>
                                     {ele.label}
                                 </Button>
                             ))}

@@ -3,7 +3,7 @@ import { TableProps } from 'antd';
 import { RowWithActions, ReactComponentProps } from '../../types/Page';
 declare const _default: <ED2 extends ED, T2 extends keyof ED2>(props: ReactComponentProps<ED2, T2, false, {
     entity: T2;
-    extraActions: OakExtraActionProps[];
+    extraActions: OakExtraActionProps[] | ((row: ED2[T2]["Schema"]) => OakExtraActionProps[]);
     onAction: onActionFnDef;
     disabledOp: boolean;
     attributes: OakAbsAttrDef[];

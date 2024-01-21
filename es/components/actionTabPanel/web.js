@@ -3,7 +3,6 @@ import { Button, Modal, Typography, } from 'antd';
 import OakIcon from '../icon';
 import classNames from 'classnames';
 import Style from './web.module.less';
-const { confirm } = Modal;
 function ItemComponent(props) {
     const { icon, buttonProps, render, onClick, iconRender, iconProps, mode, text, } = props;
     if (render) {
@@ -88,7 +87,7 @@ export default function Render(props) {
         }}>
                     <div className={Style.tabView}>
                         {tabNums.map((tabNum, index) => {
-            return (<div className={Style.btnContainer}>
+            return (<div key={`tab${index}`} className={Style.btnContainer}>
                                     {newItems
                     .filter((btn, index2) => (tabNum - 1) * count <
                     index2 + 1 &&
@@ -102,16 +101,16 @@ export default function Render(props) {
                     else {
                         text = getActionName(action);
                     }
-                    let onClick = async () => {
+                    let onClick2 = async () => {
                         if (ele.onClick) {
                             ele.onClick(ele);
                             return;
                         }
                     };
                     if (ele.alerted) {
-                        onClick = async () => {
+                        onClick2 = async () => {
                             const { title, content, okText, cancelText, } = getAlertOptions(ele);
-                            confirm({
+                            Modal.confirm({
                                 title,
                                 content,
                                 okText,
@@ -137,7 +136,7 @@ export default function Render(props) {
                                 : 1})`,
                             width: `calc(100% / ${column})`,
                         }}>
-                                                    <ItemComponent {...ele} onClick={onClick} mode={mode} text={text}/>
+                                                    <ItemComponent {...ele} onClick={onClick2} mode={mode} text={text}/>
                                                 </div>);
                 })}
                                 </div>);

@@ -5,7 +5,7 @@ export default OakComponent({
     properties: {
         entity: '',
         extraActions: [],
-        onAction: (() => undefined),
+        onAction: (() => { }),
         disabledOp: false,
         attributes: [],
         data: [],

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Space, Button, Divider, Popover, Typography, } from 'antd';
-import { MoreOutlined, } from '@ant-design/icons';
+import { Space, Button, Divider, Popover, Typography } from 'antd';
+import { MoreOutlined } from '@ant-design/icons';
 import Style from './mobile.module.less';
 export default function Render(props) {
     const { methods, data } = props;
@@ -22,7 +22,7 @@ export default function Render(props) {
                 </>))}
             {moreItems && moreItems.length > 0 && (<Divider type="vertical"/>)}
             {moreItems && moreItems.length > 0 && (<Popover placement='topRight' content={<Space direction="vertical">
-                            {moreItems.map((ele) => (<Button size="small" type="link" onClick={ele.onClick}>
+                            {moreItems.map((ele, index) => (<Button key={`btn${index}`} size="small" type="link" onClick={ele.onClick}>
                                     {ele.label}
                                 </Button>))}
                         </Space>} trigger="click">

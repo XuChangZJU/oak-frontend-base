@@ -111,7 +111,9 @@ export function resolvePath<ED extends EntityDict & BaseEntityDict>(
             }
             idx++;
         } catch (err) {
-            console.log(`存在非schema属性${path}`);
+            if (process.env.NODE_ENV === 'development') {
+                console.warn(`存在非「${_entity as string}」schema属性: ${path}`);
+            }
             return {
                 entity: 'notExist',
                 attr: path,

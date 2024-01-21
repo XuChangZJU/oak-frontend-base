@@ -28,9 +28,9 @@ export class ContextMenuFactory extends Feature {
                 }
                 return;
             }
-            const pathhh = path.split('.');
+            const pathArr = path.split('.');
             const judgeIter = (e2, idx) => {
-                const attr = pathhh[idx];
+                const attr = pathArr[idx];
                 const rel = judgeRelation(schema, e2, attr);
                 let e3 = e2;
                 if (typeof rel === 'string') {
@@ -43,14 +43,14 @@ export class ContextMenuFactory extends Feature {
                     assert(rel instanceof Array);
                     e3 = rel[0];
                 }
-                if (idx === pathhh.length - 1) {
+                if (idx === pathArr.length - 1) {
                     if (e3 === 'user') {
                         // 用user连接说明一定满足
                         return true;
                     }
                     if (e3 === entity) {
                         const filter = {};
-                        const paths2 = pathhh.slice(0, pathhh.length - 1);
+                        const paths2 = pathArr.slice(0, pathArr.length - 1);
                         if (rel === 2) {
                             set(filter, paths2.concat('entity'), entity);
                             set(filter, paths2.concat('entityId'), entityId);
@@ -87,6 +87,28 @@ export class ContextMenuFactory extends Feature {
                         return true;
                     }
                     // relationAuth和其它的checker现在分开判断
+                    let result = false;
+                    if (action instanceof Array) {
+                        for (let i = 0; i < action.length; i++) {
+                            // action有一个满足就行了
+                            const checkResult = this.relationAuth.checkRelation(destEntity, {
+                                action: action[i],
+                                data: undefined,
+                                filter,
+                            }) &&
+                                this.cache.checkOperation(destEntity, action[i], undefined, filter, [
+                                    'logical',
+                                    'relation',
+                                    'logicalRelation',
+                                    'row',
+                                ]);
+                            if (checkResult) {
+                                result = checkResult;
+                                break;
+                            }
+                        }
+                        return result;
+                    }
                     return (this.relationAuth.checkRelation(destEntity, {
                         action,
                         data: undefined,

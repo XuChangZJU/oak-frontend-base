@@ -26,7 +26,7 @@ function getProps(
     const props = {};
 
     for (const k in query) {
-        if (properties && properties[k]) {
+        if (properties && properties.hasOwnProperty(k)) {
             switch (typeof properties[k]) {
                 case 'number': {
                     Object.assign(props, {
@@ -75,22 +75,26 @@ function getProps(
     return props;
 }
 
-const withRouter = (Component: React.ComponentType<any>, { path, properties }: { path?: string, properties?: Record<string, any> }) => {
+type OakComponentProperties = {
+    path?: string;
+    properties?: Record<string, any>;
+};
+
+const withRouter = (
+    Component: React.ComponentType<any>,
+    { path, properties }: OakComponentProperties
+) => {
     const ComponentWithRouterProp = (props: any) => {
         const navigation = props.navigation;
         const route = props.route;
 
         const { params: routeParams } = route || {};
         let params = {};
-        /**
-         * 由path来判定是否为Page。这里有个隐患，未来实现了keepAlive后，可能会影响到之前压栈的Page
-         * 待测试。by Xc 20231102
-         */
         if (path) {
             params = Object.assign(params, getParams(routeParams, properties));
         }
 
-        return <Component {...props} {...params} width="xs" />;
+        return <Component {...props} {...params} ref={props.ref} width="xs" />;
     };
     return ComponentWithRouterProp;
 };

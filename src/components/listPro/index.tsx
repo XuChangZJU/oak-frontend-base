@@ -24,7 +24,7 @@ type Props<ED2 extends ED, T extends keyof ED2> = {
     buttonGroup?: ListButtonProps[];
     onReload?: () => void;
     entity: T;
-    extraActions?: OakExtraActionProps[];
+    extraActions?: OakExtraActionProps[] | ((row: any) => OakExtraActionProps[]);
     onAction?: onActionFnDef;
     disabledOp?: boolean;
     attributes: OakAbsAttrDef[];
@@ -55,8 +55,8 @@ export const TableContext = createContext<{
     entity: keyof ED | undefined;
     schema: StorageSchema<ED> | undefined;
     setTableAttributes:
-        | ((attributes: TableAttributeType[]) => void)
-        | undefined;
+    | ((attributes: TableAttributeType[]) => void)
+    | undefined;
     setSchema: ((schema: any) => void) | undefined;
     onReset: (() => void) | undefined; // 重置tableAttributes为传入的attributes
 }>({
@@ -115,6 +115,7 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
                         attribute: {
                             label: '#',
                             path: '#',
+                            width: 100,
                         },
                         attrType: 'number',
                         attr: '#',
@@ -171,18 +172,18 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
                     data={
                         !disableSerialNumber
                             ? data?.map((ele, index) => {
-                                  if (tablePagination) {
-                                      const total = tablePagination.total || 0;
-                                      const pageSize =
-                                          tablePagination.pageSize || 20; //条数
-                                      const current =
-                                          tablePagination.current || 1; //当前页
-                                      (ele as any)['#'] =
-                                          pageSize * (current - 1) +
-                                          (index + 1);
-                                  }
-                                  return ele;
-                              })
+                                if (tablePagination) {
+                                    const total = tablePagination.total || 0;
+                                    const pageSize =
+                                        tablePagination.pageSize || 20; //条数
+                                    const current =
+                                        tablePagination.current || 1; //当前页
+                                    (ele as any)['#'] =
+                                        pageSize * (current - 1) +
+                                        (index + 1);
+                                }
+                                return ele;
+                            })
                             : data
                     }
                     loading={loading}

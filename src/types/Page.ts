@@ -301,8 +301,10 @@ export type OakComponentOption<
 
 type OakComponentProperties<
     ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED> = Partial<{
-        width: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';     // 判断屏幕宽度，暂时只能放在这儿  by Xc
+    T extends keyof ED
+> = Partial<
+    {
+        width: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl'; // 判断屏幕宽度，暂时只能放在这儿  by Xc
         oakPath: string;
         oakId: string;
         oakFrom: string;
@@ -312,7 +314,8 @@ type OakComponentProperties<
         oakActions: string;
         oakCascadeActions: string;
         oakFilters: Array<ED[T]['Selection']['filter']>;
-    }>;
+    } & React.RefAttributes<HTMLElement>
+>;
 
 export type OakListComponentProperties<
     ED extends EntityDict & BaseEntityDict,

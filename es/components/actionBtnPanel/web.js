@@ -1,7 +1,6 @@
 import React from 'react';
 import { Space, Button, Modal, Dropdown, Typography, } from 'antd';
 import Style from './web.module.less';
-const { confirm } = Modal;
 function ItemComponent(props) {
     const { type, buttonProps, render, onClick, text } = props;
     if (type === 'button') {
@@ -43,7 +42,7 @@ export default function Render(props) {
             if (ele.alerted) {
                 onClick = async () => {
                     const { title, content, okText, cancelText } = getAlertOptions(ele);
-                    confirm({
+                    Modal.confirm({
                         title,
                         content,
                         okText,
@@ -80,7 +79,7 @@ export default function Render(props) {
     if (mode === 'table-cell') {
         return (<Space {...spaceProps}>
                 {newItems?.map((ele, index) => {
-                return (<ItemComponent {...ele} onClick={ele.onClick2} text={ele.text}/>);
+                return (<ItemComponent {...ele} onClick={ele.onClick2} text={ele.text} key={`c_ItemComponent_${index}`}/>);
             })}
 
                 {moreItems && moreItems.length > 0 && (<Dropdown menu={{
@@ -112,7 +111,7 @@ export default function Render(props) {
                 </Dropdown>)}
             <Space {...spaceProps}>
                 {newItems?.map((ele, index) => {
-            return (<ItemComponent type="button" {...ele} onClick={ele.onClick2} text={ele.text}/>);
+            return (<ItemComponent type="button" {...ele} onClick={ele.onClick2} text={ele.text} key={`c_ItemComponent_${index}`}/>);
         })}
             </Space>
         </div>);
