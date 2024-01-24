@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styles from './index.module.less';
 
-import { Space, Checkbox, Divider, Modal, Image } from 'antd';
+import { Space, Checkbox, Divider, Image } from 'antd';
 
 import {
   EyeOutlined,
 } from '@ant-design/icons';
 
-const { confirm } = Modal;
 
 type Props = {
     mode?: 'select';
