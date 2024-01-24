@@ -6,8 +6,9 @@ type buttonProps = {
     onClick: () => void;
 };
 type ToolBarProps = {
-    title?: string;
+    title?: React.ReactNode;
     buttonGroup?: buttonProps[];
+    extraContent?: React.ReactNode;
     reload: () => void;
 };
 declare function ToolBar(props: ToolBarProps): React.JSX.Element;

@@ -11,18 +11,19 @@ import Style from './index.module.less';
 
 type buttonProps = {
     label: string;
-    type?: ButtonProps['type']
+    type?: ButtonProps['type'];
     onClick: () => void;
 } 
 
 type ToolBarProps = {
-    title?: string;
+    title?: React.ReactNode;
     buttonGroup?: buttonProps[];
+    extraContent?: React.ReactNode;
     reload: () => void;
 }
 
 function ToolBar(props: ToolBarProps) {
-    const { title, buttonGroup, reload } = props;
+    const { title, buttonGroup, reload, extraContent } = props;
     const features = useFeatures<{ locales: Locales<any, any, any, any> }>();
 
     return (
@@ -30,6 +31,7 @@ function ToolBar(props: ToolBarProps) {
             <div className={Style.title}>{title}</div>
             <div className={Style.toolbarRight}>
                 <Space>
+                    {extraContent}
                     {buttonGroup && buttonGroup.length > 0 && (
                         <ButtonGroup items={buttonGroup} />
                     )}
