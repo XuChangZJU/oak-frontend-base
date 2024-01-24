@@ -1,5 +1,5 @@
 import { Feature } from '../types/Feature';
-import { pull, intersection } from 'oak-domain/lib/utils/lodash';
+import { pull, intersection, unset } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { OakRowUnexistedException, OakException, OakUserException } from 'oak-domain/lib/types/Exception';
 import { assert } from 'oak-domain/lib/utils/assert';
@@ -130,7 +130,7 @@ export class Cache extends Feature {
         if (originTimestamp) {
             return () => this.addRefreshRecord(entity, key, originTimestamp);
         }
-        return () => undefined;
+        return () => unset(this.refreshRecords[entity], key);
     }
     /**
      * 向服务器刷新数据

@@ -36,11 +36,11 @@ const ProList = (props) => {
                         attribute: {
                             label: '#',
                             path: '#',
+                            width: 100,
                         },
                         attrType: 'number',
                         attr: '#',
                         entity: entity,
-                        width:100,
                     },
                     show: true,
                     disabled: true,

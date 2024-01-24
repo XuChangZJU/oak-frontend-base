@@ -77,8 +77,9 @@ export class Locales extends Feature {
         this.i18n.store(dataset);
         if (i18ns.length > 0) {
             // 启动时刷新数据策略
-            const nss = i18ns.map(ele => ele.namespace);
-            await this.loadServerData(nss);
+            // 先不处理了，这样似乎会导致如果key不miss就不会更新，所以i18n的更新要确保这点
+            /* const nss = i18ns.map(ele => ele.namespace!);
+            await this.loadServerData(nss); */
         }
     }
     async loadServerData(nss) {
@@ -127,6 +128,9 @@ export class Locales extends Feature {
     async loadData(key) {
         assert(typeof key === 'string');
         const [ns] = key.split('.');
+        if (process.env.NODE_ENV === 'development') {
+            assert(!['undefined', 'notExist'].includes(ns));
+        }
         await this.loadServerData([ns]);
         if (!this.hasKey(key)) {
             console.warn(`命名空间${ns}中的${key}缺失且可能请求不到更新的数据`);

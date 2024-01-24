@@ -2,7 +2,7 @@ import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, Check
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
-import { merge, pull, intersection, omit, pick } from 'oak-domain/lib/utils/lodash';
+import { merge, pull, intersection, omit, unset } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { OakRowUnexistedException, OakRowInconsistencyException, OakException, OakUserException } from 'oak-domain/lib/types/Exception';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
@@ -203,7 +203,7 @@ export class Cache<
         if (originTimestamp) {
             return () => this.addRefreshRecord(entity, key, originTimestamp);
         }
-        return () => undefined as void;
+        return () => unset(this.refreshRecords[entity], key);
     }
 
     /**

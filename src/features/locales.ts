@@ -102,8 +102,9 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
 
         if (i18ns.length > 0) {
             // 启动时刷新数据策略
-            const nss = i18ns.map(ele => ele.namespace!);
-            await this.loadServerData(nss);
+            // 先不处理了，这样似乎会导致如果key不miss就不会更新，所以i18n的更新要确保这点
+            /* const nss = i18ns.map(ele => ele.namespace!);
+            await this.loadServerData(nss); */
         }
     }
 
@@ -156,6 +157,10 @@ export class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncCo
     private async loadData(key: Scope) {
         assert(typeof key === 'string');
         const [ ns ] = key.split('.');
+
+        if (process.env.NODE_ENV === 'development') {
+            assert(!['undefined', 'notExist'].includes(ns));
+        }
 
         await this.loadServerData([ns]);
         if (!this.hasKey(key)) {
