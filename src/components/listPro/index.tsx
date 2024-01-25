@@ -20,7 +20,9 @@ import { useFeatures } from '../../platforms/web';
 import { Locales } from '../../features/locales';
 
 type Props<ED2 extends ED, T extends keyof ED2> = {
-    title?: string;
+    title?: string | React.ReactNode,
+    extraContent?: React.ReactNode,
+    hideDefaultButtons?: boolean;
     buttonGroup?: ListButtonProps[];
     onReload?: () => void;
     entity: T;
@@ -70,7 +72,6 @@ export const TableContext = createContext<{
 
 const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
     const {
-        title,
         buttonGroup,
         entity,
         extraActions,
@@ -83,6 +84,9 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
         rowSelection,
         onReload,
         disableSerialNumber,
+        title,
+        hideDefaultButtons = false,
+        extraContent,
     } = props;
     const features = useFeatures<{
         locales: Locales<any, any, any, any>;
@@ -153,9 +157,10 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
             }}
         >
             <div className={Style.container}>
-                {!isMobile && (
+                {!isMobile && !hideDefaultButtons && (
                     <ToolBar
                         title={title}
+                        extraContent={extraContent}
                         buttonGroup={buttonGroup}
                         reload={() => {
                             onReload && onReload();

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import styles from './index.module.less';
-import { Space, Checkbox, Divider, Modal, Image } from 'antd';
+import { Space, Checkbox, Divider, Image } from 'antd';
 import { EyeOutlined, } from '@ant-design/icons';
-const { confirm } = Modal;
 function MaskView(props) {
     const { selected, onClick, setVisibleTrue } = props;
     return (<div className={selected ? styles['mask-checked'] : styles.mask} onClick={onClick}>

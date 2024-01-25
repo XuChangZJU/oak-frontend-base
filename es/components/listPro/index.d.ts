@@ -4,7 +4,9 @@ import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, ListButtonProps, ED, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
 import { RowWithActions } from '../../types/Page';
 type Props<ED2 extends ED, T extends keyof ED2> = {
-    title?: string;
+    title?: string | React.ReactNode;
+    extraContent?: React.ReactNode;
+    hideDefaultButtons?: boolean;
     buttonGroup?: ListButtonProps[];
     onReload?: () => void;
     entity: T;

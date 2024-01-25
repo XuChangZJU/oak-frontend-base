@@ -3,9 +3,9 @@ import { Input, Button, Space, Form, Badge, Row, Col } from 'antd';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
-import Filter from '../filter2';
+import Filter from '../filter';
 import { ColSpanType, ColumnProps } from '../../types/Filter';
-import { getFilterName } from '../filter2/utils';
+import { getFilterName } from '../filter/utils';
 import Style from './web.module.less';
 
 

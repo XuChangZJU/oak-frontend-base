@@ -1,5 +1,5 @@
 import { assert } from 'oak-domain/lib/utils/assert';
-import { getFilterName } from '../filter2/utils';
+import { getFilterName } from '../filter/utils';
 export default OakComponent({
     isList: true,
     data: {

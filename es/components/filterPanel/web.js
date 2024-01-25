@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Button, Space, Form, Badge, Row, Col } from 'antd';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
-import Filter from '../filter2';
-import { getFilterName } from '../filter2/utils';
+import Filter from '../filter';
+import { getFilterName } from '../filter/utils';
 import Style from './web.module.less';
 const DEFAULT_COLUMN_MAP = {
     xxl: 4,
