@@ -22,5 +22,5 @@ export declare abstract class FrontendRuntimeContext<ED extends EntityDict & Bas
     env: Environment;
     navigator: Navigator;
     constructor(store: SyncRowStore<ED, FrontendRuntimeContext<ED, Cxt, AD>>, features: BasicFeatures<ED, Cxt, FrontendRuntimeContext<ED, Cxt, AD>, AD>);
-    protected getSerializedData(): SerializedData;
+    protected getSerializedData(): Promise<SerializedData>;
 }

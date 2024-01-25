@@ -27,7 +27,7 @@ export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDi
         return this.be;
     }
 
-    protected getSerializedData(): SerializedData {
+    protected async getSerializedData(): Promise<SerializedData> {
         return {
             sid: this.subscriberId,
             be: this.be,

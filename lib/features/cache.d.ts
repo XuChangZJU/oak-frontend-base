@@ -37,7 +37,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     private initSavedLogic;
     onInitialized(): Promise<void>;
     getSchema(): StorageSchema<ED>;
-    exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void, dontPublish?: true): Promise<{
+    exec<K extends keyof AD>(name: K, params: Parameters<AD[K]>[0], callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void, dontPublish?: true, ignoreContext?: true): Promise<{
         result: Awaited<ReturnType<AD[K]>>;
         message: string | null | undefined;
     }>;

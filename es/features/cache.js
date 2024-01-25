@@ -77,10 +77,10 @@ export class Cache extends Feature {
         const context = this.contextBuilder && this.contextBuilder();
         return context?.getCurrentUserId(allowUnloggedIn);
     } */
-    async exec(name, params, callback, dontPublish) {
+    async exec(name, params, callback, dontPublish, ignoreContext) {
         try {
             this.refreshing++;
-            const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
+            const { result, opRecords, message } = await this.aspectWrapper.exec(name, params, ignoreContext);
             callback && callback(result, opRecords);
             if (opRecords) {
                 this.syncInner(opRecords);

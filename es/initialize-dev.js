@@ -31,9 +31,9 @@ export function initialize(storageSchema, frontendContextBuilder, backendContext
     const features1 = initBasicFeaturesStep1();
     const debugStore = createDebugStore(storageSchema, backendContextBuilder, triggers2, checkers2, watchers2, timers, startRoutines, initialData, actionDict, authDeduceRelationMap, (key, data) => features1.localStorage.save(key, data), (key) => features1.localStorage.load(key), selectFreeEntities, updateFreeDict);
     const wrapper = {
-        exec: async (name, params) => {
+        exec: async (name, params, ignoreContext) => {
             const context = features2.cache.buildContext();
-            const str = context.toString();
+            const str = !ignoreContext ? await context.toString() : '{}';
             const contextBackend = await backendContextBuilder(str)(debugStore);
             await contextBackend.begin();
             let result;
