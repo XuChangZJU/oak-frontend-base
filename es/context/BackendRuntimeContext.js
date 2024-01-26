@@ -15,7 +15,7 @@ export class BackendRuntimeContext extends AsyncContext {
     getBriefEnvironment() {
         return this.be;
     }
-    getSerializedData() {
+    async getSerializedData() {
         return {
             sid: this.subscriberId,
             be: this.be,

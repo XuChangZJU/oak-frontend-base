@@ -1,2 +1,0 @@
-<l-search-bar value="{{searchValue}}" placeholder="{{placeholder}}" bind:linchange="searchChangeMp" bind:linconfirm="searchConfirm" bind:linclear="searchClear" show-cancel="{{false}}" />
-

@@ -15,7 +15,7 @@ export const TableContext = createContext({
     onReset: undefined,
 });
 const ProList = (props) => {
-    const { title, buttonGroup, entity, extraActions, onAction, disabledOp, attributes, data, loading, tablePagination, rowSelection, onReload, disableSerialNumber, } = props;
+    const { buttonGroup, entity, extraActions, onAction, disabledOp, attributes, data, loading, tablePagination, rowSelection, onReload, disableSerialNumber, title, hideDefaultButtons = false, extraContent, } = props;
     const features = useFeatures();
     const [tableAttributes, setTableAttributes] = useState([]);
     const [schema, setSchema] = useState(undefined);
@@ -36,11 +36,11 @@ const ProList = (props) => {
                         attribute: {
                             label: '#',
                             path: '#',
+                            width: 100,
                         },
                         attrType: 'number',
                         attr: '#',
                         entity: entity,
-                        width:100,
                     },
                     show: true,
                     disabled: true,
@@ -68,7 +68,7 @@ const ProList = (props) => {
             },
         }}>
             <div className={Style.container}>
-                {!isMobile && (<ToolBar title={title} buttonGroup={buttonGroup} reload={() => {
+                {!isMobile && !hideDefaultButtons && (<ToolBar title={title} extraContent={extraContent} buttonGroup={buttonGroup} reload={() => {
                 onReload && onReload();
             }}/>)}
                 {isMobile && <ButtonGroup items={buttonGroup}/>}

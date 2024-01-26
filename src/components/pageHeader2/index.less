@@ -1,0 +1,97 @@
+.oak-new-pageHeader {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    &-header {
+        margin: 0;
+        font-size: 0;
+        height: auto;
+        line-height: inherit;
+        min-height: inherit;
+        position: relative;
+        padding: 10px 20px;
+        color: #000;
+
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+
+        &-left {
+            display: flex;
+            align-items: center;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        &-back {
+            outline: none;
+            cursor: pointer;
+            transition: color .3s;
+            color: #000;
+            border: 0px;
+            background: transparent;
+            padding: 0px;
+            line-height: inherit;
+            display: inline-block;
+        }
+
+        &-backIcon {
+            width: 16px;
+            height: 16px;
+            font-size: 16px;
+        }
+
+        &-title {
+            display: inline-block;
+            vertical-align: middle;
+            font-size: 16px;
+            font-weight: 700;
+            margin-right: 20px;
+            overflow: hidden;
+            white-space: nowrap;
+            -o-text-overflow: ellipsis;
+            text-overflow: ellipsis;
+            height: 30px;
+            line-height: 30px;
+        }
+
+        &-subTitle {
+            font-size: 12px;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 20px;
+        }
+
+        &-back {
+            margin-right: 24px;
+        }
+
+        &-extra {
+            display: flex;
+            align-items: center;
+        }
+    }
+
+
+
+    &-content {
+        display: flex;
+        flex-direction: column;
+        margin: 12px 12px 12px 12px;
+
+        padding: 16px 32px;
+    }
+
+    &-body {
+        display: flex;
+        flex-direction: column;
+
+        margin: 0px 12px 12px 12px;
+
+        background: var(--oak-bg-color-container);
+        box-shadow: 0 2px 3px #0000001a;
+        border-radius: 3px;
+        padding: 30px 32px;
+    }
+}

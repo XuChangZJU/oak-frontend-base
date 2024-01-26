@@ -35,7 +35,7 @@ export abstract class FrontendRuntimeContext<
         this.navigator = features.navigator;
     }
 
-    protected getSerializedData(): SerializedData {
+    protected async getSerializedData(): Promise<SerializedData> {
         const sid = this.subscriber.getSubscriberId();
         const be = this.env.getBriefEnv();
         const ns = this.navigator.getState();

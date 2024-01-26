@@ -2,7 +2,7 @@ import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, Check
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
-import { merge, pull, intersection, omit, pick } from 'oak-domain/lib/utils/lodash';
+import { merge, pull, intersection, omit, unset } from 'oak-domain/lib/utils/lodash';
 import { CacheStore } from '../cacheStore/CacheStore';
 import { OakRowUnexistedException, OakRowInconsistencyException, OakException, OakUserException } from 'oak-domain/lib/types/Exception';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
@@ -145,10 +145,11 @@ export class Cache<
         params: Parameters<AD[K]>[0],
         callback?: (result: Awaited<ReturnType<AD[K]>>, opRecords?: OpRecord<ED>[]) => void,
         dontPublish?: true,
+        ignoreContext?: true,
     ) {
         try {
             this.refreshing++;
-            const { result, opRecords, message } = await this.aspectWrapper.exec(name, params);
+            const { result, opRecords, message } = await this.aspectWrapper.exec(name, params, ignoreContext);
             callback && callback(result, opRecords);
             if (opRecords) {
                 this.syncInner(opRecords);
@@ -203,7 +204,7 @@ export class Cache<
         if (originTimestamp) {
             return () => this.addRefreshRecord(entity, key, originTimestamp);
         }
-        return () => undefined as void;
+        return () => unset(this.refreshRecords[entity], key);
     }
 
     /**

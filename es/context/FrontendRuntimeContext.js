@@ -9,7 +9,7 @@ export class FrontendRuntimeContext extends SyncContext {
         this.env = features.environment;
         this.navigator = features.navigator;
     }
-    getSerializedData() {
+    async getSerializedData() {
         const sid = this.subscriber.getSubscriberId();
         const be = this.env.getBriefEnv();
         const ns = this.navigator.getState();
