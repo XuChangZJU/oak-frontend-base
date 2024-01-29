@@ -322,7 +322,7 @@ export class Cache extends Feature {
         opers.forEach((oper) => {
             const { entity, operation } = oper;
             this.cacheStore.operate(entity, operation, this.context, {
-                checkerTypes: ['logical'],
+                checkerTypes: ['logical'], // 这里不能检查data，不然在数据没填完前会有大量异常
                 dontCollect: true,
                 dontCreateOper: true,
                 dontCreateModi: true,

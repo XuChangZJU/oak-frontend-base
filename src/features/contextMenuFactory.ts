@@ -15,6 +15,7 @@ interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     entity: T;
     action: ED[T]['Action'] | ED[T]['Action'][];
     paths: string[];
+    url?: string
 }
 
 export class ContextMenuFactory<

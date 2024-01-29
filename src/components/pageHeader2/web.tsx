@@ -27,6 +27,8 @@ type PageHeaderProps = {
     // contentClassName?: string;
     // bodyStyle?: React.ReactNode;
     // bodyClassName?: string;
+
+    allowBack: boolean;
 };
 
 type ED = EntityDict & BaseEntityDict;
@@ -42,6 +44,7 @@ export default function Render(
         }
     >
 ) {
+    const { data, methods } = props;
     const {
         style,
         className,
@@ -61,19 +64,23 @@ export default function Render(
         // contentClassName,
         // bodyStyle,
         // bodyClassName,
-    } = props.data;
-    const { t, goBack } = props.methods;
+        allowBack = true, //state取
+    } = data;
+    const { t, goBack } = methods;
     const prefixCls = 'oak-new';
+    const back = data.hasOwnProperty('showBack')
+        ? showBack
+        : allowBack;
 
     return (
         <div
             style={style}
             className={classNames(`${prefixCls}-pageHeader`, className)}
         >
-            {showHeader && (title || showBack || subTitle || tags || extra) && (
+            {showHeader && (title || back || subTitle || tags || extra) && (
                 <div className={`${prefixCls}-pageHeader-header`}>
                     <div className={`${prefixCls}-pageHeader-header-left`}>
-                        {showBack && (
+                        {back && (
                             <Button
                                 type="text"
                                 className={`${prefixCls}-pageHeader-header-back`}

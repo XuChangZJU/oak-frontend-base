@@ -11,6 +11,7 @@ interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     entity: T;
     action: ED[T]['Action'] | ED[T]['Action'][];
     paths: string[];
+    url?: string;
 }
 export declare class ContextMenuFactory<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt> & Record<string, Aspect<ED, Cxt>>> extends Feature {
     cache: Cache<ED, Cxt, FrontCxt, AD>;

@@ -4,18 +4,23 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
 import './index.less';
 export default function Render(props) {
-    const { style, className, showHeader = true, showBack = false, onBack, backIcon, delta, title, subTitle, extra, tags, children, content,
+    const { data, methods } = props;
+    const { style, className, showHeader = true, showBack = false, onBack, backIcon, delta, title, subTitle, extra, tags, children, content, 
     // contentStyle,
     // contentClassName,
     // bodyStyle,
     // bodyClassName,
-     } = props.data;
-    const { t, goBack } = props.methods;
+    allowBack = true, //state取
+     } = data;
+    const { t, goBack } = methods;
     const prefixCls = 'oak-new';
+    const back = data.hasOwnProperty('showBack')
+        ? showBack
+        : allowBack;
     return (<div style={style} className={classNames(`${prefixCls}-pageHeader`, className)}>
-            {showHeader && (title || showBack || subTitle || tags || extra) && (<div className={`${prefixCls}-pageHeader-header`}>
+            {showHeader && (title || back || subTitle || tags || extra) && (<div className={`${prefixCls}-pageHeader-header`}>
                     <div className={`${prefixCls}-pageHeader-header-left`}>
-                        {showBack && (<Button type="text" className={`${prefixCls}-pageHeader-header-back`} onClick={() => {
+                        {back && (<Button type="text" className={`${prefixCls}-pageHeader-header-back`} onClick={() => {
                     if (typeof onBack === 'function') {
                         onBack();
                         return;
