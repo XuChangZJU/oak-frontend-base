@@ -9,7 +9,7 @@ export default OakComponent({
         multiple: false,
         entityId: '',
         entityIds: [],
-        pickerRender: {}, // OakAbsRefAttrPickerRender
+        pickerRender: {},
         onChange: (() => undefined),
     },
     formData() {
