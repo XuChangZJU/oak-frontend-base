@@ -90,7 +90,7 @@ export default OakComponent({
         attribute: {},
         options: [],
         inputType: '',
-        timeStartStr: '',
+        timeStartStr: '', // 小程序选择时间显示
         timeEndStr: '',
         selectedLabel: '',
         minDateMp: new Date(1980, 1, 1).getTime(),

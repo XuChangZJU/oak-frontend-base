@@ -1,6 +1,9 @@
 import React from 'react';
 import { Space, Button, Modal, Dropdown, Typography, } from 'antd';
 import Style from './web.module.less';
+const MoreIcon = (<svg viewBox="64 64 896 896" focusable="false" data-icon="ellipsis" width="1em" height="1em" fill="currentColor" aria-hidden="true">
+        <path d="M176 511a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0z"></path>
+    </svg>);
 function ItemComponent(props) {
     const { type, buttonProps, render, onClick, text } = props;
     if (type === 'button') {
@@ -16,7 +19,7 @@ function ItemComponent(props) {
 export default function Render(props) {
     const { methods, data } = props;
     const { t, getActionName, getAlertOptions } = methods;
-    const { items, spaceProps, entity, mode = 'cell', column } = data;
+    const { items, spaceProps, entity, mode = 'default', column } = data;
     const getItems = () => {
         const items2 = items
             .filter((ele) => {
@@ -96,8 +99,33 @@ export default function Render(props) {
                     </Dropdown>)}
             </Space>);
     }
+    if (mode === 'cell') {
+        return (<div className={Style.panelContainer}>
+                {moreItems && moreItems.length > 0 && (<Dropdown menu={{
+                    items: moreItems.map((ele, index) => ({
+                        label: ele.text,
+                        key: index,
+                    })),
+                    onClick: (e) => {
+                        const item = moreItems[e.key];
+                        item.onClick2();
+                    },
+                }} arrow>
+                        <Typography className={Style.more}>更多</Typography>
+                    </Dropdown>)}
+                <Space {...spaceProps}>
+                    {newItems?.map((ele, index) => {
+                return (<ItemComponent type="button" {...ele} onClick={ele.onClick2} text={ele.text} key={`c_ItemComponent_${index}`}/>);
+            })}
+                </Space>
+            </div>);
+    }
     return (<div className={Style.panelContainer}>
-            {moreItems && moreItems.length > 0 && (<Dropdown menu={{
+            <Space {...spaceProps}>
+                {newItems?.map((ele, index) => {
+            return (<ItemComponent type="button" {...ele} onClick={ele.onClick2} text={ele.text} key={`c_ItemComponent_${index}`}/>);
+        })}
+                {moreItems && moreItems.length > 0 && (<Dropdown menu={{
                 items: moreItems.map((ele, index) => ({
                     label: ele.text,
                     key: index,
@@ -107,12 +135,8 @@ export default function Render(props) {
                     item.onClick2();
                 },
             }} arrow>
-                    <Typography className={Style.more}>更多</Typography>
-                </Dropdown>)}
-            <Space {...spaceProps}>
-                {newItems?.map((ele, index) => {
-            return (<ItemComponent type="button" {...ele} onClick={ele.onClick2} text={ele.text} key={`c_ItemComponent_${index}`}/>);
-        })}
+                        <Button className={Style.btnMore}>{MoreIcon}</Button>
+                    </Dropdown>)}
             </Space>
         </div>);
 }

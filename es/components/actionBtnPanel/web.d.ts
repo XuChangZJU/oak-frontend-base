@@ -8,7 +8,7 @@ export default function Render(props: WebComponentProps<EntityDict, keyof Entity
     actions: string[];
     items: Item[];
     spaceProps: SpaceProps;
-    mode: 'cell' | 'table-cell';
+    mode: 'cell' | 'table-cell' | 'default';
     column: 3;
 }, {
     getActionName: (action?: string) => string;

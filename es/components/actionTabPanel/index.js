@@ -1,9 +1,9 @@
 export default OakComponent({
     isList: false,
     data: {
-        slideWidth: 0,
-        slideLeft: 0,
-        slideShow: false,
+        slideWidth: 0, //小程序使用
+        slideLeft: 0, //小程序使用
+        slideShow: false, //小程序使用
         commonAction: [
             'create',
             'update',
