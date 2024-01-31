@@ -1013,7 +1013,6 @@ export function createComponent<
                         const fnData = {} as Partial<WechatMiniprogram.Component.DataOption>;
                         for (const k in this.data) {
                             if (typeof this.data[k] === 'function') {
-                                // this.data[k] = this.data[k].bind(this);
                                 fnData[k] = this.data[k].bind(this);
                             }
                         }
@@ -1025,7 +1024,6 @@ export function createComponent<
                     const fnData = {} as Partial<WechatMiniprogram.Component.DataOption>;
                     for (const k in this.data) {
                         if (typeof this.data[k] === 'function') {
-                            // this.data[k] = this.data[k].bind(this);
                             fnData[k] = this.data[k].bind(this);
                         }
                     }
