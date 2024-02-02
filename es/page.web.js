@@ -6,6 +6,11 @@ const DEFAULT_REACH_BOTTOM_DISTANCE = 50;
 export function createComponent(option, features) {
     const BaseComponent = createReactComponent(option, features);
     class Component extends BaseComponent {
+        constructor(props) {
+            super(props);
+            this.handleResize = this.handleResize.bind(this);
+            this.scrollEvent = this.scrollEvent.bind(this);
+          }
         scrollEvent = () => {
             this.checkReachBottom();
         };
@@ -20,16 +25,16 @@ export function createComponent(option, features) {
             resize && resize(size);
         }
         registerResize() {
-            window.addEventListener('resize', this.handleResize.bind(this));
+            window.addEventListener('resize', this.handleResize);
         }
         unregisterResize() {
-            window.removeEventListener('resize', this.handleResize.bind(this));
+            window.removeEventListener('resize', this.handleResize);
         }
         registerPageScroll() {
-            window.addEventListener('scroll', this.scrollEvent.bind(this));
+            window.addEventListener('scroll', this.scrollEvent);
         }
         unregisterPageScroll() {
-            window.removeEventListener('scroll', this.scrollEvent.bind(this));
+            window.removeEventListener('scroll', this.scrollEvent);
         }
         checkReachBottom() {
             if (!this.supportPullDownRefresh()) {
