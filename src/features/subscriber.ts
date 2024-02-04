@@ -24,7 +24,7 @@ export class SubScriber<
         url: string;
         path: string;
     }>;
-    private eventMap: Record<string, (event: string, records: OpRecord<ED>[]) => void> = {};
+    private eventMap: Record<string, ((event: string, records: OpRecord<ED>[]) => void) | undefined> = {};
     
     private url?: string;
     private path?: string;
@@ -104,10 +104,11 @@ export class SubScriber<
                 });
 
                 socket.on('data', (opRecords: OpRecord<ED>[], event: string) => {
-                    this.cache.sync(opRecords);
                     const callback = this.eventMap[event];
-                    assert(callback);
-                    callback(event, opRecords);
+                    if (callback) {
+                        callback(event, opRecords);
+                    }
+                    this.cache.sync(opRecords);
                 });
 
                 socket.on('error', (errString: string) => {
@@ -148,7 +149,7 @@ export class SubScriber<
         });
     }
 
-    async sub(events: string[], callback: (event: string, opRecords: OpRecord<ED>[]) => void): Promise<void> {
+    async sub(events: string[], callback?: (event: string, opRecords: OpRecord<ED>[]) => void): Promise<void> {
         events.forEach((event) => {
             assert(
                 !this.eventMap.hasOwnProperty(event),

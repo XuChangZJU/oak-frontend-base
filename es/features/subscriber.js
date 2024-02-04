@@ -65,10 +65,11 @@ export class SubScriber extends Feature {
                     }
                 });
                 socket.on('data', (opRecords, event) => {
-                    this.cache.sync(opRecords);
                     const callback = this.eventMap[event];
-                    assert(callback);
-                    callback(event, opRecords);
+                    if (callback) {
+                        callback(event, opRecords);
+                    }
+                    this.cache.sync(opRecords);
                 });
                 socket.on('error', (errString) => {
                     console.error(errString);

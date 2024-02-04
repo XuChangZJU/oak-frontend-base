@@ -26,7 +26,7 @@ export declare class SubScriber<ED extends EntityDict & BaseEntityDict, Cxt exte
     private emit;
     private initSocketPoint;
     private connect;
-    sub(events: string[], callback: (event: string, opRecords: OpRecord<ED>[]) => void): Promise<void>;
+    sub(events: string[], callback?: (event: string, opRecords: OpRecord<ED>[]) => void): Promise<void>;
     unsub(events: string[]): Promise<void>;
     getSubscriberId(): string | undefined;
 }
