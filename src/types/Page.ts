@@ -401,7 +401,7 @@ export type OakCommonComponentMethods<
         aggregate: (
             aggregation: ED[T]['Aggregation']
         ) => Promise<AggregationResult<ED[T]['Schema']>>;
-        subDataEvents: (events: string[]) => Promise<void>;
+        subDataEvents: (events: string[], callback: (event: string, opRecords: OpRecord<ED>[]) => void) => Promise<void>;
         unsubDataEvents: (events: string[]) => Promise<void>;
     };
 

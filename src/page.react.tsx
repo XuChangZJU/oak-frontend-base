@@ -566,8 +566,8 @@ abstract class OakComponentBase<
         }
     }
 
-    subDataEvents(events: string[]) {
-        return this.features.subscriber.sub(events);
+    subDataEvents(events: string[], callback: (event: string, opRecords: OpRecord<ED>[]) => void) {
+        return this.features.subscriber.sub(events, callback);
     }
 
     unsubDataEvents(events: string[]) {

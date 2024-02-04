@@ -10,7 +10,7 @@ export function createComponent(option, features) {
             super(props);
             this.handleResize = this.handleResize.bind(this);
             this.scrollEvent = this.scrollEvent.bind(this);
-          }
+        }
         scrollEvent = () => {
             this.checkReachBottom();
         };

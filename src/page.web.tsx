@@ -50,7 +50,7 @@ export function createComponent<
     >(option, features);
 
     class Component extends BaseComponent {
-        constructor(props) {
+        constructor(props: any) {
             super(props);
             this.handleResize = this.handleResize.bind(this);
             this.scrollEvent = this.scrollEvent.bind(this);

@@ -1,4 +1,4 @@
-import { EntityDict, Aspect } from 'oak-domain/lib/types';
+import { EntityDict, Aspect, OpRecord } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
@@ -11,7 +11,7 @@ export declare class SubScriber<ED extends EntityDict & BaseEntityDict, Cxt exte
     private cache;
     private message;
     private getSubscribePointFn;
-    private events;
+    private eventMap;
     private url?;
     private path?;
     private socket?;
@@ -26,7 +26,7 @@ export declare class SubScriber<ED extends EntityDict & BaseEntityDict, Cxt exte
     private emit;
     private initSocketPoint;
     private connect;
-    sub(events: string[]): Promise<void>;
+    sub(events: string[], callback: (event: string, opRecords: OpRecord<ED>[]) => void): Promise<void>;
     unsub(events: string[]): Promise<void>;
     getSubscriberId(): string | undefined;
 }

@@ -1,6 +1,6 @@
 /// <reference types="wechat-miniprogram" />
 /// <reference types="wechat-miniprogram" />
-import { Aspect, EntityDict, CheckerType, AggregationResult } from "oak-domain/lib/types";
+import { Aspect, EntityDict, CheckerType, AggregationResult, OpRecord } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
@@ -170,7 +170,7 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
     }[] | undefined;
     refresh: () => Promise<void>;
     aggregate: (aggregation: ED[T]['Aggregation']) => Promise<AggregationResult<ED[T]['Schema']>>;
-    subDataEvents: (events: string[]) => Promise<void>;
+    subDataEvents: (events: string[], callback: (event: string, opRecords: OpRecord<ED>[]) => void) => Promise<void>;
     unsubDataEvents: (events: string[]) => Promise<void>;
 };
 export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {

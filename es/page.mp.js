@@ -427,8 +427,8 @@ const oakBehavior = Behavior({
         loadMissedLocales(key) {
             this.features.locales.loadMissedLocale(key);
         },
-        subDataEvents(events) {
-            return this.features.subscriber.sub(events);
+        subDataEvents(events, callback) {
+            return this.features.subscriber.sub(events, callback);
         },
         unsubDataEvents(events) {
             return this.features.subscriber.unsub(events);
