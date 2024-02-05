@@ -170,7 +170,7 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
     }[] | undefined;
     refresh: () => Promise<void>;
     aggregate: (aggregation: ED[T]['Aggregation']) => Promise<AggregationResult<ED[T]['Schema']>>;
-    subDataEvents: (events: string[], callback: (event: string, opRecords: OpRecord<ED>[]) => void) => Promise<void>;
+    subDataEvents: (events: string[], callback?: (event: string, opRecords: OpRecord<ED>[]) => void) => Promise<void>;
     unsubDataEvents: (events: string[]) => Promise<void>;
 };
 export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
