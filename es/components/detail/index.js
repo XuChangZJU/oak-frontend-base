@@ -63,7 +63,7 @@ export default OakComponent({
             let currentUrl = event.currentTarget.dataset.src;
             let urlList = event.currentTarget.dataset.list;
             wx.previewImage({
-                current: currentUrl,
+                current: currentUrl, // 当前显示图片的http链接
                 urls: urlList, // 需要预览的图片http链接列表
             });
         },
