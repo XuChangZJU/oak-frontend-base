@@ -185,7 +185,7 @@ abstract class OakComponentBase<
     }
 
     addItem<T extends keyof ED>(
-        data: Omit<ED[T]['CreateSingle']['data'], 'id'>,
+        data: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string },
         path?: string
     ) {
         const path2 = path
@@ -731,7 +731,7 @@ export function createComponent<
                 }
             };
             Object.assign(methodProps, {
-                addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, path?: string) => {
+                addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }, path?: string) => {
                     return this.addItem(data, path);
                 },
                 removeItem: (id: string, path?: string) => {

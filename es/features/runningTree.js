@@ -494,7 +494,7 @@ class ListNode extends Node {
                 });
             }
         }
-        const id = generateNewId();
+        const id = item.id || generateNewId();
         assert(!this.updates[id]);
         this.updates[id] = {
             id: generateNewId(),

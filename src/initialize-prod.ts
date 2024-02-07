@@ -41,7 +41,7 @@ export function initialize<
     checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>,
     option: InitializeOptions<ED, Cxt>
 ) {
-    const {  authDeduceRelationMap, actionDict, selectFreeEntities, updateFreeDict, colorDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
+    const { authDeduceRelationMap, actionDict, selectFreeEntities, updateFreeDict, colorDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
 
     const { checkers: intCheckers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict);
     const checkers2 = checkers.concat(intCheckers);

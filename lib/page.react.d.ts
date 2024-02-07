@@ -53,7 +53,9 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         redirectTo<T2_1 extends keyof ED>(options: {
             url: string;
         } & OakNavigateToParameters<ED, T2_1>, state?: Record<string, any> | undefined, disableNamespace?: boolean | undefined): Promise<void>;
-        addItem<T extends keyof ED>(data: Omit<ED[T]["CreateSingle"]["data"], "id">, path?: string | undefined): string;
+        addItem<T extends keyof ED>(data: Omit<ED[T]["CreateSingle"]["data"], "id"> & {
+            id?: string | undefined;
+        }, path?: string | undefined): string;
         removeItem(id: string, path?: string | undefined): void;
         updateItem<T_1 extends keyof ED>(data: ED[T_1]["Update"]["data"], id: string, action?: ED[T_1]["Action"] | undefined, path?: string | undefined): void;
         recoverItem(id: string, path?: string | undefined): void;

@@ -434,7 +434,7 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     setPageSize: (pageSize: number, path?: string) => void;
     setCurrentPage: (current: number, path?: string) => void;
 
-    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, path?: string) => string;
+    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }, path?: string) => string;
     removeItem: (id: string, path?: string) => void;
     updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], path?: string) => void;
     recoverItem: (id: string, path?: string) => void;

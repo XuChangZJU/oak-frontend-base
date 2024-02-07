@@ -274,8 +274,6 @@ export class Cache extends Feature {
                 const { entity, operation } = oper;
                 this.context.operate(entity, operation, {
                     dontCollect: true,
-                    dontCreateOper: true,
-                    dontCreateModi: true,
                 });
             }
             this.rollback();
@@ -324,8 +322,6 @@ export class Cache extends Feature {
             this.cacheStore.operate(entity, operation, this.context, {
                 checkerTypes: ['logical'],
                 dontCollect: true,
-                dontCreateOper: true,
-                dontCreateModi: true,
             });
         });
         return;

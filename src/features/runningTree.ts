@@ -615,7 +615,7 @@ class ListNode<
         return result;
     }
 
-    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>) {
+    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }) {
         // 如果数据键值是一个空字符串则更新成null
         for (const k in item) {
             if (item[k] === '') {
@@ -624,7 +624,7 @@ class ListNode<
                 });
             }
         }
-        const id = generateNewId();
+        const id = item.id || generateNewId();
         assert(!this.updates[id]);
         this.updates[id] = {
             id: generateNewId(),
@@ -1986,7 +1986,7 @@ export class RunningTree<
 
     addItem<T extends keyof ED>(
         path: string,
-        data: Omit<ED[T]['CreateSingle']['data'], 'id'>
+        data: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }
     ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);

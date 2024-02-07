@@ -95,7 +95,9 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     removeNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(name: string, refresh: boolean): void;
     getFreshValue(): Array<Partial<ED[T]['Schema']>>;
-    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>): string;
+    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'> & {
+        id?: string;
+    }): string;
     removeItem(id: string): void;
     recoverItem(id: string): void;
     resetItem(id: string): void;
@@ -238,7 +240,9 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     destroyNode(path: string): void;
     getFreshValue(path: string): Partial<ED[keyof ED]["Schema"]> | Partial<ED[keyof ED]["Schema"]>[] | undefined;
     isDirty(path: string): boolean;
-    addItem<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>): string;
+    addItem<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'> & {
+        id?: string;
+    }): string;
     removeItem(path: string, id: string): void;
     updateItem<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action']): void;
     recoverItem(path: string, id: string): void;

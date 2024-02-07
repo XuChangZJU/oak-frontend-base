@@ -394,8 +394,6 @@ export class Cache<
                 const { entity, operation } = oper;
                 this.context!.operate(entity, operation, {
                     dontCollect: true,
-                    dontCreateOper: true,
-                    dontCreateModi: true,
                 });
             }
             this.rollback();
@@ -449,8 +447,6 @@ export class Cache<
                 this.cacheStore!.operate(entity, operation, this.context!, {
                     checkerTypes: ['logical'],      // 这里不能检查data，不然在数据没填完前会有大量异常
                     dontCollect: true,
-                    dontCreateOper: true,
-                    dontCreateModi: true,
                 });
             }
         );
