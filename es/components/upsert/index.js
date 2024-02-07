@@ -5,7 +5,7 @@ export default OakComponent({
         return this.props.entity;
     },
     properties: {
-        helps: {}, // Record<string, string>;
+        helps: {},
         entity: '',
         attributes: [],
         layout: 'horizontal',
