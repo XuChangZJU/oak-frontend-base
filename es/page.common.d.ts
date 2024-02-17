@@ -10,5 +10,9 @@ export declare function onPathSet<ED extends EntityDict & BaseEntityDict, T exte
 export declare function reRender<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>>(this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>, option: OakComponentOption<any, ED, T, Cxt, FrontCxt, any, any, any, {}, {}, {}>, extra?: Record<string, any>): void;
 export declare function refresh<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>>(this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>): Promise<void>;
 export declare function loadMore<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>>(this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>): Promise<void>;
-export declare function execute<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>>(this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>, action?: ED[T]['Action'], path?: string, messageProps?: boolean | MessageProps): Promise<void>;
+export declare function execute<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>>(this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>, action?: ED[T]['Action'], path?: string, messageProps?: boolean | MessageProps, //默认true
+opers?: Array<{
+    entity: T;
+    operation: ED[T]['Operation'];
+}>): Promise<void>;
 export declare function destroyNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>>(this: ComponentFullThisType<ED, T, any, Cxt, FrontCxt>): void;

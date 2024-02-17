@@ -294,8 +294,11 @@ abstract class OakComponentBase<
         return this.features.locales.t(key, params);
     }
 
-    execute(action?: ED[T]['Action'], messageProps?: boolean | MessageProps, path?: string) {
-        return execute.call(this as any, action, path, messageProps);
+    execute(action?: ED[T]['Action'], messageProps?: boolean | MessageProps, path?: string, opers?: Array<{
+        entity: T,
+        operation: ED[T]['Operation'],
+    }>) {
+        return execute.call(this as any, action, path, messageProps, opers as any);
     }
 
     isDirty(path?: string) {
@@ -677,9 +680,13 @@ export function createComponent<
                 execute: (
                     action?: ED[T]['Action'],
                     messageProps?: boolean | MessageProps,
-                    path?: string
+                    path?: string, 
+                    opers?: Array<{
+                        entity: T,
+                        operation: ED[T]['Operation'],
+                    }>
                 ) => {
-                    return this.execute(action, messageProps, path);
+                    return this.execute(action, messageProps, path, opers);
                 },
                 isDirty: (path?: string) => this.isDirty(path),
                 aggregate: (aggregation: ED[T]['Aggregation']) => {

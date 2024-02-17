@@ -66,7 +66,10 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         isCreation(path?: string | undefined): boolean;
         clean(path?: string | undefined): void;
         t(key: string, params?: object | undefined): string;
-        execute(action?: ED[T]["Action"] | undefined, messageProps?: boolean | MessageProps | undefined, path?: string | undefined): Promise<void>;
+        execute(action?: ED[T]["Action"] | undefined, messageProps?: boolean | MessageProps | undefined, path?: string | undefined, opers?: {
+            entity: T;
+            operation: ED[T]["Operation"];
+        }[] | undefined): Promise<void>;
         isDirty(path?: string | undefined): boolean;
         getFreshValue(path?: string | undefined): Partial<ED[keyof ED]["Schema"]> | Partial<ED[keyof ED]["Schema"]>[] | undefined;
         checkOperation(entity: T, action: ED[T]["Action"], data?: ED[T]["Update"]["data"] | undefined, filter?: ED[T]["Update"]["filter"] | undefined, checkerTypes?: CheckerType[] | undefined): boolean;

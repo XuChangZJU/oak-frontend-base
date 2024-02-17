@@ -144,8 +144,8 @@ class OakComponentBase extends React.PureComponent {
     t(key, params) {
         return this.features.locales.t(key, params);
     }
-    execute(action, messageProps, path) {
-        return execute.call(this, action, path, messageProps);
+    execute(action, messageProps, path, opers) {
+        return execute.call(this, action, path, messageProps, opers);
     }
     isDirty(path) {
         return this.features.runningTree.isDirty(path || this.state.oakFullpath);
@@ -390,8 +390,8 @@ export function createComponent(option, features) {
             super(props);
             const methodProps = {
                 t: (key, params) => this.t(key, params),
-                execute: (action, messageProps, path) => {
-                    return this.execute(action, messageProps, path);
+                execute: (action, messageProps, path, opers) => {
+                    return this.execute(action, messageProps, path, opers);
                 },
                 isDirty: (path) => this.isDirty(path),
                 aggregate: (aggregation) => {

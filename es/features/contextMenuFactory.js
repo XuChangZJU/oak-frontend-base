@@ -77,7 +77,12 @@ export class ContextMenuFactory extends Feature {
         const menus = this.menus
             .filter((menu) => {
             const { entity: destEntity, paths, action } = menu;
-            const filters = paths.length > 0
+            // 如果没有关联在entity上，则默认显示，由页面自己处理用户权限
+            if (!destEntity || !paths) {
+                return true;
+            }
+            assert(action);
+            const filters = paths && paths.length > 0
                 ? this.makeMenuFilters(destEntity, paths, entity, entityId)
                 : [{}]; // 如果没有path，视为无法推断操作的filter，直接返回无任何限制
             if (filters.length > 0) {

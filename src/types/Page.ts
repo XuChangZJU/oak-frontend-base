@@ -385,6 +385,10 @@ export type OakCommonComponentMethods<
             action?: ED[T]['Action'],
             messageProps?: boolean | MessageProps,
             path?: string,
+            opers?: Array<{
+                entity: T,
+                operation: ED[T]['Operation'],
+            }>
         ) => Promise<void>;
         checkOperation: (
             entity: T,

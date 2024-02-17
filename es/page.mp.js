@@ -181,8 +181,8 @@ const oakBehavior = Behavior({
         isDirty(path) {
             return this.features.runningTree.isDirty(path || this.state.oakFullpath);
         },
-        execute(action, messageProps, path) {
-            return execute.call(this, action, path, messageProps);
+        execute(action, messageProps, path, opers) {
+            return execute.call(this, action, path, messageProps, opers);
         },
         getFreshValue(path) {
             const path2 = path

@@ -161,7 +161,10 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
     clean: (path?: string) => void;
     isDirty: (path?: string) => boolean;
     t(key: string, params?: object): string;
-    execute: (action?: ED[T]['Action'], messageProps?: boolean | MessageProps, path?: string) => Promise<void>;
+    execute: (action?: ED[T]['Action'], messageProps?: boolean | MessageProps, path?: string, opers?: Array<{
+        entity: T;
+        operation: ED[T]['Operation'];
+    }>) => Promise<void>;
     checkOperation: (entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => boolean;
     tryExecute: (path?: string) => boolean | Error;
     getOperations: (path?: string) => {
