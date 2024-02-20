@@ -11,7 +11,7 @@ function ToolBar(props) {
     return (<div className={Style.toolbarContainer}>
             <div className={Style.title}>{title}</div>
             <div className={Style.toolbarRight}>
-                <Space>
+                <Space align='center'>
                     {extraContent}
                     {buttonGroup && buttonGroup.length > 0 && (<ButtonGroup items={buttonGroup}/>)}
                     <Tooltip title={features.locales.t('reload')}>

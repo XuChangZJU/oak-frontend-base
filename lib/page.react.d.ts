@@ -1,6 +1,6 @@
 import React from 'react';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { Aspect, CheckerType, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, CheckerType, EntityDict, OpRecord } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
@@ -53,7 +53,9 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         redirectTo<T2_1 extends keyof ED>(options: {
             url: string;
         } & OakNavigateToParameters<ED, T2_1>, state?: Record<string, any> | undefined, disableNamespace?: boolean | undefined): Promise<void>;
-        addItem<T extends keyof ED>(data: Omit<ED[T]["CreateSingle"]["data"], "id">, path?: string | undefined): string;
+        addItem<T extends keyof ED>(data: Omit<ED[T]["CreateSingle"]["data"], "id"> & {
+            id?: string | undefined;
+        }, path?: string | undefined): string;
         removeItem(id: string, path?: string | undefined): void;
         updateItem<T_1 extends keyof ED>(data: ED[T_1]["Update"]["data"], id: string, action?: ED[T_1]["Action"] | undefined, path?: string | undefined): void;
         recoverItem(id: string, path?: string | undefined): void;
@@ -64,7 +66,10 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         isCreation(path?: string | undefined): boolean;
         clean(path?: string | undefined): void;
         t(key: string, params?: object | undefined): string;
-        execute(action?: ED[T]["Action"] | undefined, messageProps?: boolean | MessageProps | undefined, path?: string | undefined): Promise<void>;
+        execute(action?: ED[T]["Action"] | undefined, messageProps?: boolean | MessageProps | undefined, path?: string | undefined, opers?: {
+            entity: T;
+            operation: ED[T]["Operation"];
+        }[] | undefined): Promise<void>;
         isDirty(path?: string | undefined): boolean;
         getFreshValue(path?: string | undefined): Partial<ED[keyof ED]["Schema"]> | Partial<ED[keyof ED]["Schema"]>[] | undefined;
         checkOperation(entity: T, action: ED[T]["Action"], data?: ED[T]["Update"]["data"] | undefined, filter?: ED[T]["Update"]["filter"] | undefined, checkerTypes?: CheckerType[] | undefined): boolean;
@@ -94,7 +99,7 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         getPagination(path?: string | undefined): import(".").Pagination | undefined;
         setPageSize(pageSize: number, path?: string | undefined): void;
         setCurrentPage(currentPage: number, path?: string | undefined): void;
-        subDataEvents(events: string[]): Promise<void>;
+        subDataEvents(events: string[], callback: (event: string, opRecords: OpRecord<ED>[]) => void): Promise<void>;
         unsubDataEvents(events: string[]): Promise<void>;
         context: unknown;
         setState<K extends keyof TData | keyof FormedData | keyof import("./types/Page").OakComponentData<ED, T>>(state: ComponentData<ED, T, FormedData, TData> | ((prevState: Readonly<ComponentData<ED, T, FormedData, TData>>, props: Readonly<ComponentProps<ED, T, TProperty>>) => ComponentData<ED, T, FormedData, TData> | Pick<ComponentData<ED, T, FormedData, TData>, K> | null) | Pick<ComponentData<ED, T, FormedData, TData>, K> | null, callback?: (() => void) | undefined): void;

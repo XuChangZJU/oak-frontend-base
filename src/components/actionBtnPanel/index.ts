@@ -6,7 +6,7 @@ export default OakComponent({
     properties: {
         entity: '' as keyof ED,
         items: [] as Item[],
-        mode: 'cell' as 'cell' | 'table-cell',
+        mode: 'default' as 'default' | 'cell' | 'table-cell',
         column: 3,
         fixed: false,
     },

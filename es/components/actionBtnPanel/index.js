@@ -3,7 +3,7 @@ export default OakComponent({
     properties: {
         entity: '',
         items: [],
-        mode: 'cell',
+        mode: 'default',
         column: 3,
         fixed: false,
     },

@@ -8,7 +8,7 @@ export default function Render(props) {
     }
     return (<Space>
             {items?.filter((ele) => ele.show)
-            .map((ele, index) => (<Button key={`c_buttonGroup_${index}`} type={ele.type} onClick={ele.onClick}>
+            .map((ele, index) => (<Button key={`c_buttonGroup_${index}`} type={ele.type} onClick={ele.onClick} icon={ele.icon}>
                         {ele.label}
                     </Button>))}
         </Space>);

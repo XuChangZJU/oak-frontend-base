@@ -385,6 +385,10 @@ export type OakCommonComponentMethods<
             action?: ED[T]['Action'],
             messageProps?: boolean | MessageProps,
             path?: string,
+            opers?: Array<{
+                entity: T,
+                operation: ED[T]['Operation'],
+            }>
         ) => Promise<void>;
         checkOperation: (
             entity: T,
@@ -401,7 +405,7 @@ export type OakCommonComponentMethods<
         aggregate: (
             aggregation: ED[T]['Aggregation']
         ) => Promise<AggregationResult<ED[T]['Schema']>>;
-        subDataEvents: (events: string[]) => Promise<void>;
+        subDataEvents: (events: string[], callback?: (event: string, opRecords: OpRecord<ED>[]) => void) => Promise<void>;
         unsubDataEvents: (events: string[]) => Promise<void>;
     };
 
@@ -434,7 +438,7 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     setPageSize: (pageSize: number, path?: string) => void;
     setCurrentPage: (current: number, path?: string) => void;
 
-    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, path?: string) => string;
+    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }, path?: string) => string;
     removeItem: (id: string, path?: string) => void;
     updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], path?: string) => void;
     recoverItem: (id: string, path?: string) => void;

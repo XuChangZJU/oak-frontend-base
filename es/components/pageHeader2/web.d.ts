@@ -17,6 +17,7 @@ type PageHeaderProps = {
     extra?: React.ReactNode;
     children?: React.ReactNode;
     content?: React.ReactNode;
+    allowBack: boolean;
 };
 type ED = EntityDict & BaseEntityDict;
 export default function Render(props: WebComponentProps<ED, keyof ED, false, PageHeaderProps, {

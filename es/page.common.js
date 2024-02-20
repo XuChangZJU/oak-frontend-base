@@ -468,7 +468,8 @@ export async function loadMore() {
         }
     }
 }
-export async function execute(action, path, messageProps) {
+export async function execute(action, path, messageProps, //默认true
+opers) {
     if (this.state.oakExecuting) {
         throw new Error('请仔细设计按钮状态，不要允许重复点击！');
     }
@@ -476,7 +477,7 @@ export async function execute(action, path, messageProps) {
         oakFocused: undefined,
     }); */
     const fullpath = path ? path : this.state.oakFullpath;
-    const { message } = await this.features.runningTree.execute(fullpath, action);
+    const { message } = await this.features.runningTree.execute(fullpath, action, opers);
     if (messageProps !== false) {
         const messageData = {
             type: 'success',

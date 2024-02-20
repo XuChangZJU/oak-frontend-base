@@ -1,6 +1,6 @@
 /// <reference types="wechat-miniprogram" />
 /// <reference types="wechat-miniprogram" />
-import { Aspect, EntityDict, CheckerType, AggregationResult } from "oak-domain/lib/types";
+import { Aspect, EntityDict, CheckerType, AggregationResult, OpRecord } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
@@ -161,7 +161,10 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
     clean: (path?: string) => void;
     isDirty: (path?: string) => boolean;
     t(key: string, params?: object): string;
-    execute: (action?: ED[T]['Action'], messageProps?: boolean | MessageProps, path?: string) => Promise<void>;
+    execute: (action?: ED[T]['Action'], messageProps?: boolean | MessageProps, path?: string, opers?: Array<{
+        entity: T;
+        operation: ED[T]['Operation'];
+    }>) => Promise<void>;
     checkOperation: (entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => boolean;
     tryExecute: (path?: string) => boolean | Error;
     getOperations: (path?: string) => {
@@ -170,7 +173,7 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
     }[] | undefined;
     refresh: () => Promise<void>;
     aggregate: (aggregation: ED[T]['Aggregation']) => Promise<AggregationResult<ED[T]['Schema']>>;
-    subDataEvents: (events: string[]) => Promise<void>;
+    subDataEvents: (events: string[], callback?: (event: string, opRecords: OpRecord<ED>[]) => void) => Promise<void>;
     unsubDataEvents: (events: string[]) => Promise<void>;
 };
 export type OakSingleComponentMethods<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = {
@@ -200,7 +203,9 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     getPagination: (path?: string) => Pagination | undefined;
     setPageSize: (pageSize: number, path?: string) => void;
     setCurrentPage: (current: number, path?: string) => void;
-    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, path?: string) => string;
+    addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'> & {
+        id?: string;
+    }, path?: string) => string;
     removeItem: (id: string, path?: string) => void;
     updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], path?: string) => void;
     recoverItem: (id: string, path?: string) => void;

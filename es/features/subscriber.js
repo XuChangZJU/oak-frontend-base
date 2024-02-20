@@ -1,12 +1,12 @@
 import { assert } from 'oak-domain/lib/utils/assert';
-import { pull } from 'oak-domain/lib/utils/lodash';
+import { pull, unset } from 'oak-domain/lib/utils/lodash';
 import io from '../utils/socket.io/socket.io';
 import { Feature } from '../types/Feature';
 export class SubScriber extends Feature {
     cache;
     message;
     getSubscribePointFn;
-    events = [];
+    eventMap = {};
     url;
     path;
     socket;
@@ -60,11 +60,15 @@ export class SubScriber extends Feature {
                     this.socketState = 'unconnected';
                     this.emit('disconnect');
                     socket.removeAllListeners();
-                    if (this.events.length > 0) {
+                    if (Object.keys(this.eventMap).length > 0) {
                         this.connect();
                     }
                 });
-                socket.on('data', (opRecords, ids) => {
+                socket.on('data', (opRecords, event) => {
+                    const callback = this.eventMap[event];
+                    if (callback) {
+                        callback(event, opRecords);
+                    }
                     this.cache.sync(opRecords);
                 });
                 socket.on('error', (errString) => {
@@ -75,8 +79,8 @@ export class SubScriber extends Feature {
                         content: errString,
                     });
                 });
-                if (this.events.length > 0) {
-                    socket.emit('sub', this.events);
+                if (Object.keys(this.eventMap).length > 0) {
+                    socket.emit('sub', Object.keys(this.eventMap));
                     resolve(undefined);
                 }
                 else {
@@ -101,10 +105,10 @@ export class SubScriber extends Feature {
             socket.connect();
         });
     }
-    async sub(events) {
+    async sub(events, callback) {
         events.forEach((event) => {
-            assert(!this.events.includes(event), `[subscriber]注册回调的id${event}发生重复`);
-            this.events.push(event);
+            assert(!this.eventMap.hasOwnProperty(event), `[subscriber]注册回调的id${event}发生重复`);
+            this.eventMap[event] = callback;
         });
         if (this.socketState === 'unconnected') {
             return this.connect();
@@ -128,10 +132,10 @@ export class SubScriber extends Feature {
         }
     }
     async unsub(events) {
-        events.forEach((event) => pull(this.events, event));
+        events.forEach((event) => unset(this.eventMap, event));
         if (this.socketState === 'connected') {
             this.socket.emit('unsub', events);
-            if (this.events.length === 0) {
+            if (Object.keys(this.eventMap).length === 0) {
                 this.socket.disconnect();
                 this.socket.removeAllListeners();
                 this.socketState = 'unconnected';

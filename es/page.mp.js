@@ -181,8 +181,8 @@ const oakBehavior = Behavior({
         isDirty(path) {
             return this.features.runningTree.isDirty(path || this.state.oakFullpath);
         },
-        execute(action, messageProps, path) {
-            return execute.call(this, action, path, messageProps);
+        execute(action, messageProps, path, opers) {
+            return execute.call(this, action, path, messageProps, opers);
         },
         getFreshValue(path) {
             const path2 = path
@@ -427,8 +427,8 @@ const oakBehavior = Behavior({
         loadMissedLocales(key) {
             this.features.locales.loadMissedLocale(key);
         },
-        subDataEvents(events) {
-            return this.features.subscriber.sub(events);
+        subDataEvents(events, callback) {
+            return this.features.subscriber.sub(events, callback);
         },
         unsubDataEvents(events) {
             return this.features.subscriber.unsub(events);
@@ -673,7 +673,6 @@ export function createComponent(option, features) {
                         const fnData = {};
                         for (const k in this.data) {
                             if (typeof this.data[k] === 'function') {
-                                // this.data[k] = this.data[k].bind(this);
                                 fnData[k] = this.data[k].bind(this);
                             }
                         }
@@ -686,7 +685,6 @@ export function createComponent(option, features) {
                     const fnData = {};
                     for (const k in this.data) {
                         if (typeof this.data[k] === 'function') {
-                            // this.data[k] = this.data[k].bind(this);
                             fnData[k] = this.data[k].bind(this);
                         }
                     }

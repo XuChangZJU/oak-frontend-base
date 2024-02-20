@@ -28,6 +28,7 @@ export default function Render(
                         key={`c_buttonGroup_${index}`}
                         type={ele.type}
                         onClick={ele.onClick}
+                        icon={ele.icon}
                     >
                         {ele.label}
                     </Button>

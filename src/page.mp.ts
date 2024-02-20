@@ -314,8 +314,8 @@ const oakBehavior = Behavior<
             );
         },
 
-        execute(action, messageProps, path) {
-            return execute.call(this as any, action, path, messageProps);
+        execute(action, messageProps, path, opers) {
+            return execute.call(this as any, action, path, messageProps, opers);
         },
 
         getFreshValue(path?: string) {
@@ -653,8 +653,8 @@ const oakBehavior = Behavior<
             this.features.locales.loadMissedLocale(key);
         },
 
-        subDataEvents(events) {
-            return this.features.subscriber.sub(events);
+        subDataEvents(events, callback) {
+            return this.features.subscriber.sub(events, callback);
         },
 
         unsubDataEvents(events) {
@@ -1013,7 +1013,6 @@ export function createComponent<
                         const fnData = {} as Partial<WechatMiniprogram.Component.DataOption>;
                         for (const k in this.data) {
                             if (typeof this.data[k] === 'function') {
-                                // this.data[k] = this.data[k].bind(this);
                                 fnData[k] = this.data[k].bind(this);
                             }
                         }
@@ -1025,7 +1024,6 @@ export function createComponent<
                     const fnData = {} as Partial<WechatMiniprogram.Component.DataOption>;
                     for (const k in this.data) {
                         if (typeof this.data[k] === 'function') {
-                            // this.data[k] = this.data[k].bind(this);
                             fnData[k] = this.data[k].bind(this);
                         }
                     }

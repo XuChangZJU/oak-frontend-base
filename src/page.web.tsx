@@ -50,6 +50,11 @@ export function createComponent<
     >(option, features);
 
     class Component extends BaseComponent {
+        constructor(props: any) {
+            super(props);
+            this.handleResize = this.handleResize.bind(this);
+            this.scrollEvent = this.scrollEvent.bind(this);
+        }
         private scrollEvent = () => {
             this.checkReachBottom();
         };
@@ -66,19 +71,19 @@ export function createComponent<
         }
 
         private registerResize() {
-            window.addEventListener('resize', this.handleResize.bind(this));
+            window.addEventListener('resize', this.handleResize);
         }
 
         private unregisterResize() {
-            window.removeEventListener('resize', this.handleResize.bind(this));
+            window.removeEventListener('resize', this.handleResize);
         }
 
         private registerPageScroll() {
-            window.addEventListener('scroll', this.scrollEvent.bind(this));
+            window.addEventListener('scroll', this.scrollEvent);
         }
 
         private unregisterPageScroll() {
-            window.removeEventListener('scroll', this.scrollEvent.bind(this));
+            window.removeEventListener('scroll', this.scrollEvent);
         }
 
         private checkReachBottom() {
@@ -87,7 +92,7 @@ export function createComponent<
             }
             const isCurrentReachBottom =
                 document.body.scrollHeight -
-                    (window.innerHeight + window.scrollY) <=
+                (window.innerHeight + window.scrollY) <=
                 DEFAULT_REACH_BOTTOM_DISTANCE;
 
             if (!this.isReachBottom && isCurrentReachBottom && option.isList) {
@@ -120,9 +125,9 @@ export function createComponent<
                     <PullToRefresh
                         onRefresh={async () => {
                             try {
-                                 this.setState({
-                                     oakPullDownRefreshLoading: true as any,
-                                 });
+                                this.setState({
+                                    oakPullDownRefreshLoading: true as any,
+                                });
                                 await this.refresh();
                                 this.setState({
                                     oakPullDownRefreshLoading: false as any,

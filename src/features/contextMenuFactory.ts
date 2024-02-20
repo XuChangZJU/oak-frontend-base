@@ -12,9 +12,10 @@ import { RelationAuth } from './relationAuth';
 
 interface IMenu<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
     name: string;
-    entity: T;
-    action: ED[T]['Action'] | ED[T]['Action'][];
-    paths: string[];
+    entity?: T;
+    action?: ED[T]['Action'] | ED[T]['Action'][];
+    paths?: string[];
+    url?: string
 }
 
 export class ContextMenuFactory<
@@ -124,11 +125,16 @@ export class ContextMenuFactory<
         const menus = this.menus
             .filter((menu) => {
                 const { entity: destEntity, paths, action } = menu;
+                // 如果没有关联在entity上，则默认显示，由页面自己处理用户权限
+                if (!destEntity || !paths) {
+                    return true;
+                }
+                assert(action);
                 const filters =
-                    paths.length > 0
+                    paths && paths.length > 0
                         ? this.makeMenuFilters(
-                              destEntity,
-                              paths,
+                              destEntity!,
+                              paths!,
                               entity,
                               entityId
                           )

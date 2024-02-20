@@ -615,7 +615,7 @@ class ListNode<
         return result;
     }
 
-    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'>) {
+    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }) {
         // 如果数据键值是一个空字符串则更新成null
         for (const k in item) {
             if (item[k] === '') {
@@ -624,7 +624,7 @@ class ListNode<
                 });
             }
         }
-        const id = generateNewId();
+        const id = item.id || generateNewId();
         assert(!this.updates[id]);
         this.updates[id] = {
             id: generateNewId(),
@@ -1353,37 +1353,39 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         });
         const keys = k ? [k] : Object.keys(this.children || {});
         for (const k of keys) {
-            const child = this.children[k]!;
-            const rel = this.judgeRelation(k);
-            if (rel === 2) {
-                if (value?.entityId) {
-                    assert(child instanceof SingleNode);
-                    assert(value.entity === child.getEntity());
-                    child.saveRefreshResult({
-                        [value.entityId!]: this.sr![k] || {},
-                    });
+            if (this.sr[k]) {
+                const child = this.children[k]!;
+                const rel = this.judgeRelation(k);
+                if (rel === 2) {
+                    if (value?.entityId) {
+                        assert(child instanceof SingleNode);
+                        assert(value.entity === child.getEntity());
+                        child.saveRefreshResult({
+                            [value.entityId!]: this.sr![k],
+                        });
+                    }
+                    else if (value && value.entityId === undefined && process.env.NODE_ENV === 'development') {
+                        console.warn(`singleNode 的子路径「${k}」上没有找到相应的entityId值，可能是取数据不全，请检查`);
+                    }
                 }
-                else if (value && value.entityId === undefined && process.env.NODE_ENV === 'development') {
-                    console.warn(`singleNode 的子路径「${k}」上没有找到相应的entityId值，可能是取数据不全，请检查`);
+                else if (typeof rel === 'string') {
+                    if (value && value[`${k}Id`]) {
+                        assert(child instanceof SingleNode);
+                        assert(rel === child.getEntity());
+                        child.saveRefreshResult({
+                            [value[`${k}Id`] as string]: this.sr![k],
+                        });
+                    }
+                    else if (value && value[`${k}Id`] === undefined && process.env.NODE_ENV === 'development') {
+                        console.warn(`singleNode 的子路径「${k}」上没有找到相应的${k}Id值，可能是取数据不全，请检查`);
+                    }
                 }
-            }
-            else if (typeof rel === 'string') {
-                if (value && value[`${k}Id`]) {
-                    assert(child instanceof SingleNode);
-                    assert(rel === child.getEntity());
-                    child.saveRefreshResult({
-                        [value[`${k}Id`] as string]: this.sr![k] || {},
-                    });
+                else {
+                    assert(rel instanceof Array);
+                    assert(child instanceof ListNode);
+                    // assert(this.sr![k]);
+                    child.saveRefreshResult(this.sr![k]);
                 }
-                else if (value && value[`${k}Id`] === undefined && process.env.NODE_ENV === 'development') {
-                    console.warn(`singleNode 的子路径「${k}」上没有找到相应的${k}Id值，可能是取数据不全，请检查`);
-                }
-            }
-            else {
-                assert(rel instanceof Array);
-                assert(child instanceof ListNode);
-                // assert(this.sr![k]);
-                child.saveRefreshResult(this.sr![k] || {});
             }
         }
     }
@@ -1986,7 +1988,7 @@ export class RunningTree<
 
     addItem<T extends keyof ED>(
         path: string,
-        data: Omit<ED[T]['CreateSingle']['data'], 'id'>
+        data: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }
     ) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
@@ -2053,11 +2055,10 @@ export class RunningTree<
     }
 
     isCreation(path: string) {
-        const node = this.findNode(path);
-        assert(node instanceof SingleNode);
-        const oper = node.composeOperations();
-
-        return !!(oper && oper[0].operation.action === 'create');
+        const value = this.getFreshValue(path);
+        assert(!(value instanceof Array));
+        
+        return value?.$$createAt$$ === 1;
     }
 
     isLoading(path: string) {

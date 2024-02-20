@@ -4,26 +4,26 @@ export default OakComponent({
     isList: false,
     formData({ props }) {
         const data = this.consumeMessage() as MessageProps;
-        if (process.env.OAK_PLATFORM === 'wechatMp') {
-            if (data) {
+        if (data) {
+            if (process.env.OAK_PLATFORM === 'wechatMp') {
                 // lin-ui的message: https://doc.mini.talelin.com/component/response/message.html
+                const type =
+                    !data.type || data.type === 'info' ? 'primary' : data.type;
                 (wx as any).lin.showMessage({
-                    type:
-                        data.type === 'info'
-                            ? 'primary'
-                            : data.type || 'primary',
+                    type: type,
                     content: data.content,
                     icon: data.icon,
                     duration: data.duration,
                     top: data.offset,
                 });
+                return {};
             }
-            return {};
-        }
 
-        return {
-            data,
-        };
+            return {
+                data,
+            };
+        }
+        return {};
     },
     features: ['message'],
 });

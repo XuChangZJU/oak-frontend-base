@@ -185,7 +185,7 @@ abstract class OakComponentBase<
     }
 
     addItem<T extends keyof ED>(
-        data: Omit<ED[T]['CreateSingle']['data'], 'id'>,
+        data: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string },
         path?: string
     ) {
         const path2 = path
@@ -294,8 +294,11 @@ abstract class OakComponentBase<
         return this.features.locales.t(key, params);
     }
 
-    execute(action?: ED[T]['Action'], messageProps?: boolean | MessageProps, path?: string) {
-        return execute.call(this as any, action, path, messageProps);
+    execute(action?: ED[T]['Action'], messageProps?: boolean | MessageProps, path?: string, opers?: Array<{
+        entity: T,
+        operation: ED[T]['Operation'],
+    }>) {
+        return execute.call(this as any, action, path, messageProps, opers as any);
     }
 
     isDirty(path?: string) {
@@ -566,8 +569,8 @@ abstract class OakComponentBase<
         }
     }
 
-    subDataEvents(events: string[]) {
-        return this.features.subscriber.sub(events);
+    subDataEvents(events: string[], callback: (event: string, opRecords: OpRecord<ED>[]) => void) {
+        return this.features.subscriber.sub(events, callback);
     }
 
     unsubDataEvents(events: string[]) {
@@ -677,9 +680,13 @@ export function createComponent<
                 execute: (
                     action?: ED[T]['Action'],
                     messageProps?: boolean | MessageProps,
-                    path?: string
+                    path?: string, 
+                    opers?: Array<{
+                        entity: T,
+                        operation: ED[T]['Operation'],
+                    }>
                 ) => {
-                    return this.execute(action, messageProps, path);
+                    return this.execute(action, messageProps, path, opers);
                 },
                 isDirty: (path?: string) => this.isDirty(path),
                 aggregate: (aggregation: ED[T]['Aggregation']) => {
@@ -731,7 +738,7 @@ export function createComponent<
                 }
             };
             Object.assign(methodProps, {
-                addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'>, path?: string) => {
+                addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }, path?: string) => {
                     return this.addItem(data, path);
                 },
                 removeItem: (id: string, path?: string) => {

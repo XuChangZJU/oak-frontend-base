@@ -24,7 +24,7 @@ export class SubScriber<
         url: string;
         path: string;
     }>;
-    private events: string[] = [];
+    private eventMap: Record<string, ((event: string, records: OpRecord<ED>[]) => void) | undefined> = {};
     
     private url?: string;
     private path?: string;
@@ -98,12 +98,16 @@ export class SubScriber<
                     this.emit('disconnect');
                     socket.removeAllListeners();
 
-                    if (this.events.length > 0) {
+                    if (Object.keys(this.eventMap).length > 0) {
                         this.connect();
                     }
                 });
 
-                socket.on('data', (opRecords: OpRecord<ED>[], ids: string[]) => {
+                socket.on('data', (opRecords: OpRecord<ED>[], event: string) => {
+                    const callback = this.eventMap[event];
+                    if (callback) {
+                        callback(event, opRecords);
+                    }
                     this.cache.sync(opRecords);
                 });
 
@@ -116,8 +120,8 @@ export class SubScriber<
                     });
                 })
 
-                if (this.events.length > 0) {
-                    socket.emit('sub', this.events);
+                if (Object.keys(this.eventMap).length > 0) {
+                    socket.emit('sub', Object.keys(this.eventMap));
                     resolve(undefined);
                 }
                 else {
@@ -145,13 +149,13 @@ export class SubScriber<
         });
     }
 
-    async sub(events: string[]): Promise<void> {
+    async sub(events: string[], callback?: (event: string, opRecords: OpRecord<ED>[]) => void): Promise<void> {
         events.forEach((event) => {
             assert(
-                !this.events.includes(event),
+                !this.eventMap.hasOwnProperty(event),
                 `[subscriber]注册回调的id${event}发生重复`
             );
-            this.events.push(event);
+            this.eventMap[event] = callback;
         });
 
         if (this.socketState === 'unconnected') {
@@ -179,11 +183,11 @@ export class SubScriber<
     }
 
     async unsub(events: string[]) {
-        events.forEach((event) => pull(this.events, event));
+        events.forEach((event) => unset(this.eventMap, event));
 
         if (this.socketState === 'connected') {
             this.socket!.emit('unsub', events);
-            if (this.events.length === 0) {
+            if (Object.keys(this.eventMap).length === 0) {
                 this.socket!.disconnect();
                 this.socket!.removeAllListeners();
                 this.socketState = 'unconnected';

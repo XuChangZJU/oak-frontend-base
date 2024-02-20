@@ -12,6 +12,20 @@ import { EntityDict } from 'oak-domain/lib/base-app-domain';
 import Style from './web.module.less';
 import { Item } from './types';
 
+const MoreIcon = (
+    <svg
+        viewBox="64 64 896 896"
+        focusable="false"
+        data-icon="ellipsis"
+        width="1em"
+        height="1em"
+        fill="currentColor"
+        aria-hidden="true"
+    >
+        <path d="M176 511a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0z"></path>
+    </svg>
+);
+
 function ItemComponent(
     props: Item & {
         onClick: () => void | Promise<void>;
@@ -43,7 +57,7 @@ export default function Render(
             actions: string[];
             items: Item[];
             spaceProps: SpaceProps;
-            mode: 'cell' | 'table-cell';
+            mode: 'cell' | 'table-cell' | 'default';
             column: 3;
         },
         {
@@ -59,7 +73,7 @@ export default function Render(
 ) {
     const { methods, data } = props;
     const { t, getActionName, getAlertOptions } = methods;
-    const { items, spaceProps, entity, mode = 'cell', column } = data;
+    const { items, spaceProps, entity, mode = 'default', column } = data;
 
     const getItems = () => {
         const items2 = items
@@ -161,25 +175,46 @@ export default function Render(
         );
     }
 
+    if (mode === 'cell') {
+        return (
+            <div className={Style.panelContainer}>
+                {moreItems && moreItems.length > 0 && (
+                    <Dropdown
+                        menu={{
+                            items: moreItems.map((ele: any, index) => ({
+                                label: ele.text,
+                                key: index,
+                            })),
+                            onClick: (e: any) => {
+                                const item = moreItems[e.key] as any;
+                                item.onClick2();
+                            },
+                        }}
+                        arrow
+                    >
+                        <Typography className={Style.more}>更多</Typography>
+                    </Dropdown>
+                )}
+                <Space {...spaceProps}>
+                    {newItems?.map((ele, index: number) => {
+                        return (
+                            <ItemComponent
+                                type="button"
+                                {...ele}
+                                onClick={ele.onClick2}
+                                text={ele.text}
+                                key={`c_ItemComponent_${index}`}
+                            />
+                        );
+                    })}
+                </Space>
+            </div>
+        );
+
+    }
+
     return (
         <div className={Style.panelContainer}>
-            {moreItems && moreItems.length > 0 && (
-                <Dropdown
-                    menu={{
-                        items: moreItems.map((ele: any, index) => ({
-                            label: ele.text,
-                            key: index,
-                        })),
-                        onClick: (e: any) => {
-                            const item = moreItems[e.key] as any;
-                            item.onClick2();
-                        },
-                    }}
-                    arrow
-                >
-                    <Typography className={Style.more}>更多</Typography>
-                </Dropdown>
-            )}
             <Space {...spaceProps}>
                 {newItems?.map((ele, index: number) => {
                     return (
@@ -192,6 +227,23 @@ export default function Render(
                         />
                     );
                 })}
+                {moreItems && moreItems.length > 0 && (
+                    <Dropdown
+                        menu={{
+                            items: moreItems.map((ele: any, index) => ({
+                                label: ele.text,
+                                key: index,
+                            })),
+                            onClick: (e: any) => {
+                                const item = moreItems[e.key] as any;
+                                item.onClick2();
+                            },
+                        }}
+                        arrow
+                    >
+                        <Button className={Style.btnMore}>{MoreIcon}</Button>
+                    </Dropdown>
+                )}
             </Space>
         </div>
     );

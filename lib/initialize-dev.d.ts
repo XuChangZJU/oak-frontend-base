@@ -24,7 +24,7 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
     [T in keyof ED]?: Array<ED[T]['OpSchema']>;
 }, option: InitializeOptions<ED, Cxt>): {
     features: {
-        cache: import(".").Cache<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
+        cache: import("./features/cache").Cache<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
         relationAuth: import("./features/relationAuth").RelationAuth<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
         runningTree: import("./features/runningTree").RunningTree<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
         locales: import("./features/locales").Locales<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>;
@@ -39,7 +39,7 @@ export declare function initialize<ED extends EntityDict & BaseEntityDict, Cxt e
         eventBus: import("./features/eventBus").EventBus;
         notification: import("./features/notification").Notification;
         message: import("./features/message").Message;
-        localStorage: import(".").LocalStorage;
+        localStorage: import("./features/localStorage").LocalStorage;
         navigator: import("./features/navigator.web").Navigator;
     };
 };

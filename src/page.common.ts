@@ -594,6 +594,10 @@ export async function execute<
     action?: ED[T]['Action'],
     path?: string,
     messageProps?: boolean | MessageProps, //默认true
+    opers?: Array<{
+        entity: T,
+        operation: ED[T]['Operation'],
+    }>
 ) {
     if (this.state.oakExecuting) {
         throw new Error('请仔细设计按钮状态，不要允许重复点击！');
@@ -603,7 +607,7 @@ export async function execute<
     }); */
 
     const fullpath = path ? path : this.state.oakFullpath;
-    const { message } = await this.features.runningTree.execute(fullpath, action);
+    const { message } = await this.features.runningTree.execute(fullpath, action, opers);
     if (messageProps !== false) {
         const messageData: MessageProps = {
             type: 'success',
