@@ -38,7 +38,7 @@ export class ContextMenuFactory<
     }
 
     setMenus(menus: IMenu<ED, keyof ED>[]) {
-        assert(!this.menus, 'setMenus只应该全局调用一次');
+        // assert(!this.menus, 'setMenus只应该全局调用一次');
         this.menus = menus;
     }
 
