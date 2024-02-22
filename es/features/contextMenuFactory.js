@@ -12,7 +12,7 @@ export class ContextMenuFactory extends Feature {
         this.relationAuth = relationAuth;
     }
     setMenus(menus) {
-        assert(!this.menus, 'setMenus只应该全局调用一次');
+        // assert(!this.menus, 'setMenus只应该全局调用一次');
         this.menus = menus;
     }
     makeMenuFilters(destEntity, paths, entity, entityId) {
