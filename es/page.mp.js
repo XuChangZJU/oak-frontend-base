@@ -367,6 +367,12 @@ const oakBehavior = Behavior({
                 : this.state.oakFullpath;
             return this.features.runningTree.addItem(path2, data);
         },
+        addItems(data, path) {
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            return this.features.runningTree.addItems(path2, data);
+        },
         updateItem(data, id, action, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
@@ -379,11 +385,23 @@ const oakBehavior = Behavior({
                 : this.state.oakFullpath;
             return this.features.runningTree.removeItem(path2, id);
         },
+        removeItems(ids, path) {
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            return this.features.runningTree.removeItems(path2, ids);
+        },
         recoverItem(id, path) {
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
             return this.features.runningTree.recoverItem(path2, id);
+        },
+        recoverItems(ids, path) {
+            const path2 = path
+                ? `${this.state.oakFullpath}.${path}`
+                : this.state.oakFullpath;
+            return this.features.runningTree.recoverItems(path2, ids);
         },
         resetItem(id, path) {
             const path2 = path
