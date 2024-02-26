@@ -615,7 +615,7 @@ class ListNode<
         return result;
     }
 
-    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }) {
+    private addItemInner(item: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }) {
         // 如果数据键值是一个空字符串则更新成null
         for (const k in item) {
             if (item[k] === '') {
@@ -632,15 +632,25 @@ class ListNode<
             data: Object.assign(item, { id }),
         };
         this.sr[id] = {};
+        return id;
+    }
+
+    addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }) {
+        const id = this.addItemInner(item);
         this.setDirty();
         return id;
     }
 
-    removeItem(id: string) {
-        if (
-            this.updates[id] &&
-            this.updates[id].action === 'create'
-        ) {
+    addItems(items: Array< Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }>) {
+        const ids = items.map(
+            (item) => this.addItemInner(item)
+        );
+        this.setDirty();
+        return ids;
+    }
+
+    private removeItemInner(id: string) {
+        if (this.updates[id] && this.updates[id].action === 'create') {
             // 如果是新增项，在这里抵消
             unset(this.updates, id);
             unset(this.sr, id);
@@ -654,13 +664,35 @@ class ListNode<
                 },
             };
         }
+    }
+
+    removeItem(id: string) {
+        this.removeItemInner(id);
         this.setDirty();
     }
 
-    recoverItem(id: string) {
+    removeItems(ids: string[]) {
+        ids.forEach(
+            (id) => this.removeItemInner(id)
+        );
+        this.setDirty();
+    }
+
+    private recoverItemInner(id: string) {
         const operation = this.updates[id];
         assert(operation?.action === 'remove');
         unset(this.updates, id);
+    }
+
+    recoverItem(id: string) {
+        this.recoverItemInner(id);
+        this.setDirty();
+    }
+
+    recoverItems(ids: string[]) {
+        ids.forEach(
+            (id) => this.recoverItemInner(id)
+        );
         this.setDirty();
     }
 
@@ -1995,13 +2027,22 @@ export class RunningTree<
         return node.addItem(data);
     }
 
-    removeItem(
-        path: string,
-        id: string
-    ) {
+    addItems<T extends keyof ED>(path: string, data: Array<Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }>) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        return node.addItems(data);
+    }
+
+    removeItem(path: string, id: string) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.removeItem(id);
+    }
+
+    removeItems(path: string, ids: string[]) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        node.removeItems(ids);
     }
 
     updateItem<T extends keyof ED>(
@@ -2019,6 +2060,12 @@ export class RunningTree<
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.recoverItem(id);
+    }
+
+    recoverItems(path: string, ids: string[]) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        node.recoverItems(ids);
     }
 
     resetItem(path: string, id: string) {

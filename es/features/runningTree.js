@@ -485,7 +485,7 @@ class ListNode extends Node {
         }, true, this.sr);
         return result;
     }
-    addItem(item) {
+    addItemInner(item) {
         // 如果数据键值是一个空字符串则更新成null
         for (const k in item) {
             if (item[k] === '') {
@@ -502,12 +502,20 @@ class ListNode extends Node {
             data: Object.assign(item, { id }),
         };
         this.sr[id] = {};
+        return id;
+    }
+    addItem(item) {
+        const id = this.addItemInner(item);
         this.setDirty();
         return id;
     }
-    removeItem(id) {
-        if (this.updates[id] &&
-            this.updates[id].action === 'create') {
+    addItems(items) {
+        const ids = items.map((item) => this.addItemInner(item));
+        this.setDirty();
+        return ids;
+    }
+    removeItemInner(id) {
+        if (this.updates[id] && this.updates[id].action === 'create') {
             // 如果是新增项，在这里抵消
             unset(this.updates, id);
             unset(this.sr, id);
@@ -522,12 +530,26 @@ class ListNode extends Node {
                 },
             };
         }
+    }
+    removeItem(id) {
+        this.removeItemInner(id);
         this.setDirty();
     }
-    recoverItem(id) {
+    removeItems(ids) {
+        ids.forEach((id) => this.removeItemInner(id));
+        this.setDirty();
+    }
+    recoverItemInner(id) {
         const operation = this.updates[id];
         assert(operation?.action === 'remove');
         unset(this.updates, id);
+    }
+    recoverItem(id) {
+        this.recoverItemInner(id);
+        this.setDirty();
+    }
+    recoverItems(ids) {
+        ids.forEach((id) => this.recoverItemInner(id));
         this.setDirty();
     }
     resetItem(id) {
@@ -1643,10 +1665,20 @@ export class RunningTree extends Feature {
         assert(node instanceof ListNode);
         return node.addItem(data);
     }
+    addItems(path, data) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        return node.addItems(data);
+    }
     removeItem(path, id) {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.removeItem(id);
+    }
+    removeItems(path, ids) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        node.removeItems(ids);
     }
     updateItem(path, data, id, action) {
         const node = this.findNode(path);
@@ -1657,6 +1689,11 @@ export class RunningTree extends Feature {
         const node = this.findNode(path);
         assert(node instanceof ListNode);
         node.recoverItem(id);
+    }
+    recoverItems(path, ids) {
+        const node = this.findNode(path);
+        assert(node instanceof ListNode);
+        node.recoverItems(ids);
     }
     resetItem(path, id) {
         const node = this.findNode(path);

@@ -47,7 +47,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     getParent(): SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD> | undefined;
     protected getProjection(): ED[T]['Selection']['data'] | undefined;
     setProjection(projection: ED[T]['Selection']['data']): void;
-    protected judgeRelation(attr: string): string | 0 | 1 | string[] | 2;
+    protected judgeRelation(attr: string): string | 0 | 1 | string[] | 2 | -1;
 }
 declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private updates;
@@ -95,11 +95,19 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     removeNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(name: string, refresh: boolean): void;
     getFreshValue(): Array<Partial<ED[T]['Schema']>>;
+    private addItemInner;
     addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'> & {
         id?: string;
     }): string;
+    addItems(items: Array<Omit<ED[T]['CreateSingle']['data'], 'id'> & {
+        id?: string;
+    }>): string[];
+    private removeItemInner;
     removeItem(id: string): void;
+    removeItems(ids: string[]): void;
+    private recoverItemInner;
     recoverItem(id: string): void;
+    recoverItems(ids: string[]): void;
     resetItem(id: string): void;
     /**
      * 目前只支持根据itemId进行更新
@@ -243,9 +251,14 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     addItem<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'> & {
         id?: string;
     }): string;
+    addItems<T extends keyof ED>(path: string, data: Array<Omit<ED[T]['CreateSingle']['data'], 'id'> & {
+        id?: string;
+    }>): string[];
     removeItem(path: string, id: string): void;
+    removeItems(path: string, ids: string[]): void;
     updateItem<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action']): void;
     recoverItem(path: string, id: string): void;
+    recoverItems(path: string, ids: string[]): void;
     resetItem(path: string, id: string): void;
     create<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>): void;
     update<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], action?: ED[T]['Action']): void;

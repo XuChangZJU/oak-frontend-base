@@ -87,11 +87,23 @@ class OakComponentBase extends React.PureComponent {
             : this.state.oakFullpath;
         return this.features.runningTree.addItem(path2, data);
     }
+    addItems(data, path) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        return this.features.runningTree.addItems(path2, data);
+    }
     removeItem(id, path) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
         this.features.runningTree.removeItem(path2, id);
+    }
+    removeItems(ids, path) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        this.features.runningTree.removeItems(path2, ids);
     }
     updateItem(data, id, action, path) {
         const path2 = path
@@ -104,6 +116,12 @@ class OakComponentBase extends React.PureComponent {
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
         this.features.runningTree.recoverItem(path2, id);
+    }
+    recoverItems(ids, path) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        this.features.runningTree.recoverItems(path2, ids);
     }
     resetItem(id, path) {
         const path2 = path
@@ -426,8 +444,14 @@ export function createComponent(option, features) {
                 addItem: (data, path) => {
                     return this.addItem(data, path);
                 },
+                addItems: (data, path) => {
+                    return this.addItems(data, path);
+                },
                 removeItem: (id, path) => {
                     return this.removeItem(id, path);
+                },
+                removeItems: (ids, path) => {
+                    return this.removeItems(ids, path);
                 },
                 updateItem: (data, id, action, path) => {
                     return this.updateItem(data, id, action, path);
@@ -470,6 +494,9 @@ export function createComponent(option, features) {
                 },
                 recoverItem: (id, path) => {
                     return this.recoverItem(id, path);
+                },
+                recoverItems: (ids, path) => {
+                    return this.recoverItems(ids, path);
                 },
                 resetItem: (id, path) => {
                     return this.resetItem(id, path);

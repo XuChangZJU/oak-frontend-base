@@ -197,10 +197,20 @@ abstract class OakComponentBase<
         );
     }
 
-    removeItem(
-        id: string,
+    addItems<T extends keyof ED>(
+        data: Array<Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }>,
         path?: string
     ) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        return this.features.runningTree.addItems(
+            path2,
+            data
+        );
+    }
+
+    removeItem(id: string, path?: string) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
@@ -208,6 +218,13 @@ abstract class OakComponentBase<
             path2,
             id
         );
+    }
+
+    removeItems(ids: string[], path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        this.features.runningTree.removeItems(path2, ids);
     }
 
     updateItem<T extends keyof ED>(
@@ -232,6 +249,13 @@ abstract class OakComponentBase<
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
         this.features.runningTree.recoverItem(path2, id);
+    }
+
+    recoverItems(ids: string[], path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        this.features.runningTree.recoverItems(path2, ids);
     }
 
     resetItem(id: string, path?: string) {
@@ -741,8 +765,14 @@ export function createComponent<
                 addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }, path?: string) => {
                     return this.addItem(data, path);
                 },
+                addItems: (data: Array<Omit<ED[T]['CreateSingle']['data'], 'id'>> & { id?: string }, path?: string) => {
+                    return this.addItems(data, path);
+                },
                 removeItem: (id: string, path?: string) => {
                     return this.removeItem(id, path);
+                },
+                removeItems: (ids: string[], path?: string) => {
+                    return this.removeItems(ids, path);
                 },
                 updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], path?: string) => {
                     return this.updateItem(data, id, action, path);
@@ -785,6 +815,9 @@ export function createComponent<
                 },
                 recoverItem: (id: string, path?: string) => {
                     return this.recoverItem(id, path);
+                },
+                recoverItems: (ids: string[], path?: string) => {
+                    return this.recoverItems(ids, path);
                 },
                 resetItem: (id: string, path?: string) => {
                     return this.resetItem(id, path);

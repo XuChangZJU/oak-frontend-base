@@ -439,9 +439,12 @@ export type OakListComponentMethods<ED extends EntityDict & BaseEntityDict, T ex
     setCurrentPage: (current: number, path?: string) => void;
 
     addItem: (data: Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }, path?: string) => string;
+    addItems: (data: Array<Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }>, path?: string) => string[];
     removeItem: (id: string, path?: string) => void;
+    removeItems: (ids: string[], path?: string) => void;
     updateItem: (data: ED[T]['Update']['data'], id: string, action?: ED[T]['Action'], path?: string) => void;
     recoverItem: (id: string, path?: string) => void;
+    recoverItems: (ids: string[], path?: string) => void;
     resetItem: (id: string, path?: string) => void;
 };
 
@@ -522,7 +525,8 @@ export type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | '
 
 // 暴露给list组件的方法
 export type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedFilter' | 'removeNamedFilter' | 'removeNamedFilterByName' | 'setNamedSorters'
-    | 'addNamedSorter' | 'removeNamedSorter' | 'removeNamedSorterByName' | 'setPageSize' | 'setCurrentPage' | 'addItem' | 'removeItem' | 'updateItem' | 'resetItem' | 'recoverItem';
+    | 'addNamedSorter' | 'removeNamedSorter' | 'removeNamedSorterByName' | 'setPageSize' | 'setCurrentPage'
+    | 'addItem' | 'addItems' | 'removeItem' | 'removeItems' | 'updateItem' | 'resetItem' | 'recoverItem' | 'recoverItems';
 
 // 暴露给single组件的方法
 export type WebComponentSingleMethodNames = 'update' | 'remove' | 'create' | 'isCreation';
