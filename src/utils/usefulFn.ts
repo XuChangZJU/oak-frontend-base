@@ -85,42 +85,30 @@ export function resolvePath<ED extends EntityDict & BaseEntityDict>(
             idx++;
             continue;
         }
-        try {
-            const relation = judgeRelation(dataSchema, _entity, attr);
-            if (relation === 1) {
-                const attributes = getAttributes(
-                    dataSchema[_entity].attributes
-                );
-                attribute = attributes[attr];
-                attrType = attribute.type;
-                if (attr === 'id') {
-                    attrType = 'ref';
-                } else {
-                    if (attrType === 'ref') {
-                        attr = attribute.ref as string;
-                    }
+        const relation = judgeRelation(dataSchema, _entity, attr, true);
+        if (relation === 1) {
+            const attributes = getAttributes(
+                dataSchema[_entity].attributes
+            );
+            attribute = attributes[attr];
+            attrType = attribute.type;
+            if (attr === 'id') {
+                attrType = 'ref';
+            } else {
+                if (attrType === 'ref') {
+                    attr = attribute.ref as string;
                 }
-            } else if (relation === 2) {
-                // entity entityId
-                if (attr === 'entityId') {
-                    attrType = 'ref';
-                }
-                _entity = attr as keyof ED;
-            } else if (typeof relation === 'string') {
-                _entity = relation as keyof ED;
             }
-            idx++;
-        } catch (err) {
-            if (process.env.NODE_ENV === 'development') {
-                console.warn(`存在非「${_entity as string}」schema属性: ${path}`);
+        } else if (relation === 2) {
+            // entity entityId
+            if (attr === 'entityId') {
+                attrType = 'ref';
             }
-            return {
-                entity: 'notExist',
-                attr: path,
-                attrType: undefined,
-                attribute,
-            };
+            _entity = attr as keyof ED;
+        } else if (typeof relation === 'string') {
+            _entity = relation as keyof ED;
         }
+        idx++;
     }
     return {
         entity: _entity,
@@ -174,11 +162,15 @@ export function getLabel<ED extends EntityDict & BaseEntityDict>(
     if (
         attr === '$$createAt$$' ||
         attr === '$$updateAt$$' ||
-        attr === '$$deleteAt$$'
+        attr === '$$deleteAt$$' ||
+        attr === '$$seq$$'
     ) {
         return t(`common::${attr}`, {
             '#oakModule': 'oak-frontend-base',
         });
+    }
+    if (attr === 'id') {
+        return 'id';
     }
     return t(`${entity as string}:attr.${attr}`, {});
 }

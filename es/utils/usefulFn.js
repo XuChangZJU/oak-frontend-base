@@ -45,44 +45,31 @@ export function resolvePath(dataSchema, entity, path) {
             idx++;
             continue;
         }
-        try {
-            const relation = judgeRelation(dataSchema, _entity, attr);
-            if (relation === 1) {
-                const attributes = getAttributes(dataSchema[_entity].attributes);
-                attribute = attributes[attr];
-                attrType = attribute.type;
-                if (attr === 'id') {
-                    attrType = 'ref';
-                }
-                else {
-                    if (attrType === 'ref') {
-                        attr = attribute.ref;
-                    }
+        const relation = judgeRelation(dataSchema, _entity, attr, true);
+        if (relation === 1) {
+            const attributes = getAttributes(dataSchema[_entity].attributes);
+            attribute = attributes[attr];
+            attrType = attribute.type;
+            if (attr === 'id') {
+                attrType = 'ref';
+            }
+            else {
+                if (attrType === 'ref') {
+                    attr = attribute.ref;
                 }
             }
-            else if (relation === 2) {
-                // entity entityId
-                if (attr === 'entityId') {
-                    attrType = 'ref';
-                }
-                _entity = attr;
-            }
-            else if (typeof relation === 'string') {
-                _entity = relation;
-            }
-            idx++;
         }
-        catch (err) {
-            if (process.env.NODE_ENV === 'development') {
-                console.warn(`存在非「${_entity}」schema属性: ${path}`);
+        else if (relation === 2) {
+            // entity entityId
+            if (attr === 'entityId') {
+                attrType = 'ref';
             }
-            return {
-                entity: 'notExist',
-                attr: path,
-                attrType: undefined,
-                attribute,
-            };
+            _entity = attr;
         }
+        else if (typeof relation === 'string') {
+            _entity = relation;
+        }
+        idx++;
     }
     return {
         entity: _entity,
@@ -123,10 +110,14 @@ export function getLabel(attribute, entity, attr, t) {
     }
     if (attr === '$$createAt$$' ||
         attr === '$$updateAt$$' ||
-        attr === '$$deleteAt$$') {
+        attr === '$$deleteAt$$' ||
+        attr === '$$seq$$') {
         return t(`common::${attr}`, {
             '#oakModule': 'oak-frontend-base',
         });
+    }
+    if (attr === 'id') {
+        return 'id';
     }
     return t(`${entity}:attr.${attr}`, {});
 }
