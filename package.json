@@ -1,6 +1,6 @@
 {
     "name": "oak-frontend-base",
-    "version": "4.2.2",
+    "version": "4.2.4",
     "description": "oak框架中前端与业务逻辑无关的平台部分",
     "author": {
         "name": "XuChang"
@@ -31,7 +31,8 @@
         "react-responsive": "^9.0.2",
         "rmc-pull-to-refresh": "^1.0.13",
         "socket.io-client": "^4.7.2",
-        "uuid": "^8.3.2"
+        "uuid": "^8.3.2",
+        "weapp.socket.io": "^2.2.1"
     },
     "peerDependencies": {
         "@ant-design/icons": ">=5.2.6",

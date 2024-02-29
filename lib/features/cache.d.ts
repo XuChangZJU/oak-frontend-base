@@ -99,7 +99,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     mergeSelectResult<T extends keyof ED>(entity: T, rows: Partial<ED[T]['Schema']>[], sr: Record<string, any>): void;
     get<T extends keyof ED>(entity: T, selection: ED[T]['Selection'], allowMiss?: boolean, sr?: Record<string, any>): Partial<ED[T]["Schema"]>[];
     getById<T extends keyof ED>(entity: T, projection: ED[T]['Selection']['data'], id: string, allowMiss?: boolean): Partial<ED[T]["Schema"]>[];
-    judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | string[] | 2;
+    judgeRelation(entity: keyof ED, attr: string): string | 0 | 1 | string[] | 2 | -1;
     bindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;
     unbindOnSync(callback: (opRecords: OpRecord<ED>[]) => void): void;
     getCachedData(): { [T in keyof ED]?: ED[T]["OpSchema"][] | undefined; };

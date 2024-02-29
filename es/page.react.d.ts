@@ -56,12 +56,17 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         addItem<T extends keyof ED>(data: Omit<ED[T]["CreateSingle"]["data"], "id"> & {
             id?: string | undefined;
         }, path?: string | undefined): string;
+        addItems<T_1 extends keyof ED>(data: (Omit<ED[T_1]["CreateSingle"]["data"], "id"> & {
+            id?: string | undefined;
+        })[], path?: string | undefined): string[];
         removeItem(id: string, path?: string | undefined): void;
-        updateItem<T_1 extends keyof ED>(data: ED[T_1]["Update"]["data"], id: string, action?: ED[T_1]["Action"] | undefined, path?: string | undefined): void;
+        removeItems(ids: string[], path?: string | undefined): void;
+        updateItem<T_2 extends keyof ED>(data: ED[T_2]["Update"]["data"], id: string, action?: ED[T_2]["Action"] | undefined, path?: string | undefined): void;
         recoverItem(id: string, path?: string | undefined): void;
+        recoverItems(ids: string[], path?: string | undefined): void;
         resetItem(id: string, path?: string | undefined): void;
-        update<T_2 extends keyof ED>(data: ED[T_2]["Update"]["data"], action?: ED[T_2]["Action"] | undefined, path?: string | undefined): void;
-        create<T_3 extends keyof ED>(data: Omit<ED[T_3]["CreateSingle"]["data"], "id">, path?: string | undefined): void;
+        update<T_3 extends keyof ED>(data: ED[T_3]["Update"]["data"], action?: ED[T_3]["Action"] | undefined, path?: string | undefined): void;
+        create<T_4 extends keyof ED>(data: Omit<ED[T_4]["CreateSingle"]["data"], "id">, path?: string | undefined): void;
         remove(path?: string | undefined): void;
         isCreation(path?: string | undefined): boolean;
         clean(path?: string | undefined): void;
@@ -74,7 +79,7 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         getFreshValue(path?: string | undefined): Partial<ED[keyof ED]["Schema"]> | Partial<ED[keyof ED]["Schema"]>[] | undefined;
         checkOperation(entity: T, action: ED[T]["Action"], data?: ED[T]["Update"]["data"] | undefined, filter?: ED[T]["Update"]["filter"] | undefined, checkerTypes?: CheckerType[] | undefined): boolean;
         tryExecute(path?: string | undefined): boolean | Error;
-        getOperations<T_4 extends keyof ED>(path?: string | undefined): {
+        getOperations<T_5 extends keyof ED>(path?: string | undefined): {
             entity: keyof ED;
             operation: ED[keyof ED]["Operation"];
         }[] | undefined;
