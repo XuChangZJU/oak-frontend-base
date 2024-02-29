@@ -468,22 +468,27 @@ class ListNode extends Node {
             this.publish();
         }
     }
-    getFreshValue(usingFilter) {
+    getFreshValue(inModi) {
         /**
          * 现在简化情况，只取sr中有id的数据
-         * 但是对于
+         * 但是对于modi查询，需要查询“热更新”部分的数据（逻辑可能不一定严密）
          */
         const ids = Object.keys(this.sr);
         const { data, sorter, filter } = this.constructSelection(true, false, true);
+        /**
+         * 这里在非modi状态下，原来的代码是不会去刷新缺失的数据，原因不明，可能是认为页面应当自己负责数据的获取
+         * 在modi状态下，有些外键指向的数据无法预先获取，因此需要加上这个逻辑
+         * by Xc 20240229
+         */
         const result = this.cache.get(this.entity, {
             data,
-            filter: usingFilter ? filter : {
+            filter: inModi ? filter : {
                 id: {
                     $in: ids,
                 }
             },
             sorter,
-        }, true, this.sr);
+        }, !inModi, this.sr);
         return result;
     }
     addItemInner(item) {
@@ -934,16 +939,21 @@ class SingleNode extends Node {
     removeChild(path) {
         unset(this.children, path);
     }
-    getFreshValue() {
+    getFreshValue(inModi) {
         const projection = this.getProjection(false);
         const id = this.getId();
         if (projection && id) {
+            /**
+             * 这里在非modi状态下，原来的代码是不会去刷新缺失的数据，原因不明，可能是认为页面应当自己负责数据的获取
+             * 在modi状态下，有些外键指向的数据无法预先获取，因此需要加上这个逻辑
+             * by Xc 20240229
+             */
             const result = this.cache.get(this.entity, {
                 data: projection,
                 filter: {
                     id,
                 },
-            }, true, {
+            }, !inModi, {
                 [id]: this.sr,
             });
             return result[0];

@@ -183,7 +183,7 @@ class ListNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Node<ED, T, Cxt, FrontCxt, AD> {
+    > extends Node<ED, T, Cxt, FrontCxt, AD> {
     private updates: Record<
         string,
         ED[T]['CreateSingle']
@@ -353,11 +353,11 @@ class ListNode<
                                         id: 1,
                                     },
                                     filter: combineFilters(this.entity, this.cache.getSchema(), [
-                                        { id: { $in: ids }},
+                                        { id: { $in: ids } },
                                         ...filters
                                     ])
                                 });
-                                
+
                                 ids.forEach(
                                     (id) => {
                                         if (!rows2.find(ele => ele.id === id)) {
@@ -595,23 +595,28 @@ class ListNode<
         }
     }
 
-    getFreshValue(usingFilter?: boolean): Array<Partial<ED[T]['Schema']>> {
+    getFreshValue(inModi?: boolean): Array<Partial<ED[T]['Schema']>> {
         /**
          * 现在简化情况，只取sr中有id的数据
-         * 但是对于
+         * 但是对于modi查询，需要查询“热更新”部分的数据（逻辑可能不一定严密）
          */
         const ids = Object.keys(this.sr);
         const { data, sorter, filter } = this.constructSelection(true, false, true);
 
+        /**
+         * 这里在非modi状态下，原来的代码是不会去刷新缺失的数据，原因不明，可能是认为页面应当自己负责数据的获取
+         * 在modi状态下，有些外键指向的数据无法预先获取，因此需要加上这个逻辑
+         * by Xc 20240229
+         */
         const result = this.cache.get(this.entity, {
             data,
-            filter: usingFilter ? filter : {
+            filter: inModi ? filter : {
                 id: {
                     $in: ids,
                 }
             },
             sorter,
-        }, true, this.sr);
+        }, !inModi, this.sr);
 
         return result;
     }
@@ -642,7 +647,7 @@ class ListNode<
         return id;
     }
 
-    addItems(items: Array< Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }>) {
+    addItems(items: Array<Omit<ED[T]['CreateSingle']['data'], 'id'> & { id?: string }>) {
         const ids = items.map(
             (item) => this.addItemInner(item)
         );
@@ -1157,16 +1162,21 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         unset(this.children, path);
     }
 
-    getFreshValue(): Partial<ED[T]['Schema']> | undefined {
+    getFreshValue(inModi?: boolean): Partial<ED[T]['Schema']> | undefined {
         const projection = this.getProjection(false);
         const id = this.getId();
         if (projection && id) {
+            /**
+             * 这里在非modi状态下，原来的代码是不会去刷新缺失的数据，原因不明，可能是认为页面应当自己负责数据的获取
+             * 在modi状态下，有些外键指向的数据无法预先获取，因此需要加上这个逻辑
+             * by Xc 20240229
+             */
             const result = this.cache.get(this.entity, {
                 data: projection,
                 filter: {
                     id,
                 },
-            }, true, {
+            }, !inModi, {
                 [id]: this.sr,
             });
             return result[0];
@@ -1588,7 +1598,7 @@ class VirtualNode<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Feature {
+    > extends Feature {
     private dirty: boolean;
     private executing: boolean;
     private loading = false;
@@ -1773,7 +1783,7 @@ export class RunningTree<
     Cxt extends AsyncContext<ED>,
     FrontCxt extends SyncContext<ED>,
     AD extends CommonAspectDict<ED, Cxt>
-> extends Feature {
+    > extends Feature {
     private cache: Cache<ED, Cxt, FrontCxt, AD>;
     private schema: StorageSchema<ED>;
     private root: Record<
@@ -2106,7 +2116,7 @@ export class RunningTree<
     isCreation(path: string) {
         const value = this.getFreshValue(path);
         assert(!(value instanceof Array));
-        
+
         return value?.$$createAt$$ === 1;
     }
 
