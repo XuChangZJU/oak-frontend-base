@@ -606,6 +606,8 @@ class ListNode<
         /**
          * 这里在非modi状态下，原来的代码是不会去刷新缺失的数据，原因不明，可能是认为页面应当自己负责数据的获取
          * 在modi状态下，有些外键指向的数据无法预先获取，因此需要加上这个逻辑
+         * 
+         * 先放回来，不知道会有什么后果
          * by Xc 20240229
          */
         const result = this.cache.get(this.entity, {
@@ -616,7 +618,7 @@ class ListNode<
                 }
             },
             sorter,
-        }, !inModi, this.sr);
+        }, undefined, this.sr);
 
         return result;
     }
@@ -1169,6 +1171,8 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             /**
              * 这里在非modi状态下，原来的代码是不会去刷新缺失的数据，原因不明，可能是认为页面应当自己负责数据的获取
              * 在modi状态下，有些外键指向的数据无法预先获取，因此需要加上这个逻辑
+             * 
+             * 先放回来，不知道有什么问题
              * by Xc 20240229
              */
             const result = this.cache.get(this.entity, {
@@ -1176,7 +1180,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
                 filter: {
                     id,
                 },
-            }, !inModi, {
+            }, undefined, {
                 [id]: this.sr,
             });
             return result[0];
@@ -1393,7 +1397,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             filter: {
                 id: this.id,
             },
-        });
+        }, true, this.sr);
         const keys = k ? [k] : Object.keys(this.children || {});
         for (const k of keys) {
             if (this.sr[k]) {
