@@ -94,7 +94,7 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
     addNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorter(sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(name: string, refresh: boolean): void;
-    getFreshValue(): Array<Partial<ED[T]['Schema']>>;
+    getFreshValue(inModi?: boolean): Array<Partial<ED[T]['Schema']>>;
     private addItemInner;
     addItem(item: Omit<ED[T]['CreateSingle']['data'], 'id'> & {
         id?: string;
@@ -167,7 +167,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     };
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
-    getFreshValue(): Partial<ED[T]['Schema']> | undefined;
+    getFreshValue(inModi?: boolean): Partial<ED[T]['Schema']> | undefined;
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>): void;
     update(data: ED[T]['Update']['data'], action?: ED[T]['Action']): void;
     remove(): void;

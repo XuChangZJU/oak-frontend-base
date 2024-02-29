@@ -1,7 +1,7 @@
 import React from 'react';
 export const keys = ['xs', 'sm', 'md', 'lg', 'xl', 'xxl'];
 export const values = {
-    xs: 576,
+    xs: 576, //小于576
     sm: 576,
     md: 768,
     lg: 992,

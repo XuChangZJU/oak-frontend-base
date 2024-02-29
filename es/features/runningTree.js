@@ -468,21 +468,29 @@ class ListNode extends Node {
             this.publish();
         }
     }
-    getFreshValue() {
+    getFreshValue(inModi) {
         /**
          * 现在简化情况，只取sr中有id的数据
+         * 但是对于modi查询，需要查询“热更新”部分的数据（逻辑可能不一定严密）
          */
         const ids = Object.keys(this.sr);
-        const { data, sorter } = this.constructSelection(true, false, true);
+        const { data, sorter, filter } = this.constructSelection(true, false, true);
+        /**
+         * 这里在非modi状态下，原来的代码是不会去刷新缺失的数据，原因不明，可能是认为页面应当自己负责数据的获取
+         * 在modi状态下，有些外键指向的数据无法预先获取，因此需要加上这个逻辑
+         *
+         * 先放回来，不知道会有什么后果
+         * by Xc 20240229
+         */
         const result = this.cache.get(this.entity, {
             data,
-            filter: {
+            filter: inModi ? filter : {
                 id: {
                     $in: ids,
                 }
             },
             sorter,
-        }, true, this.sr);
+        }, undefined, this.sr);
         return result;
     }
     addItemInner(item) {
@@ -933,16 +941,23 @@ class SingleNode extends Node {
     removeChild(path) {
         unset(this.children, path);
     }
-    getFreshValue() {
+    getFreshValue(inModi) {
         const projection = this.getProjection(false);
         const id = this.getId();
         if (projection && id) {
+            /**
+             * 这里在非modi状态下，原来的代码是不会去刷新缺失的数据，原因不明，可能是认为页面应当自己负责数据的获取
+             * 在modi状态下，有些外键指向的数据无法预先获取，因此需要加上这个逻辑
+             *
+             * 先放回来，不知道有什么问题
+             * by Xc 20240229
+             */
             const result = this.cache.get(this.entity, {
                 data: projection,
                 filter: {
                     id,
                 },
-            }, true, {
+            }, undefined, {
                 [id]: this.sr,
             });
             return result[0];
@@ -1144,7 +1159,7 @@ class SingleNode extends Node {
             filter: {
                 id: this.id,
             },
-        });
+        }, true, this.sr);
         const keys = k ? [k] : Object.keys(this.children || {});
         for (const k of keys) {
             if (this.sr[k]) {
@@ -1646,7 +1661,8 @@ export class RunningTree extends Feature {
                 if (opers) {
                     this.cache.redoOperation(opers);
                 }
-                const value = node.getFreshValue();
+                // 如果是list结点，要将modi所产生的未提交行的数据也读出来
+                const value = includeModi && node instanceof ListNode ? node.getFreshValue(true) : node.getFreshValue();
                 this.cache.rollback();
                 return value;
             }
