@@ -595,16 +595,17 @@ class ListNode<
         }
     }
 
-    getFreshValue(): Array<Partial<ED[T]['Schema']>> {
+    getFreshValue(usingFilter?: boolean): Array<Partial<ED[T]['Schema']>> {
         /**
          * 现在简化情况，只取sr中有id的数据
+         * 但是对于
          */
         const ids = Object.keys(this.sr);
-        const { data, sorter } = this.constructSelection(true, false, true);
+        const { data, sorter, filter } = this.constructSelection(true, false, true);
 
         const result = this.cache.get(this.entity, {
             data,
-            filter: {
+            filter: usingFilter ? filter : {
                 id: {
                     $in: ids,
                 }
@@ -2002,7 +2003,8 @@ export class RunningTree<
                 if (opers) {
                     this.cache.redoOperation(opers);
                 }
-                const value = node.getFreshValue();
+                // 如果是list结点，要将modi所产生的未提交行的数据也读出来
+                const value = includeModi && node instanceof ListNode ? node.getFreshValue(true) : node.getFreshValue();
                 this.cache.rollback();
                 return value;
             }

@@ -992,18 +992,17 @@ export function createComponent<
                         console.warn('发生了结点先形成再配置oakPath的情况，请检查代码修正');
                         lifetimes?.ready && lifetimes.ready.call(this);
                         lifetimes?.show && lifetimes.show.call(this);
-
-                        const { oakFullpath } = this.state;
-                        if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && !features.runningTree.isListDescandent(oakFullpath)) {
-                            this.refresh();
-                        }
-                        else {
-                            this.reRender();
-                        }
+                    }
+                    const { oakFullpath } = this.state;
+                    if (oakFullpath && !features.runningTree.checkIsModiNode(oakFullpath) && !features.runningTree.isListDescandent(oakFullpath)) {
+                        this.refresh();
+                    }
+                    else {
+                        this.reRender();
                     }
                 });
             }
-            if (this.props.oakId !== prevProps.oakId) {
+            else if (this.props.oakId !== prevProps.oakId) {
                 assert(this.props.oakId);       // 好像不可能把已有的id设空的界面需求吧
                 this.setId(this.props.oakId!);
             }
