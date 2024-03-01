@@ -162,9 +162,7 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
                         title={title}
                         extraContent={extraContent}
                         buttonGroup={buttonGroup}
-                        reload={() => {
-                            onReload && onReload();
-                        }}
+                        reload={onReload}
                     />
                 )}
                 {isMobile && <ButtonGroup items={buttonGroup} />}
