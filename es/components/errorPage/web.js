@@ -56,7 +56,7 @@ export default function Render(props) {
             {children || (<Button type="primary" onClick={() => {
                 goBack();
             }}>
-                    {t('back')}
+                    返回
                 </Button>)}
         </div>);
 }

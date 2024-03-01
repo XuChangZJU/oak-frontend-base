@@ -86,7 +86,7 @@ export default function Render(
                         goBack();
                     }}
                 >
-                    {t('back')}
+                    返回
                 </Button>
             )}
         </div>
