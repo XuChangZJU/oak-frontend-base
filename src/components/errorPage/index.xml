@@ -1,0 +1,10 @@
+<l-status-show
+    show="{{true}}"
+    type="error"
+    custom="{{true}}"
+>
+    <view class="content">
+        <view class="desc">{{desc}}</view>
+        <image src="{{imagePath}}" mode="aspectFit" />
+    </view>
+</l-status-show>

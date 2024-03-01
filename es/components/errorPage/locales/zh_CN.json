@@ -1,0 +1,13 @@
+
+{
+    "back": "返回",
+    "403 Forbidden": "抱歉，您无权限访问此页面",
+    "404 Not Found": "抱歉，您访问的页面不存在。",
+    "500 Internal Server Error": "抱歉，服务器出错啦！",
+    "networkError": "网络异常",
+    "Network error, please try again later": "网络异常，请稍后再试。",
+    "browserIncompatible": "浏览器版本低",
+    "Sorry, the browser version you are using is too low to open the current webpage": "抱歉，您正在使用的浏览器版本过低，无法打开当前网页。",
+    "maintenance": "系统维护中",
+    "System maintenance in progress, please try again later": "系统维护中，请稍后再试。"
+}
