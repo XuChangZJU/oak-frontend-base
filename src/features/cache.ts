@@ -400,7 +400,8 @@ export class Cache<
             return true;
         } catch (err) {
             this.rollback();
-            if (!(err instanceof OakUserException)) {
+            // 现在如果cache中属性缺失会报OakRowUnexistedException，待进一步细化
+            if (!(err instanceof OakUserException) || !(err instanceof OakRowUnexistedException)) {
                 throw err;
             }
             return err as Error;

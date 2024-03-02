@@ -281,7 +281,8 @@ export class Cache extends Feature {
         }
         catch (err) {
             this.rollback();
-            if (!(err instanceof OakUserException)) {
+            // 现在如果cache中属性缺失会报OakRowUnexistedException，待进一步细化
+            if (!(err instanceof OakUserException) || !(err instanceof OakRowUnexistedException)) {
                 throw err;
             }
             return err;
@@ -320,7 +321,7 @@ export class Cache extends Feature {
         opers.forEach((oper) => {
             const { entity, operation } = oper;
             this.cacheStore.operate(entity, operation, this.context, {
-                checkerTypes: ['logical'], // 这里不能检查data，不然在数据没填完前会有大量异常
+                checkerTypes: ['logical'],
                 dontCollect: true,
             });
         });

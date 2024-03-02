@@ -1,5 +1,6 @@
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+// @ts-ignore
 import { ButtonProps } from 'antd';
 
 export type RenderWidth = 1 | 2 | 3 | 4;
