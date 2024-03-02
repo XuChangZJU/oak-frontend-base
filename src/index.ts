@@ -12,8 +12,7 @@ export * from './types/AbstractComponent';
 export * from './types/Exception';
 export * from './types/Pagination';
 export * from './types/NamedCondition';
-
-// export * from './utils/upload';
+export * from './types/ErrorPage';
 
 // export { CacheStore } from './cacheStore/CacheStore';
 // export { default as SyncTriggerExecutor } from './cacheStore/SyncTriggerExecutor';

@@ -9,5 +9,6 @@ export * from './types/AbstractComponent';
 export * from './types/Exception';
 export * from './types/Pagination';
 export * from './types/NamedCondition';
+export * from './types/ErrorPage';
 export { FrontendRuntimeContext, SerializedData } from './context/FrontendRuntimeContext';
 export { BackendRuntimeContext } from './context/BackendRuntimeContext';
