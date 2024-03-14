@@ -3,7 +3,7 @@ import { assert } from 'oak-domain/lib/utils/assert';
 import { I18n } from 'i18n-js';
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
 export class Locales extends Feature {
-    static MINIMAL_LOADING_GAP = 600 * 10000; // 最小加载间歇
+    static REFRESH_STALE_INTERVAL = 30 * 24 * 3600 * 1000; // 正式环境下的主动刷新缓存策略
     cache;
     localStorage;
     environment;
@@ -61,6 +61,7 @@ export class Locales extends Feature {
                 data: 1,
                 namespace: 1,
                 language: 1,
+                $$updateAt$$: 1,
             },
         });
         const dataset = {};
@@ -76,10 +77,23 @@ export class Locales extends Feature {
         });
         this.i18n.store(dataset);
         if (i18ns.length > 0) {
-            // 启动时刷新数据策略
-            // 先不处理了，这样似乎会导致如果key不miss就不会更新，所以i18n的更新要确保这点
-            /* const nss = i18ns.map(ele => ele.namespace!);
-            await this.loadServerData(nss); */
+            /**
+             * 前台启动时的数据刷新策略：
+             * dev环境无条件刷新，production环境只会主动刷新超过REFRESH_STALE_INTERVAL(30天)的i18n数据，
+             * 这样会导致在此期间内，如果不发生key miss，数据不会更新
+             * 程序员要谨慎对待这一特性，对于重要的i18n，在版本间尽量不要更新原有的key值。
+             */
+            if (process.env.NODE_ENV === 'development') {
+                const nss = i18ns.map(ele => ele.namespace);
+                await this.loadServerData(nss);
+            }
+            else {
+                const now = Date.now();
+                const nss = i18ns.filter(ele => now - ele.$$updateAt$$ > Locales.REFRESH_STALE_INTERVAL).map(ele => ele.namespace);
+                if (nss.length > 0) {
+                    await this.loadServerData(nss);
+                }
+            }
         }
     }
     async loadServerData(nss) {
