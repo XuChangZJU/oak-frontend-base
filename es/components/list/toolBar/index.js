@@ -14,13 +14,14 @@ function ToolBar(props) {
                 <Space align='center'>
                     {extraContent}
                     {buttonGroup && buttonGroup.length > 0 && (<ButtonGroup items={buttonGroup}/>)}
-                    <Tooltip title={features.locales.t('reload')}>
-                        <div className={Style.reloadIconBox} onClick={() => {
-            reload();
-        }}>
-                            <ReloadOutlined />
-                        </div>
-                    </Tooltip>
+                    {reload &&
+            <Tooltip title={features.locales.t('reload')}>
+                            <div className={Style.reloadIconBox} onClick={() => {
+                    reload();
+                }}>
+                                <ReloadOutlined />
+                            </div>
+                        </Tooltip>}
                     <ColumnSetting />
                 </Space>
             </div>

@@ -68,9 +68,7 @@ const ProList = (props) => {
             },
         }}>
             <div className={Style.container}>
-                {!isMobile && !hideDefaultButtons && (<ToolBar title={title} extraContent={extraContent} buttonGroup={buttonGroup} reload={() => {
-                onReload && onReload();
-            }}/>)}
+                {!isMobile && !hideDefaultButtons && (<ToolBar title={title} extraContent={extraContent} buttonGroup={buttonGroup} reload={onReload}/>)}
                 {isMobile && <ButtonGroup items={buttonGroup}/>}
                 <List entity={entity} extraActions={extraActions} onAction={onAction} disabledOp={disabledOp} attributes={attributes} data={!disableSerialNumber
             ? data?.map((ele, index) => {

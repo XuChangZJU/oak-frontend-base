@@ -9,7 +9,7 @@ type ToolBarProps = {
     title?: React.ReactNode;
     buttonGroup?: buttonProps[];
     extraContent?: React.ReactNode;
-    reload: () => void;
+    reload?: () => void;
 };
 declare function ToolBar(props: ToolBarProps): React.JSX.Element;
 export default ToolBar;

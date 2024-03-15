@@ -168,6 +168,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
     getFreshValue(inModi?: boolean): Partial<ED[T]['Schema']> | undefined;
+    private refreshListChildren;
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>): void;
     update(data: ED[T]['Update']['data'], action?: ED[T]['Action']): void;
     remove(): void;
