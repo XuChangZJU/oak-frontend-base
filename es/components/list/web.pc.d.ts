@@ -22,4 +22,5 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
     i18n: any;
     hideHeader?: boolean;
     judgeAttributes: OakAbsAttrJudgeDef[];
+    size?: 'large' | 'middle' | 'small';
 }, {}>): React.JSX.Element;

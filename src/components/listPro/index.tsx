@@ -20,13 +20,15 @@ import { useFeatures } from '../../platforms/web';
 import { Locales } from '../../features/locales';
 
 type Props<ED2 extends ED, T extends keyof ED2> = {
-    title?: string | React.ReactNode,
-    extraContent?: React.ReactNode,
+    title?: string | React.ReactNode;
+    extraContent?: React.ReactNode;
     hideDefaultButtons?: boolean;
     buttonGroup?: ListButtonProps[];
     onReload?: () => void;
     entity: T;
-    extraActions?: OakExtraActionProps[] | ((row: any) => OakExtraActionProps[]);
+    extraActions?:
+        | OakExtraActionProps[]
+        | ((row: RowWithActions<ED2, T>) => OakExtraActionProps[]);
     onAction?: onActionFnDef;
     disabledOp?: boolean;
     attributes: OakAbsAttrDef[];
@@ -43,6 +45,7 @@ type Props<ED2 extends ED, T extends keyof ED2> = {
         ) => void;
     };
     disableSerialNumber?: boolean; //是否禁用序号 默认启用
+    size?: 'large' | 'middle' | 'small';
 };
 
 export type TableAttributeType = {
@@ -87,6 +90,7 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
         title,
         hideDefaultButtons = false,
         extraContent,
+        size = 'large',
     } = props;
     const features = useFeatures<{
         locales: Locales<any, any, any, any>;
@@ -175,21 +179,22 @@ const ProList = <ED2 extends ED, T extends keyof ED2>(props: Props<ED2, T>) => {
                     data={
                         !disableSerialNumber
                             ? data?.map((ele, index) => {
-                                if (tablePagination) {
-                                    const total = tablePagination.total || 0;
-                                    const pageSize =
-                                        tablePagination.pageSize || 20; //条数
-                                    const current =
-                                        tablePagination.current || 1; //当前页
-                                    (ele as any)['#'] =
-                                        pageSize * (current - 1) +
-                                        (index + 1);
-                                }
-                                return ele;
-                            })
+                                  if (tablePagination) {
+                                      const total = tablePagination.total || 0;
+                                      const pageSize =
+                                          tablePagination.pageSize || 20; //条数
+                                      const current =
+                                          tablePagination.current || 1; //当前页
+                                      (ele as any)['#'] =
+                                          pageSize * (current - 1) +
+                                          (index + 1);
+                                  }
+                                  return ele;
+                              })
                             : data
                     }
                     loading={loading}
+                    size={size}
                     tablePagination={Object.assign(
                         {
                             showTotal,
