@@ -37,7 +37,7 @@ export default OakComponent({
         code: '',
         title: '',
         desc: '',
-        icon: '', //web独有
+        icon: '',
         imagePath: '', //小程序独有
     },
     lifetimes: {

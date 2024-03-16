@@ -235,6 +235,13 @@ export function getAlign(attrType: DataType): 'left' | 'right' | 'center' {
     return 'left';
 }
 
+export function getFixed(attribute: OakAbsAttrDef): 'left' | 'right' | undefined {
+    if (typeof attribute?.fixed === 'function') {
+        return undefined;
+    }
+    return attribute?.fixed;
+}
+
 export function getType(
     attribute: OakAbsAttrDef,
     attrType: OakAbsDerivedAttrDef['type']

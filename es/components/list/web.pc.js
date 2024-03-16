@@ -3,7 +3,7 @@ import { Table } from 'antd';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { get } from 'oak-domain/lib/utils/lodash';
 import ActionBtn from '../actionBtn';
-import { getWidth, getValue, getLabel, getType, getAlign, getLinkUrl } from '../../utils/usefulFn';
+import { getWidth, getValue, getLabel, getType, getAlign, getLinkUrl, getFixed } from '../../utils/usefulFn';
 import TableCell from './renderCell';
 import { TableContext } from '../listPro';
 export default function Render(props) {
@@ -38,6 +38,7 @@ export default function Render(props) {
                     key: ele.path,
                     title,
                     align,
+                    fixed: getFixed(ele.attribute),
                     render: (v, row) => {
                         if (typeof ele.attribute !== 'string' && ele.attribute.render) {
                             return ele.attribute.render(row);

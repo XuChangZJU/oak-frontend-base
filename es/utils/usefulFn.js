@@ -168,6 +168,12 @@ export function getAlign(attrType) {
     }
     return 'left';
 }
+export function getFixed(attribute) {
+    if (typeof attribute?.fixed === 'function') {
+        return undefined;
+    }
+    return attribute?.fixed;
+}
 export function getType(attribute, attrType) {
     let type = attrType;
     if (isAttrbuteType(attribute).type) {

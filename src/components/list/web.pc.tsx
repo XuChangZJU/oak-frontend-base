@@ -10,7 +10,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 import { OakAbsAttrDef, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
-import { getPath, getWidth, getValue, getLabel, resolvePath, getType, getAlign, getLinkUrl } from '../../utils/usefulFn';
+import { getPath, getWidth, getValue, getLabel, resolvePath, getType, getAlign, getLinkUrl, getFixed } from '../../utils/usefulFn';
 import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
 import TableCell from './renderCell';
 import Style from './web.module.less';
@@ -92,6 +92,7 @@ export default function Render(
                     key: ele.path,
                     title,
                     align,
+                    fixed: getFixed(ele.attribute),
                     render: (v: string, row: any) => {
                         if (typeof ele.attribute !== 'string' && ele.attribute.render) {
                             return ele.attribute.render(row);
