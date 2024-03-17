@@ -1,10 +1,8 @@
 import { List, Tag, Input, Divider } from 'antd-mobile';
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import Styles from './web.module.less';
+import { ED } from '../../../types/AbstractComponent';
 
-type ED = EntityDict & BaseEntityDict;
+import Styles from './web.module.less';
 
 export default function render(
     props: WebComponentProps<

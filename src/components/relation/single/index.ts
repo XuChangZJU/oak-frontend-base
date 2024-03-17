@@ -1,8 +1,6 @@
 
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { ED } from '../../../types/AbstractComponent';
 
-type ED = EntityDict & BaseEntityDict;
 
 export default OakComponent({
     isList: false,

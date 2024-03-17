@@ -5,13 +5,7 @@ import classNames from 'classnames';
 import './index.less';
 export default function Render(props) {
     const { data, methods } = props;
-    const { style, className, showHeader = true, showBack = false, onBack, backIcon, delta, title, subTitle, extra, tags, children, content, 
-    // contentStyle,
-    // contentClassName,
-    // bodyStyle,
-    // bodyClassName,
-    allowBack = true, //state取
-     } = data;
+    const { style, className, showHeader = true, showBack = false, onBack, backIcon, delta, title, subTitle, extra, tags, children, content, contentStyle, contentClassName, bodyStyle, bodyClassName, allowBack = true, } = data;
     const { t, goBack } = methods;
     const prefixCls = 'oak-new';
     const back = data.hasOwnProperty('showBack')
@@ -42,19 +36,11 @@ export default function Render(props) {
                     </div>
                 </div>)}
 
-            {content ? (<div 
-        // style={contentStyle}
-        className={classNames(`${prefixCls}-pageHeader-content`
-            // contentClassName
-            )}>
+            {content ? (<div style={contentStyle} className={classNames(`${prefixCls}-pageHeader-content`, contentClassName)}>
                     {content}
                 </div>) : null}
 
-            <div 
-    // style={bodyStyle}
-    className={classNames(`${prefixCls}-pageHeader-body`
-        // bodyClassName
-        )}>
+            <div style={bodyStyle} className={classNames(`${prefixCls}-pageHeader-body`, bodyClassName)}>
                 {children}
             </div>
         </div>);

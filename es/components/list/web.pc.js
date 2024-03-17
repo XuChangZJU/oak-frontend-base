@@ -2,8 +2,8 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Table } from 'antd';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { get } from 'oak-domain/lib/utils/lodash';
-import ActionBtn from '../actionBtn';
 import { getWidth, getValue, getLabel, getType, getAlign, getLinkUrl, getFixed } from '../../utils/usefulFn';
+import ActionBtn from '../actionBtn';
 import TableCell from './renderCell';
 import { TableContext } from '../listPro';
 export default function Render(props) {

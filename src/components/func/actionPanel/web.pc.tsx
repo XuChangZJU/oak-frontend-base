@@ -1,5 +1,5 @@
+import React from 'react';
 import { Button, Space } from 'antd';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { ED } from '../../../types/AbstractComponent';
 import { WebComponentProps } from '../../../types/Page';
 import Style from './web.module.less';
@@ -7,7 +7,7 @@ import Style from './web.module.less';
 export default function Render(
     props: WebComponentProps<
         ED,
-        keyof EntityDict,
+        keyof ED,
         false,
         {
             actionss: Array<{

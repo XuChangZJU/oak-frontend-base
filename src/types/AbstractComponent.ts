@@ -2,6 +2,7 @@ import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 // @ts-ignore
 import { ButtonProps } from 'antd';
+import { ActionDef }  from './Page'
 
 export type RenderWidth = 1 | 2 | 3 | 4;
 
@@ -187,6 +188,10 @@ export type onActionFnDef = (
     action: string,
     cascadeAction?: CascadeActionProps
 ) => void;
+
+export type CascadeActionDef = {
+    [K in keyof ED[keyof EntityDict]['Schema']]?: ActionDef<ED, keyof ED>[];
+};
 
 export type ListButtonProps = {
     label: string;

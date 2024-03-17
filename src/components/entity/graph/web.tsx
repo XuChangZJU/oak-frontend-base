@@ -1,9 +1,9 @@
+import React from 'react';
+
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { ED } from '../../../types/AbstractComponent';
 
 import Styles from './web.module.less';
-type ED = EntityDict & BaseEntityDict;
 
 export default function render(
     props: WebComponentProps<
@@ -11,8 +11,8 @@ export default function render(
         keyof ED,
         true,
         {
-            data: Array<{ name: string, x?: number, y?: number }>;
-            links: Array<{ source: string, target: string }>;
+            data: Array<{ name: string; x?: number; y?: number }>;
+            links: Array<{ source: string; target: string }>;
         },
         {
             onEntityClicked: (entity: string) => void;
@@ -20,9 +20,5 @@ export default function render(
     >
 ) {
     const { t } = props.methods;
-    return (
-        <div className={Styles.container}>
-            {t('useWideScreen')}
-        </div>
-    )
+    return <div className={Styles.container}>{t('useWideScreen')}</div>;
 }

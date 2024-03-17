@@ -1,13 +1,9 @@
-import { Table, Checkbox, Button, Row, Radio, Col, Typography, Space, Modal, Badge, Tag } from 'antd';
-const { Title, Text } = Typography;
+import { Table, Checkbox, Button, Row, Space, } from 'antd';
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { ED } from '../../../types/AbstractComponent';
 import { difference, intersection, isEqual } from 'oak-domain/lib/utils/lodash';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import ActionAuthListSingle from '../../relation/single';
-
-type ED = EntityDict & BaseEntityDict;
 
 
 export default function render(
@@ -24,20 +20,32 @@ export default function render(
             actionAuthList: Array<{
                 paths: string[];
                 sourceEntity: string;
-                relations: ED['actionAuth']['Schema'][],
-                relationSelections: Array<{ id: string, name: string }>
+                relations: ED['actionAuth']['Schema'][];
+                relationSelections: Array<{ id: string; name: string }>;
             }>;
             actions: string[];
-            entity: keyof EntityDict;
+            entity: keyof ED;
         },
         {
-            onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['Schema'][]) => void;
-            onChange2: (checked: boolean, relationId: string, paths: string[], actionAuths: ED['actionAuth']['Schema'][], actionAuth?: ED['actionAuth']['Schema']) => void;
+            onChange: (
+                checked: boolean,
+                relationId: string,
+                path: string,
+                actionAuth?: ED['actionAuth']['Schema'][]
+            ) => void;
+            onChange2: (
+                checked: boolean,
+                relationId: string,
+                paths: string[],
+                actionAuths: ED['actionAuth']['Schema'][],
+                actionAuth?: ED['actionAuth']['Schema']
+            ) => void;
             confirm: () => void;
         }
     >
 ) {
-    const { cascadeEntityActions, oakDirty, actions, entity, actionAuthList } = props.data;
+    const { cascadeEntityActions, oakDirty, actions, entity, actionAuthList } =
+        props.data;
     const { onChange, t, clean, confirm, onChange2 } = props.methods;
     return (
         <Space direction="vertical" style={{ width: '100%' }}>
@@ -63,9 +71,14 @@ export default function render(
                                 if (index === 0) {
                                     return ele;
                                 } else {
-                                    return <><br />{ele}</>
+                                    return (
+                                        <>
+                                            <br />
+                                            {ele}
+                                        </>
+                                    );
                                 }
-                            })
+                            });
                         },
                     },
                     {
@@ -77,11 +90,13 @@ export default function render(
                             // const { relations, actionAuths, path } = record;
                             const { relations, relationSelections } = record;
                             return (
-                                <div style={{
-                                    width: '100%',
-                                    display: 'flex',
-                                    flexWrap: 'wrap',
-                                }}>
+                                <div
+                                    style={{
+                                        width: '100%',
+                                        display: 'flex',
+                                        flexWrap: 'wrap',
+                                    }}
+                                >
                                     {/* {
                                         relations?.map(
                                             (r) => {
@@ -124,36 +139,53 @@ export default function render(
                                             }
                                         )
                                     } */}
-                                    {
-                                        relationSelections.map(
-                                            (ele) => {
-                                                let checked = false, indeterminate = false;
-                                                if (actions && actions.length > 0) {
-                                                    const relation = relations.find((ele2) => ele2.relationId === ele.id && !ele2.$$deleteAt$$);
-                                                    if (relation) {
-                                                        const { deActions } = relation;
-                                                        checked = difference(actions, deActions).length === 0;
-                                                        indeterminate = !checked && intersection(actions, deActions).length > 0;
-                                                    }
-                                                }
-                                                return <Checkbox
-                                                    disabled={actions.length === 0}
-                                                    checked={checked}
-                                                    indeterminate={indeterminate}
-                                                    onChange={({ target }) => {
-                                                        onChange2(target.checked, ele.id, record.paths, relations);
-                                                    }}
-                                                >
-                                                    {ele.name}
-                                                </Checkbox>
+                                    {relationSelections.map((ele) => {
+                                        let checked = false,
+                                            indeterminate = false;
+                                        if (actions && actions.length > 0) {
+                                            const relation = relations.find(
+                                                (ele2) =>
+                                                    ele2.relationId ===
+                                                        ele.id &&
+                                                    !ele2.$$deleteAt$$
+                                            );
+                                            if (relation) {
+                                                const { deActions } = relation;
+                                                checked =
+                                                    difference(
+                                                        actions,
+                                                        deActions
+                                                    ).length === 0;
+                                                indeterminate =
+                                                    !checked &&
+                                                    intersection(
+                                                        actions,
+                                                        deActions
+                                                    ).length > 0;
                                             }
-                                        )
-
-                                    }
+                                        }
+                                        return (
+                                            <Checkbox
+                                                disabled={actions.length === 0}
+                                                checked={checked}
+                                                indeterminate={indeterminate}
+                                                onChange={({ target }) => {
+                                                    onChange2(
+                                                        target.checked,
+                                                        ele.id,
+                                                        record.paths,
+                                                        relations
+                                                    );
+                                                }}
+                                            >
+                                                {ele.name}
+                                            </Checkbox>
+                                        );
+                                    })}
                                 </div>
-                            )
-                        }
-                    }
+                            );
+                        },
+                    },
                 ]}
                 dataSource={actionAuthList}
                 pagination={false}
@@ -161,17 +193,14 @@ export default function render(
             <Row justify="end" style={{ marginTop: 20, padding: 5 }}>
                 <Button
                     style={{ marginRight: 10 }}
-                    type='primary'
+                    type="primary"
                     disabled={!oakDirty}
                     onClick={() => confirm()}
                 >
-                    {t("confirm")}
+                    {t('confirm')}
                 </Button>
-                <Button
-                    disabled={!oakDirty}
-                    onClick={() => clean()}
-                >
-                    {t("reset")}
+                <Button disabled={!oakDirty} onClick={() => clean()}>
+                    {t('reset')}
                 </Button>
             </Row>
         </Space>

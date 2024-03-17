@@ -1,10 +1,9 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { Button } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
 import { WebComponentProps } from '../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { ED } from '../../types/AbstractComponent';
 
 import './index.less';
 
@@ -23,15 +22,14 @@ type PageHeaderProps = {
     children?: React.ReactNode;
     content?: React.ReactNode;
 
-    // contentStyle?: React.CSSProperties;
-    // contentClassName?: string;
-    // bodyStyle?: React.ReactNode;
-    // bodyClassName?: string;
+    contentStyle?: React.CSSProperties;
+    contentClassName?: string;
+    bodyStyle?: React.CSSProperties;
+    bodyClassName?: string;
 
     allowBack: boolean;
 };
 
-type ED = EntityDict & BaseEntityDict;
 
 export default function Render(
     props: WebComponentProps<
@@ -60,11 +58,11 @@ export default function Render(
         children,
         content,
 
-        // contentStyle,
-        // contentClassName,
-        // bodyStyle,
-        // bodyClassName,
-        allowBack = true, //state取
+        contentStyle,
+        contentClassName,
+        bodyStyle,
+        bodyClassName,
+        allowBack = true,
     } = data;
     const { t, goBack } = methods;
     const prefixCls = 'oak-new';
@@ -123,10 +121,10 @@ export default function Render(
 
             {content ? (
                 <div
-                    // style={contentStyle}
+                    style={contentStyle}
                     className={classNames(
-                        `${prefixCls}-pageHeader-content`
-                        // contentClassName
+                        `${prefixCls}-pageHeader-content`,
+                        contentClassName
                     )}
                 >
                     {content}
@@ -134,10 +132,10 @@ export default function Render(
             ) : null}
 
             <div
-                // style={bodyStyle}
+                style={bodyStyle}
                 className={classNames(
-                    `${prefixCls}-pageHeader-body`
-                    // bodyClassName
+                    `${prefixCls}-pageHeader-body`,
+                    bodyClassName
                 )}
             >
                 {children}

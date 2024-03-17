@@ -1,9 +1,9 @@
 import React from 'react';
 import { SpaceProps } from 'antd';
 import { WebComponentProps } from '../../types/Page';
-import { EntityDict } from 'oak-domain/lib/base-app-domain';
+import { ED } from '../../types/AbstractComponent';
 import { Item } from './types';
-export default function Render(props: WebComponentProps<EntityDict, keyof EntityDict, false, {
+export default function Render(props: WebComponentProps<ED, keyof ED, false, {
     entity: string;
     actions: string[];
     items: Item[];

@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Row, Col, Button, Pagination, InputNumber } from 'antd';
+import { Pagination } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import type { PaginationProps as RcPaginationProps } from 'rc-pagination';
 import classNames from 'classnames';
 import { WebComponentProps } from '../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { ED } from '../../types/AbstractComponent';
 import Style from './index.module.less';
-import type { PaginationLocale, PaginationProps as RcPaginationProps } from 'rc-pagination';
 
 export interface PaginationProps extends RcPaginationProps {
     showQuickJumper?: boolean | {
@@ -28,7 +27,6 @@ export interface PaginationProps extends RcPaginationProps {
     total1: number
 }
 
-type ED = EntityDict & BaseEntityDict;
 
 export default function Render(
     props: WebComponentProps<

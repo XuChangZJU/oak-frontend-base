@@ -13,16 +13,13 @@ import {
     Button,
 } from 'antd-mobile';
 import OakIcon from '../icon';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 
-type ED = EntityDict & BaseEntityDict;
 import { WebComponentProps } from '../../types/Page';
 import RefAttr from '../refAttr';
 import Location, { Poi } from '../map/location';
 import Map from '../map/map';
 import dayjs from 'dayjs';
-import { AttrUpsertRender, OakAbsRefAttrPickerRender, OakAbsNativeAttrUpsertRender } from '../../types/AbstractComponent';
+import { AttrUpsertRender, OakAbsRefAttrPickerRender, OakAbsNativeAttrUpsertRender, ED } from '../../types/AbstractComponent';
 
 function makeAttrInput<T extends keyof ED>(
     attrRender: AttrUpsertRender<ED, T>,

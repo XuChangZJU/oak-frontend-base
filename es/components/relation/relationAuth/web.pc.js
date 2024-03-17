@@ -1,6 +1,4 @@
 import { Table, Checkbox, Button, Row } from 'antd';
-import { Typography } from 'antd';
-const { Title, Text } = Typography;
 import { intersection, difference } from 'oak-domain/lib/utils/lodash';
 export default function render(props) {
     const { relationIds, relationAuths, oakDirty, auths, sourceRelations } = props.data;

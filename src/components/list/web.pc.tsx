@@ -3,26 +3,23 @@ import { Table, Tag, TableProps, PaginationProps, Space, Button, Avatar } from '
 import type { ColumnsType, ColumnType, ColumnGroupType } from 'antd/es/table';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { get } from 'oak-domain/lib/utils/lodash';
-import ActionBtn from '../actionBtn';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { ActionDef, WebComponentProps } from '../../types/Page';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
-import { getPath, getWidth, getValue, getLabel, resolvePath, getType, getAlign, getLinkUrl, getFixed } from '../../utils/usefulFn';
 import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
+import { OakAbsAttrDef, onActionFnDef, CascadeActionProps, OakAbsDerivedAttrDef, OakExtraActionProps, OakAbsAttrJudgeDef, ED } from '../../types/AbstractComponent';
+import { getPath, getWidth, getValue, getLabel, resolvePath, getType, getAlign, getLinkUrl, getFixed } from '../../utils/usefulFn';
+import { WebComponentProps } from '../../types/Page';
+import ActionBtn from '../actionBtn';
 import TableCell from './renderCell';
-import Style from './web.module.less';
 import { TableContext } from '../listPro';
-
-type ED = EntityDict & BaseEntityDict;
+import Style from './web.module.less';
 
 
 export default function Render(
     props: WebComponentProps<
-        EntityDict & BaseEntityDict,
-        keyof EntityDict,
+        ED,
+        keyof ED,
         false,
         {
             width: 'xl' | 'lg' | 'md' | 'sm' | 'xs';
@@ -31,11 +28,11 @@ export default function Render(
                 | OakExtraActionProps[]
                 | ((row: any) => OakExtraActionProps[]);
             entity: string;
-            schema: StorageSchema<EntityDict & BaseEntityDict>;
+            schema: StorageSchema<ED>;
             attributes: OakAbsAttrDef[];
             data: any[];
             disabledOp: boolean;
-            colorDict: ColorDict<EntityDict & BaseEntityDict>;
+            colorDict: ColorDict<ED>;
             tablePagination?: TableProps<any[]>['pagination'];
             onAction?: onActionFnDef;
             rowSelection?: TableProps<any[]>['rowSelection'];

@@ -1,14 +1,12 @@
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import React, { useState, useEffect } from 'react';
 import { Row, Badge, Col, Tabs, Checkbox, Table, Space, Button, Modal, Card, Breadcrumb, Tag } from 'antd';
 import { Typography } from 'antd';
-const { Title, Text } = Typography;
 import { WebComponentProps } from '../../../types/Page';
-import { useState, useEffect } from 'react';
+import { ED } from '../../../types/AbstractComponent';
 import ActionAuthList from '../actionAuthList';
 
+const { Title, Text } = Typography;
 
-type ED = EntityDict & BaseEntityDict;
 
 export default function render(props: WebComponentProps<ED, keyof ED, false, {
     entity: keyof ED;

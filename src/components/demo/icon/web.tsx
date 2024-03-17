@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { ED } from '../../../types/AbstractComponent';
 
 import JsonData from './iconfont.json';
@@ -39,7 +38,7 @@ function copy(value: string, cb?: () => void) {
 }
 
 
-export default function Render(props: WebComponentProps<ED, keyof EntityDict, false, {}, {}>) {
+export default function Render(props: WebComponentProps<ED, keyof ED, false, {}, {}>) {
     const { methods } = props;
     const icons = JsonData.glyphs;
     return (

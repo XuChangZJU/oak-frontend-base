@@ -1,8 +1,8 @@
+import React, { useState } from 'react';
 import { Row, Col, Space, Button, Modal, Breadcrumb, Tag } from 'antd';
 import { Typography } from 'antd';
-const { Title, Text } = Typography;
-import { useState } from 'react';
 import ActionAuthList from '../actionAuthList';
+const { Title, Text } = Typography;
 export default function render(props) {
     const { methods, data } = props;
     const { entity, entityDNode, entitySNode, oakFullpath } = data;

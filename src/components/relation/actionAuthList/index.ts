@@ -1,5 +1,3 @@
-import assert from "assert";
-import { EntityDict } from "oak-domain/lib/types";
 import { ED } from "../../../types/AbstractComponent";
 
 export default OakComponent({
@@ -43,11 +41,11 @@ export default OakComponent({
     },
     formData({ data: rows }) {
         return {
-            rows
+            rows,
         };
     },
     data: {
-        relations: [] as Partial<EntityDict['relation']['Schema']>[],
+        relations: [] as Partial<ED['relation']['Schema']>[],
         actions: [] as string[],
     },
     listeners: {
@@ -65,49 +63,54 @@ export default OakComponent({
                     '#name': 'path'
                 }, true) */
             }
-        }
+        },
     },
     lifetimes: {
         async ready() {
             this.getRelationAndActions();
-        }
+        },
     },
     methods: {
         async getRelationAndActions() {
             const { path, entity } = this.props;
             const entities = path!.split('.');
             const sourceEntity = entities[entities?.length - 1];
-            const source = sourceEntity.includes('$') ? sourceEntity.split('$')[0] : sourceEntity;
+            const source = sourceEntity.includes('$')
+                ? sourceEntity.split('$')[0]
+                : sourceEntity;
             // 获取actions
             const actions = this.features.relationAuth.getActions(entity!);
             // 获取relation
             // user 没有relation
             if (source.includes('(user)')) {
                 this.setState({
-                    relations: [{id: '', name: '当前用户'}],
+                    relations: [{ id: '', name: '当前用户' }],
                     actions,
-                })
+                });
                 return;
             }
-            const { data: relations } = await this.features.cache.refresh('relation', {
-                data: {
-                    id: 1,
-                    entity: 1,
-                    entityId: 1,
-                    name: 1,
-                    display: 1,
-                },
-                filter: {
-                    entity: source,
-                    entityId: {
-                        $exists: false,
+            const { data: relations } = await this.features.cache.refresh(
+                'relation',
+                {
+                    data: {
+                        id: 1,
+                        entity: 1,
+                        entityId: 1,
+                        name: 1,
+                        display: 1,
                     },
-                },
-            });
+                    filter: {
+                        entity: source,
+                        entityId: {
+                            $exists: false,
+                        },
+                    },
+                }
+            );
             this.setState({
                 relations,
                 actions,
-            })
-        }
-    }
-})
+            });
+        },
+    },
+});
