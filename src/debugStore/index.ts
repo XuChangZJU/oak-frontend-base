@@ -9,7 +9,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { generateNewIdAsync } from 'oak-domain/lib/utils/uuid';
-import { ED } from '..';
+import { LocalStorage } from '../features/localStorage';
 
 async function initDataInStore<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>>(
     store: DebugStore<ED, Cxt>,
@@ -24,10 +24,10 @@ async function initDataInStore<ED extends EntityDict & BaseEntityDict, Cxt exten
     store.resetInitialData(initialData, stat);
 }
 
-async function getMaterializedData(loadFn: (key: string) => Promise<any>) {
+async function getMaterializedData(localStorage: LocalStorage) {
     try {
-        const data = await loadFn(LOCAL_STORAGE_KEYS.debugStore);
-        const stat = await loadFn(LOCAL_STORAGE_KEYS.debugStoreStat);
+        const data = await localStorage.load(LOCAL_STORAGE_KEYS.debugStore);
+        const stat = await localStorage.load(LOCAL_STORAGE_KEYS.debugStoreStat);
         if (data && stat) {
             return {
                 data,
@@ -45,47 +45,14 @@ let lastMaterializedVersion = 0;
 async function materializeData(
     data: any,
     stat: { create: number, update: number, remove: number, commit: number },
-    saveFn: (key: string, data: any) => Promise<void>) {
+    localStorage: LocalStorage) {
     try {
-        await saveFn(LOCAL_STORAGE_KEYS.debugStore, data);
-        await saveFn(LOCAL_STORAGE_KEYS.debugStoreStat, stat);
+        await localStorage.save(LOCAL_STORAGE_KEYS.debugStore, data);
+        await localStorage.save(LOCAL_STORAGE_KEYS.debugStoreStat, stat);
         lastMaterializedVersion = stat.commit;
         console.log('物化数据', data);
     } catch (e) {
         console.error(e);
-    }
-}
-
-export function clearMaterializedData() {
-    if (process.env.OAK_PLATFORM === 'wechatMp') {
-        try {
-            wx.removeStorageSync(LOCAL_STORAGE_KEYS.debugStore);
-            wx.removeStorageSync(LOCAL_STORAGE_KEYS.debugStoreStat);
-            lastMaterializedVersion = 0;
-            wx.showToast({
-                title: '数据已清除',
-                icon: 'success',
-            });
-            console.log('清空数据');
-        } catch (e) {
-            console.error(e);
-            wx.showToast({
-                title: '清空数据失败',
-                icon: 'error',
-            });
-        }
-    }
-    else if (process.env.OAK_PLATFORM === 'web') {
-        try {
-            window.localStorage.removeItem(LOCAL_STORAGE_KEYS.debugStore);
-            window.localStorage.removeItem(LOCAL_STORAGE_KEYS.debugStoreStat);
-            lastMaterializedVersion = 0;
-            console.log('清空数据');
-            // alert('数据已物化');
-        } catch (e) {
-            console.error(e);
-            // alert('物化数据失败');
-        }
     }
 }
 
@@ -249,8 +216,7 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
     },
     actionDict: ActionDictOfEntityDict<ED>,
     authDeduceRelationMap: AuthDeduceRelationMap<ED>,
-    saveFn: (key: string, data: any) => Promise<void>,
-    loadFn: (key: string) => Promise<any>,
+    localStorage: LocalStorage,
     selectFreeEntities?: (keyof ED)[],
     updateFreeDict?: {
         [A in keyof ED]?: string[];
@@ -269,7 +235,7 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
 
     // 如果没有物化数据则使用initialData初始化debugStore
     const loadInitialData = async () => {
-        const data = await getMaterializedData(loadFn);
+        const data = await getMaterializedData(localStorage);
         if (!data) {
             initDataInStore(store, initialData!);
             console.log('使用初始化数据建立debugStore', initialData);
@@ -294,7 +260,7 @@ export function createDebugStore<ED extends EntityDict & BaseEntityDict, Cxt ext
             if (Object.keys(result).length > 0) {
                 const stat = store.getStat();
                 const data = store.getCurrentData();
-                await materializeData(data, stat, saveFn);
+                await materializeData(data, stat, localStorage);
             }
         }
     );

@@ -63,7 +63,7 @@ abstract class OakComponentBase<
     featuresSubscribed: Array<{
         name: string;
         callback: (args?: any) => void;
-        unsubHandler?: () => void;        
+        unsubHandler?: () => void;
     }> = []
 
     addFeatureSub(name: string, callback: (args?: any) => void) {
@@ -89,7 +89,7 @@ abstract class OakComponentBase<
                 if (ele.unsubHandler) {
                     ele.unsubHandler();
                     ele.unsubHandler = undefined;
-                }              
+                }
             }
         );
     }
@@ -103,7 +103,7 @@ abstract class OakComponentBase<
             }
         );
     }
-    
+
     subEvent(type: string, callback: Function) {
         this.features.eventBus.sub(type, callback);
     }
@@ -336,35 +336,25 @@ abstract class OakComponentBase<
         return this.features.runningTree.getFreshValue(path2);
     }
 
-    checkOperation(
-        entity: T,
-        action: ED[T]['Action'],
-        data?: ED[T]['Update']['data'],
-        filter?: ED[T]['Update']['filter'],
-        checkerTypes?: CheckerType[]
+    checkOperation<T2 extends keyof ED>(
+        entity: T2,
+        operation: Omit<ED[T2]['Operation'], 'id'>,
+        checkerTypes?: (CheckerType | 'relation')[]
     ) {
         if (checkerTypes?.includes('relation')) {
             return this.features.relationAuth.checkRelation(
                 entity,
-                {
-                    action,
-                    data,
-                    filter,
-                } as Omit<ED[keyof ED]['Operation'], 'id'>
+                operation
             ) && this.features.cache.checkOperation(
                 entity,
-                action,
-                data,
-                filter,
-                checkerTypes
+                operation,
+                checkerTypes as CheckerType[]
             )
         }
         return this.features.cache.checkOperation(
             entity,
-            action,
-            data,
-            filter,
-            checkerTypes
+            operation,
+            checkerTypes as CheckerType[]
         );
     }
 
@@ -372,7 +362,17 @@ abstract class OakComponentBase<
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        return this.features.runningTree.tryExecute(path2);
+        const operations = this.features.runningTree.getOperations(path2);
+        if (operations) {
+            for (const oper of operations) {
+                const { entity, operation } = oper;
+                if (!this.checkOperation(entity, operation)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     getOperations<T extends keyof ED>(path?: string) {
@@ -382,7 +382,7 @@ abstract class OakComponentBase<
         return this.features.runningTree.getOperations(path2);
     }
 
-    refresh() {        
+    refresh() {
         return refresh.call(this as any);
     }
 
@@ -704,7 +704,7 @@ export function createComponent<
                 execute: (
                     action?: ED[T]['Action'],
                     messageProps?: boolean | MessageProps,
-                    path?: string, 
+                    path?: string,
                     opers?: Array<{
                         entity: T,
                         operation: ED[T]['Operation'],
@@ -757,8 +757,8 @@ export function createComponent<
                 clean: (path?: string) => {
                     return this.clean(path);
                 },
-                checkOperation: (entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => {
-                    return this.checkOperation(entity, action, data, filter, checkerTypes);
+                checkOperation: <T2 extends keyof ED>(entity: T2, operation: ED[T2]['Operation'], checkerTypes?: CheckerType[]) => {
+                    return this.checkOperation(entity, operation, checkerTypes);
                 }
             };
             Object.assign(methodProps, {
@@ -904,7 +904,7 @@ export function createComponent<
 
 
         async componentDidMount() {
-            this.addFeatureSub('locales', () => this.reRender());            
+            this.addFeatureSub('locales', () => this.reRender());
             if (option.entity) {
                 this.addFeatureSub('cache', () => this.reRender());
             }

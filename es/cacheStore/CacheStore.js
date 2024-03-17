@@ -1,4 +1,3 @@
-import { readOnlyActions } from 'oak-domain/lib/actions/action';
 import { TreeStore } from 'oak-memory-tree-store';
 import { assert } from 'oak-domain/lib/utils/assert';
 import SyncTriggerExecutor from './SyncTriggerExecutor';
@@ -54,15 +53,8 @@ export class CacheStore extends TreeStore {
     }
     check(entity, operation, context, checkerTypes) {
         assert(context.getCurrentTxnId());
-        const { action } = operation;
-        if (readOnlyActions.includes(action)) {
-            // 只读查询的checker只能在根部入口执行
-            this.triggerExecutor.check(entity, operation, context, undefined, checkerTypes);
-            return;
-        }
-        this.operate(entity, operation, context, {
-            checkerTypes,
-        });
+        // check不再支持CascadeOperation了，不然处理不了data为undefined，通过filter来check create
+        this.triggerExecutor.check(entity, operation, context, undefined, checkerTypes);
     }
     select(entity, selection, context, option) {
         const autoCommit = !context.getCurrentTxnId();
@@ -85,7 +77,7 @@ export class CacheStore extends TreeStore {
         return result;
     }
     registerChecker(checker) {
-        this.triggerExecutor.registerChecker(checker);
+        this.triggerExecutor.registerChecker(checker, this.getSchema());
     }
     /* registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>) {
         this.triggerExecutor.registerTrigger(trigger);

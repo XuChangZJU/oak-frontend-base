@@ -408,17 +408,20 @@ export class Cache<
         }
     }
 
-    checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) {
+    checkOperation<T extends keyof ED>(
+        entity: T, 
+        operation: {
+            action: ED[T]['Action'],
+            data?: ED[T]['Operation']['data'],
+            filter?: ED[T]['Operation']['filter'],
+        },
+        checkerTypes?: CheckerType[]
+    ) {
         let autoCommit = false;
         if (!this.context) {
             this.begin();
             autoCommit = true;
         }
-        const operation = {
-            action,
-            filter,
-            data
-        } as ED[T]['Update'];
         try {
             this.cacheStore!.check(entity, operation, this.context!, checkerTypes);
             if (autoCommit) {

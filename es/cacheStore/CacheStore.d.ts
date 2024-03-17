@@ -14,7 +14,11 @@ export declare class CacheStore<ED extends EntityDict & BaseEntityDict, Cxt exte
     protected cascadeUpdate<T extends keyof ED, OP extends CachStoreOperation>(entity: T, operation: ED[T]['Operation'], context: SyncContext<ED>, option: OP): OperationResult<ED>;
     operate<T extends keyof ED, OP extends CachStoreOperation>(entity: T, operation: ED[T]['Operation'], context: Cxt, option: OP): OperationResult<ED>;
     sync<Cxt extends SyncContext<ED>>(opRecords: Array<OpRecord<ED>>, context: Cxt): void;
-    check<T extends keyof ED>(entity: T, operation: Omit<ED[T]['Operation'], 'id'>, context: Cxt, checkerTypes?: CheckerType[]): void;
+    check<T extends keyof ED>(entity: T, operation: {
+        action: ED[T]['Action'];
+        data?: ED[T]['Operation']['data'];
+        filter?: ED[T]['Operation']['filter'];
+    }, context: Cxt, checkerTypes?: CheckerType[]): void;
     select<T extends keyof ED, OP extends SelectOption, Cxt extends SyncContext<ED>>(entity: T, selection: ED[T]['Selection'], context: Cxt, option: OP): Partial<ED[T]["Schema"]>[];
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>): void;
     count<T extends keyof ED, OP extends SelectOption>(entity: T, selection: Pick<ED[T]['Selection'], 'filter' | 'count'>, context: SyncContext<ED>, option: OP): number;

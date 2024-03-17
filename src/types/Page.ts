@@ -90,8 +90,6 @@ export type ActionDef<
         filter?: ED[T]['Selection']['filter'];
         data?: Partial<ED[T]['CreateSingle']['data']>;
         label?: string;
-        color?: string;
-        key?: string;
     } | ED[T]['Action'];
 
 export type RowWithActions<
@@ -390,12 +388,14 @@ export type OakCommonComponentMethods<
                 operation: ED[T]['Operation'],
             }>
         ) => Promise<void>;
-        checkOperation: (
-            entity: T,
-            action: ED[T]['Action'],
-            data?: ED[T]['Update']['data'],
-            filter?: ED[T]['Update']['filter'],
-            checkerTypes?: CheckerType[]
+        checkOperation: <T2 extends keyof ED>(
+            entity: T2,
+            operation: {
+                action: ED[T2]['Action'],
+                data?: ED[T2]['Operation']['data'],
+                filter?: ED[T2]['Operation']['filter'],
+            },
+            checkerTypes?: (CheckerType | 'relation')[]
         ) => boolean;
         tryExecute: (path?: string) => boolean | Error;
         getOperations: (

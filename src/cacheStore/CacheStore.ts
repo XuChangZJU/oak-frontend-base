@@ -79,17 +79,15 @@ export class CacheStore<
         return result;
     }
 
-    check<T extends keyof ED>(entity: T, operation: Omit<ED[T]['Operation'], 'id'>, context: Cxt, checkerTypes?: CheckerType[]) {
+    check<T extends keyof ED>(entity: T, operation: {
+        action: ED[T]['Action'],
+        data?: ED[T]['Operation']['data'],
+        filter?: ED[T]['Operation']['filter'],
+    }, context: Cxt, checkerTypes?: CheckerType[]) {
         assert(context.getCurrentTxnId());
-        const { action } = operation;
-        if (readOnlyActions.includes(action)) {
-            // 只读查询的checker只能在根部入口执行
-            this.triggerExecutor.check(entity, operation, context, undefined, checkerTypes);
-            return;
-        }
-        this.operate(entity, operation as ED[T]['Operation'], context, {
-            checkerTypes,
-        });
+        
+        // check不再支持CascadeOperation了，不然处理不了data为undefined，通过filter来check create
+        this.triggerExecutor.check(entity, operation, context, undefined, checkerTypes);
     }
 
     select<
@@ -118,7 +116,7 @@ export class CacheStore<
     }
 
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
-        this.triggerExecutor.registerChecker(checker);
+        this.triggerExecutor.registerChecker(checker, this.getSchema());
     }
 
     /* registerTrigger<T extends keyof ED>(trigger: Trigger<ED, T, Cxt>) {

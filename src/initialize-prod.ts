@@ -9,7 +9,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict, OpRecord, SubDataDef } from 'oak-domain/lib/types/Entity';
 
 import { initializeStep1 as initBasicFeaturesStep1, initializeStep2 as initBasicFeaturesStep2 } from './features';
-import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
+import { makeIntrinsicCheckers } from 'oak-domain/lib/store/IntrinsicCheckers';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { CacheStore } from './cacheStore/CacheStore';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
@@ -43,8 +43,8 @@ export function initialize<
 ) {
     const { authDeduceRelationMap, actionDict, selectFreeEntities, updateFreeDict, colorDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
 
-    const { checkers: intCheckers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict);
-    const checkers2 = checkers.concat(intCheckers);
+    const intrinsicCheckers = makeIntrinsicCheckers<ED, Cxt, FrontCxt>(storageSchema, actionDict);
+    const checkers2 = checkers.concat(intrinsicCheckers);
 
     const features1 = initBasicFeaturesStep1();
 
@@ -62,9 +62,9 @@ export function initialize<
 
     const features2 = initBasicFeaturesStep2<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt> & AD>(
         features1,
-        wrapper, 
-        storageSchema, 
-        frontendContextBuilder, 
+        wrapper,
+        storageSchema,
+        frontendContextBuilder,
         checkers2,
         authDeduceRelationMap,
         colorDict,

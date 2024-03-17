@@ -98,25 +98,31 @@ export default OakComponent({
             this.triggerEvent('onAction', { action, cascadeAction: undefined });
         },
         getLabel(actionItem, entity) {
+            let action = actionItem;
             if (typeof actionItem !== 'string') {
-                return actionItem.label;
-            }
-            else {
-                if (['update', 'create', 'detail', 'remove'].includes(actionItem)) {
-                    return this.t(`common::action.${actionItem}`);
+                if (actionItem.label) {
+                    return actionItem.label;
                 }
-                else {
-                    return this.t(`${entity}:action.${actionItem}`);
-                }
+                action = actionItem.action;
             }
+            if (this.features.locales.hasKey(`${entity}:action.${action}`)) {
+                return this.t(`${entity}:action.${action}`);
+            }
+            return this.t(`common::action.${action}`);
         },
         getLabel2(schema, path, actionItem, entity) {
+            let action = actionItem;
             if (typeof actionItem !== 'string') {
-                return actionItem.label;
+                if (actionItem.label) {
+                    return actionItem.label;
+                }
+                action = actionItem.action;
             }
             const { entity: entityI18n } = resolvePath(schema, entity, path);
-            const label = this.t(`${entityI18n}:action.${actionItem}`);
-            return label;
+            if (this.features.locales.hasKey(`${entityI18n}:action.${action}`)) {
+                return this.t(`${entityI18n}:action.${action}`);
+            }
+            return this.t(`common::action.${action}`);
         }
     },
 });

@@ -1,7 +1,7 @@
 /// <reference path="../node_modules/@types/wechat-miniprogram/index.d.ts" />
 import { assert } from 'oak-domain/lib/utils/assert';
 import { CommonAspectDict } from 'oak-common-aspect';
-import { Aspect, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, CheckerType, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { BasicFeatures } from './features';
 import { Feature } from './types/Feature';
@@ -55,16 +55,16 @@ const oakBehavior = Behavior<
     DataOption,
     WechatMiniprogram.Component.PropertyOption,
     OakCommonComponentMethods<EDD, keyof EDD> &
-        OakListComponentMethods<EDD, keyof EDD> &
-        OakSingleComponentMethods<EDD, keyof EDD> & {
-            iAmThePage: () => boolean;
-            setState: (
-                data: Record<string, any>,
-                callback?: () => void
-            ) => void;
-            onLoad: (query: Record<string, any>) => Promise<void>;
-            loadMissedLocales: (key: string) => void;
-        },
+    OakListComponentMethods<EDD, keyof EDD> &
+    OakSingleComponentMethods<EDD, keyof EDD> & {
+        iAmThePage: () => boolean;
+        setState: (
+            data: Record<string, any>,
+            callback?: () => void
+        ) => void;
+        onLoad: (query: Record<string, any>) => Promise<void>;
+        loadMissedLocales: (key: string) => void;
+    },
     {
         unmounted: false;
         prevState: Record<string, any>;
@@ -89,7 +89,7 @@ const oakBehavior = Behavior<
             FrontCxt,
             ADD & CommonAspectDict<EDD, Cxt>
         > &
-            FDD;
+        FDD;
         oakOption: OakComponentOption<
             boolean,
             EDD,
@@ -227,7 +227,7 @@ const oakBehavior = Behavior<
                         query,
                         key,
                         typeof OakProperties[
-                            key as keyof typeof OakProperties
+                        key as keyof typeof OakProperties
                         ] as 'string'
                     );
                 }
@@ -325,7 +325,7 @@ const oakBehavior = Behavior<
             return this.features.runningTree.getFreshValue(path2);
         },
 
-        checkOperation(entity, action, data, filter, checkerTypes) {
+        checkOperation(entity,{ action, data, filter}, checkerTypes) {
             if (checkerTypes?.includes('relation')) {
                 return (
                     this.features.relationAuth.checkRelation(entity, {
@@ -335,19 +335,23 @@ const oakBehavior = Behavior<
                     } as Omit<EDD[keyof EDD]['Operation'], 'id'>) &&
                     this.features.cache.checkOperation(
                         entity,
-                        action,
-                        data,
-                        filter,
-                        checkerTypes
+                        {
+                            action,
+                            data,
+                            filter,
+                        },
+                        checkerTypes as CheckerType[]
                     )
                 );
             }
             return this.features.cache.checkOperation(
                 entity,
-                action,
-                data,
-                filter,
-                checkerTypes
+                {
+                    action,
+                    data,
+                    filter,
+                },
+                checkerTypes as CheckerType[]
             );
         },
 
@@ -355,7 +359,17 @@ const oakBehavior = Behavior<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.tryExecute(path2);
+            const operations = this.features.runningTree.getOperations(path2);
+            if (operations) {
+                for (const oper of operations) {
+                    const { entity, operation } = oper;
+                    if (!this.checkOperation(entity, operation)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
         },
 
         getOperations<T extends keyof EDD>(path?: string) {
@@ -736,7 +750,7 @@ function translateListeners(listeners?: Record<string, (prev: Record<string, any
             result[ln] = function (this: { state: Record<string, any>, prevState: Record<string, any> }, ...args) {
                 // 实测中小程序也是在update之后再调用observer，此时state上的值已经变成后项，因此增加prevState来缓存之
                 const propNames = ln.split(',');
-                
+
                 const prev: Record<string, any> = {};
                 const next: Record<string, any> = {};
                 let dirty = false;
@@ -789,7 +803,7 @@ function translatePropertiesToPropertyDefinitions(properties?: DataOption) {
                             type: Number,
                             value: properties[prop],
                         };
-                        break;                    
+                        break;
                     }
                     case 'object': {
                         if (properties[prop] instanceof Array) {
@@ -817,9 +831,9 @@ function translatePropertiesToPropertyDefinitions(properties?: DataOption) {
                         break;
                     }
                     case 'function': {
-                         Object.assign(definitions, {
-                             [prop]: Function,
-                         });
+                        Object.assign(definitions, {
+                            [prop]: Function,
+                        });
                     }
                     default: {
                         // 小程序也支持传函数 https://developers.weixin.qq.com/miniprogram/dev/framework/custom-component/wxml-wxss.html
@@ -889,7 +903,7 @@ export function createComponent<
             featuresSubscribed: Array<{
                 name: string;
                 callback: () => void;
-                unsubHandler?: () => void;        
+                unsubHandler?: () => void;
             }>;
             props: {
                 oakId?: string;
@@ -906,7 +920,7 @@ export function createComponent<
                 FrontCxt,
                 AD & CommonAspectDict<ED, Cxt>
             > &
-                FD;
+            FD;
             oakOption: OakComponentOption<
                 IsList,
                 ED,
@@ -921,19 +935,19 @@ export function createComponent<
                 TMethod
             >;
         }
-    >({        
+    >({
         externalClasses,
         behaviors: [oakBehavior],
         data:
             typeof data !== 'function'
                 ? Object.assign({}, data, {
-                      oakFullpath: '',
-                      oakLoading: !!option.entity && !!option.projection,
-                  })
+                    oakFullpath: '',
+                    oakLoading: !!option.entity && !!option.projection,
+                })
                 : {
-                      oakFullpath: '',
-                      oakLoading: !!option.entity && !!option.projection,
-                  },
+                    oakFullpath: '',
+                    oakLoading: !!option.entity && !!option.projection,
+                },
         properties: Object.assign(
             {},
             translatePropertiesToPropertyDefinitions(properties),
@@ -951,7 +965,7 @@ export function createComponent<
                         this.setState({
                             oakPullDownRefreshLoading: true as any,
                         });
-                        await(
+                        await (
                             onPullDownRefresh
                                 ? onPullDownRefresh.call(this)
                                 : this.refresh()

@@ -161,7 +161,7 @@ export class DebugStore<ED extends EntityDict & BaseEntityDict, Cxt extends Asyn
     }
 
     registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
-        this.executor.registerChecker(checker);
+        this.executor.registerChecker(checker, this.getSchema());
     }
 
     resetInitialData(initialData: {

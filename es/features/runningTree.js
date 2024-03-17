@@ -1888,14 +1888,14 @@ export class RunningTree extends Feature {
         assert(node instanceof ListNode || node instanceof SingleNode);
         return node.getIntrinsticFilters();
     }
-    tryExecute(path) {
+    /* tryExecute(path: string) {
         const node = this.findNode(path);
         const operations = node?.composeOperations();
         if (operations && operations.length > 0) {
             return this.cache.tryRedoOperations(operations);
         }
         return false;
-    }
+    } */
     getOperations(path) {
         const node = this.findNode(path);
         const operations = node?.composeOperations();

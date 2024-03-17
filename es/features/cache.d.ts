@@ -79,7 +79,11 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         operation: ED[T]['Operation'];
         entity: T;
     })[]): true | Error;
-    checkOperation<T extends keyof ED>(entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]): boolean;
+    checkOperation<T extends keyof ED>(entity: T, operation: {
+        action: ED[T]['Action'];
+        data?: ED[T]['Operation']['data'];
+        filter?: ED[T]['Operation']['filter'];
+    }, checkerTypes?: CheckerType[]): boolean;
     redoOperation(opers: Array<{
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];
