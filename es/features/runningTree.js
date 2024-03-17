@@ -668,6 +668,7 @@ class ListNode extends Node {
         });
         if (withParent && this.parent) {
             if (this.parent instanceof SingleNode) {
+                // @ts-ignore
                 const filterOfParent = this.parent.getParentFilter(this, ignoreNewParent);
                 if (filterOfParent) {
                     filters.push(filterOfParent);
@@ -831,6 +832,7 @@ class SingleNode extends Node {
     filters;
     operation;
     constructor(entity, schema, cache, relationAuth, projection, parent, path, id, filters, actions, cascadeActions) {
+        // @ts-ignore
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
         this.sr = {};
@@ -1567,6 +1569,7 @@ export class RunningTree extends Feature {
         }
         if (!parentNode) {
             assert(!parent && !this.root[path]);
+            // @ts-ignore
             this.root[path] = node;
         }
         node.subscribe(() => {

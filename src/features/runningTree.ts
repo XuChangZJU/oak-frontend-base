@@ -833,6 +833,7 @@ class ListNode<
 
         if (withParent && this.parent) {
             if (this.parent instanceof SingleNode) {
+                // @ts-ignore
                 const filterOfParent = this.parent.getParentFilter<T>(this, ignoreNewParent);
                 if (filterOfParent) {
                     filters.push(filterOfParent as any);
@@ -1037,6 +1038,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         cascadeActions?: () => {
             [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
         }) {
+        // @ts-ignore
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
         this.sr = {};
@@ -1918,6 +1920,7 @@ export class RunningTree<
         }
         if (!parentNode) {
             assert(!parent && !this.root[path]);
+            // @ts-ignore
             this.root[path] = node;
         }
 

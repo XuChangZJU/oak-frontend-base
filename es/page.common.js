@@ -389,7 +389,7 @@ export function reRender(option, extra) {
         const oakLoadingMore = this.features.runningTree.isLoadingMore(this.state.oakFullpath);
         const oakLoading = !oakLoadingMore && this.features.runningTree.isLoading(this.state.oakFullpath);
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
-        const oakExecutable = !oakExecuting && this.tryExecute(this.state.oakFullpath);
+        const oakExecutable = !oakExecuting && this.tryExecute();
         const oakLegalActions = rows && checkActionsAndCascadeEntities.call(this, rows, option);
         let data = formData
             ? formData.call(this, {
