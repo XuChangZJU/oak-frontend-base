@@ -1,11 +1,8 @@
 import React from 'react';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
+import { OakAbsRefAttrPickerRender, ED } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import { StorageSchema } from 'oak-domain/lib/types';
-type ED = EntityDict & BaseEntityDict;
-export default function render(props: WebComponentProps<ED, keyof EntityDict, false, {
+export default function render(props: WebComponentProps<ED, keyof ED, false, {
     entityId: string;
     entityIds: string[];
     multiple: boolean;
@@ -16,6 +13,5 @@ export default function render(props: WebComponentProps<ED, keyof EntityDict, fa
     }[];
     pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
     onChange: (value: string[]) => void;
-    schema: StorageSchema<EntityDict & BaseEntityDict>;
+    schema: StorageSchema<ED>;
 }>): React.JSX.Element;
-export {};

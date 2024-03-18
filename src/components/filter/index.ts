@@ -1,13 +1,11 @@
 import { ED } from '../../types/AbstractComponent';
 import { assert } from 'oak-domain/lib/utils/assert';
-import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { getAttributes, getFilterName, getOp, getOp2 } from './utils';
 import { ColumnProps, Ops, ViewType, ValueType } from '../../types/Filter';
 import { resolvePath } from '../../utils/usefulFn';
 import { Attribute } from 'oak-domain/lib/types';
 import dayjs, { Dayjs } from 'dayjs';
 import { get, set } from 'oak-domain/lib/utils/lodash';
-import { ReactComponentProps } from '../../types/Page';
 
 type ModeMp = 'selector' | 'multiSelector';
 

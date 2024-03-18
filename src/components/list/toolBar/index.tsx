@@ -1,7 +1,7 @@
 import React from 'react';
 import { Space, Tooltip, ButtonProps } from 'antd';
 import {
- ReloadOutlined
+    ReloadOutlined
 } from '@ant-design/icons';
 import ButtonGroup from '../buttonGroup';
 import ColumnSetting from '../columnSetting';
@@ -13,13 +13,13 @@ type buttonProps = {
     label: string;
     type?: ButtonProps['type'];
     onClick: () => void;
-} 
+}
 
 type ToolBarProps = {
     title?: React.ReactNode;
     buttonGroup?: buttonProps[];
     extraContent?: React.ReactNode;
-    reload: () => void;
+    reload?: () => void;
 }
 
 function ToolBar(props: ToolBarProps) {
@@ -35,16 +35,17 @@ function ToolBar(props: ToolBarProps) {
                     {buttonGroup && buttonGroup.length > 0 && (
                         <ButtonGroup items={buttonGroup} />
                     )}
-                    <Tooltip title={features.locales.t('reload')}>
-                        <div
-                            className={Style.reloadIconBox}
-                            onClick={() => {
-                                reload();
-                            }}
-                        >
-                            <ReloadOutlined />
-                        </div>
-                    </Tooltip>
+                    {reload &&
+                        <Tooltip title={features.locales.t('reload')}>
+                            <div
+                                className={Style.reloadIconBox}
+                                onClick={() => {
+                                    reload!();
+                                }}
+                            >
+                                <ReloadOutlined />
+                            </div>
+                        </Tooltip>}
                     <ColumnSetting />
                 </Space>
             </div>

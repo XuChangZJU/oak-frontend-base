@@ -13,6 +13,7 @@ export default OakComponent({
         tablePagination: {},
         rowSelection: {},
         hideHeader: false,
+        size: 'large',
     },
     formData({ props }) {
         const { converter } = this.state;
@@ -40,7 +41,7 @@ export default OakComponent({
             const { attributes, entity, data } = this.props;
             const schema = this.features.cache.getSchema();
             const colorDict = this.features.style.getColorDict();
-            assert(!!data, 'data不能为空');
+            // assert(!!data, 'data不能为空');
             assert(!!entity, 'list属性entity不能为空');
             // assert(attributes?.length, 'attributes不能为空');
             const ttt = this.t.bind(this);

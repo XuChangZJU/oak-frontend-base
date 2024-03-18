@@ -556,7 +556,7 @@ export function reRender<
              */
             const oakDirty = this.features.runningTree.isDirty(this.state.oakFullpath);
             const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
-            const oakExecutable = !oakExecuting && this.tryExecute(this.state.oakFullpath);
+            const oakExecutable = !oakExecuting && this.tryExecute();
             const oakLoading = this.features.runningTree.isLoading(this.state.oakFullpath);
             Object.assign(data, {
                 oakDirty,

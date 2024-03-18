@@ -9,7 +9,7 @@ import { Environment } from './environment';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { Scope, TranslateOptions } from 'i18n-js';
 export declare class Locales<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Feature {
-    static MINIMAL_LOADING_GAP: number;
+    static REFRESH_STALE_INTERVAL: number;
     private cache;
     private localStorage;
     private environment;

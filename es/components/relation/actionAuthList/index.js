@@ -39,7 +39,7 @@ export default OakComponent({
     },
     formData({ data: rows }) {
         return {
-            rows
+            rows,
         };
     },
     data: {
@@ -61,19 +61,21 @@ export default OakComponent({
                     '#name': 'path'
                 }, true) */
             }
-        }
+        },
     },
     lifetimes: {
         async ready() {
             this.getRelationAndActions();
-        }
+        },
     },
     methods: {
         async getRelationAndActions() {
             const { path, entity } = this.props;
             const entities = path.split('.');
             const sourceEntity = entities[entities?.length - 1];
-            const source = sourceEntity.includes('$') ? sourceEntity.split('$')[0] : sourceEntity;
+            const source = sourceEntity.includes('$')
+                ? sourceEntity.split('$')[0]
+                : sourceEntity;
             // 获取actions
             const actions = this.features.relationAuth.getActions(entity);
             // 获取relation
@@ -104,6 +106,6 @@ export default OakComponent({
                 relations,
                 actions,
             });
-        }
-    }
+        },
+    },
 });

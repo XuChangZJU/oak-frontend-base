@@ -9,12 +9,13 @@ export default OakComponent({
         const menus = features.contextMenuFactory.menus;
         const namespace = features.navigator.getNamespace();
         const location = features.navigator.getLocation();
-        const currentPath = location.pathname; //当前路由path
+        const pathname = location.pathname; //当前路由path
+        // const pathname2 = pathname.endsWith('/') ? pathname.substring(0, pathname.length - 1) : pathname
         const allowBack = !menus?.find((ele) => features.navigator
             .getPathname(ele.url || '', namespace)
-            ?.toLocaleLowerCase() === currentPath?.toLocaleLowerCase());
+            ?.toLocaleLowerCase() === pathname?.toLocaleLowerCase());
         return {
             allowBack,
         };
-    }
+    },
 });

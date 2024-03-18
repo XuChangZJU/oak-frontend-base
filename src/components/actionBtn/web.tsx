@@ -4,13 +4,12 @@ import { MoreOutlined } from '@ant-design/icons';
 import { WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 
-import { EntityDict } from 'oak-domain/lib/types/Entity';
 import Style from './mobile.module.less';
 
 export default function Render(
     props: WebComponentProps<
         ED,
-        keyof EntityDict,
+        keyof ED,
         false,
         {
             width: string;
@@ -25,41 +24,39 @@ export default function Render(
 ) {
     const { methods, data } = props;
     const { t, makeItems } = methods;
-    const {
-        width,
-        items,
-        moreItems,
-        i18n,
-    } = data;
+    const { width, items, moreItems, i18n } = data;
     const isMobile = width.includes('xs');
-    const zhCNKeys: number = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
+    const zhCNKeys: number =
+        i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
     useEffect(() => {
         makeItems(isMobile);
-    }, [zhCNKeys])
+    }, [zhCNKeys]);
     return (
         <div className={Style.container}>
-            {items && items.map((ele, index:number) => (
-                <>
-                    <div className={Style.btn} onClick={ele.onClick}>
-                        <Typography.Link>
-                            {ele.label}
-                        </Typography.Link>
-                    </div>
-                    {index !== items.length - 1 && (
-                        <Divider type="vertical"></Divider>
-                    )}
-                </>
-            ))}
-            {moreItems && moreItems.length > 0 && (
-                <Divider type="vertical" />
-            )}
+            {items &&
+                items.map((ele, index: number) => (
+                    <>
+                        <div className={Style.btn} onClick={ele.onClick}>
+                            <Typography.Link>{ele.label}</Typography.Link>
+                        </div>
+                        {index !== items.length - 1 && (
+                            <Divider type="vertical"></Divider>
+                        )}
+                    </>
+                ))}
+            {moreItems && moreItems.length > 0 && <Divider type="vertical" />}
             {moreItems && moreItems.length > 0 && (
                 <Popover
-                    placement='topRight'
+                    placement="topRight"
                     content={
                         <Space direction="vertical">
                             {moreItems.map((ele, index) => (
-                                <Button key={`btn${index}`} size="small" type="link" onClick={ele.onClick}>
+                                <Button
+                                    key={`btn${index}`}
+                                    size="small"
+                                    type="link"
+                                    onClick={ele.onClick}
+                                >
                                     {ele.label}
                                 </Button>
                             ))}
@@ -67,7 +64,7 @@ export default function Render(
                     }
                     trigger="click"
                 >
-                    <Button type="link" icon={(<MoreOutlined />)} />
+                    <Button type="link" icon={<MoreOutlined />} />
                 </Popover>
             )}
         </div>

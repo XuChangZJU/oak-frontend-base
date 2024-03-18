@@ -1,8 +1,7 @@
 /// <reference types="react" />
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ReactComponentProps } from '../../types/Page';
-declare const _default: <ED2 extends EntityDict & BaseEntityDict, T2 extends keyof ED2>(props: ReactComponentProps<ED2, T2, false, {
+import { ED } from '../../types/AbstractComponent';
+declare const _default: <ED2 extends ED, T2 extends keyof ED2>(props: ReactComponentProps<ED2, T2, false, {
     style?: import("react").CSSProperties | undefined;
     className?: string | undefined;
     title?: React.ReactNode;

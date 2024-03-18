@@ -1,8 +1,6 @@
 /// <reference types="react" />
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-type ED = EntityDict & BaseEntityDict;
+import { ED } from '../../../types/AbstractComponent';
 export default function render(props: WebComponentProps<ED, 'relation', true, {
     relations: RowWithActions<ED, 'relation'>[];
     entity: string;
@@ -11,4 +9,3 @@ export default function render(props: WebComponentProps<ED, 'relation', true, {
 }, {
     setEntityFilter: (filter: string) => void;
 }>): import("react").JSX.Element | null;
-export {};

@@ -15,7 +15,7 @@ export declare abstract class BackendRuntimeContext<ED extends EntityDict & Base
     getSubscriberId(): string | undefined;
     getBriefEnvironment(): BriefEnv | undefined;
     protected getSerializedData(): Promise<SerializedData>;
-    initialize(data?: SerializedData): Promise<void>;
+    initialize(data?: SerializedData, later?: boolean): Promise<void>;
     /**
      * 未来可以支持在event中带id的占位符，到saveOpRecord时再动态注入 by Xc
      * @param operationId

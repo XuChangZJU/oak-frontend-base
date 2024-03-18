@@ -1,11 +1,8 @@
 import React from 'react';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { RowWithActions, WebComponentProps } from '../../types/Page';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { onActionFnDef, OakExtraActionProps } from '../../types/AbstractComponent';
+import { onActionFnDef, OakExtraActionProps, ED } from '../../types/AbstractComponent';
 import { DataType } from 'oak-domain/lib/types/schema/DataTypes';
-type ED = EntityDict & BaseEntityDict;
-export default function Render(props: WebComponentProps<EntityDict & BaseEntityDict, keyof EntityDict, false, {
+export default function Render(props: WebComponentProps<ED, keyof ED, false, {
     entity: string;
     extraActions: OakExtraActionProps[];
     mobileData: {
@@ -26,4 +23,3 @@ export default function Render(props: WebComponentProps<EntityDict & BaseEntityD
         }) => void;
     };
 }, {}>): React.JSX.Element;
-export {};

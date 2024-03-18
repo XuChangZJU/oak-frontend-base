@@ -1,8 +1,6 @@
-/// <reference types="react" />
+import React from 'react';
+import { ED } from '../../../types/AbstractComponent';
 import { WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-type ED = EntityDict & BaseEntityDict;
 export default function render(props: WebComponentProps<ED, keyof ED, true, {
     data: Array<{
         name: string;
@@ -15,5 +13,4 @@ export default function render(props: WebComponentProps<ED, keyof ED, true, {
     }>;
 }, {
     onEntityClicked: (entity: string) => void;
-}>): import("react").JSX.Element;
-export {};
+}>): React.JSX.Element;

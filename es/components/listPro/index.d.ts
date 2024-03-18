@@ -10,7 +10,7 @@ type Props<ED2 extends ED, T extends keyof ED2> = {
     buttonGroup?: ListButtonProps[];
     onReload?: () => void;
     entity: T;
-    extraActions?: OakExtraActionProps[] | ((row: any) => OakExtraActionProps[]);
+    extraActions?: OakExtraActionProps[] | ((row: RowWithActions<ED2, T>) => OakExtraActionProps[]);
     onAction?: onActionFnDef;
     disabledOp?: boolean;
     attributes: OakAbsAttrDef[];
@@ -25,6 +25,7 @@ type Props<ED2 extends ED, T extends keyof ED2> = {
         }) => void;
     };
     disableSerialNumber?: boolean;
+    size?: 'large' | 'middle' | 'small';
 };
 export type TableAttributeType = {
     attribute: OakAbsAttrJudgeDef;

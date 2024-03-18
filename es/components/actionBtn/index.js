@@ -25,7 +25,7 @@ export default OakComponent({
             this.setState({
                 schema,
             });
-        }
+        },
     },
     methods: {
         makeItems(isMobile) {
@@ -40,7 +40,7 @@ export default OakComponent({
                     column = 2;
                 }
                 if (extraActions?.length || actions?.length) {
-                    const actions2 = actions && [...actions] || [];
+                    const actions2 = (actions && [...actions]) || [];
                     if (extraActions) {
                         // 用户传的action默认排在前面
                         const extraActions2 = extraActions.filter((ele) => ele.show) || [];
@@ -54,24 +54,35 @@ export default OakComponent({
                         onClick: () => onAction &&
                             onAction(typeof ele !== 'string' ? ele.action : ele, undefined),
                     }));
-                    cascadeActions && Object.keys(cascadeActions).map((key, index) => {
-                        const cascadeActionArr = cascadeActions[key];
-                        if (cascadeActionArr && cascadeActionArr.length) {
-                            cascadeActionArr.forEach((ele) => {
-                                items.push({
-                                    action: typeof ele !== 'string' ? ele.action : ele,
-                                    path: key,
-                                    label: this.getLabel2(schema, key, ele, entity),
-                                    onClick: () => onAction && onAction(undefined, { path: key, action: typeof ele !== 'string' ? ele.action : ele }),
+                    cascadeActions &&
+                        Object.keys(cascadeActions).map((key, index) => {
+                            const cascadeActionArr = cascadeActions[key];
+                            if (cascadeActionArr &&
+                                cascadeActionArr.length) {
+                                cascadeActionArr.forEach((ele) => {
+                                    items.push({
+                                        action: typeof ele !== 'string'
+                                            ? ele.action
+                                            : ele,
+                                        path: key,
+                                        label: this.getLabel2(schema, key, ele, entity),
+                                        onClick: () => onAction &&
+                                            onAction(undefined, {
+                                                path: key,
+                                                action: typeof ele !==
+                                                    'string'
+                                                    ? ele.action
+                                                    : ele,
+                                            }),
+                                    });
                                 });
-                            });
-                        }
-                    });
+                            }
+                        });
                     // 根据column显示几个，裁剪出在更多里显示的item
                     const moreItems = items.splice(column);
                     this.setState({
                         items,
-                        moreItems
+                        moreItems,
                     });
                 }
             }
@@ -91,7 +102,7 @@ export default OakComponent({
                     cascadeAction: {
                         path,
                         action,
-                    }
+                    },
                 });
                 return;
             }

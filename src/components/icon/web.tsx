@@ -1,12 +1,12 @@
 import React from 'react';
 import { WebComponentProps } from '../../types/Page';
-import { EntityDict } from 'oak-domain/lib/base-app-domain';
+import { ED } from '../../types/AbstractComponent';
 import './web.less';
 
 export default function Render(
     props: WebComponentProps<
-        EntityDict,
-        keyof EntityDict,
+        ED,
+        keyof ED,
         false,
         {
             name: string;
@@ -26,35 +26,29 @@ export default function Render(
 ) {
     const { data } = props;
 
-    const {
-        name,
-        color = '',
-        size,
-        className,
-        style = {},
-    } = data;
+    const { name, color = '', size, className, style = {} } = data;
 
     const isColor = ['primary', 'info', 'success', 'error', 'warning'].includes(
         color
     );
 
-     let class_name = 'oak-icon ' + 'oak-icon-' + name;
-     if (isColor || color === '') {
-         class_name += ' ' + 'oak-icon__' + (color || 'primary');
-     }
-     if (className) {
-         class_name += ' ' + className;
-     }
-     return (
-         <span
-             className={class_name}
-             style={
-                 Object.assign(
-                     style,
-                     size && { fontSize: size },
-                     color && !isColor && { color }
-                 ) as React.CSSProperties
-             }
-         ></span>
-     );
+    let class_name = 'oak-icon ' + 'oak-icon-' + name;
+    if (isColor || color === '') {
+        class_name += ' ' + 'oak-icon__' + (color || 'primary');
+    }
+    if (className) {
+        class_name += ' ' + className;
+    }
+    return (
+        <span
+            className={class_name}
+            style={
+                Object.assign(
+                    style,
+                    size && { fontSize: size },
+                    color && !isColor && { color }
+                ) as React.CSSProperties
+            }
+        ></span>
+    );
 }

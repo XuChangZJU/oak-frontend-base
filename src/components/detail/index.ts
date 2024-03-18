@@ -8,13 +8,10 @@ import {
     OakAbsAttrDef,
     OakAbsAttrUpsertDef,
     ColumnMapType,
-    OakAbsAttrJudgeDef
+    OakAbsAttrJudgeDef,
 } from '../../types/AbstractComponent';
 import { makeDataTransformer, translateAttributes } from '../../utils/usefulFn';
 import { ReactComponentProps } from '../../types/Page';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { ColorDict } from 'oak-domain/lib/types/Style';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { Breakpoint } from 'antd';
 
