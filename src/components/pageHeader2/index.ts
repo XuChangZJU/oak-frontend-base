@@ -47,8 +47,8 @@ export default OakComponent({
             content: React.ReactNode;
             // contentStyle?: React.CSSProperties;
             // contentClassName?: string;
-            // bodyStyle?: React.ReactNode;
-            // bodyClassName?: string;
+            bodyStyle?: React.ReactNode;
+            bodyClassName?: string;
         }
     >
 ) => React.ReactElement;

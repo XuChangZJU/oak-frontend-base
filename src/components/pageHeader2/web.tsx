@@ -25,8 +25,8 @@ type PageHeaderProps = {
 
     // contentStyle?: React.CSSProperties;
     // contentClassName?: string;
-    // bodyStyle?: React.ReactNode;
-    // bodyClassName?: string;
+    bodyStyle?: React.ReactNode;
+    bodyClassName?: string;
 
     allowBack: boolean;
 };
@@ -62,8 +62,8 @@ export default function Render(
 
         // contentStyle,
         // contentClassName,
-        // bodyStyle,
-        // bodyClassName,
+        bodyStyle,
+        bodyClassName,
         allowBack = true, //state取
     } = data;
     const { t, goBack } = methods;
@@ -134,14 +134,13 @@ export default function Render(
             ) : null}
 
             <div
-                // style={bodyStyle}
+                style={bodyStyle}
                 className={classNames(
-                    `${prefixCls}-pageHeader-body`
-                    // bodyClassName
+                    `${prefixCls}-pageHeader-body`, bodyClassName
                 )}
             >
                 {children}
             </div>
-        </div>
+        </div >
     );
 }
