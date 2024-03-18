@@ -22,8 +22,7 @@ export type ActionDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED
     filter?: ED[T]['Selection']['filter'];
     data?: Partial<ED[T]['CreateSingle']['data']>;
     label?: string;
-    color?: string;
-    key?: string;
+    attrs?: (keyof ED[T]['Update']['data'])[];
 } | ED[T]['Action'];
 export type RowWithActions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<ED[T]['Schema']> & {
     '#oakLegalActions': ActionDef<ED, T>[];
@@ -165,7 +164,11 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
         entity: T;
         operation: ED[T]['Operation'];
     }>) => Promise<void>;
-    checkOperation: (entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => boolean;
+    checkOperation: <T2 extends keyof ED>(entity: T2, operation: {
+        action: ED[T2]['Action'];
+        data?: ED[T2]['Operation']['data'];
+        filter?: ED[T2]['Operation']['filter'];
+    }, checkerTypes?: (CheckerType | 'relation')[]) => boolean;
     tryExecute: (path?: string) => boolean | Error;
     getOperations: (path?: string) => {
         operation: ED[T]['Operation'];

@@ -1,35 +1,29 @@
 import React from 'react';
 import { Space, Typography } from 'antd';
 import ImgBox from '../../imgBox';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../../types/Page';
-import { OakAbsDerivedAttrDef } from '../../../types/AbstractComponent';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { OakAbsDerivedAttrDef, ED } from '../../../types/AbstractComponent';
 
 const { Link, Text } = Typography;
 
 export default function Render(
     props: WebComponentProps<
-        EntityDict & BaseEntityDict,
-        keyof EntityDict,
+        ED,
+        keyof ED,
         false,
         {
             value: string | string[];
-            type: OakAbsDerivedAttrDef['type'],
+            type: OakAbsDerivedAttrDef['type'];
             color: string;
         },
-        {
-        }
+        {}
     >
 ) {
     const { methods, data: oakData } = props;
-    const {
-       value, type, color
-    } = oakData;
+    const { value, type, color } = oakData;
     if (value === null || value === '' || value === undefined) {
-        return (<>--</>);
-    }
-    else if (type === 'image') {
+        return <>--</>;
+    } else if (type === 'image') {
         if (value instanceof Array) {
             return (
                 <Space>
@@ -37,13 +31,10 @@ export default function Render(
                         <ImgBox src={ele} width={100} height={60} />
                     ))}
                 </Space>
-            )
+            );
         }
-        return (
-            <ImgBox src={value} width={100} height={60} />
-        )
-    }
-    else if (type === 'link') {
+        return <ImgBox src={value} width={100} height={60} />;
+    } else if (type === 'link') {
         if (value instanceof Array) {
             return (
                 <Space direction="vertical">
@@ -53,17 +44,13 @@ export default function Render(
                         </Link>
                     ))}
                 </Space>
-            )
+            );
         }
         return (
             <Link href={value} target="_blank" ellipsis>
                 {value}
             </Link>
-        )
+        );
     }
-    return (
-        <Text ellipsis>
-            {value}
-        </Text>
-    )
+    return <Text ellipsis>{value}</Text>;
 }

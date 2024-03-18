@@ -1,10 +1,9 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { Row, Col, Button } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import classNames from 'classnames';
 import { WebComponentProps } from '../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { ED } from '../../types/AbstractComponent';
 
 import './index.less';
 
@@ -25,8 +24,6 @@ type PageHeaderProps = {
     children?: React.ReactNode;
     showHeader?: boolean; //默认true 显示头部
 };
-
-type ED = EntityDict & BaseEntityDict;
 
 export default function Render(
     props: WebComponentProps<

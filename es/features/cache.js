@@ -288,17 +288,12 @@ export class Cache extends Feature {
             return err;
         }
     }
-    checkOperation(entity, action, data, filter, checkerTypes) {
+    checkOperation(entity, operation, checkerTypes) {
         let autoCommit = false;
         if (!this.context) {
             this.begin();
             autoCommit = true;
         }
-        const operation = {
-            action,
-            filter,
-            data
-        };
         try {
             this.cacheStore.check(entity, operation, this.context, checkerTypes);
             if (autoCommit) {

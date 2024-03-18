@@ -25,7 +25,6 @@ dayjs.extend(weekday);
 dayjs.extend(localeData);
 
 import { get, set } from 'oak-domain/lib/utils/lodash';
-import { assert } from 'oak-domain/lib/utils/assert';
 
 import {
     ColumnProps,

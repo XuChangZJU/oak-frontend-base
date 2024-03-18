@@ -3,11 +3,9 @@ import { Table, Checkbox, Button, Row, Space, Tooltip, } from 'antd';
 import { Typography } from 'antd';
 const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { assert } from 'oak-domain/lib/utils/assert';
+import { ED } from '../../../types/AbstractComponent';
 
-type ED = EntityDict & BaseEntityDict;
+
 type TableData = {
     relationId: string;
     relation: string;
@@ -20,7 +18,7 @@ export default function render(
         'actionAuth',
         true,
         {
-            relations: EntityDict['relation']['Schema'][],
+            relations: ED['relation']['Schema'][];
             actions: string[];
             datasource: TableData[];
             rows: ED['actionAuth']['Schema'][];
@@ -29,22 +27,29 @@ export default function render(
             openTip: boolean;
             onClose: () => void;
         },
-        {
-          
-        }
+        {}
     >
 ) {
     const { data, methods } = props;
-    const { rows, relations, actions, path, entity, openTip, oakExecutable, onClose } = data;
+    const {
+        rows,
+        relations,
+        actions,
+        path,
+        entity,
+        openTip,
+        oakExecutable,
+        onClose,
+    } = data;
     const [datasource, setDatasource] = useState<TableData[]>([]);
     useEffect(() => {
         const tableRows: TableData[] = relations.map((ele) => ({
-            relationId: ele.id,
-            relation: ele.name,
+            relationId: ele.id!,
+            relation: ele.name!,
             actions,
-        }))
+        }));
         setDatasource(tableRows);
-    }, [relations])
+    }, [relations]);
     return (
         <Space direction="vertical" style={{ width: '100%' }}>
             <Space>

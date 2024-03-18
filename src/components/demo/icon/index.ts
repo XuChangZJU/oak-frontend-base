@@ -1,6 +1,5 @@
 
 export default OakComponent({
-    isList: true,
-    methods: {
-    },
+    isList: false,
+    methods: {},
 });

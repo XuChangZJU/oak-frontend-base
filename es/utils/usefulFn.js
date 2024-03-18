@@ -79,7 +79,7 @@ export function resolvePath(dataSchema, entity, path) {
     };
 }
 // 强制类型
-function isAttrbuteType(attribute) {
+function isAttributeType(attribute) {
     return attribute;
 }
 export function getLinkUrl(attribute, props) {
@@ -105,8 +105,8 @@ export function getPath(attribute) {
     return attribute.path;
 }
 export function getLabel(attribute, entity, attr, t) {
-    if (isAttrbuteType(attribute).label) {
-        return isAttrbuteType(attribute).label;
+    if (isAttributeType(attribute).label) {
+        return isAttributeType(attribute).label;
     }
     if (attr === '$$createAt$$' ||
         attr === '$$updateAt$$' ||
@@ -124,14 +124,15 @@ export function getLabel(attribute, entity, attr, t) {
 // 目前width属性可以是undefined，只有特殊type或用户自定义才有值，这样其余attr属性可以自适应
 export function getWidth(attribute, attrType) {
     let width;
+    if (isAttributeType(attribute).width) {
+        width = isAttributeType(attribute).width;
+        return width;
+    }
     if (attrType === 'enum') {
         width = 120;
     }
-    if (isAttrbuteType(attribute).width) {
-        width = isAttrbuteType(attribute).width;
-    }
-    if (isAttrbuteType(attribute).span) {
-        width = tableWidthMap[isAttrbuteType(attribute).span];
+    if (isAttributeType(attribute).span) {
+        width = tableWidthMap[isAttributeType(attribute).span];
     }
     return width;
 }
@@ -168,10 +169,13 @@ export function getAlign(attrType) {
     }
     return 'left';
 }
+export function getFixed(attribute) {
+    return isAttributeType(attribute).fixed;
+}
 export function getType(attribute, attrType) {
     let type = attrType;
-    if (isAttrbuteType(attribute).type) {
-        type = isAttrbuteType(attribute).type;
+    if (isAttributeType(attribute).type) {
+        type = isAttributeType(attribute).type;
     }
     return type;
 }

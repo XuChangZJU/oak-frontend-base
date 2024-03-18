@@ -3,13 +3,13 @@ import { assert } from 'oak-domain/lib/utils/assert';
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { Checker, CheckerType, SelectOption, OperateOption, CHECKER_PRIORITY_MAP, 
-    Trigger, RemoveTrigger, UpdateTrigger, TRIGGER_DEFAULT_PRIORITY } from 'oak-domain/lib/types';
+    Trigger, RemoveTrigger, UpdateTrigger, TRIGGER_DEFAULT_PRIORITY, RowChecker, StorageSchema } from 'oak-domain/lib/types';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { translateCheckerInSyncContext } from 'oak-domain/lib/store/checker';
 import { checkFilterRepel } from 'oak-domain/lib/store/filter';
 
 export default class SyncTriggerExecutor<ED extends EntityDict & BaseEntityDict, Cxt extends SyncContext<ED>> {
-    static All_Checker_Types: CheckerType[] = ['data', 'logical', 'logicalRelation', 'relation', 'row'];
+    static All_Checker_Types: CheckerType[] = ['data', 'logical', 'row'];
     private checkerMap: {
         [K in keyof ED]?: {
             [A: string]: Array<{
@@ -69,9 +69,9 @@ export default class SyncTriggerExecutor<ED extends EntityDict & BaseEntityDict,
     }
 
 
-    registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>) {
-        let { entity, action, priority, type, conditionalFilter } = checker;
-        const { fn, when } = translateCheckerInSyncContext(checker);
+    registerChecker<T extends keyof ED>(checker: Checker<ED, T, Cxt>, schema: StorageSchema<ED>) {
+        let { entity, action, priority, type, conditionalFilter } = checker as RowChecker<ED, T, Cxt>;
+        const { fn, when } = translateCheckerInSyncContext(checker, schema);
         if (action instanceof Array) {
             action.forEach(
                 a => this.addToCheckerMap(a as string, entity, priority || CHECKER_PRIORITY_MAP[type], when, fn as any, type, conditionalFilter)
@@ -106,7 +106,11 @@ export default class SyncTriggerExecutor<ED extends EntityDict & BaseEntityDict,
     } */
 
 
-    check<T extends keyof ED>(entity: T, operation: Omit<ED[T]['Operation'], 'id'>, context: Cxt, when?: 'before' | 'after', checkerTypes?: CheckerType[]) {
+    check<T extends keyof ED>(entity: T, operation: {
+        action: ED[T]['Action'],
+        data?: ED[T]['Operation']['data'],
+        filter?: ED[T]['Operation']['filter'],
+    }, context: Cxt, when?: 'before' | 'after', checkerTypes?: CheckerType[]) {
         const { action } = operation;
         const checkers = this.checkerMap[entity] && this.checkerMap[entity]![action];
         if (checkers) {

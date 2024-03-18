@@ -174,21 +174,27 @@ class OakComponentBase extends React.PureComponent {
             : this.state.oakFullpath;
         return this.features.runningTree.getFreshValue(path2);
     }
-    checkOperation(entity, action, data, filter, checkerTypes) {
+    checkOperation(entity, operation, checkerTypes) {
         if (checkerTypes?.includes('relation')) {
-            return this.features.relationAuth.checkRelation(entity, {
-                action,
-                data,
-                filter,
-            }) && this.features.cache.checkOperation(entity, action, data, filter, checkerTypes);
+            return this.features.relationAuth.checkRelation(entity, operation) && this.features.cache.checkOperation(entity, operation, checkerTypes);
         }
-        return this.features.cache.checkOperation(entity, action, data, filter, checkerTypes);
+        return this.features.cache.checkOperation(entity, operation, checkerTypes);
     }
     tryExecute(path) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        return this.features.runningTree.tryExecute(path2);
+        const operations = this.features.runningTree.getOperations(path2);
+        if (operations) {
+            for (const oper of operations) {
+                const { entity, operation } = oper;
+                if (!this.checkOperation(entity, operation)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
     getOperations(path) {
         const path2 = path
@@ -436,8 +442,8 @@ export function createComponent(option, features) {
                 clean: (path) => {
                     return this.clean(path);
                 },
-                checkOperation: (entity, action, data, filter, checkerTypes) => {
-                    return this.checkOperation(entity, action, data, filter, checkerTypes);
+                checkOperation: (entity, operation, checkerTypes) => {
+                    return this.checkOperation(entity, operation, checkerTypes);
                 }
             };
             Object.assign(methodProps, {

@@ -22,7 +22,7 @@ export class BackendRuntimeContext extends AsyncContext {
             ns: this.ns,
         };
     }
-    async initialize(data) {
+    async initialize(data, later) {
         if (data?.sid) {
             this.subscriberId = data.sid;
         }

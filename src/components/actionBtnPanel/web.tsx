@@ -8,7 +8,7 @@ import {
     Typography,
 } from 'antd';
 import { WebComponentProps } from '../../types/Page';
-import { EntityDict } from 'oak-domain/lib/base-app-domain';
+import { ED } from '../../types/AbstractComponent';
 import Style from './web.module.less';
 import { Item } from './types';
 
@@ -49,8 +49,8 @@ function ItemComponent(
 
 export default function Render(
     props: WebComponentProps<
-        EntityDict,
-        keyof EntityDict,
+        ED,
+        keyof ED,
         false,
         {
             entity: string;
@@ -210,7 +210,6 @@ export default function Render(
                 </Space>
             </div>
         );
-
     }
 
     return (

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Space, Image } from 'antd-mobile';
 import styles from './mobile.module.less';
-// type Width = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 import { getLabel, getType, getValue } from '../../utils/usefulFn';
 function RenderRow(props) {
     const { type, label, value } = props;
@@ -37,22 +36,21 @@ function RenderRow(props) {
 export default function Render(props) {
     const { methods, data: oakData } = props;
     const { t } = methods;
-    const { title, renderData, entity, judgeAttributes, data, } = oakData;
+    const { title, renderData, entity, judgeAttributes, data } = oakData;
     return (<div className={styles.panel}>
-            {title && (<div className={styles.title}>
-                    {title}
-                </div>)}
+            {title && <div className={styles.title}>{title}</div>}
             <div className={styles.panel_content}>
                 <Space direction="vertical" style={{ '--gap': '10px' }}>
-                    {judgeAttributes && judgeAttributes.map((ele) => {
-            let renderValue = getValue(data, ele.path, ele.entity, ele.attr, ele.attrType, t);
-            let renderLabel = getLabel(ele.attribute, ele.entity, ele.attr, t);
-            const renderType = getType(ele.attribute, ele.attrType);
-            if ([null, '', undefined].includes(renderValue)) {
-                renderValue = t('not_filled_in');
-            }
-            return (<RenderRow label={renderLabel} value={renderValue} type={renderType}/>);
-        })}
+                    {judgeAttributes &&
+            judgeAttributes.map((ele) => {
+                let renderValue = getValue(data, ele.path, ele.entity, ele.attr, ele.attrType, t);
+                let renderLabel = getLabel(ele.attribute, ele.entity, ele.attr, t);
+                const renderType = getType(ele.attribute, ele.attrType);
+                if ([null, '', undefined].includes(renderValue)) {
+                    renderValue = t('not_filled_in');
+                }
+                return (<RenderRow label={renderLabel} value={renderValue} type={renderType}/>);
+            })}
                 </Space>
             </div>
         </div>);

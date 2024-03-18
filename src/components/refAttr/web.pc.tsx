@@ -1,32 +1,24 @@
 import React, { useState } from 'react';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+
 import {
     Checkbox,
     Input,
-    InputNumber,
     Radio,
     Modal,
-    Button,
-    DatePicker,
     Space,
-    Cascader,
     Select,
-    Tag,
-    Switch,
 } from 'antd';
-import { OakAbsRefAttrPickerRender } from '../../types/AbstractComponent';
+import { OakAbsRefAttrPickerRender, ED } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import Picker from '../picker';
 import { combineFilters } from 'oak-domain/lib/store/filter';
 import { StorageSchema } from 'oak-domain/lib/types';
 
-type ED = EntityDict & BaseEntityDict;
 
 export default function render(
     props: WebComponentProps<
         ED,
-        keyof EntityDict,
+        keyof ED,
         false,
         {
             entityIds: string[];
@@ -36,7 +28,7 @@ export default function render(
             pickerRender: OakAbsRefAttrPickerRender<ED, keyof ED>;
             onChange: (value: string[]) => void;
             placeholder: string;
-            schema: StorageSchema<EntityDict & BaseEntityDict>;
+            schema: StorageSchema<ED>;
         }
     >
 ) {
@@ -159,9 +151,7 @@ export default function render(
                                     }
                                 } else {
                                     if (filter) {
-                                        setDynamicFilter(
-                                            filter
-                                        );
+                                        setDynamicFilter(filter);
                                     }
                                     if (sorter) {
                                         setDynamicSorter(sorter);

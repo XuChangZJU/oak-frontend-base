@@ -1,3 +1,4 @@
+import React from 'react';
 import { Button, Space } from 'antd-mobile';
 import Style from './mobile.module.less';
 export default function Render(props) {

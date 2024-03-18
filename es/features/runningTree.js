@@ -668,6 +668,7 @@ class ListNode extends Node {
         });
         if (withParent && this.parent) {
             if (this.parent instanceof SingleNode) {
+                // @ts-ignore
                 const filterOfParent = this.parent.getParentFilter(this, ignoreNewParent);
                 if (filterOfParent) {
                     filters.push(filterOfParent);
@@ -787,6 +788,7 @@ class ListNode extends Node {
         }
         else {
             // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
+            this.sr = {};
             this.publish();
         }
     }
@@ -831,6 +833,7 @@ class SingleNode extends Node {
     filters;
     operation;
     constructor(entity, schema, cache, relationAuth, projection, parent, path, id, filters, actions, cascadeActions) {
+        // @ts-ignore
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
         this.sr = {};
@@ -913,12 +916,14 @@ class SingleNode extends Node {
             }
             assert(!this.dirty, 'setId时结点是dirty，在setId之前应当处理掉原有的update');
             this.id = id;
+            this.refreshListChildren();
             this.publish();
         }
     }
     unsetId() {
         if (this.id) {
             this.id = undefined;
+            this.refreshListChildren();
             this.publish();
         }
     }
@@ -963,6 +968,15 @@ class SingleNode extends Node {
             return result[0];
         }
     }
+    // 当node的id重置时，其一对多的儿子结点都应当刷新数据（条件已经改变）
+    refreshListChildren() {
+        for (const k in this.children) {
+            const child = this.children[k];
+            if (child instanceof ListNode) {
+                child.refresh();
+            }
+        }
+    }
     create(data) {
         const id = generateNewId();
         assert(!this.id && !this.dirty, 'create前要保证singleNode为空');
@@ -979,6 +993,7 @@ class SingleNode extends Node {
             action: 'create',
             data: Object.assign({}, data, { id }),
         };
+        this.refreshListChildren();
         this.setDirty();
     }
     update(data, action) {
@@ -1294,7 +1309,7 @@ class SingleNode extends Node {
      */
     getParentFilter(childNode, ignoreNewParent) {
         const value = this.getFreshValue();
-        if (value && value.$$createAt$$ === 1 && ignoreNewParent) {
+        if (!value || (value && value.$$createAt$$ === 1 && ignoreNewParent)) {
             return;
         }
         for (const key in this.children) {
@@ -1567,6 +1582,7 @@ export class RunningTree extends Feature {
         }
         if (!parentNode) {
             assert(!parent && !this.root[path]);
+            // @ts-ignore
             this.root[path] = node;
         }
         node.subscribe(() => {
@@ -1888,14 +1904,14 @@ export class RunningTree extends Feature {
         assert(node instanceof ListNode || node instanceof SingleNode);
         return node.getIntrinsticFilters();
     }
-    tryExecute(path) {
+    /* tryExecute(path: string) {
         const node = this.findNode(path);
         const operations = node?.composeOperations();
         if (operations && operations.length > 0) {
             return this.cache.tryRedoOperations(operations);
         }
         return false;
-    }
+    } */
     getOperations(path) {
         const node = this.findNode(path);
         const operations = node?.composeOperations();

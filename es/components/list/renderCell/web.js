@@ -6,7 +6,7 @@ export default function Render(props) {
     const { methods, data: oakData } = props;
     const { value, type, color } = oakData;
     if (value === null || value === '' || value === undefined) {
-        return (<>--</>);
+        return <>--</>;
     }
     else if (type === 'image') {
         if (value instanceof Array) {
@@ -14,7 +14,7 @@ export default function Render(props) {
                     {value.map((ele) => (<ImgBox src={ele} width={100} height={60}/>))}
                 </Space>);
         }
-        return (<ImgBox src={value} width={100} height={60}/>);
+        return <ImgBox src={value} width={100} height={60}/>;
     }
     else if (type === 'link') {
         if (value instanceof Array) {
@@ -28,7 +28,5 @@ export default function Render(props) {
                 {value}
             </Link>);
     }
-    return (<Text ellipsis>
-            {value}
-        </Text>);
+    return <Text ellipsis>{value}</Text>;
 }

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Button, Space, Drawer, Modal, Tooltip } from 'antd';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../../types/Page';
 import { ED } from '../../../types/AbstractComponent';
 import OakIcon from '../../icon';
@@ -10,7 +9,7 @@ import Style from './web.module.less';
 export default function render(
     props: WebComponentProps<
         ED,
-        keyof EntityDict,
+        keyof ED,
         true,
         {
             placement: 'top' | 'bottom' | 'left' | 'right';

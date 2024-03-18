@@ -2,7 +2,6 @@ import React from 'react';
 // TODO 应该是要antd-mobile组件
 import { FloatButton } from 'antd';
 
-import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { ListButtonProps, ED } from '../../../types/AbstractComponent';
 import { WebComponentProps } from '../../../types/Page';
 
@@ -13,7 +12,7 @@ import {
 export default function Render(
     props: WebComponentProps<
         ED,
-        keyof EntityDict,
+        keyof ED,
         false,
         {
             items: ListButtonProps[];

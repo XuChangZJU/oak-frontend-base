@@ -1,13 +1,8 @@
 
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ED } from '../../types/AbstractComponent';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { resolvePath } from '../../utils/usefulFn';
-import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { ActionDef } from '../../types/Page';
 import { NamedFilterItem } from '../../types/NamedCondition';
 
-type Filter = NamedFilterItem<EntityDict & BaseEntityDict, string | number>;
+type Filter = NamedFilterItem<ED, string | number>;
 
 export default OakComponent({
     entity() {

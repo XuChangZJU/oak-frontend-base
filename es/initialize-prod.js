@@ -1,5 +1,5 @@
 import { initializeStep1 as initBasicFeaturesStep1, initializeStep2 as initBasicFeaturesStep2 } from './features';
-import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
+import { makeIntrinsicCheckers } from 'oak-domain/lib/store/IntrinsicCheckers';
 /**
  * @param storageSchema
  * @param createFeatures
@@ -15,8 +15,8 @@ import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
  */
 export function initialize(storageSchema, frontendContextBuilder, connector, checkers, option) {
     const { authDeduceRelationMap, actionDict, selectFreeEntities, updateFreeDict, colorDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
-    const { checkers: intCheckers } = makeIntrinsicCTWs(storageSchema, actionDict);
-    const checkers2 = checkers.concat(intCheckers);
+    const intrinsicCheckers = makeIntrinsicCheckers(storageSchema, actionDict);
+    const checkers2 = checkers.concat(intrinsicCheckers);
     const features1 = initBasicFeaturesStep1();
     const wrapper = {
         exec: async (name, params, ignoreContext) => {

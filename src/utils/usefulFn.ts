@@ -119,7 +119,7 @@ export function resolvePath<ED extends EntityDict & BaseEntityDict>(
 }
 
 // 强制类型
-function isAttrbuteType(attribute: OakAbsAttrDef): OakAbsDerivedAttrDef {
+function isAttributeType(attribute: OakAbsAttrDef): OakAbsDerivedAttrDef {
     return attribute as OakAbsDerivedAttrDef;
 }
 
@@ -156,8 +156,8 @@ export function getLabel<ED extends EntityDict & BaseEntityDict>(
     attr: string,
     t: (k: string, params?: object) => string
 ) {
-    if (isAttrbuteType(attribute).label) {
-        return isAttrbuteType(attribute).label;
+    if (isAttributeType(attribute).label) {
+        return isAttributeType(attribute).label;
     }
     if (
         attr === '$$createAt$$' ||
@@ -181,14 +181,15 @@ export function getWidth(
     attrType: DataType | 'ref' | undefined
 ) {
     let width;
+    if (isAttributeType(attribute).width) {
+        width = isAttributeType(attribute).width;
+        return width;
+    }
     if (attrType === 'enum') {
         width = 120;
     }
-    if (isAttrbuteType(attribute).width) {
-        width = isAttrbuteType(attribute).width;
-    }
-    if (isAttrbuteType(attribute).span) {
-        width = tableWidthMap[isAttrbuteType(attribute).span!];
+    if (isAttributeType(attribute).span) {
+        width = tableWidthMap[isAttributeType(attribute).span!];
     }
     return width;
 }
@@ -235,13 +236,17 @@ export function getAlign(attrType: DataType): 'left' | 'right' | 'center' {
     return 'left';
 }
 
+export function getFixed(attribute: OakAbsAttrDef): 'left' | 'right' | undefined {
+    return isAttributeType(attribute).fixed;
+}
+
 export function getType(
     attribute: OakAbsAttrDef,
     attrType: OakAbsDerivedAttrDef['type']
 ) {
     let type = attrType;
-    if (isAttrbuteType(attribute).type) {
-        type = isAttrbuteType(attribute).type;
+    if (isAttributeType(attribute).type) {
+        type = isAttributeType(attribute).type;
     }
     return type;
 }

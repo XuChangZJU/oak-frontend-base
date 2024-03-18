@@ -155,7 +155,6 @@ export class ContextMenuFactory<
                                         destEntity,
                                         {
                                             action: action[i],
-                                            data: undefined as any,
                                             filter,
                                         } as Omit<
                                             ED[keyof ED]['Operation'],
@@ -164,13 +163,12 @@ export class ContextMenuFactory<
                                     ) &&
                                     this.cache.checkOperation(
                                         destEntity,
-                                        action[i],
-                                        undefined,
-                                        filter,
+                                        {
+                                            action: action[i],
+                                            filter: filter,
+                                        } as Omit<ED[keyof ED]['Operation'], 'id'>,
                                         [
                                             'logical',
-                                            'relation',
-                                            'logicalRelation',
                                             'row',
                                         ]
                                     );
@@ -185,18 +183,16 @@ export class ContextMenuFactory<
                         return (
                             this.relationAuth.checkRelation(destEntity, {
                                 action,
-                                data: undefined as any,
                                 filter,
                             } as Omit<ED[keyof ED]['Operation'], 'id'>) &&
                             this.cache.checkOperation(
                                 destEntity,
-                                action,
-                                undefined,
-                                filter,
+                                {
+                                    action,
+                                    filter: filter,
+                                } as Omit<ED[keyof ED]['Operation'], 'id'>,
                                 [
                                     'logical',
-                                    'relation',
-                                    'logicalRelation',
                                     'row',
                                 ]
                             )

@@ -35,7 +35,7 @@ export abstract class BackendRuntimeContext<ED extends EntityDict & BaseEntityDi
         }
     }
 
-    async initialize(data?: SerializedData) {
+    async initialize(data?: SerializedData, later?: boolean) {
         if (data?.sid) {
             this.subscriberId = data.sid;
         }

@@ -1,4 +1,4 @@
-import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
+import { makeIntrinsicCTWs } from 'oak-domain/lib/store/IntrinsicLogics';
 import { createDebugStore } from './debugStore';
 import { initializeStep1 as initBasicFeaturesStep1, initializeStep2 as initBasicFeaturesStep2 } from './features';
 import { cloneDeep, intersection } from 'oak-domain/lib/utils/lodash';
@@ -29,7 +29,7 @@ export function initialize(storageSchema, frontendContextBuilder, backendContext
     const triggers2 = triggers.concat(intTriggers);
     const watchers2 = watchers.concat(intWatchers);
     const features1 = initBasicFeaturesStep1();
-    const debugStore = createDebugStore(storageSchema, backendContextBuilder, triggers2, checkers2, watchers2, timers, startRoutines, initialData, actionDict, authDeduceRelationMap, (key, data) => features1.localStorage.save(key, data), (key) => features1.localStorage.load(key), selectFreeEntities, updateFreeDict);
+    const debugStore = createDebugStore(storageSchema, backendContextBuilder, triggers2, checkers2, watchers2, timers, startRoutines, initialData, actionDict, authDeduceRelationMap, features1.localStorage, selectFreeEntities, updateFreeDict);
     const wrapper = {
         exec: async (name, params, ignoreContext) => {
             const context = features2.cache.buildContext();

@@ -1,8 +1,6 @@
-/// <reference types="react" />
 import { WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-type ED = EntityDict & BaseEntityDict;
+import { ED } from '../../../types/AbstractComponent';
+import React from 'react';
 export default function render(props: WebComponentProps<ED, 'actionAuth', true, {
     cascadeEntityActions: Array<{
         path: any;
@@ -19,10 +17,9 @@ export default function render(props: WebComponentProps<ED, 'actionAuth', true, 
         }>;
     }>;
     actions: string[];
-    entity: keyof EntityDict;
+    entity: keyof ED;
 }, {
     onChange: (checked: boolean, relationId: string, path: string, actionAuth?: ED['actionAuth']['Schema'][]) => void;
     onChange2: (checked: boolean, relationId: string, paths: string[], actionAuths: ED['actionAuth']['Schema'][], actionAuth?: ED['actionAuth']['Schema']) => void;
     confirm: () => void;
-}>): import("react").JSX.Element;
-export {};
+}>): React.JSX.Element;

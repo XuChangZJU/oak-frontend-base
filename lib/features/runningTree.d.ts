@@ -168,6 +168,7 @@ declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof
     addChild(path: string, node: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>): void;
     removeChild(path: string): void;
     getFreshValue(inModi?: boolean): Partial<ED[T]['Schema']> | undefined;
+    private refreshListChildren;
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>): void;
     update(data: ED[T]['Update']['data'], action?: ED[T]['Action']): void;
     remove(): void;
@@ -298,7 +299,6 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(path: string, name: string, refresh?: boolean): void;
     getIntrinsticFilters(path: string): ED[keyof ED]["Selection"]["filter"] | undefined;
-    tryExecute(path: string): boolean | Error;
     getOperations(path: string): {
         entity: keyof ED;
         operation: ED[keyof ED]["Operation"];

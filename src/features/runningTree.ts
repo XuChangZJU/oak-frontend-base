@@ -833,6 +833,7 @@ class ListNode<
 
         if (withParent && this.parent) {
             if (this.parent instanceof SingleNode) {
+                // @ts-ignore
                 const filterOfParent = this.parent.getParentFilter<T>(this, ignoreNewParent);
                 if (filterOfParent) {
                     filters.push(filterOfParent as any);
@@ -971,6 +972,7 @@ class ListNode<
         }
         else {
             // 不刷新也publish一下，触发页面reRender，不然有可能导致页面不进入formData
+            this.sr = {};
             this.publish();
         }
     }
@@ -1037,6 +1039,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         cascadeActions?: () => {
             [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
         }) {
+        // @ts-ignore
         super(entity, schema, cache, relationAuth, projection, parent, path, actions, cascadeActions);
         this.children = {};
         this.sr = {};
@@ -1130,6 +1133,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             }
             assert(!this.dirty, 'setId时结点是dirty，在setId之前应当处理掉原有的update');
             this.id = id;
+            this.refreshListChildren();
             this.publish();
         }
     }
@@ -1137,6 +1141,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     unsetId() {
         if (this.id) {
             this.id = undefined;
+            this.refreshListChildren();
             this.publish();
         }
     }
@@ -1187,6 +1192,16 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
         }
     }
 
+    // 当node的id重置时，其一对多的儿子结点都应当刷新数据（条件已经改变）
+    private refreshListChildren() {
+        for (const k in this.children) {
+            const child = this.children[k];
+            if (child instanceof ListNode) {
+                child.refresh();
+            }
+        }
+    }
+
     create(data: Partial<Omit<ED[T]['CreateSingle']['data'], 'id'>>) {
         const id = generateNewId();
         assert(!this.id && !this.dirty, 'create前要保证singleNode为空');
@@ -1203,6 +1218,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             action: 'create',
             data: Object.assign({}, data, { id }),
         };
+        this.refreshListChildren();
         this.setDirty();
     }
 
@@ -1544,7 +1560,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     getParentFilter<T2 extends keyof ED>(childNode: ListNode<ED, keyof ED, Cxt, FrontCxt, AD>, ignoreNewParent?: boolean): ED[T2]['Selection']['filter'] | undefined {
         const value = this.getFreshValue();
 
-        if (value && value.$$createAt$$ === 1 && ignoreNewParent) {
+        if (!value || (value && value.$$createAt$$ === 1 && ignoreNewParent)) {
             return;
         }
         for (const key in this.children) {
@@ -1918,6 +1934,7 @@ export class RunningTree<
         }
         if (!parentNode) {
             assert(!parent && !this.root[path]);
+            // @ts-ignore
             this.root[path] = node;
         }
 
@@ -2336,14 +2353,14 @@ export class RunningTree<
         return node.getIntrinsticFilters();
     }
 
-    tryExecute(path: string) {
+    /* tryExecute(path: string) {
         const node = this.findNode(path);
         const operations = node?.composeOperations();
         if (operations && operations.length > 0) {
             return this.cache.tryRedoOperations(operations);
         }
         return false;
-    }
+    } */
 
     getOperations(path: string) {
         const node = this.findNode(path);

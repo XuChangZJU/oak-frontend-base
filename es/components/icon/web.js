@@ -2,7 +2,7 @@ import React from 'react';
 import './web.less';
 export default function Render(props) {
     const { data } = props;
-    const { name, color = '', size, className, style = {}, } = data;
+    const { name, color = '', size, className, style = {} } = data;
     const isColor = ['primary', 'info', 'success', 'error', 'warning'].includes(color);
     let class_name = 'oak-icon ' + 'oak-icon-' + name;
     if (isColor || color === '') {

@@ -1,4 +1,4 @@
 export default OakComponent({
-    isList: true,
+    isList: false,
     methods: {},
 });

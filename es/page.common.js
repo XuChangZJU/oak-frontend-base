@@ -127,22 +127,22 @@ export function onPathSet(option) {
     }
 }
 function checkActionsAndCascadeEntities(rows, option) {
-    const checkTypes = ['relation', 'row', 'logical', 'logicalRelation'];
+    const checkTypes = ['relation', 'row', 'logical'];
     const actions = this.props.oakActions ? JSON.parse(this.props.oakActions) : (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
     const legalActions = [];
     // 这里向服务器请求相应的actionAuth，cache层会对请求加以优化，避免反复过频的不必要取数据
     const destEntities = [];
     if (actions) {
         destEntities.push(this.state.oakEntity);
-        // todo 这里actions整体进行测试的性能应该要高于一个个去测试
+        // 这里actions整体进行测试的性能应该要高于一个个去测试
         for (const action of actions) {
             if (rows instanceof Array) {
                 assert(option.isList);
                 const filter = this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath);
                 if (action === 'create' || typeof action === 'object' && action.action === 'create') {
                     // 创建对象的判定不落在具体行上，但要考虑list上外键相关属性的限制
-                    const data = typeof action === 'object' && Object.assign(cloneDeep(action.data) || {}, { id: generateNewId() });
-                    if (this.checkOperation(this.state.oakEntity, 'create', data, filter, checkTypes)) {
+                    const data = typeof action === 'object' ? cloneDeep(action.data) : undefined;
+                    if (this.checkOperation(this.state.oakEntity, { action: 'create', data, filter }, checkTypes)) {
                         legalActions.push(action);
                     }
                 }
@@ -150,7 +150,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                     const a2 = typeof action === 'object' ? action.action : action;
                     // 先尝试整体测试是否通过，再测试每一行
                     // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
-                    if (filter && this.checkOperation(this.state.oakEntity, a2, undefined, filter, checkTypes)) {
+                    if (filter && this.checkOperation(this.state.oakEntity, { action: a2, filter }, checkTypes)) {
                         rows.forEach((row) => {
                             if (row['#oakLegalActions']) {
                                 row['#oakLegalActions'].push(action);
@@ -165,7 +165,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                     else {
                         rows.forEach((row) => {
                             const { id } = row;
-                            if (this.checkOperation(this.state.oakEntity, a2, undefined, { id }, checkTypes)) {
+                            if (this.checkOperation(this.state.oakEntity, { action: a2, filter: { id } }, checkTypes)) {
                                 if (row['#oakLegalActions']) {
                                     row['#oakLegalActions'].push(action);
                                 }
@@ -185,7 +185,10 @@ function checkActionsAndCascadeEntities(rows, option) {
                     // 如果是create，根据updateData来判定。create动作应该是自动创建行的并将$$createAt$$置为1
                     if (rows.$$createAt$$ === 1) {
                         const [{ operation }] = this.features.runningTree.getOperations(this.state.oakFullpath);
-                        if (this.checkOperation(this.state.oakEntity, 'create', operation.data, undefined, checkTypes)) {
+                        if (this.checkOperation(this.state.oakEntity, {
+                            action: 'create',
+                            data: operation.data,
+                        }, checkTypes)) {
                             legalActions.push(action);
                             if (rows['#oakLegalActions']) {
                                 rows['#oakLegalActions'].push(action);
@@ -201,8 +204,12 @@ function checkActionsAndCascadeEntities(rows, option) {
                 else {
                     const a2 = typeof action === 'object' ? action.action : action;
                     const data = typeof action === 'object' ? action.data : undefined;
-                    const filter = this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath);
-                    if (filter && this.checkOperation(this.state.oakEntity, a2, data, filter, checkTypes)) {
+                    const filter1 = typeof action === 'object' ? action.filter : undefined;
+                    const filter2 = this.features.runningTree.getIntrinsticFilters(this.state.oakFullpath);
+                    const filter = (filter1 || filter2) && combineFilters(this.state.oakEntity, this.features.cache.getSchema(), [
+                        filter1, filter2
+                    ]);
+                    if (filter && this.checkOperation(this.state.oakEntity, { action: a2, filter }, checkTypes)) {
                         legalActions.push(action);
                         if (rows['#oakLegalActions']) {
                             rows['#oakLegalActions'].push(action);
@@ -253,7 +260,10 @@ function checkActionsAndCascadeEntities(rows, option) {
                                 if (typeof action === 'object') {
                                     Object.assign(intrinsticData, action.data);
                                 }
-                                if (this.checkOperation(rel[0], 'create', intrinsticData, undefined, checkTypes)) {
+                                if (this.checkOperation(rel[0], {
+                                    action: 'create',
+                                    data: intrinsticData,
+                                }, checkTypes)) {
                                     addToRow(row, e, action);
                                 }
                             });
@@ -269,19 +279,25 @@ function checkActionsAndCascadeEntities(rows, option) {
                             const filter2 = combineFilters(rel[0], this.features.cache.getSchema(), [filter, intrinsticFilter]);
                             // 先尝试整体测试是否通过，再测试每一行
                             // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
-                            if (this.checkOperation(rel[0], a2, undefined, filter2, checkTypes)) {
+                            if (this.checkOperation(rel[0], {
+                                action: a2,
+                                filter: filter2,
+                            }, checkTypes)) {
                                 rows.forEach((row) => addToRow(row, e, action));
                             }
                             else {
                                 rows.forEach((row) => {
                                     const { id } = row;
-                                    const intrinsticFilter = rel[1] ? {
+                                    let intrinsticFilterRow = rel[1] ? {
                                         [rel[1]]: id,
                                     } : { entity: this.state.oakEntity, entityId: row.id };
-                                    if (typeof action === 'object') {
-                                        Object.assign(intrinsticFilter, action.filter);
+                                    if (filter) {
+                                        intrinsticFilterRow = combineFilters(rel[0], this.features.cache.getSchema(), [filter, intrinsticFilterRow]);
                                     }
-                                    if (this.checkOperation(rel[0], a2, undefined, intrinsticFilter, checkTypes)) {
+                                    if (this.checkOperation(rel[0], {
+                                        action: a2,
+                                        filter: intrinsticFilterRow,
+                                    }, checkTypes)) {
                                         addToRow(row, e, action);
                                     }
                                 });
@@ -297,7 +313,10 @@ function checkActionsAndCascadeEntities(rows, option) {
                             if (typeof action === 'object') {
                                 Object.assign(intrinsticData, action.data);
                             }
-                            if (this.checkOperation(rel[0], 'create', intrinsticData, undefined, checkTypes)) {
+                            if (this.checkOperation(rel[0], {
+                                action: 'create',
+                                data: intrinsticData,
+                            }, checkTypes)) {
                                 addToRow(rows, e, action);
                             }
                         }
@@ -310,7 +329,10 @@ function checkActionsAndCascadeEntities(rows, option) {
                             const filter2 = combineFilters(rel[0], this.features.cache.getSchema(), [filter, intrinsticFilter]);
                             // 先尝试整体测试是否通过，再测试每一行
                             // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
-                            if (this.checkOperation(rel[0], a2, undefined, filter2, checkTypes)) {
+                            if (this.checkOperation(rel[0], {
+                                action: a2,
+                                filter: filter2,
+                            }, checkTypes)) {
                                 addToRow(rows, e, action);
                             }
                         }
@@ -367,7 +389,7 @@ export function reRender(option, extra) {
         const oakLoadingMore = this.features.runningTree.isLoadingMore(this.state.oakFullpath);
         const oakLoading = !oakLoadingMore && this.features.runningTree.isLoading(this.state.oakFullpath);
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
-        const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
+        const oakExecutable = !oakExecuting && this.tryExecute();
         const oakLegalActions = rows && checkActionsAndCascadeEntities.call(this, rows, option);
         let data = formData
             ? formData.call(this, {
@@ -431,7 +453,7 @@ export function reRender(option, extra) {
              */
             const oakDirty = this.features.runningTree.isDirty(this.state.oakFullpath);
             const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
-            const oakExecutable = !oakExecuting && this.features.runningTree.tryExecute(this.state.oakFullpath);
+            const oakExecutable = !oakExecuting && this.tryExecute();
             const oakLoading = this.features.runningTree.isLoading(this.state.oakFullpath);
             Object.assign(data, {
                 oakDirty,
