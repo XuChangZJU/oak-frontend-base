@@ -106,12 +106,13 @@ export default function Render(
                     );
                     const width = getWidth(ele.attribute, ele.attrType);
                     const type = getType(ele.attribute, ele.attrType);
-                    const align = getAlign(ele.attrType as DataType);
+                    const align = getAlign(ele.attribute);
+                    const fixed = getFixed(ele.attribute);
                     const column: ColumnType<any> = {
                         key: ele.path,
                         title,
                         align,
-                        fixed: getFixed(ele.attribute),
+                        fixed,
                         render: (v: string, row: any) => {
                             if (
                                 typeof ele.attribute !== 'string' &&

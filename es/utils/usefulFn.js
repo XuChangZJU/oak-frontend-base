@@ -156,18 +156,8 @@ export function getValue(data, path, entity, attr, attrType, t) {
     }
     return value;
 }
-export function getAlign(attrType) {
-    const rightType = [
-        'float',
-        'int',
-        'bigint',
-        'decimal',
-        'money',
-    ];
-    if (rightType.includes(attrType)) {
-        return 'right';
-    }
-    return 'left';
+export function getAlign(attribute) {
+    return isAttributeType(attribute).align || 'left';
 }
 export function getFixed(attribute) {
     return isAttributeType(attribute).fixed;

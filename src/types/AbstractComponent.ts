@@ -1,10 +1,17 @@
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import {
+    DataType,
+    DataTypeParams,
+} from 'oak-domain/lib/types/schema/DataTypes';
 // @ts-ignore
 import { ButtonProps } from 'antd';
-import { ActionDef }  from './Page'
+import { ActionDef, RowWithActions }  from './Page'
 
+export type ED = BaseEntityDict & EntityDict;
 export type RenderWidth = 1 | 2 | 3 | 4;
+export type RenderAlign = 'left' | 'right' | 'center';
+export type RenderFixed = 'left' | 'right';
 
 export type OakActionBtnProps = {
     label: string;
@@ -34,10 +41,11 @@ export type OakAbsDerivedAttrDef = {
     label: string;
     width?: number;
     span?: number;
-    type?: 'image' | 'link' | DataType | 'ref';
+    type?: 'image' | 'link' | 'ref' | DataType;
     linkUrl?: string;
-    render?: (row: any) => React.ReactNode | undefined;
-    fixed?: 'right' | 'left';
+    render?: (row: any) => React.ReactNode;
+    fixed?: RenderFixed;
+    align?: RenderAlign;
 };
 
 export type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
@@ -58,22 +66,22 @@ export type CardDef = {
 };
 
 export interface OakAbsRefAttrPickerDef<
-    ED extends EntityDict & BaseEntityDict,
-    T extends keyof ED
+    ED2 extends ED,
+    T extends keyof ED2
 > {
     type: 'ref';
     mode: 'select' | 'list' | 'radio';
     attr: string;
     entity: T;
-    projection: ED[T]['Selection']['data'];
-    title: (row: Partial<ED[T]['Schema']>) => string;
+    projection: ED2[T]['Selection']['data'];
+    title: (row: Partial<ED2[T]['Schema']>) => string;
     titleLabel?: string;
-    filter?: ED[T]['Selection']['filter'];
-    sorter?: ED[T]['Selection']['sorter'];
+    filter?: ED2[T]['Selection']['filter'];
+    sorter?: ED2[T]['Selection']['sorter'];
     getDynamicSelectors?: () => Promise<{
-        filter?: ED[T]['Selection']['filter'];
-        sorter?: ED[T]['Selection']['sorter'];
-        projection?: ED[T]['Selection']['data'];
+        filter?: ED2[T]['Selection']['filter'];
+        sorter?: ED2[T]['Selection']['sorter'];
+        projection?: ED2[T]['Selection']['data'];
     }>; // 这里主要是为了动态构造filter，当需要先选A再将A作为B的filter条件时经常出现
     count?: number;
     label?: string;
@@ -126,10 +134,7 @@ export type OakAbsAttrUpsertDef<
     | keyof ED[T]['OpSchema']
     | OakAbsNativeAttrUpsertDef<ED, T, keyof ED[T]['OpSchema']>;
 
-import {
-    DataType,
-    DataTypeParams,
-} from 'oak-domain/lib/types/schema/DataTypes';
+
 export type AttrRender = {
     label: string;
     value: any;
@@ -177,7 +182,6 @@ export type DataUpsertTransformer<
 
 export type DataConverter = (data: any[]) => Record<string, any>;
 
-export type ED = BaseEntityDict & EntityDict;
 
 export type CascadeActionProps = {
     path: string;

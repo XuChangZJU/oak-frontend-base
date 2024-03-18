@@ -222,18 +222,8 @@ export function getValue<ED extends EntityDict & BaseEntityDict>(
     return value;
 }
 
-export function getAlign(attrType: DataType): 'left' | 'right' | 'center' {
-    const rightType: DataType[] = [
-        'float',
-        'int',
-        'bigint',
-        'decimal',
-        'money',
-    ];
-    if (rightType.includes(attrType)) {
-        return 'right';
-    }
-    return 'left';
+export function getAlign(attribute: OakAbsAttrDef): 'left' | 'right' | 'center' {
+    return isAttributeType(attribute).align || 'left';
 }
 
 export function getFixed(attribute: OakAbsAttrDef): 'left' | 'right' | undefined {
