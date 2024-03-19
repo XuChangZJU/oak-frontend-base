@@ -140,6 +140,6 @@ export default function Render(
             >
                 {children}
             </div>
-        </div>
+        </div >
     );
 }

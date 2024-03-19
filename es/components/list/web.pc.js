@@ -36,12 +36,13 @@ export default function Render(props) {
                     const title = getLabel(ele.attribute, ele.entity, ele.attr, t);
                     const width = getWidth(ele.attribute, ele.attrType);
                     const type = getType(ele.attribute, ele.attrType);
-                    const align = getAlign(ele.attrType);
+                    const align = getAlign(ele.attribute);
+                    const fixed = getFixed(ele.attribute);
                     const column = {
                         key: ele.path,
                         title,
                         align,
-                        fixed: getFixed(ele.attribute),
+                        fixed,
                         render: (v, row) => {
                             if (typeof ele.attribute !== 'string' &&
                                 ele.attribute.render) {
