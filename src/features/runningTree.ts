@@ -597,10 +597,15 @@ class ListNode<
 
     getFreshValue(inModi?: boolean): Array<Partial<ED[T]['Schema']>> {
         /**
-         * 现在简化情况，只取sr中有id的数据
-         * 但是对于modi查询，需要查询“热更新”部分的数据（逻辑可能不一定严密）
+         * 现在简化情况，只取sr中有id的数据，以及addItem中的create数据
+         * 但是对于modi查询，需要查询“热更新”部分的数据（因为这部分数据不会被sync到内存中，逻辑不严密，后面再说）
          */
         const ids = Object.keys(this.sr);
+        const createIds = Object.keys(this.updates).filter(
+            k => this.updates[k].action === 'create'
+        ).map(
+            k => this.updates[k].data.id as string
+        );
         const { data, sorter, filter } = this.constructSelection(true, false, true);
 
         /**
@@ -614,7 +619,7 @@ class ListNode<
             data,
             filter: inModi ? filter : {
                 id: {
-                    $in: ids,
+                    $in: ids.concat(createIds),
                 }
             },
             sorter,
@@ -639,7 +644,6 @@ class ListNode<
             action: 'create',
             data: Object.assign(item, { id }),
         };
-        this.sr[id] = {};
         return id;
     }
 
@@ -660,8 +664,7 @@ class ListNode<
     private removeItemInner(id: string) {
         if (this.updates[id] && this.updates[id].action === 'create') {
             // 如果是新增项，在这里抵消
-            unset(this.updates, id);
-            unset(this.sr, id);
+            unset(this.updates, id);            
         } else {
             this.updates[id] = {
                 id: generateNewId(),
@@ -900,16 +903,6 @@ class ListNode<
         }
         else {
             this.sr = data || {};
-
-            // 如果有addItem，在这里不能丢。by Xc;
-            if (this.updates) {
-                for (const k in this.updates) {
-                    if (this.updates[k].action === 'create') {
-                        const { id } = this.updates[k].data;
-                        this.sr[id!] = {};
-                    }
-                }
-            }
         }
         for (const k in this.children) {
             const child = this.children[k];
@@ -997,11 +990,6 @@ class ListNode<
             this.updates = {};
             for (const k in this.children) {
                 this.children[k].clean();
-            }
-            for (const k in originUpdates) {
-                if (originUpdates[k].action === 'create') {
-                    unset(this.sr, originUpdates[k].data.id!);
-                }
             }
 
             this.dirty = undefined;
