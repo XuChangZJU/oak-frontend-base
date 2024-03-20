@@ -57,7 +57,7 @@ export function initialize<
     },
     option: InitializeOptions<ED, Cxt>
 ) {
-    const { actionDict, authDeduceRelationMap,
+    const { actionDict, authDeduceRelationMap, attrUpdateMatrix,
         colorDict, importations, exportations, selectFreeEntities, updateFreeDict,
         cacheKeepFreshPeriod, cacheSavedEntities } = option;
     let intersected = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
@@ -67,7 +67,7 @@ export function initialize<
         );
     }
     const aspectDict2 = Object.assign({}, aspectDict, commonAspectDict);
-    const { checkers: intCheckers, triggers: intTriggers, watchers: intWatchers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict);
+    const { checkers: intCheckers, triggers: intTriggers, watchers: intWatchers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict, attrUpdateMatrix);
     const checkers2 = checkers.concat(intCheckers);
     const triggers2 = triggers.concat(intTriggers);
     const watchers2 = watchers.concat(intWatchers);

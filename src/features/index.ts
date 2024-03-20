@@ -1,4 +1,4 @@
-import { Aspect, AspectWrapper, AuthDeduceRelationMap, Checker, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, AspectWrapper, AttrUpdateMatrix, AuthDeduceRelationMap, Checker, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 
@@ -46,10 +46,11 @@ export function initializeStep2<
             [A in keyof ED]?: string[];
         },
         savedEntities?: (keyof ED)[],
-        keepFreshPeriod?: number) {
+        keepFreshPeriod?: number,
+        attrUpdateMatrix?: AttrUpdateMatrix<ED>) {
     const { localStorage, environment, message } = features;
     const cache = new Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(storageSchema, aspectWrapper,
-        frontendContextBuilder, checkers, getFullDataFn, localStorage, savedEntities, keepFreshPeriod);
+        frontendContextBuilder, checkers, getFullDataFn, localStorage, savedEntities, keepFreshPeriod, attrUpdateMatrix);
     const relationAuth = new RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, authDeduceRelationMap, selectFreeEntities, updateFreeDict);
     const runningTree = new RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>(cache, storageSchema, relationAuth);
     const geo = new Geo(aspectWrapper);

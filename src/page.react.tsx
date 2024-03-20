@@ -390,8 +390,11 @@ abstract class OakComponentBase<
         return loadMore.call(this as any);
     }
 
-    setId(id: string) {
-        return this.features.runningTree.setId(this.state.oakFullpath, id);
+    setId(id: string, path?: string) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        return this.features.runningTree.setId(path2, id);
     }
 
     unsetId() {
@@ -825,6 +828,9 @@ export function createComponent<
                 setId: (id: string) => {
                     return this.setId(id);
                 },
+                getId: (id: string) => {
+                    return this.getId();
+                },
                 unsetId: () => {
                     return this.unsetId();
                 }
@@ -842,7 +848,9 @@ export function createComponent<
                 },
                 isCreation: (path?: string) => {
                     return this.isCreation(path);
-                }
+                },
+                getId: (path?: string) => this.getId(path),
+                setId: (id: string, path?: string) => this.setId(id, path)
             } as Record<WebComponentSingleMethodNames, Function>);
 
             if (methods) {

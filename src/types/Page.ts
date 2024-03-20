@@ -530,7 +530,7 @@ export type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedF
     | 'addItem' | 'addItems' | 'removeItem' | 'removeItems' | 'updateItem' | 'resetItem' | 'recoverItem' | 'recoverItems';
 
 // 暴露给single组件的方法
-export type WebComponentSingleMethodNames = 'update' | 'remove' | 'create' | 'isCreation';
+export type WebComponentSingleMethodNames = 'update' | 'remove' | 'create' | 'isCreation' | 'getId' | 'setId';
 
 export type WebComponentProps<
     ED extends EntityDict & BaseEntityDict,

@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, StorageSchema, Checker } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, StorageSchema, Checker, AttrUpdateMatrix } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -30,7 +30,8 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
     private refreshRecords;
     private context?;
     private initPromise;
-    constructor(storageSchema: StorageSchema<ED>, aspectWrapper: AspectWrapper<ED, Cxt, AD>, frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt, checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>, getFullData: () => any, localStorage: LocalStorage, savedEntities?: (keyof ED)[], keepFreshPeriod?: number);
+    private attrUpdateMatrix?;
+    constructor(storageSchema: StorageSchema<ED>, aspectWrapper: AspectWrapper<ED, Cxt, AD>, frontendContextBuilder: () => (store: CacheStore<ED, FrontCxt>) => FrontCxt, checkers: Array<Checker<ED, keyof ED, FrontCxt | Cxt>>, getFullData: () => any, localStorage: LocalStorage, savedEntities?: (keyof ED)[], keepFreshPeriod?: number, attrUpdateMatrix?: AttrUpdateMatrix<ED>);
     /**
      * 处理cache中需要缓存的数据
      */
@@ -79,6 +80,15 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         operation: ED[T]['Operation'];
         entity: T;
     })[]): true | Error;
+    /**
+     * 根据初始化定义的attrUpdateMatrix，检查当前entity是否支持用action去更新Attrs属性
+     * 返回通过合法性检查的Attrs
+     * @param entity
+     * @param action
+     * @param attrs
+     * @returns
+     */
+    getLegalUpdateAttrs<T extends keyof ED>(entity: T, action: ED[T]['Action'], attrs: (keyof ED[T]['Update']['data'])[], id: string): (keyof ED[T]["Update"]["data"])[];
     checkOperation<T extends keyof ED>(entity: T, operation: {
         action: ED[T]['Action'];
         data?: ED[T]['Operation']['data'];

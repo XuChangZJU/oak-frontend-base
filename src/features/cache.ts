@@ -1,4 +1,4 @@
-import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, StorageSchema, Checker, SubDataDef } from 'oak-domain/lib/types';
+import { EntityDict, OperateOption, SelectOption, OpRecord, AspectWrapper, CheckerType, Aspect, SelectOpResult, StorageSchema, Checker, SubDataDef, AttrUpdateMatrix } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
@@ -11,7 +11,7 @@ import { assert } from 'oak-domain/lib/utils/assert';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
 import { LocalStorage } from './localStorage';
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
-import { combineFilters } from 'oak-domain/lib/store/filter';
+import { checkFilterContains, combineFilters } from 'oak-domain/lib/store/filter';
 
 const DEFAULT_KEEP_FRESH_PERIOD = 600 * 1000;       // 10分钟不刷新
 
@@ -50,6 +50,7 @@ export class Cache<
     } = {};
     private context?: FrontCxt;
     private initPromise: Promise<void>;
+    private attrUpdateMatrix?: AttrUpdateMatrix<ED>;
 
     constructor(
         storageSchema: StorageSchema<ED>,
@@ -60,6 +61,7 @@ export class Cache<
         localStorage: LocalStorage,
         savedEntities?: (keyof ED)[],
         keepFreshPeriod?: number,
+        attrUpdateMatrix?: AttrUpdateMatrix<ED>
     ) {
         super();
         this.aspectWrapper = aspectWrapper;
@@ -70,6 +72,7 @@ export class Cache<
         this.savedEntities = ['actionAuth', 'i18n', 'path', ...(savedEntities || [])];
         this.keepFreshPeriod = keepFreshPeriod || DEFAULT_KEEP_FRESH_PERIOD;
         this.localStorage = localStorage;
+        this.attrUpdateMatrix = attrUpdateMatrix;
 
         checkers.forEach(
             (checker) => this.cacheStore.registerChecker(checker)
@@ -406,6 +409,53 @@ export class Cache<
             }
             return err as Error;
         }
+    }
+
+    /**
+     * 根据初始化定义的attrUpdateMatrix，检查当前entity是否支持用action去更新Attrs属性
+     * 返回通过合法性检查的Attrs
+     * @param entity 
+     * @param action 
+     * @param attrs 
+     * @returns 
+     */
+    getLegalUpdateAttrs<T extends keyof ED>(
+        entity: T,
+        action: ED[T]['Action'],
+        attrs: (keyof ED[T]['Update']['data'])[],
+        id: string,
+    ) {
+        if (!this.attrUpdateMatrix) {
+            return [...attrs];
+        }
+        const matrix = this.attrUpdateMatrix[entity];
+        if (!matrix) {
+            return [...attrs];
+        }
+        const result = [] as (keyof ED[T]['Update']['data'])[];
+
+        let autoCommit = false;
+        if (!this.context) {
+            this.begin();
+            autoCommit = true;
+        }
+        for (const attr of attrs) {
+            const def = matrix[attr];
+            if (def) {
+                const { actions, filter } = def;
+                if (actions && !actions.includes(action)) {
+                    continue;
+                }
+                if (!filter || checkFilterContains<ED, T, FrontCxt>(entity, this.context!, filter, { id }, true)) {
+                    result.push(attr);
+                }
+            }
+        }
+
+        if (autoCommit) {
+            this.rollback();
+        }
+        return result;
     }
 
     checkOperation<T extends keyof ED>(

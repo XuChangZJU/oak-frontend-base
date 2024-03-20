@@ -208,8 +208,11 @@ class OakComponentBase extends React.PureComponent {
     loadMore() {
         return loadMore.call(this);
     }
-    setId(id) {
-        return this.features.runningTree.setId(this.state.oakFullpath, id);
+    setId(id, path) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        return this.features.runningTree.setId(path2, id);
     }
     unsetId() {
         return this.features.runningTree.unsetId(this.state.oakFullpath);
@@ -510,6 +513,9 @@ export function createComponent(option, features) {
                 setId: (id) => {
                     return this.setId(id);
                 },
+                getId: (id) => {
+                    return this.getId();
+                },
                 unsetId: () => {
                     return this.unsetId();
                 }
@@ -526,7 +532,9 @@ export function createComponent(option, features) {
                 },
                 isCreation: (path) => {
                     return this.isCreation(path);
-                }
+                },
+                getId: (path) => this.getId(path),
+                setId: (id, path) => this.setId(id, path)
             });
             if (methods) {
                 for (const m in methods) {

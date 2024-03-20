@@ -126,6 +126,19 @@ export function onPathSet(option) {
         };
     }
 }
+function checkActionAttrsIfNecessary(cache, entity, action, id) {
+    if (typeof action === 'string') {
+        return action;
+    }
+    if (!action.attrs) {
+        return action;
+    }
+    const attrs2 = cache.getLegalUpdateAttrs(entity, action.action, action.attrs, id);
+    return {
+        ...action,
+        attrs: attrs2,
+    };
+}
 function checkActionsAndCascadeEntities(rows, option) {
     const checkTypes = ['relation', 'row', 'logical'];
     const actions = this.props.oakActions ? JSON.parse(this.props.oakActions) : (typeof option.actions === 'function' ? option.actions.call(this) : option.actions);
@@ -153,11 +166,11 @@ function checkActionsAndCascadeEntities(rows, option) {
                     if (filter && this.checkOperation(this.state.oakEntity, { action: a2, filter }, checkTypes)) {
                         rows.forEach((row) => {
                             if (row['#oakLegalActions']) {
-                                row['#oakLegalActions'].push(action);
+                                row['#oakLegalActions'].push(checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, row.id));
                             }
                             else {
                                 Object.assign(row, {
-                                    '#oakLegalActions': [action],
+                                    '#oakLegalActions': [checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, row.id)],
                                 });
                             }
                         });
@@ -167,11 +180,11 @@ function checkActionsAndCascadeEntities(rows, option) {
                             const { id } = row;
                             if (this.checkOperation(this.state.oakEntity, { action: a2, filter: { id } }, checkTypes)) {
                                 if (row['#oakLegalActions']) {
-                                    row['#oakLegalActions'].push(action);
+                                    row['#oakLegalActions'].push(checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, row.id));
                                 }
                                 else {
                                     Object.assign(row, {
-                                        '#oakLegalActions': [action],
+                                        '#oakLegalActions': [checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, row.id)],
                                     });
                                 }
                             }
@@ -210,13 +223,14 @@ function checkActionsAndCascadeEntities(rows, option) {
                         filter1, filter2
                     ]);
                     if (filter && this.checkOperation(this.state.oakEntity, { action: a2, filter }, checkTypes)) {
-                        legalActions.push(action);
+                        const action2 = checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, rows.id);
+                        legalActions.push(action2);
                         if (rows['#oakLegalActions']) {
-                            rows['#oakLegalActions'].push(action);
+                            rows['#oakLegalActions'].push(action2);
                         }
                         else {
                             Object.assign(rows, {
-                                '#oakLegalActions': [action],
+                                '#oakLegalActions': [action2],
                             });
                         }
                     }
@@ -226,21 +240,21 @@ function checkActionsAndCascadeEntities(rows, option) {
     }
     const cascadeActionDict = this.props.oakCascadeActions ? JSON.parse(this.props.oakCascadeActions) : ((option.cascadeActions && option.cascadeActions.call(this)));
     if (cascadeActionDict) {
-        const addToRow = (r, e, a) => {
+        const addToRow = (entity, r, e, a) => {
             if (!r['#oakLegalCascadeActions']) {
                 Object.assign(r, {
                     '#oakLegalCascadeActions': {
-                        [e]: [a],
+                        [e]: [checkActionAttrsIfNecessary(this.features.cache, entity, a, r.id)],
                     },
                 });
             }
             else if (!r['#oakLegalCascadeActions'][e]) {
                 Object.assign(r['#oakLegalCascadeActions'], {
-                    [e]: [a],
+                    [e]: [checkActionAttrsIfNecessary(this.features.cache, entity, a, r.id)],
                 });
             }
             else {
-                r['#oakLegalCascadeActions'][e].push(a);
+                r['#oakLegalCascadeActions'][e].push(checkActionAttrsIfNecessary(this.features.cache, entity, a, r.id));
             }
         };
         for (const e in cascadeActionDict) {
@@ -264,7 +278,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                                     action: 'create',
                                     data: intrinsticData,
                                 }, checkTypes)) {
-                                    addToRow(row, e, action);
+                                    addToRow(rel[0], row, e, action);
                                 }
                             });
                         }
@@ -283,7 +297,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                                 action: a2,
                                 filter: filter2,
                             }, checkTypes)) {
-                                rows.forEach((row) => addToRow(row, e, action));
+                                rows.forEach((row) => addToRow(rel[0], row, e, action));
                             }
                             else {
                                 rows.forEach((row) => {
@@ -298,7 +312,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                                         action: a2,
                                         filter: intrinsticFilterRow,
                                     }, checkTypes)) {
-                                        addToRow(row, e, action);
+                                        addToRow(rel[0], row, e, action);
                                     }
                                 });
                             }
@@ -317,7 +331,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                                 action: 'create',
                                 data: intrinsticData,
                             }, checkTypes)) {
-                                addToRow(rows, e, action);
+                                addToRow(rel[0], rows, e, action);
                             }
                         }
                         else {
@@ -333,7 +347,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                                 action: a2,
                                 filter: filter2,
                             }, checkTypes)) {
-                                addToRow(rows, e, action);
+                                addToRow(rel[0], rows, e, action);
                             }
                         }
                     }

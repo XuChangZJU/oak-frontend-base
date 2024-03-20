@@ -85,7 +85,7 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         }[] | undefined;
         refresh(): Promise<void>;
         loadMore(): Promise<void>;
-        setId(id: string): void;
+        setId(id: string, path?: string | undefined): void;
         unsetId(): void;
         getId(path?: string | undefined): string | undefined;
         setFilters(filters: NamedFilterItem<ED, T>[], path?: string | undefined): void;

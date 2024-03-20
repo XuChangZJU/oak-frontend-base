@@ -24,6 +24,8 @@ import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { combineFilters } from 'oak-domain/lib/store/filter';
 import { MODI_NEXT_PATH_SUFFIX } from './features/runningTree';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
+import { Cache } from './features/cache';
+import { CommonAspectDict } from 'oak-common-aspect/es/AspectDict';
 
 export function onPathSet<
     ED extends EntityDict & BaseEntityDict,
@@ -104,13 +106,13 @@ export function onPathSet<
                         break;
                     }
                     case 'mobile':
-                    {
-                        if (width === 'xs') {
-                            getTotal2 = max;
+                        {
+                            if (width === 'xs') {
+                                getTotal2 = max;
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case 'pc': 
+                    case 'pc':
                     default: {
                         if (width !== 'xs') {
                             getTotal2 = max;
@@ -176,6 +178,32 @@ export function onPathSet<
     }
 }
 
+function checkActionAttrsIfNecessary<
+    ED extends EntityDict & BaseEntityDict,
+    T extends keyof ED,
+    Cxt extends AsyncContext<ED>,
+    FrontCxt extends SyncContext<ED>>(
+        cache: Cache<ED, Cxt, FrontCxt, CommonAspectDict<ED, Cxt>>,
+        entity: T,
+        action: ActionDef<ED, T>,
+        id: string
+    ): ActionDef<ED, T> {
+    if (typeof action === 'string') {
+        return action;
+    }
+
+    if (!action.attrs) {
+        return action;
+    }
+
+    const attrs2 = cache.getLegalUpdateAttrs(entity, action.action, action.attrs!, id);
+
+    return {
+        ...action,
+        attrs: attrs2,
+    };
+}
+
 function checkActionsAndCascadeEntities<
     ED extends EntityDict & BaseEntityDict,
     T extends keyof ED,
@@ -213,11 +241,11 @@ function checkActionsAndCascadeEntities<
                         rows.forEach(
                             (row) => {
                                 if (row['#oakLegalActions']) {
-                                    row['#oakLegalActions'].push(action);
+                                    row['#oakLegalActions'].push(checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, row.id!));
                                 }
                                 else {
                                     Object.assign(row, {
-                                        '#oakLegalActions': [action],
+                                        '#oakLegalActions': [checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, row.id!)],
                                     });
                                 }
                             }
@@ -229,11 +257,11 @@ function checkActionsAndCascadeEntities<
                                 const { id } = row;
                                 if (this.checkOperation(this.state.oakEntity, { action: a2, filter: { id } }, checkTypes)) {
                                     if (row['#oakLegalActions']) {
-                                        row['#oakLegalActions'].push(action);
+                                        row['#oakLegalActions'].push(checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, row.id!));
                                     }
                                     else {
                                         Object.assign(row, {
-                                            '#oakLegalActions': [action],
+                                            '#oakLegalActions': [checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, row.id!)],
                                         });
                                     }
                                 }
@@ -275,13 +303,14 @@ function checkActionsAndCascadeEntities<
                         filter1, filter2
                     ]);
                     if (filter && this.checkOperation(this.state.oakEntity, { action: a2, filter }, checkTypes)) {
-                        legalActions.push(action);
+                        const action2 = checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, rows.id!);
+                        legalActions.push(action2);
                         if (rows['#oakLegalActions']) {
-                            rows['#oakLegalActions'].push(action);
+                            rows['#oakLegalActions'].push(action2);
                         }
                         else {
                             Object.assign(rows, {
-                                '#oakLegalActions': [action],
+                                '#oakLegalActions': [action2],
                             });
                         }
                     }
@@ -294,21 +323,21 @@ function checkActionsAndCascadeEntities<
     } = this.props.oakCascadeActions ? JSON.parse(this.props.oakCascadeActions) : ((option.cascadeActions && option.cascadeActions.call(this)));
 
     if (cascadeActionDict) {
-        const addToRow = (r: Partial<ED[keyof ED]['Schema']>, e: keyof ED[T]['Schema'], a: ActionDef<ED, keyof ED>) => {
+        const addToRow = (entity: keyof ED, r: Partial<ED[keyof ED]['Schema']>, e: keyof ED[T]['Schema'], a: ActionDef<ED, keyof ED>) => {
             if (!r['#oakLegalCascadeActions']) {
                 Object.assign(r, {
                     '#oakLegalCascadeActions': {
-                        [e]: [a],
+                        [e]: [checkActionAttrsIfNecessary(this.features.cache, entity, a, r.id!)],
                     },
                 });
             }
             else if (!r['#oakLegalCascadeActions'][e]) {
                 Object.assign(r['#oakLegalCascadeActions'], {
-                    [e]: [a],
+                    [e]: [checkActionAttrsIfNecessary(this.features.cache, entity, a, r.id!)],
                 });
             }
             else {
-                r['#oakLegalCascadeActions'][e].push(a);
+                r['#oakLegalCascadeActions'][e].push(checkActionAttrsIfNecessary(this.features.cache, entity, a, r.id!));
             }
         };
         for (const e in cascadeActionDict) {
@@ -329,11 +358,11 @@ function checkActionsAndCascadeEntities<
                                     if (typeof action === 'object') {
                                         Object.assign(intrinsticData, action.data);
                                     }
-                                    if (this.checkOperation(rel[0] as any,  {
+                                    if (this.checkOperation(rel[0] as any, {
                                         action: 'create',
                                         data: intrinsticData,
                                     }, checkTypes)) {
-                                        addToRow(row, e, action);
+                                        addToRow(rel[0], row, e, action);
                                     }
                                 }
                             );
@@ -355,7 +384,7 @@ function checkActionsAndCascadeEntities<
                                 filter: filter2,
                             }, checkTypes)) {
                                 rows.forEach(
-                                    (row) => addToRow(row, e, action)
+                                    (row) => addToRow(rel[0], row, e, action)
                                 );
                             }
                             else {
@@ -372,7 +401,7 @@ function checkActionsAndCascadeEntities<
                                             action: a2,
                                             filter: intrinsticFilterRow,
                                         }, checkTypes)) {
-                                            addToRow(row, e, action);
+                                            addToRow(rel[0], row, e, action);
                                         }
                                     }
                                 );
@@ -392,7 +421,7 @@ function checkActionsAndCascadeEntities<
                                 action: 'create',
                                 data: intrinsticData,
                             }, checkTypes)) {
-                                addToRow(rows, e, action);
+                                addToRow(rel[0], rows, e, action);
                             }
                         }
                         else {
@@ -409,7 +438,7 @@ function checkActionsAndCascadeEntities<
                                 action: a2,
                                 filter: filter2,
                             }, checkTypes)) {
-                                addToRow(rows, e, action);
+                                addToRow(rel[0], rows, e, action);
                             }
                         }
                     }

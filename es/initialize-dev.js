@@ -18,13 +18,13 @@ import { registerPorts } from 'oak-common-aspect';
  * @returns
  */
 export function initialize(storageSchema, frontendContextBuilder, backendContextBuilder, aspectDict, triggers, checkers, watchers, timers, startRoutines, initialData, option) {
-    const { actionDict, authDeduceRelationMap, colorDict, importations, exportations, selectFreeEntities, updateFreeDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
+    const { actionDict, authDeduceRelationMap, attrUpdateMatrix, colorDict, importations, exportations, selectFreeEntities, updateFreeDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
     let intersected = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
     if (intersected.length > 0) {
         throw new Error(`用户定义的aspect中不能和系统aspect同名：「${intersected.join(',')}」`);
     }
     const aspectDict2 = Object.assign({}, aspectDict, commonAspectDict);
-    const { checkers: intCheckers, triggers: intTriggers, watchers: intWatchers } = makeIntrinsicCTWs(storageSchema, actionDict);
+    const { checkers: intCheckers, triggers: intTriggers, watchers: intWatchers } = makeIntrinsicCTWs(storageSchema, actionDict, attrUpdateMatrix);
     const checkers2 = checkers.concat(intCheckers);
     const triggers2 = triggers.concat(intTriggers);
     const watchers2 = watchers.concat(intWatchers);
