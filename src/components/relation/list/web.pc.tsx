@@ -1,11 +1,9 @@
 import React from 'react';
 import { Card, Button, Input, Tag } from 'antd'
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { ED } from '../../../types/AbstractComponent';
 import Styles from './web.pc.module.less';
 
-type ED = EntityDict & BaseEntityDict;
 
 export default function render(
     props: WebComponentProps<

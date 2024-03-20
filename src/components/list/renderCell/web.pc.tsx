@@ -1,34 +1,29 @@
 import React from 'react';
 import { Space, Tag, Tooltip, Typography } from 'antd';
 import ImgBox from '../../imgBox';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../../types/Page';
-import { OakAbsDerivedAttrDef } from '../../../types/AbstractComponent';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { OakAbsDerivedAttrDef, ED } from '../../../types/AbstractComponent';
 
 const { Link } = Typography;
 
 export default function Render(
     props: WebComponentProps<
-        EntityDict & BaseEntityDict,
-        keyof EntityDict,
+        ED,
+        keyof ED,
         false,
         {
             value: string | string[];
-            type: OakAbsDerivedAttrDef['type'],
+            type: OakAbsDerivedAttrDef['type'];
             color: string;
             linkUrl: string;
         },
-        {
-        }
+        {}
     >
 ) {
     const { methods, data: oakData } = props;
-    const {
-       value, type, color, linkUrl
-    } = oakData;
+    const { value, type, color, linkUrl } = oakData;
     if (value === null || value === '' || value === undefined) {
-        return (<>--</>);
+        return <>--</>;
     }
     // 属性类型是enum要使用标签
     else if (type === 'enum') {
@@ -38,15 +33,10 @@ export default function Render(
             renderColor = 'processing';
         }
         if (renderColor === 'danger') {
-            renderColor = 'error'
+            renderColor = 'error';
         }
-        return (
-            <Tag color={renderColor} >
-                {value}
-            </Tag>
-        )
-    }
-    else if (type === 'image') {
+        return <Tag color={renderColor}>{value}</Tag>;
+    } else if (type === 'image') {
         if (value instanceof Array) {
             return (
                 <Space>
@@ -54,13 +44,10 @@ export default function Render(
                         <ImgBox src={ele} width={120} height={70} />
                     ))}
                 </Space>
-            )
+            );
         }
-        return (
-            <ImgBox src={value} width={120} height={70} />
-        )
-    }
-    else if (type === 'link') {
+        return <ImgBox src={value} width={120} height={70} />;
+    } else if (type === 'link') {
         let href = linkUrl;
         if (value instanceof Array) {
             return (
@@ -68,26 +55,18 @@ export default function Render(
                     {value.map((ele) => {
                         href = ele;
                         if (linkUrl) {
-                            href = linkUrl
+                            href = linkUrl;
                         }
-                        return (
-                            <Link href={href}>
-                                {ele}
-                            </Link>
-                        )
+                        return <Link href={href}>{ele}</Link>;
                     })}
                 </Space>
-            )
+            );
         }
-        return (
-            <Link href={href}>
-                {value}
-            </Link>
-        )
+        return <Link href={href}>{value}</Link>;
     }
     return (
         <Tooltip placement="topLeft" title={value}>
             {value}
         </Tooltip>
-    )
+    );
 }

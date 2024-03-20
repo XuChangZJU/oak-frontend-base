@@ -1,6 +1,6 @@
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+
 import { ReactComponentProps } from '../../types/Page';
+import { ED } from '../../types/AbstractComponent';
 
 export default OakComponent({
     isList: false,
@@ -14,19 +14,20 @@ export default OakComponent({
         const namespace = features.navigator.getNamespace();
 
         const location = features.navigator.getLocation();
-        const currentPath = location.pathname; //当前路由path
+        const pathname = location.pathname; //当前路由path
+        // const pathname2 = pathname.endsWith('/') ? pathname.substring(0, pathname.length - 1) : pathname
         const allowBack = !menus?.find(
             (ele) =>
                 features.navigator
                     .getPathname(ele.url || '', namespace)
-                    ?.toLocaleLowerCase() === currentPath?.toLocaleLowerCase()
+                    ?.toLocaleLowerCase() === pathname?.toLocaleLowerCase()
         );
 
         return {
             allowBack,
         };
-    }
-}) as <ED2 extends EntityDict & BaseEntityDict, T2 extends keyof ED2>(
+    },
+}) as <ED2 extends ED, T2 extends keyof ED2>(
     props: ReactComponentProps<
         ED2,
         T2,
@@ -45,10 +46,10 @@ export default OakComponent({
             extra?: React.ReactNode;
             children?: React.ReactNode;
             content: React.ReactNode;
-            // contentStyle?: React.CSSProperties;
-            // contentClassName?: string;
-            // bodyStyle?: React.ReactNode;
-            // bodyClassName?: string;
+            contentStyle?: React.CSSProperties;
+            contentClassName?: string;
+            bodyStyle?: React.CSSProperties;
+            bodyClassName?: string;
         }
     >
 ) => React.ReactElement;

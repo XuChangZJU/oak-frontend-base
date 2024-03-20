@@ -77,15 +77,15 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         }[] | undefined): Promise<void>;
         isDirty(path?: string | undefined): boolean;
         getFreshValue(path?: string | undefined): Partial<ED[keyof ED]["Schema"]> | Partial<ED[keyof ED]["Schema"]>[] | undefined;
-        checkOperation(entity: T, action: ED[T]["Action"], data?: ED[T]["Update"]["data"] | undefined, filter?: ED[T]["Update"]["filter"] | undefined, checkerTypes?: CheckerType[] | undefined): boolean;
-        tryExecute(path?: string | undefined): boolean | Error;
+        checkOperation<T2_2 extends keyof ED>(entity: T2_2, operation: Omit<ED[T2_2]["Operation"], "id">, checkerTypes?: (CheckerType | "relation")[] | undefined): boolean;
+        tryExecute(path?: string | undefined): boolean;
         getOperations<T_5 extends keyof ED>(path?: string | undefined): {
             entity: keyof ED;
             operation: ED[keyof ED]["Operation"];
         }[] | undefined;
         refresh(): Promise<void>;
         loadMore(): Promise<void>;
-        setId(id: string): void;
+        setId(id: string, path?: string | undefined): void;
         unsetId(): void;
         getId(path?: string | undefined): string | undefined;
         setFilters(filters: NamedFilterItem<ED, T>[], path?: string | undefined): void;

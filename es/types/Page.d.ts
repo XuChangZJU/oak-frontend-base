@@ -22,8 +22,7 @@ export type ActionDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED
     filter?: ED[T]['Selection']['filter'];
     data?: Partial<ED[T]['CreateSingle']['data']>;
     label?: string;
-    color?: string;
-    key?: string;
+    attrs?: (keyof ED[T]['Update']['data'])[];
 } | ED[T]['Action'];
 export type RowWithActions<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = Partial<ED[T]['Schema']> & {
     '#oakLegalActions': ActionDef<ED, T>[];
@@ -165,7 +164,11 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
         entity: T;
         operation: ED[T]['Operation'];
     }>) => Promise<void>;
-    checkOperation: (entity: T, action: ED[T]['Action'], data?: ED[T]['Update']['data'], filter?: ED[T]['Update']['filter'], checkerTypes?: CheckerType[]) => boolean;
+    checkOperation: <T2 extends keyof ED>(entity: T2, operation: {
+        action: ED[T2]['Action'];
+        data?: ED[T2]['Operation']['data'];
+        filter?: ED[T2]['Operation']['filter'];
+    }, checkerTypes?: (CheckerType | 'relation')[]) => boolean;
     tryExecute: (path?: string) => boolean | Error;
     getOperations: (path?: string) => {
         operation: ED[T]['Operation'];
@@ -250,7 +253,7 @@ type OakListComoponetData<ED extends EntityDict & BaseEntityDict, T extends keyo
 export type MakeOakComponent<ED extends EntityDict & BaseEntityDict, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends Record<string, Aspect<ED, Cxt>>, FD extends Record<string, Feature>> = <IsList extends boolean, T extends keyof ED, FormedData extends DataOption, TData extends DataOption, TProperty extends DataOption, TMethod extends MethodOption>(options: OakComponentOption<IsList, ED, T, Cxt, FrontCxt, AD, FD, FormedData, TData, TProperty, TMethod>) => (props: ReactComponentProps<ED, T, IsList, TProperty>) => React.ReactElement;
 export type WebComponentCommonMethodNames = 'setNotification' | 'setMessage' | 'navigateTo' | 'navigateBack' | 'redirectTo' | 'clean' | 't' | 'execute' | 'refresh' | 'aggregate' | 'checkOperation' | 'isDirty';
 export type WebComponentListMethodNames = 'loadMore' | 'setFilters' | 'addNamedFilter' | 'removeNamedFilter' | 'removeNamedFilterByName' | 'setNamedSorters' | 'addNamedSorter' | 'removeNamedSorter' | 'removeNamedSorterByName' | 'setPageSize' | 'setCurrentPage' | 'addItem' | 'addItems' | 'removeItem' | 'removeItems' | 'updateItem' | 'resetItem' | 'recoverItem' | 'recoverItems';
-export type WebComponentSingleMethodNames = 'update' | 'remove' | 'create' | 'isCreation';
+export type WebComponentSingleMethodNames = 'update' | 'remove' | 'create' | 'isCreation' | 'getId' | 'setId';
 export type WebComponentProps<ED extends EntityDict & BaseEntityDict, T extends keyof ED, IsList extends boolean, TData extends DataOption = {}, TMethod extends MethodOption = {}> = {
     methods: TMethod & OakCommonComponentMethods<ED, T> & OakListComponentMethods<ED, T> & OakSingleComponentMethods<ED, T>;
     data: TData & OakComponentData<ED, T> & (IsList extends true ? OakListComoponetData<ED, T> : {

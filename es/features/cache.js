@@ -4,7 +4,7 @@ import { CacheStore } from '../cacheStore/CacheStore';
 import { OakRowUnexistedException, OakException, OakUserException } from 'oak-domain/lib/types/Exception';
 import { assert } from 'oak-domain/lib/utils/assert';
 import { LOCAL_STORAGE_KEYS } from '../constant/constant';
-import { combineFilters } from 'oak-domain/lib/store/filter';
+import { checkFilterContains, combineFilters } from 'oak-domain/lib/store/filter';
 const DEFAULT_KEEP_FRESH_PERIOD = 600 * 1000; // 10分钟不刷新
 ;
 export class Cache extends Feature {
@@ -20,7 +20,8 @@ export class Cache extends Feature {
     refreshRecords = {};
     context;
     initPromise;
-    constructor(storageSchema, aspectWrapper, frontendContextBuilder, checkers, getFullData, localStorage, savedEntities, keepFreshPeriod) {
+    attrUpdateMatrix;
+    constructor(storageSchema, aspectWrapper, frontendContextBuilder, checkers, getFullData, localStorage, savedEntities, keepFreshPeriod, attrUpdateMatrix) {
         super();
         this.aspectWrapper = aspectWrapper;
         this.syncEventsCallbacks = [];
@@ -29,6 +30,7 @@ export class Cache extends Feature {
         this.savedEntities = ['actionAuth', 'i18n', 'path', ...(savedEntities || [])];
         this.keepFreshPeriod = keepFreshPeriod || DEFAULT_KEEP_FRESH_PERIOD;
         this.localStorage = localStorage;
+        this.attrUpdateMatrix = attrUpdateMatrix;
         checkers.forEach((checker) => this.cacheStore.registerChecker(checker));
         this.getFullDataFn = getFullData;
         // 现在这个init变成了异步行为，不知道有没有影响。by Xc 20231126
@@ -288,17 +290,51 @@ export class Cache extends Feature {
             return err;
         }
     }
-    checkOperation(entity, action, data, filter, checkerTypes) {
+    /**
+     * 根据初始化定义的attrUpdateMatrix，检查当前entity是否支持用action去更新Attrs属性
+     * 返回通过合法性检查的Attrs
+     * @param entity
+     * @param action
+     * @param attrs
+     * @returns
+     */
+    getLegalUpdateAttrs(entity, action, attrs, id) {
+        if (!this.attrUpdateMatrix) {
+            return [...attrs];
+        }
+        const matrix = this.attrUpdateMatrix[entity];
+        if (!matrix) {
+            return [...attrs];
+        }
+        const result = [];
         let autoCommit = false;
         if (!this.context) {
             this.begin();
             autoCommit = true;
         }
-        const operation = {
-            action,
-            filter,
-            data
-        };
+        for (const attr of attrs) {
+            const def = matrix[attr];
+            if (def) {
+                const { actions, filter } = def;
+                if (actions && !actions.includes(action)) {
+                    continue;
+                }
+                if (!filter || checkFilterContains(entity, this.context, filter, { id }, true)) {
+                    result.push(attr);
+                }
+            }
+        }
+        if (autoCommit) {
+            this.rollback();
+        }
+        return result;
+    }
+    checkOperation(entity, operation, checkerTypes) {
+        let autoCommit = false;
+        if (!this.context) {
+            this.begin();
+            autoCommit = true;
+        }
         try {
             this.cacheStore.check(entity, operation, this.context, checkerTypes);
             if (autoCommit) {
@@ -321,7 +357,7 @@ export class Cache extends Feature {
         opers.forEach((oper) => {
             const { entity, operation } = oper;
             this.cacheStore.operate(entity, operation, this.context, {
-                checkerTypes: ['logical'], // 这里不能检查data，不然在数据没填完前会有大量异常
+                checkerTypes: ['logical'],
                 dontCollect: true,
             });
         });

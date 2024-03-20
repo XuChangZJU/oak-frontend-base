@@ -29,6 +29,7 @@ export default OakComponent({
             ) => void;
         },
         hideHeader: false,
+        size: 'large',
     },
     formData({ props }) {
         const { converter } = this.state;
@@ -56,7 +57,7 @@ export default OakComponent({
             const { attributes, entity, data } = this.props;
             const schema = this.features.cache.getSchema();
             const colorDict = this.features.style.getColorDict();
-            assert(!!data, 'data不能为空');
+            // assert(!!data, 'data不能为空');
             assert(!!entity, 'list属性entity不能为空');
             // assert(attributes?.length, 'attributes不能为空');
             const ttt = this.t.bind(this);
@@ -100,7 +101,7 @@ export default OakComponent({
             entity: T2;
             extraActions:
                 | OakExtraActionProps[]
-                | ((row: ED2[T2]['Schema']) => OakExtraActionProps[]);
+                | ((row: RowWithActions<ED2, T2>) => OakExtraActionProps[]);
             onAction: onActionFnDef;
             disabledOp: boolean;
             attributes: OakAbsAttrDef[];
@@ -119,6 +120,7 @@ export default OakComponent({
                 ) => void;
             };
             hideHeader: boolean;
+            size?: 'large' | 'middle' | 'small';
         }
     >
 ) => React.ReactElement;

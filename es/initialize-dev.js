@@ -1,4 +1,4 @@
-import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
+import { makeIntrinsicCTWs } from 'oak-domain/lib/store/IntrinsicLogics';
 import { createDebugStore } from './debugStore';
 import { initializeStep1 as initBasicFeaturesStep1, initializeStep2 as initBasicFeaturesStep2 } from './features';
 import { cloneDeep, intersection } from 'oak-domain/lib/utils/lodash';
@@ -18,18 +18,18 @@ import { registerPorts } from 'oak-common-aspect';
  * @returns
  */
 export function initialize(storageSchema, frontendContextBuilder, backendContextBuilder, aspectDict, triggers, checkers, watchers, timers, startRoutines, initialData, option) {
-    const { actionDict, authDeduceRelationMap, colorDict, importations, exportations, selectFreeEntities, updateFreeDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
+    const { actionDict, authDeduceRelationMap, attrUpdateMatrix, colorDict, importations, exportations, selectFreeEntities, updateFreeDict, cacheKeepFreshPeriod, cacheSavedEntities } = option;
     let intersected = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
     if (intersected.length > 0) {
         throw new Error(`用户定义的aspect中不能和系统aspect同名：「${intersected.join(',')}」`);
     }
     const aspectDict2 = Object.assign({}, aspectDict, commonAspectDict);
-    const { checkers: intCheckers, triggers: intTriggers, watchers: intWatchers } = makeIntrinsicCTWs(storageSchema, actionDict);
+    const { checkers: intCheckers, triggers: intTriggers, watchers: intWatchers } = makeIntrinsicCTWs(storageSchema, actionDict, attrUpdateMatrix);
     const checkers2 = checkers.concat(intCheckers);
     const triggers2 = triggers.concat(intTriggers);
     const watchers2 = watchers.concat(intWatchers);
     const features1 = initBasicFeaturesStep1();
-    const debugStore = createDebugStore(storageSchema, backendContextBuilder, triggers2, checkers2, watchers2, timers, startRoutines, initialData, actionDict, authDeduceRelationMap, (key, data) => features1.localStorage.save(key, data), (key) => features1.localStorage.load(key), selectFreeEntities, updateFreeDict);
+    const debugStore = createDebugStore(storageSchema, backendContextBuilder, triggers2, checkers2, watchers2, timers, startRoutines, initialData, actionDict, authDeduceRelationMap, features1.localStorage, selectFreeEntities, updateFreeDict);
     const wrapper = {
         exec: async (name, params, ignoreContext) => {
             const context = features2.cache.buildContext();

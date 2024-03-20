@@ -1,12 +1,9 @@
 import { Table, Checkbox, Button, Row } from 'antd';
 import { Typography } from 'antd';
-const { Title, Text } = Typography;
 import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { assert } from 'oak-domain/lib/utils/assert';
+import { ED } from '../../../types/AbstractComponent';
 
-type ED = EntityDict & BaseEntityDict;
+const { Title, Text } = Typography;
 
 export default function render(
     props: WebComponentProps<

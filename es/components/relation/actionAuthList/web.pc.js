@@ -4,7 +4,7 @@ import { Typography } from 'antd';
 const { Title, Text } = Typography;
 export default function render(props) {
     const { data, methods } = props;
-    const { rows, relations, actions, path, entity, openTip, oakExecutable, onClose } = data;
+    const { rows, relations, actions, path, entity, openTip, oakExecutable, onClose, } = data;
     const [datasource, setDatasource] = useState([]);
     useEffect(() => {
         const tableRows = relations.map((ele) => ({

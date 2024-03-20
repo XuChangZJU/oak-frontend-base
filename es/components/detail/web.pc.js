@@ -26,7 +26,7 @@ function RenderRow(props) {
 export default function Render(props) {
     const { methods, data: oakData } = props;
     const { t } = methods;
-    const { entity, title, colorDict, bordered, column, renderData, layout = "horizontal", judgeAttributes, data, } = oakData;
+    const { entity, title, colorDict, bordered, column, renderData, layout = 'horizontal', judgeAttributes, data, } = oakData;
     return (<Descriptions title={title} column={column} bordered={bordered} layout={layout}>
             {judgeAttributes?.map((ele) => {
             let renderValue = getValue(data, ele.path, ele.entity, ele.attr, ele.attrType, t);
@@ -36,7 +36,9 @@ export default function Render(props) {
                 renderValue = t('not_filled_in');
             }
             const stateValue = get(data, ele.path);
-            const color = colorDict && colorDict[ele.entity]?.[ele.attr]?.[stateValue] || 'default';
+            const color = (colorDict &&
+                colorDict[ele.entity]?.[ele.attr]?.[stateValue]) ||
+                'default';
             return (<Descriptions.Item label={renderLabel} span={ele.attribute.span || 1}>
                         <RenderRow type={renderType} value={renderValue} color={color}/>
                     </Descriptions.Item>);

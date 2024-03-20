@@ -4,7 +4,7 @@ import { CHECKER_PRIORITY_MAP } from 'oak-domain/lib/types';
 import { translateCheckerInSyncContext } from 'oak-domain/lib/store/checker';
 import { checkFilterRepel } from 'oak-domain/lib/store/filter';
 export default class SyncTriggerExecutor {
-    static All_Checker_Types = ['data', 'logical', 'logicalRelation', 'relation', 'row'];
+    static All_Checker_Types = ['data', 'logical', 'row'];
     checkerMap = {};
     addToCheckerMap(action, entity, priority, when, fn, type, filter) {
         if (this.checkerMap[entity] && this.checkerMap[entity][action]) {
@@ -48,9 +48,9 @@ export default class SyncTriggerExecutor {
             });
         }
     }
-    registerChecker(checker) {
+    registerChecker(checker, schema) {
         let { entity, action, priority, type, conditionalFilter } = checker;
-        const { fn, when } = translateCheckerInSyncContext(checker);
+        const { fn, when } = translateCheckerInSyncContext(checker, schema);
         if (action instanceof Array) {
             action.forEach(a => this.addToCheckerMap(a, entity, priority || CHECKER_PRIORITY_MAP[type], when, fn, type, conditionalFilter));
         }

@@ -98,13 +98,13 @@ export class ContextMenuFactory extends Feature {
                             // action有一个满足就行了
                             const checkResult = this.relationAuth.checkRelation(destEntity, {
                                 action: action[i],
-                                data: undefined,
                                 filter,
                             }) &&
-                                this.cache.checkOperation(destEntity, action[i], undefined, filter, [
+                                this.cache.checkOperation(destEntity, {
+                                    action: action[i],
+                                    filter: filter,
+                                }, [
                                     'logical',
-                                    'relation',
-                                    'logicalRelation',
                                     'row',
                                 ]);
                             if (checkResult) {
@@ -116,13 +116,13 @@ export class ContextMenuFactory extends Feature {
                     }
                     return (this.relationAuth.checkRelation(destEntity, {
                         action,
-                        data: undefined,
                         filter,
                     }) &&
-                        this.cache.checkOperation(destEntity, action, undefined, filter, [
+                        this.cache.checkOperation(destEntity, {
+                            action,
+                            filter: filter,
+                        }, [
                             'logical',
-                            'relation',
-                            'logicalRelation',
                             'row',
                         ]));
                 });

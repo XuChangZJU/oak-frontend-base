@@ -6,7 +6,7 @@ export default function Render(props) {
     const { methods, data: oakData } = props;
     const { value, type, color, linkUrl } = oakData;
     if (value === null || value === '' || value === undefined) {
-        return (<>--</>);
+        return <>--</>;
     }
     // 属性类型是enum要使用标签
     else if (type === 'enum') {
@@ -18,9 +18,7 @@ export default function Render(props) {
         if (renderColor === 'danger') {
             renderColor = 'error';
         }
-        return (<Tag color={renderColor}>
-                {value}
-            </Tag>);
+        return <Tag color={renderColor}>{value}</Tag>;
     }
     else if (type === 'image') {
         if (value instanceof Array) {
@@ -28,7 +26,7 @@ export default function Render(props) {
                     {value.map((ele) => (<ImgBox src={ele} width={120} height={70}/>))}
                 </Space>);
         }
-        return (<ImgBox src={value} width={120} height={70}/>);
+        return <ImgBox src={value} width={120} height={70}/>;
     }
     else if (type === 'link') {
         let href = linkUrl;
@@ -39,15 +37,11 @@ export default function Render(props) {
                     if (linkUrl) {
                         href = linkUrl;
                     }
-                    return (<Link href={href}>
-                                {ele}
-                            </Link>);
+                    return <Link href={href}>{ele}</Link>;
                 })}
                 </Space>);
         }
-        return (<Link href={href}>
-                {value}
-            </Link>);
+        return <Link href={href}>{value}</Link>;
     }
     return (<Tooltip placement="topLeft" title={value}>
             {value}

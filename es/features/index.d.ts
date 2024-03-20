@@ -1,4 +1,4 @@
-import { Aspect, AspectWrapper, AuthDeduceRelationMap, Checker, EntityDict } from 'oak-domain/lib/types';
+import { Aspect, AspectWrapper, AttrUpdateMatrix, AuthDeduceRelationMap, Checker, EntityDict } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { CommonAspectDict } from 'oak-common-aspect';
@@ -27,7 +27,7 @@ export declare function initializeStep2<ED extends EntityDict & BaseEntityDict, 
     path: string;
 }>, makeBridgeUrlFn?: (url: string, headers?: Record<string, string>) => string, selectFreeEntities?: (keyof ED)[], updateFreeDict?: {
     [A in keyof ED]?: string[];
-}, savedEntities?: (keyof ED)[], keepFreshPeriod?: number): {
+}, savedEntities?: (keyof ED)[], keepFreshPeriod?: number, attrUpdateMatrix?: AttrUpdateMatrix<ED>): {
     cache: Cache<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;
     runningTree: RunningTree<ED, Cxt, FrontCxt, AD & CommonAspectDict<ED, Cxt>>;

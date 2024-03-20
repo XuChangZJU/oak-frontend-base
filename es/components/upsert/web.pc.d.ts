@@ -1,9 +1,6 @@
 import React from 'react';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { AttrUpsertRender } from '../../types/AbstractComponent';
+import { AttrUpsertRender, ED } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
-type ED = EntityDict & BaseEntityDict;
 export default function render<T extends keyof ED>(props: WebComponentProps<ED, T, false, {
     entity: keyof ED;
     renderData: AttrUpsertRender<ED, T>[];
@@ -11,4 +8,3 @@ export default function render<T extends keyof ED>(props: WebComponentProps<ED, 
     layout?: 'horizontal' | 'vertical';
     children: any;
 }>): React.JSX.Element;
-export {};

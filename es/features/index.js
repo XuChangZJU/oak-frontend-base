@@ -14,9 +14,9 @@ import { Style } from './style';
 import { SubScriber } from './subscriber';
 import { ContextMenuFactory } from './contextMenuFactory';
 import { Geo } from './geo';
-export function initializeStep2(features, aspectWrapper, storageSchema, frontendContextBuilder, checkers, authDeduceRelationMap, colorDict, getFullDataFn, getSubscribePointFn, makeBridgeUrlFn, selectFreeEntities, updateFreeDict, savedEntities, keepFreshPeriod) {
+export function initializeStep2(features, aspectWrapper, storageSchema, frontendContextBuilder, checkers, authDeduceRelationMap, colorDict, getFullDataFn, getSubscribePointFn, makeBridgeUrlFn, selectFreeEntities, updateFreeDict, savedEntities, keepFreshPeriod, attrUpdateMatrix) {
     const { localStorage, environment, message } = features;
-    const cache = new Cache(storageSchema, aspectWrapper, frontendContextBuilder, checkers, getFullDataFn, localStorage, savedEntities, keepFreshPeriod);
+    const cache = new Cache(storageSchema, aspectWrapper, frontendContextBuilder, checkers, getFullDataFn, localStorage, savedEntities, keepFreshPeriod, attrUpdateMatrix);
     const relationAuth = new RelationAuth(cache, authDeduceRelationMap, selectFreeEntities, updateFreeDict);
     const runningTree = new RunningTree(cache, storageSchema, relationAuth);
     const geo = new Geo(aspectWrapper);

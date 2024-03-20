@@ -72,11 +72,16 @@ export class Navigator extends Feature {
     }
     constructNamespace(url, namespace) {
         if (namespace) {
+            // url传入空字符串，经过urlParse处理后，pathname返回"/"
             const urlParse = this.urlParse(url);
             const { pathname } = urlParse;
             let pathname2 = pathname;
             if (namespace === '/') {
                 pathname2 = pathname;
+            }
+            else if (pathname === '/') {
+                // 出现这个情况 直接返回根路由
+                pathname2 = namespace;
             }
             else if (pathname === namespace) {
                 pathname2 = pathname;

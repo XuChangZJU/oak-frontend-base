@@ -1,8 +1,6 @@
 /// <reference types="react" />
 import { WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-type ED = EntityDict & BaseEntityDict;
+import { ED } from '../../../types/AbstractComponent';
 export default function render(props: WebComponentProps<ED, 'relationAuth', true, {
     entity: string;
     relationName: string;
@@ -16,4 +14,3 @@ export default function render(props: WebComponentProps<ED, 'relationAuth', true
     onChange: (relationId: string, checked: boolean, relationAuthId?: string, path?: string) => void;
     confirm: () => void;
 }>): import("react").JSX.Element;
-export {};

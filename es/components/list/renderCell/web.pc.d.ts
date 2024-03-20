@@ -1,9 +1,7 @@
 import React from 'react';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { WebComponentProps } from '../../../types/Page';
-import { OakAbsDerivedAttrDef } from '../../../types/AbstractComponent';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-export default function Render(props: WebComponentProps<EntityDict & BaseEntityDict, keyof EntityDict, false, {
+import { OakAbsDerivedAttrDef, ED } from '../../../types/AbstractComponent';
+export default function Render(props: WebComponentProps<ED, keyof ED, false, {
     value: string | string[];
     type: OakAbsDerivedAttrDef['type'];
     color: string;

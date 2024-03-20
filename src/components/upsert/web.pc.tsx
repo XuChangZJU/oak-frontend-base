@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+
 import {
     Form,
     Input,
@@ -19,13 +18,13 @@ import {
     AttrUpsertRender,
     OakAbsRefAttrPickerRender,
     OakAbsNativeAttrUpsertRender,
+    ED,
 } from '../../types/AbstractComponent';
 import { WebComponentProps } from '../../types/Page';
 import RefAttr from '../refAttr';
 import Location, { Poi } from '../map/location';
 import Map from '../map/map';
 
-type ED = EntityDict & BaseEntityDict;
 function makeAttrInput<T extends keyof ED>(
     attrRender: AttrUpsertRender<ED, T>,
     onValueChange: (value: any, extra?: Record<string, any>) => void,

@@ -6,10 +6,10 @@ import { generateNewIdAsync } from 'oak-domain/lib/utils/uuid';
 async function initDataInStore(store, initialData, stat) {
     store.resetInitialData(initialData, stat);
 }
-async function getMaterializedData(loadFn) {
+async function getMaterializedData(localStorage) {
     try {
-        const data = await loadFn(LOCAL_STORAGE_KEYS.debugStore);
-        const stat = await loadFn(LOCAL_STORAGE_KEYS.debugStoreStat);
+        const data = await localStorage.load(LOCAL_STORAGE_KEYS.debugStore);
+        const stat = await localStorage.load(LOCAL_STORAGE_KEYS.debugStoreStat);
         if (data && stat) {
             return {
                 data,
@@ -23,49 +23,15 @@ async function getMaterializedData(loadFn) {
     }
 }
 let lastMaterializedVersion = 0;
-async function materializeData(data, stat, saveFn) {
+async function materializeData(data, stat, localStorage) {
     try {
-        await saveFn(LOCAL_STORAGE_KEYS.debugStore, data);
-        await saveFn(LOCAL_STORAGE_KEYS.debugStoreStat, stat);
+        await localStorage.save(LOCAL_STORAGE_KEYS.debugStore, data);
+        await localStorage.save(LOCAL_STORAGE_KEYS.debugStoreStat, stat);
         lastMaterializedVersion = stat.commit;
         console.log('物化数据', data);
     }
     catch (e) {
         console.error(e);
-    }
-}
-export function clearMaterializedData() {
-    if (process.env.OAK_PLATFORM === 'wechatMp') {
-        try {
-            wx.removeStorageSync(LOCAL_STORAGE_KEYS.debugStore);
-            wx.removeStorageSync(LOCAL_STORAGE_KEYS.debugStoreStat);
-            lastMaterializedVersion = 0;
-            wx.showToast({
-                title: '数据已清除',
-                icon: 'success',
-            });
-            console.log('清空数据');
-        }
-        catch (e) {
-            console.error(e);
-            wx.showToast({
-                title: '清空数据失败',
-                icon: 'error',
-            });
-        }
-    }
-    else if (process.env.OAK_PLATFORM === 'web') {
-        try {
-            window.localStorage.removeItem(LOCAL_STORAGE_KEYS.debugStore);
-            window.localStorage.removeItem(LOCAL_STORAGE_KEYS.debugStoreStat);
-            lastMaterializedVersion = 0;
-            console.log('清空数据');
-            // alert('数据已物化');
-        }
-        catch (e) {
-            console.error(e);
-            // alert('物化数据失败');
-        }
     }
 }
 async function execWatcher(store, watcher, context) {
@@ -197,14 +163,14 @@ async function doRoutines(store, contextBuilder, routines) {
         }
     }
 }
-export function createDebugStore(storageSchema, contextBuilder, triggers, checkers, watchers, timers, startRoutines, initialData, actionDict, authDeduceRelationMap, saveFn, loadFn, selectFreeEntities, updateFreeDict) {
+export function createDebugStore(storageSchema, contextBuilder, triggers, checkers, watchers, timers, startRoutines, initialData, actionDict, authDeduceRelationMap, localStorage, selectFreeEntities, updateFreeDict) {
     const store = new DebugStore(storageSchema, contextBuilder, authDeduceRelationMap, selectFreeEntities, updateFreeDict);
     triggers.forEach(ele => store.registerTrigger(ele));
     checkers.forEach(ele => store.registerChecker(ele));
     assert(actionDict);
     // 如果没有物化数据则使用initialData初始化debugStore
     const loadInitialData = async () => {
-        const data = await getMaterializedData(loadFn);
+        const data = await getMaterializedData(localStorage);
         if (!data) {
             initDataInStore(store, initialData);
             console.log('使用初始化数据建立debugStore', initialData);
@@ -227,7 +193,7 @@ export function createDebugStore(storageSchema, contextBuilder, triggers, checke
         if (Object.keys(result).length > 0) {
             const stat = store.getStat();
             const data = store.getCurrentData();
-            await materializeData(data, stat, saveFn);
+            await materializeData(data, stat, localStorage);
         }
     });
     // 启动watcher

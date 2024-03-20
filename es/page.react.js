@@ -174,21 +174,27 @@ class OakComponentBase extends React.PureComponent {
             : this.state.oakFullpath;
         return this.features.runningTree.getFreshValue(path2);
     }
-    checkOperation(entity, action, data, filter, checkerTypes) {
+    checkOperation(entity, operation, checkerTypes) {
         if (checkerTypes?.includes('relation')) {
-            return this.features.relationAuth.checkRelation(entity, {
-                action,
-                data,
-                filter,
-            }) && this.features.cache.checkOperation(entity, action, data, filter, checkerTypes);
+            return this.features.relationAuth.checkRelation(entity, operation) && this.features.cache.checkOperation(entity, operation, checkerTypes);
         }
-        return this.features.cache.checkOperation(entity, action, data, filter, checkerTypes);
+        return this.features.cache.checkOperation(entity, operation, checkerTypes);
     }
     tryExecute(path) {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        return this.features.runningTree.tryExecute(path2);
+        const operations = this.features.runningTree.getOperations(path2);
+        if (operations) {
+            for (const oper of operations) {
+                const { entity, operation } = oper;
+                if (!this.checkOperation(entity, operation)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
     getOperations(path) {
         const path2 = path
@@ -202,8 +208,11 @@ class OakComponentBase extends React.PureComponent {
     loadMore() {
         return loadMore.call(this);
     }
-    setId(id) {
-        return this.features.runningTree.setId(this.state.oakFullpath, id);
+    setId(id, path) {
+        const path2 = path
+            ? `${this.state.oakFullpath}.${path}`
+            : this.state.oakFullpath;
+        return this.features.runningTree.setId(path2, id);
     }
     unsetId() {
         return this.features.runningTree.unsetId(this.state.oakFullpath);
@@ -436,8 +445,8 @@ export function createComponent(option, features) {
                 clean: (path) => {
                     return this.clean(path);
                 },
-                checkOperation: (entity, action, data, filter, checkerTypes) => {
-                    return this.checkOperation(entity, action, data, filter, checkerTypes);
+                checkOperation: (entity, operation, checkerTypes) => {
+                    return this.checkOperation(entity, operation, checkerTypes);
                 }
             };
             Object.assign(methodProps, {
@@ -504,6 +513,9 @@ export function createComponent(option, features) {
                 setId: (id) => {
                     return this.setId(id);
                 },
+                getId: (id) => {
+                    return this.getId();
+                },
                 unsetId: () => {
                     return this.unsetId();
                 }
@@ -520,7 +532,9 @@ export function createComponent(option, features) {
                 },
                 isCreation: (path) => {
                     return this.isCreation(path);
-                }
+                },
+                getId: (path) => this.getId(path),
+                setId: (id, path) => this.setId(id, path)
             });
             if (methods) {
                 for (const m in methods) {

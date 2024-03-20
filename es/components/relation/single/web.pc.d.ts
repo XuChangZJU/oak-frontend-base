@@ -1,8 +1,6 @@
-/// <reference types="react" />
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import React from 'react';
 import { WebComponentProps } from '../../../types/Page';
-type ED = EntityDict & BaseEntityDict;
+import { ED } from '../../../types/AbstractComponent';
 export default function render(props: WebComponentProps<ED, keyof ED, false, {
     entity: keyof ED;
     entityDNode: string[];
@@ -11,5 +9,4 @@ export default function render(props: WebComponentProps<ED, keyof ED, false, {
     getNodes: (entity: keyof ED) => void;
     checkSelectRelation: () => boolean;
     resolveP: (path: string) => string;
-}>): import("react").JSX.Element;
-export {};
+}>): React.JSX.Element;

@@ -10,9 +10,9 @@ import {
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { EntityDict, OpRecord, SubDataDef } from 'oak-domain/lib/types/Entity';
-import { makeIntrinsicCTWs } from 'oak-domain/lib/store/actionDef';
+import { makeIntrinsicCTWs } from 'oak-domain/lib/store/IntrinsicLogics';
 
-import { createDebugStore, clearMaterializedData } from './debugStore';
+import { createDebugStore } from './debugStore';
 
 import { initializeStep1 as initBasicFeaturesStep1, initializeStep2 as initBasicFeaturesStep2 } from './features';
 import { cloneDeep, intersection } from 'oak-domain/lib/utils/lodash';
@@ -57,7 +57,7 @@ export function initialize<
     },
     option: InitializeOptions<ED, Cxt>
 ) {
-    const { actionDict, authDeduceRelationMap,
+    const { actionDict, authDeduceRelationMap, attrUpdateMatrix,
         colorDict, importations, exportations, selectFreeEntities, updateFreeDict,
         cacheKeepFreshPeriod, cacheSavedEntities } = option;
     let intersected = intersection(Object.keys(commonAspectDict), Object.keys(aspectDict));
@@ -67,7 +67,7 @@ export function initialize<
         );
     }
     const aspectDict2 = Object.assign({}, aspectDict, commonAspectDict);
-    const { checkers: intCheckers, triggers: intTriggers, watchers: intWatchers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict);
+    const { checkers: intCheckers, triggers: intTriggers, watchers: intWatchers } = makeIntrinsicCTWs<ED, Cxt, FrontCxt>(storageSchema, actionDict, attrUpdateMatrix);
     const checkers2 = checkers.concat(intCheckers);
     const triggers2 = triggers.concat(intTriggers);
     const watchers2 = watchers.concat(intWatchers);
@@ -85,8 +85,7 @@ export function initialize<
         initialData,
         actionDict,
         authDeduceRelationMap,
-        (key, data) => features1.localStorage.save(key, data),
-        (key) => features1.localStorage.load(key),
+        features1.localStorage,
         selectFreeEntities,
         updateFreeDict
     );

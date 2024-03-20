@@ -1,3 +1,4 @@
+import React from 'react';
 import { Table, Checkbox, Button, Row } from 'antd';
 import { Typography } from 'antd';
 const { Title, Text } = Typography;

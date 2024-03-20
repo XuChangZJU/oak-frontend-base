@@ -117,7 +117,7 @@ export class DebugStore extends TreeStore {
         this.executor.registerTrigger(trigger);
     }
     registerChecker(checker) {
-        this.executor.registerChecker(checker);
+        this.executor.registerChecker(checker, this.getSchema());
     }
     resetInitialData(initialData, stat) {
         super.resetInitialData(initialData, stat);

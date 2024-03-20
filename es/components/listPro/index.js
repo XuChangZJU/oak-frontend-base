@@ -15,7 +15,7 @@ export const TableContext = createContext({
     onReset: undefined,
 });
 const ProList = (props) => {
-    const { buttonGroup, entity, extraActions, onAction, disabledOp, attributes, data, loading, tablePagination, rowSelection, onReload, disableSerialNumber, title, hideDefaultButtons = false, extraContent, } = props;
+    const { buttonGroup, entity, extraActions, onAction, disabledOp, attributes, data, loading, tablePagination, rowSelection, onReload, disableSerialNumber, title, hideDefaultButtons = false, extraContent, size = 'large', } = props;
     const features = useFeatures();
     const [tableAttributes, setTableAttributes] = useState([]);
     const [schema, setSchema] = useState(undefined);
@@ -82,7 +82,7 @@ const ProList = (props) => {
                 }
                 return ele;
             })
-            : data} loading={loading} tablePagination={Object.assign({
+            : data} loading={loading} size={size} tablePagination={Object.assign({
             showTotal,
         }, tablePagination)} rowSelection={rowSelection}/>
             </div>

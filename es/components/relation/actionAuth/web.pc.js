@@ -1,6 +1,6 @@
-import { Table, Checkbox, Button, Row, Typography, Space } from 'antd';
-const { Title, Text } = Typography;
+import { Table, Checkbox, Button, Row, Space, } from 'antd';
 import { difference, intersection } from 'oak-domain/lib/utils/lodash';
+import React from 'react';
 import ActionAuthListSingle from '../../relation/single';
 export default function render(props) {
     const { cascadeEntityActions, oakDirty, actions, entity, actionAuthList } = props.data;
@@ -28,7 +28,10 @@ export default function render(props) {
                             return ele;
                         }
                         else {
-                            return <><br />{ele}</>;
+                            return (<>
+                                            <br />
+                                            {ele}
+                                        </>);
                         }
                     });
                 },
@@ -91,29 +94,34 @@ export default function render(props) {
                                     {relationSelections.map((ele) => {
                             let checked = false, indeterminate = false;
                             if (actions && actions.length > 0) {
-                                const relation = relations.find((ele2) => ele2.relationId === ele.id && !ele2.$$deleteAt$$);
+                                const relation = relations.find((ele2) => ele2.relationId ===
+                                    ele.id &&
+                                    !ele2.$$deleteAt$$);
                                 if (relation) {
                                     const { deActions } = relation;
-                                    checked = difference(actions, deActions).length === 0;
-                                    indeterminate = !checked && intersection(actions, deActions).length > 0;
+                                    checked =
+                                        difference(actions, deActions).length === 0;
+                                    indeterminate =
+                                        !checked &&
+                                            intersection(actions, deActions).length > 0;
                                 }
                             }
-                            return <Checkbox disabled={actions.length === 0} checked={checked} indeterminate={indeterminate} onChange={({ target }) => {
+                            return (<Checkbox disabled={actions.length === 0} checked={checked} indeterminate={indeterminate} onChange={({ target }) => {
                                     onChange2(target.checked, ele.id, record.paths, relations);
                                 }}>
-                                                    {ele.name}
-                                                </Checkbox>;
+                                                {ele.name}
+                                            </Checkbox>);
                         })}
                                 </div>);
-                }
-            }
+                },
+            },
         ]} dataSource={actionAuthList} pagination={false}/>
             <Row justify="end" style={{ marginTop: 20, padding: 5 }}>
-                <Button style={{ marginRight: 10 }} type='primary' disabled={!oakDirty} onClick={() => confirm()}>
-                    {t("confirm")}
+                <Button style={{ marginRight: 10 }} type="primary" disabled={!oakDirty} onClick={() => confirm()}>
+                    {t('confirm')}
                 </Button>
                 <Button disabled={!oakDirty} onClick={() => clean()}>
-                    {t("reset")}
+                    {t('reset')}
                 </Button>
             </Row>
         </Space>);

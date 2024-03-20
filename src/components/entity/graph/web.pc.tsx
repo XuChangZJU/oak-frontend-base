@@ -1,13 +1,12 @@
-import { RowWithActions, WebComponentProps } from '../../../types/Page';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import React, { useState } from 'react';
+
 import { Row, Switch, Col, Input, Form } from 'antd';
 import ReactEcharts from 'echarts-for-react';
-import { useState } from 'react';
 import { uniq } from 'oak-domain/lib/utils/lodash';
-import Styles from './web.pc.module.less';
+import { ED } from '../../../types/AbstractComponent';
+import { RowWithActions, WebComponentProps } from '../../../types/Page';
 
-type ED = EntityDict & BaseEntityDict;
+import Styles from './web.pc.module.less';
 
 export default function render(
     props: WebComponentProps<
@@ -15,8 +14,8 @@ export default function render(
         keyof ED,
         true,
         {
-            data: Array<{ name: string, x?: number, y?: number }>;
-            links: Array<{ source: string, target: string }>;
+            data: Array<{ name: string; x?: number; y?: number }>;
+            links: Array<{ source: string; target: string }>;
         },
         {
             onEntityClicked: (entity: string) => void;
@@ -34,35 +33,38 @@ export default function render(
 
     if (keywords) {
         if (!strict) {
-            links2 = links.filter(
-                ele => {
-                    if (keywords.find(k => ele.source.includes(k) || ele.target.includes(k))) {
-                        return true;
-                    }
-                    return false;
+            links2 = links.filter((ele) => {
+                if (
+                    keywords.find(
+                        (k) => ele.source.includes(k) || ele.target.includes(k)
+                    )
+                ) {
+                    return true;
                 }
-            );
-            data2 = uniq(links2.map(ele => ele.source).concat(links2.map(ele => ele.target))).map(
-                ele => ({ name: ele })
-            );
-        }
-        else {
-            links2 = links.filter(
-                ele => {
-                    if (keywords.find(k => ele.source.includes(k) && ele.target.includes(k))) {
-                        return true;
-                    }
-                    return false;
+                return false;
+            });
+            data2 = uniq(
+                links2
+                    .map((ele) => ele.source)
+                    .concat(links2.map((ele) => ele.target))
+            ).map((ele) => ({ name: ele }));
+        } else {
+            links2 = links.filter((ele) => {
+                if (
+                    keywords.find(
+                        (k) => ele.source.includes(k) && ele.target.includes(k)
+                    )
+                ) {
+                    return true;
                 }
-            );
-            data2 = data.filter(
-                ele => {
-                    if (keywords.find(k => ele.name.includes(k))) {
-                        return true;
-                    }
-                    return false;
+                return false;
+            });
+            data2 = data.filter((ele) => {
+                if (keywords.find((k) => ele.name.includes(k))) {
+                    return true;
                 }
-            );
+                return false;
+            });
         }
     }
 
@@ -73,19 +75,17 @@ export default function render(
                     margin: 20,
                 }}
             >
-                <Form.Item
-                    label="filter"
-                >
+                <Form.Item label="filter">
                     <>
                         <Input
-                            onChange={({ currentTarget }) => setSearch(currentTarget.value)}
+                            onChange={({ currentTarget }) =>
+                                setSearch(currentTarget.value)
+                            }
                             allowClear
                         />
                     </>
                 </Form.Item>
-                <Form.Item
-                    label="strict mode"
-                >
+                <Form.Item label="strict mode">
                     <>
                         <Switch
                             checked={strict}
@@ -106,17 +106,17 @@ export default function render(
                                 initLayout: 'circular',
                                 gravity: 0,
                                 repulsion: [10, 80],
-                                edgeLength: [10, 50]
+                                edgeLength: [10, 50],
                             },
                             data: data2,
                             links: links2,
                             lineStyle: {
                                 opacity: 0.9,
                                 width: 2,
-                                curveness: 0
+                                curveness: 0,
                             },
                             label: {
-                                show: true
+                                show: true,
                             },
                             autoCurveness: true,
                             roam: true,
@@ -130,9 +130,9 @@ export default function render(
                                 },
                                 focus: 'adjacency',
                                 lineStyle: {
-                                    width: 10
-                                }
-                            }
+                                    width: 10,
+                                },
+                            },
                         },
                     ],
                 }}

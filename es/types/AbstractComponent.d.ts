@@ -1,8 +1,13 @@
 /// <reference types="react" />
 import { EntityDict } from 'oak-domain/lib/types/Entity';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
+import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
 import { ButtonProps } from 'antd';
+import { ActionDef } from './Page';
+export type ED = BaseEntityDict & EntityDict;
 export type RenderWidth = 1 | 2 | 3 | 4;
+export type RenderAlign = 'left' | 'right' | 'center';
+export type RenderFixed = 'left' | 'right';
 export type OakActionBtnProps = {
     label: string;
     action: string;
@@ -27,9 +32,11 @@ export type OakAbsDerivedAttrDef = {
     label: string;
     width?: number;
     span?: number;
-    type?: 'image' | 'link' | DataType | 'ref';
+    type?: 'image' | 'link' | 'ref' | DataType;
     linkUrl?: string;
-    render?: (row: any) => React.ReactNode | undefined;
+    render?: (row: any) => React.ReactNode;
+    fixed?: RenderFixed;
+    align?: RenderAlign;
 };
 export type OakAbsAttrDef = string | OakAbsDerivedAttrDef;
 export type OakAbsAttrJudgeDef = {
@@ -44,20 +51,20 @@ export type CardDef = {
     state?: string | React.ReactNode;
     rows: OakAbsAttrDef[];
 };
-export interface OakAbsRefAttrPickerDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED> {
+export interface OakAbsRefAttrPickerDef<ED2 extends ED, T extends keyof ED2> {
     type: 'ref';
     mode: 'select' | 'list' | 'radio';
     attr: string;
     entity: T;
-    projection: ED[T]['Selection']['data'];
-    title: (row: Partial<ED[T]['Schema']>) => string;
+    projection: ED2[T]['Selection']['data'];
+    title: (row: Partial<ED2[T]['Schema']>) => string;
     titleLabel?: string;
-    filter?: ED[T]['Selection']['filter'];
-    sorter?: ED[T]['Selection']['sorter'];
+    filter?: ED2[T]['Selection']['filter'];
+    sorter?: ED2[T]['Selection']['sorter'];
     getDynamicSelectors?: () => Promise<{
-        filter?: ED[T]['Selection']['filter'];
-        sorter?: ED[T]['Selection']['sorter'];
-        projection?: ED[T]['Selection']['data'];
+        filter?: ED2[T]['Selection']['filter'];
+        sorter?: ED2[T]['Selection']['sorter'];
+        projection?: ED2[T]['Selection']['data'];
     }>;
     count?: number;
     label?: string;
@@ -90,7 +97,6 @@ export interface OakAbsNativeAttrUpsertDef<ED extends EntityDict & BaseEntityDic
     allowNull?: boolean;
 }
 export type OakAbsAttrUpsertDef<ED extends EntityDict & BaseEntityDict, T extends keyof ED, T2 extends keyof ED = keyof ED> = OakAbsGeoAttrUpsertDef | OakAbsRefAttrPickerDef<ED, T2> | keyof ED[T]['OpSchema'] | OakAbsNativeAttrUpsertDef<ED, T, keyof ED[T]['OpSchema']>;
-import { DataType, DataTypeParams } from 'oak-domain/lib/types/schema/DataTypes';
 export type AttrRender = {
     label: string;
     value: any;
@@ -122,12 +128,14 @@ export type ColumnDefProps = {
 export type DataTransformer = (data: object) => AttrRender[];
 export type DataUpsertTransformer<ED extends EntityDict & BaseEntityDict, T extends keyof ED> = (data: object) => AttrUpsertRender<ED, T>[];
 export type DataConverter = (data: any[]) => Record<string, any>;
-export type ED = BaseEntityDict & EntityDict;
 export type CascadeActionProps = {
     path: string;
     action: string;
 };
 export type onActionFnDef = (row: any, action: string, cascadeAction?: CascadeActionProps) => void;
+export type CascadeActionDef = {
+    [K in keyof ED[keyof EntityDict]['Schema']]?: ActionDef<ED, keyof ED>[];
+};
 export type ListButtonProps = {
     label: string;
     show?: boolean;

@@ -5,12 +5,10 @@ import {
 import { ActionDef, WebComponentProps } from '../../types/Page';
 import { ED } from '../../types/AbstractComponent';
 
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-
 export default function Render(
     props: WebComponentProps<
         ED,
-        keyof EntityDict,
+        keyof ED,
         false,
         {
             searchValue: string;
@@ -24,13 +22,17 @@ export default function Render(
     >
 ) {
     const { methods, data } = props;
-    const { t, searchChange, searchConfirm, searchClear} = methods;
-    const {
-        searchValue,
-        placeholder = '请输入'
-    } = data;
-    
+    const { t, searchChange, searchConfirm, searchClear } = methods;
+    const { searchValue, placeholder = '请输入' } = data;
+
     return (
-        <SearchBar value={searchValue} placeholder={placeholder} showCancelButton onChange={searchChange} onSearch={searchConfirm} onClear={() => searchClear()} />
+        <SearchBar
+            value={searchValue}
+            placeholder={placeholder}
+            showCancelButton
+            onChange={searchChange}
+            onSearch={searchConfirm}
+            onClear={() => searchClear()}
+        />
     );
 }

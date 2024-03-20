@@ -1,25 +1,24 @@
 import React from 'react';
 import { TableProps } from 'antd';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
-import { WebComponentProps } from '../../types/Page';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { ColorDict } from 'oak-domain/lib/types/Style';
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
-import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, OakAbsAttrJudgeDef } from '../../types/AbstractComponent';
-export default function Render(props: WebComponentProps<EntityDict & BaseEntityDict, keyof EntityDict, false, {
+import { OakAbsAttrDef, onActionFnDef, OakExtraActionProps, OakAbsAttrJudgeDef, ED } from '../../types/AbstractComponent';
+import { WebComponentProps } from '../../types/Page';
+export default function Render(props: WebComponentProps<ED, keyof ED, false, {
     width: 'xl' | 'lg' | 'md' | 'sm' | 'xs';
     loading: boolean;
     extraActions: OakExtraActionProps[] | ((row: any) => OakExtraActionProps[]);
     entity: string;
-    schema: StorageSchema<EntityDict & BaseEntityDict>;
+    schema: StorageSchema<ED>;
     attributes: OakAbsAttrDef[];
     data: any[];
     disabledOp: boolean;
-    colorDict: ColorDict<EntityDict & BaseEntityDict>;
+    colorDict: ColorDict<ED>;
     tablePagination?: TableProps<any[]>['pagination'];
     onAction?: onActionFnDef;
     rowSelection?: TableProps<any[]>['rowSelection'];
     i18n: any;
     hideHeader?: boolean;
     judgeAttributes: OakAbsAttrJudgeDef[];
+    size?: 'large' | 'middle' | 'small';
 }, {}>): React.JSX.Element;

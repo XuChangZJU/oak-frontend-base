@@ -299,7 +299,6 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     removeNamedSorter<T extends keyof ED>(path: string, sorter: NamedSorterItem<ED, T>, refresh?: boolean): void;
     removeNamedSorterByName(path: string, name: string, refresh?: boolean): void;
     getIntrinsticFilters(path: string): ED[keyof ED]["Selection"]["filter"] | undefined;
-    tryExecute(path: string): boolean | Error;
     getOperations(path: string): {
         entity: keyof ED;
         operation: ED[keyof ED]["Operation"];

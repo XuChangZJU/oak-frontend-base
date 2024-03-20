@@ -1,12 +1,15 @@
 import React, { useEffect } from 'react';
 import { Space, Button } from 'antd';
-import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { EntityDict } from 'oak-domain/lib/types/Entity';
+
 import { StorageSchema } from 'oak-domain/lib/types/Storage';
 
 import { ActionDef, WebComponentProps } from '../../types/Page';
-import { ED, OakExtraActionProps } from '../../types/AbstractComponent';
-import { CascadeActionProps } from '../../types/AbstractComponent';
+import {
+    ED,
+    OakExtraActionProps,
+    CascadeActionProps,
+    CascadeActionDef,
+} from '../../types/AbstractComponent';
 import Style from './web.module.less';
 
 type Item = {
@@ -38,24 +41,28 @@ function ItemComponent(
 }
 
 
-type CascadeActionDef = {
-    [K in keyof EntityDict[keyof EntityDict]['Schema']]?: ActionDef<EntityDict & BaseEntityDict, keyof EntityDict>[];
-}
-
 export default function Render(
     props: WebComponentProps<
         ED,
-        keyof EntityDict,
+        keyof ED,
         false,
         {
             i18n: any;
-            items: { action: string; label: string, path: string; onClick: () => void }[];
+            items: {
+                action: string;
+                label: string;
+                path: string;
+                onClick: () => void;
+            }[];
             schema: StorageSchema<ED>;
             entity: string;
-            actions: ActionDef<ED, keyof EntityDict>[];
+            actions: ActionDef<ED, keyof ED>[];
             cascadeActions: CascadeActionDef;
             extraActions: OakExtraActionProps[];
-            onAction: (action?: string, cascadeAction?: CascadeActionProps) => void;
+            onAction: (
+                action?: string,
+                cascadeAction?: CascadeActionProps
+            ) => void;
         },
         {
             makeItems: () => void;
@@ -74,13 +81,14 @@ export default function Render(
         i18n,
         extraActions,
     } = data;
-    const zhCNKeys: number = i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
+    const zhCNKeys: number =
+        i18n?.store?.data?.zh_CN && Object.keys(i18n.store.data.zh_CN).length;
     useEffect(() => {
         makeItems();
-    }, [zhCNKeys, actions, cascadeActions, extraActions])
+    }, [zhCNKeys, actions, cascadeActions, extraActions]);
     return (
         <div className={Style.panelContainer}>
-            <Space align='center' size={12} style={{ width: '100%' }} wrap>
+            <Space align="center" size={12} style={{ width: '100%' }} wrap>
                 {items?.map((ele, index: number) => {
                     return (
                         <ItemComponent
