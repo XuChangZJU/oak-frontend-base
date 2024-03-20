@@ -366,8 +366,9 @@ abstract class OakComponentBase<
         if (operations) {
             for (const oper of operations) {
                 const { entity, operation } = oper;
-                if (!this.checkOperation(entity, operation)) {
-                    return false;
+                const result = this.checkOperation(entity, operation);
+                if (result !== true) {
+                    return result;
                 }
             }
             return true;

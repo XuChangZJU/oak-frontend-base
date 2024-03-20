@@ -174,7 +174,7 @@ export class ContextMenuFactory<
                                     );
 
                                 if (checkResult) {
-                                    result = checkResult;
+                                    result = checkResult === true;
                                     break;
                                 }
                             }

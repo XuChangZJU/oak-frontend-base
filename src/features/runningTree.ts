@@ -2341,15 +2341,6 @@ export class RunningTree<
         return node.getIntrinsticFilters();
     }
 
-    /* tryExecute(path: string) {
-        const node = this.findNode(path);
-        const operations = node?.composeOperations();
-        if (operations && operations.length > 0) {
-            return this.cache.tryRedoOperations(operations);
-        }
-        return false;
-    } */
-
     getOperations(path: string) {
         const node = this.findNode(path);
         const operations = node?.composeOperations();

@@ -1,6 +1,6 @@
 /// <reference types="wechat-miniprogram" />
 /// <reference types="wechat-miniprogram" />
-import { Aspect, EntityDict, CheckerType, AggregationResult, OpRecord } from "oak-domain/lib/types";
+import { Aspect, EntityDict, CheckerType, AggregationResult, OpRecord, OakUserException } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
@@ -168,8 +168,8 @@ export type OakCommonComponentMethods<ED extends EntityDict & BaseEntityDict, T 
         action: ED[T2]['Action'];
         data?: ED[T2]['Operation']['data'];
         filter?: ED[T2]['Operation']['filter'];
-    }, checkerTypes?: (CheckerType | 'relation')[]) => boolean;
-    tryExecute: (path?: string) => boolean | Error;
+    }, checkerTypes?: (CheckerType | 'relation')[]) => boolean | OakUserException<ED>;
+    tryExecute: (path?: string) => boolean | OakUserException<ED>;
     getOperations: (path?: string) => {
         operation: ED[T]['Operation'];
         entity: T;

@@ -349,7 +349,7 @@ export class Cache extends Feature {
             if (!(err instanceof OakUserException)) {
                 throw err;
             }
-            return false;
+            return err;
         }
     }
     redoOperation(opers) {

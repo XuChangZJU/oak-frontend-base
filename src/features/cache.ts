@@ -486,7 +486,7 @@ export class Cache<
             if (!(err instanceof OakUserException)) {
                 throw err;
             }
-            return false;
+            return err as OakUserException<ED>;
         }
     }
 

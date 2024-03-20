@@ -77,8 +77,8 @@ export declare function createComponent<IsList extends boolean, ED extends Entit
         }[] | undefined): Promise<void>;
         isDirty(path?: string | undefined): boolean;
         getFreshValue(path?: string | undefined): Partial<ED[keyof ED]["Schema"]> | Partial<ED[keyof ED]["Schema"]>[] | undefined;
-        checkOperation<T2_2 extends keyof ED>(entity: T2_2, operation: Omit<ED[T2_2]["Operation"], "id">, checkerTypes?: (CheckerType | "relation")[] | undefined): boolean;
-        tryExecute(path?: string | undefined): boolean;
+        checkOperation<T2_2 extends keyof ED>(entity: T2_2, operation: Omit<ED[T2_2]["Operation"], "id">, checkerTypes?: (CheckerType | "relation")[] | undefined): boolean | import("oak-domain/lib/types").OakUserException<ED>;
+        tryExecute(path?: string | undefined): boolean | import("oak-domain/lib/types").OakUserException<ED>;
         getOperations<T_5 extends keyof ED>(path?: string | undefined): {
             entity: keyof ED;
             operation: ED[keyof ED]["Operation"];

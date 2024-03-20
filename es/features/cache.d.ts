@@ -3,6 +3,7 @@ import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from '../types/Feature';
 import { CacheStore } from '../cacheStore/CacheStore';
+import { OakUserException } from 'oak-domain/lib/types/Exception';
 import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { SyncContext } from 'oak-domain/lib/store/SyncRowStore';
 import { LocalStorage } from './localStorage';
@@ -93,7 +94,7 @@ export declare class Cache<ED extends EntityDict & BaseEntityDict, Cxt extends A
         action: ED[T]['Action'];
         data?: ED[T]['Operation']['data'];
         filter?: ED[T]['Operation']['filter'];
-    }, checkerTypes?: CheckerType[]): boolean;
+    }, checkerTypes?: CheckerType[]): true | OakUserException<ED>;
     redoOperation(opers: Array<{
         entity: keyof ED;
         operation: ED[keyof ED]['Operation'];

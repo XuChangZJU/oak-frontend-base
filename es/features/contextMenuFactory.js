@@ -108,7 +108,7 @@ export class ContextMenuFactory extends Feature {
                                     'row',
                                 ]);
                             if (checkResult) {
-                                result = checkResult;
+                                result = checkResult === true;
                                 break;
                             }
                         }
