@@ -75,44 +75,6 @@ abstract class Node<
 
     abstract checkIfClean(): void;
 
-    /**
-     * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
-     */
-    getActiveModiOperations(): Array<{
-        entity: keyof ED;
-        operation: ED[keyof ED]['Operation'];
-    }> | undefined {
-        const { modiIds } = this;
-        if (modiIds && modiIds.length > 0) {
-            const modies = this.cache.get('modi', {
-                data: {
-                    id: 1,
-                    targetEntity: 1,
-                    entity: 1,
-                    entityId: 1,
-                    iState: 1,
-                    action: 1,
-                    data: 1,
-                    filter: 1,
-                },
-                filter: {
-                    id: {
-                        $in: modiIds,
-                    },
-                    iState: 'active',
-                }
-            });
-            assert(modies);
-            return createOperationsFromModies(modies as ED['modi']['OpSchema'][]);
-        }
-        // 如果当前层没有，向上查找。只要有就返回，目前应该不存在多层modi
-        if (this.parent) {
-            if (this.parent instanceof ListNode || this.parent instanceof SingleNode) {
-                return this.parent.getActiveModiOperations();
-            }
-        }
-    }
-
     setDirty() {
         if (!this.dirty) {
             this.dirty = true;
@@ -191,7 +153,7 @@ class ListNode<
         | ED[T]['Remove']
     >;
 
-    private children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>> = {};
+    protected children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>> = {};
     private filters: (NamedFilterItem<ED, T> & { applied?: boolean })[];
     private sorters: (NamedSorterItem<ED, T> & { applied?: boolean })[];
     private getTotal?: number;
@@ -199,7 +161,6 @@ class ListNode<
     private sr: Record<string, any> = {};
 
     private syncHandler: (records: OpRecord<ED>[]) => void;
-
 
     setFiltersAndSortedApplied() {
         this.filters.forEach(
@@ -1011,7 +972,7 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
     AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?: string;
     private sr: Record<string, any>;
-    private children: {
+    protected children: {
         [K: string]: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
     };
     private filters?: NamedFilterItem<ED, T>[];
@@ -1051,6 +1012,46 @@ class SingleNode<ED extends EntityDict & BaseEntityDict,
             }
         }
     }
+    
+    getModiOperations(): Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
+    }> | undefined {
+        const { modiIds } = this;
+        if (modiIds && modiIds.length > 0) {
+            const modies = this.cache.get('modi', {
+                data: {
+                    id: 1,
+                    targetEntity: 1,
+                    entity: 1,
+                    entityId: 1,
+                    iState: 1,
+                    action: 1,
+                    data: 1,
+                    filter: 1,
+                },
+                filter: {
+                    id: {
+                        $in: modiIds,
+                    },
+                    iState: 'active',
+                }
+            });
+            assert(modies);
+            return createOperationsFromModies(modies as ED['modi']['OpSchema'][]);
+        }
+        // 当前假设设计中不存在modi嵌套modi的情况，没有再找子孙结点
+        for (const c in this.children) {
+            const child = this.children[c];
+            if (child instanceof SingleNode) {
+                const result = child.getModiOperations();
+                if (result) {
+                    return result;
+                }
+            }
+        }
+    }
+
 
     setFiltersAndSortedApplied() {
         for (const k in this.children) {
@@ -1610,7 +1611,7 @@ class VirtualNode<
     private dirty: boolean;
     private executing: boolean;
     private loading = false;
-    private children: Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
+    protected children: Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
     constructor(path?: string, parent?: VirtualNode<ED, Cxt, FrontCxt, AD>) {
         super();
         this.dirty = false;
@@ -1620,9 +1621,23 @@ class VirtualNode<
             parent.addChild(path!, this);
         }
     }
-    getActiveModies(child: any): undefined {
-        return;
+
+    getModiOperations(): Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
+    }> | undefined {
+        for (const c in this.children) {
+            const child = this.children[c];
+            if (child instanceof SingleNode) {
+                const result = child.getModiOperations();
+                if (result) {
+                    return result;
+                }
+            }
+        }
     }
+
+
     setDirty() {
         this.dirty = true;
         this.publish();
@@ -2003,35 +2018,35 @@ export class RunningTree<
         }
     }
 
-    getFreshValue(path: string) {
-        const node = this.findNode(path);
+    redoBranchOperations(path: string) {
         const paths = path.split('.');
         const root = this.root[paths[0]];
-        const includeModi = path.includes(MODI_NEXT_PATH_SUFFIX);
-        if (node) {
-            this.cache.begin();
-            try {
-                assert(node instanceof ListNode || node instanceof SingleNode);
-                if (includeModi) {
-                    const opers2 = node.getActiveModiOperations();
-                    if (opers2) {
-                        this.cache.redoOperation(opers2);
-                    }
-                }
-                const opers = root?.composeOperations();
-                if (opers) {
-                    this.cache.redoOperation(opers);
-                }
-                // 如果是list结点，要将modi所产生的未提交行的数据也读出来
-                const value = includeModi && node instanceof ListNode ? node.getFreshValue(true) : node.getFreshValue();
-                this.cache.rollback();
-                return value;
-            }
-            catch (err) {
-                this.cache.rollback();
-                throw err;
-            }
+        const opers = root.composeOperations();
+
+        this.cache.begin();
+        if (opers) {
+            this.cache.redoOperation(opers);
         }
+        
+        const includeModi = path.includes(MODI_NEXT_PATH_SUFFIX);
+        if (includeModi) {
+            const modiOperations = (root instanceof SingleNode || root instanceof VirtualNode) && root.getModiOperations();
+            modiOperations && this.cache.redoOperation(modiOperations);
+        }        
+    }
+
+    rollbackRedoBranchOperations() {
+        this.cache.rollback();
+    }
+
+    getFreshValue(path: string) {
+        const node = this.findNode(path);
+        if (node instanceof ListNode) {
+            const includeModi = path.includes(MODI_NEXT_PATH_SUFFIX);
+            return node.getFreshValue(includeModi);
+        }
+        assert(node instanceof SingleNode);
+        return node.getFreshValue();
     }
 
     isDirty(path: string) {
@@ -2120,13 +2135,6 @@ export class RunningTree<
         const node = this.findNode(path);
         assert(node instanceof SingleNode);
         node.remove();
-    }
-
-    isCreation(path: string) {
-        const value = this.getFreshValue(path);
-        assert(!(value instanceof Array));
-
-        return value?.$$createAt$$ === 1;
     }
 
     isLoading(path: string) {

@@ -30,13 +30,6 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
     getEntity(): T;
     getSchema(): StorageSchema<ED>;
     abstract checkIfClean(): void;
-    /**
-     * 这个函数从某个结点向父亲查询，看所在路径上是否有需要被应用的modi
-     */
-    getActiveModiOperations(): Array<{
-        entity: keyof ED;
-        operation: ED[keyof ED]['Operation'];
-    }> | undefined;
     setDirty(): void;
     isDirty(): boolean;
     isLoading(): boolean;
@@ -51,7 +44,7 @@ declare abstract class Node<ED extends EntityDict & BaseEntityDict, T extends ke
 }
 declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private updates;
-    private children;
+    protected children: Record<string, SingleNode<ED, T, Cxt, FrontCxt, AD>>;
     private filters;
     private sorters;
     private getTotal?;
@@ -145,12 +138,18 @@ declare class ListNode<ED extends EntityDict & BaseEntityDict, T extends keyof E
 declare class SingleNode<ED extends EntityDict & BaseEntityDict, T extends keyof ED, Cxt extends AsyncContext<ED>, FrontCxt extends SyncContext<ED>, AD extends CommonAspectDict<ED, Cxt>> extends Node<ED, T, Cxt, FrontCxt, AD> {
     private id?;
     private sr;
-    private children;
+    protected children: {
+        [K: string]: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD>;
+    };
     private filters?;
     private operation?;
     constructor(entity: T, schema: StorageSchema<ED>, cache: Cache<ED, Cxt, FrontCxt, AD>, relationAuth: RelationAuth<ED, Cxt, FrontCxt, AD>, projection?: ED[T]['Selection']['data'] | (() => Promise<ED[T]['Selection']['data']>), parent?: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD> | ListNode<ED, T, Cxt, FrontCxt, AD>, path?: string, id?: string, filters?: NamedFilterItem<ED, T>[], actions?: ActionDef<ED, T>[] | (() => ActionDef<ED, T>[]), cascadeActions?: () => {
         [K in keyof ED[T]['Schema']]?: ActionDef<ED, keyof ED>[];
     });
+    getModiOperations(): Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
+    }> | undefined;
     setFiltersAndSortedApplied(): void;
     setLoading(loading: number): void;
     setUnloading(loading: number): void;
@@ -196,9 +195,12 @@ declare class VirtualNode<ED extends EntityDict & BaseEntityDict, Cxt extends As
     private dirty;
     private executing;
     private loading;
-    private children;
+    protected children: Record<string, SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>>;
     constructor(path?: string, parent?: VirtualNode<ED, Cxt, FrontCxt, AD>);
-    getActiveModies(child: any): undefined;
+    getModiOperations(): Array<{
+        entity: keyof ED;
+        operation: ED[keyof ED]['Operation'];
+    }> | undefined;
     setDirty(): void;
     setFiltersAndSortedApplied(): void;
     addChild(path: string, child: SingleNode<ED, keyof ED, Cxt, FrontCxt, AD> | ListNode<ED, keyof ED, Cxt, FrontCxt, AD> | VirtualNode<ED, Cxt, FrontCxt, AD>): void;
@@ -247,6 +249,8 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     checkIsModiNode(path: string): boolean;
     private findNode;
     destroyNode(path: string): void;
+    redoBranchOperations(path: string): void;
+    rollbackRedoBranchOperations(): void;
     getFreshValue(path: string): Partial<ED[keyof ED]["Schema"]> | Partial<ED[keyof ED]["Schema"]>[] | undefined;
     isDirty(path: string): boolean;
     addItem<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'> & {
@@ -264,7 +268,6 @@ export declare class RunningTree<ED extends EntityDict & BaseEntityDict, Cxt ext
     create<T extends keyof ED>(path: string, data: Omit<ED[T]['CreateSingle']['data'], 'id'>): void;
     update<T extends keyof ED>(path: string, data: ED[T]['Update']['data'], action?: ED[T]['Action']): void;
     remove(path: string): void;
-    isCreation(path: string): boolean;
     isLoading(path: string): boolean | undefined;
     isLoadingMore(path: string): boolean | undefined;
     isExecuting(path: string): boolean;

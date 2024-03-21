@@ -90,7 +90,7 @@ export type ActionDef<
         filter?: ED[T]['Selection']['filter'];
         data?: Partial<ED[T]['CreateSingle']['data']>;
         label?: string;
-        attrs?: (keyof ED[T]['Update']['data'])[];
+        attrs?: (keyof ED[T]['Update']['data'] | '#all')[];
     } | ED[T]['Action'];
 
 export type RowWithActions<

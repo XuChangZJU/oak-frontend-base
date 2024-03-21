@@ -32,7 +32,7 @@ export function initialize(storageSchema, frontendContextBuilder, backendContext
     const debugStore = createDebugStore(storageSchema, backendContextBuilder, triggers2, checkers2, watchers2, timers, startRoutines, initialData, actionDict, authDeduceRelationMap, features1.localStorage, selectFreeEntities, updateFreeDict);
     const wrapper = {
         exec: async (name, params, ignoreContext) => {
-            const context = features2.cache.buildContext();
+            const context = features2.cache.getContext();
             const str = !ignoreContext ? await context.toString() : '{}';
             const contextBackend = await backendContextBuilder(str)(debugStore);
             await contextBackend.begin();
@@ -57,7 +57,7 @@ export function initialize(storageSchema, frontendContextBuilder, backendContext
             };
         },
     };
-    const features2 = initBasicFeaturesStep2(features1, wrapper, storageSchema, frontendContextBuilder, checkers2, authDeduceRelationMap, colorDict, () => debugStore.getCurrentData(), async () => ({ url: '', path: '' }), undefined, selectFreeEntities, updateFreeDict, cacheSavedEntities, cacheKeepFreshPeriod);
+    const features2 = initBasicFeaturesStep2(features1, wrapper, storageSchema, frontendContextBuilder, checkers2, authDeduceRelationMap, colorDict, () => debugStore.getCurrentData(), async () => ({ url: '', path: '' }), undefined, selectFreeEntities, updateFreeDict, cacheSavedEntities, cacheKeepFreshPeriod, attrUpdateMatrix);
     registerPorts(importations || [], exportations || []);
     const features = Object.assign(features2, features1);
     return {

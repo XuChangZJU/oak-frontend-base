@@ -2,12 +2,9 @@ import { assert } from 'oak-domain/lib/utils/assert';
 import {
     CheckerType,
     EntityDict,
-    OakException,
-    OakInputIllegalException,
-    OakUserException,
 } from 'oak-domain/lib/types';
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
-import { NamedFilterItem, NamedSorterItem } from './types/NamedCondition';
+import { NamedFilterItem } from './types/NamedCondition';
 import {
     OakComponentOption,
     ComponentFullThisType,
@@ -22,7 +19,6 @@ import { AsyncContext } from 'oak-domain/lib/store/AsyncRowStore';
 import { MessageProps } from './types/Message';
 import { judgeRelation } from 'oak-domain/lib/store/relation';
 import { combineFilters } from 'oak-domain/lib/store/filter';
-import { MODI_NEXT_PATH_SUFFIX } from './features/runningTree';
 import { generateNewId } from 'oak-domain/lib/utils/uuid';
 import { Cache } from './features/cache';
 import { CommonAspectDict } from 'oak-common-aspect/es/AspectDict';
@@ -192,11 +188,17 @@ function checkActionAttrsIfNecessary<
         return action;
     }
 
-    if (!action.attrs) {
+    const { attrs } = action;
+    if (!attrs) {
         return action;
     }
 
-    const attrs2 = cache.getLegalUpdateAttrs(entity, action.action, action.attrs!, id);
+    // 处理一下#all
+    const idx = attrs.indexOf('#all');
+    if (idx >= 0) {
+        attrs.splice(idx, 1, ...Object.keys(cache.getSchema()[entity].attributes));
+    }
+    const attrs2 = cache.getLegalUpdateAttrs(entity, action.action, attrs!, id);
 
     return {
         ...action,
@@ -230,7 +232,7 @@ function checkActionsAndCascadeEntities<
                     // 创建对象的判定不落在具体行上，但要考虑list上外键相关属性的限制
                     const data = typeof action === 'object' ? cloneDeep(action.data!) : undefined;
                     if (this.checkOperation(this.state.oakEntity, { action: 'create', data, filter }, checkTypes)) {
-                        legalActions.push(action);
+                        legalActions.push(data ? checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, data.id!) : action);
                     }
                 }
                 else {
@@ -281,7 +283,7 @@ function checkActionsAndCascadeEntities<
                             action: 'create',
                             data: operation.data,
                         }, checkTypes)) {
-                            legalActions.push(action);
+                            legalActions.push(checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, rows.id!));
                             if (rows['#oakLegalActions']) {
                                 rows['#oakLegalActions'].push(action);
                             }
@@ -502,21 +504,21 @@ export function reRender<
 
     const localeState = features.locales.getState();
     if (this.state.oakEntity && this.state.oakFullpath) {
-        const rows = this.features.runningTree.getFreshValue(
-            this.state.oakFullpath
+        // 现在取数据需要把runningTree上的更新应用了再取，判定actions也一样
+        this.features.runningTree.redoBranchOperations(this.state.oakFullpath);
+        const rows = this.features.runningTree.getFreshValue(this.state.oakFullpath);
+        const oakLegalActions = rows && checkActionsAndCascadeEntities.call(
+            this as any,
+            rows,
+            option as any
         );
+        this.features.runningTree.rollbackRedoBranchOperations();
 
         const oakDirty = this.features.runningTree.isDirty(this.state.oakFullpath);
         const oakLoadingMore = this.features.runningTree.isLoadingMore(this.state.oakFullpath);
         const oakLoading = !oakLoadingMore && this.features.runningTree.isLoading(this.state.oakFullpath);
         const oakExecuting = this.features.runningTree.isExecuting(this.state.oakFullpath);
         const oakExecutable = !oakExecuting && this.tryExecute();
-
-        const oakLegalActions = rows && checkActionsAndCascadeEntities.call(
-            this as any,
-            rows,
-            option as any
-        );
         let data = formData
             ? formData.call(this, {
                 data: rows as RowWithActions<ED, T>,

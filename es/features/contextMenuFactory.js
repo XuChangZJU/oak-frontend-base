@@ -74,6 +74,7 @@ export class ContextMenuFactory extends Feature {
     }
     getMenusByContext(entity, entityId) {
         assert(this.menus, '应当先调用setMenus才能动态判定菜单');
+        this.cache.begin();
         const menus = this.menus
             .filter((menu) => {
             const { entity: destEntity, paths, action } = menu;
@@ -134,6 +135,7 @@ export class ContextMenuFactory extends Feature {
             return false;
         })
             .map((wrapper) => omit(wrapper, ['filtersMaker']));
+        this.cache.rollback();
         return menus;
     }
 }

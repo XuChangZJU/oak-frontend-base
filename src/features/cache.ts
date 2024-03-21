@@ -499,7 +499,7 @@ export class Cache<
             (oper) => {
                 const { entity, operation } = oper;
                 this.cacheStore!.operate(entity, operation, this.context!, {
-                    checkerTypes: ['logical'],      // 这里不能检查data，不然在数据没填完前会有大量异常
+                    checkerTypes: ['logicalData'],      // 这里不能检查data，不然在数据没填完前会有大量异常
                     dontCollect: true,
                 });
             }
@@ -669,7 +669,9 @@ export class Cache<
         this.context = undefined;
     }
 
-    buildContext() {
-        return this.contextBuilder!();
+    getContext() {
+        // 因为前端是同步，所以同一时间只有一个context，要是有需要context的，使用当前的context最安全
+        // 这个设计不太好，主要是relationAuth受到了底层的限制       by Xc 20240321
+        return this.context || this.contextBuilder!();
     }
 }

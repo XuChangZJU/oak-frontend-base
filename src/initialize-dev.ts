@@ -92,7 +92,7 @@ export function initialize<
 
     const wrapper: AspectWrapper<ED, Cxt, CommonAspectDict<ED, Cxt> & AD> = {
         exec: async (name, params, ignoreContext) => {
-            const context = features2.cache.buildContext();
+            const context = features2.cache.getContext();
             const str = !ignoreContext ? await context.toString() : '{}';
             const contextBackend = await backendContextBuilder(str)(debugStore);
             await contextBackend.begin();
@@ -131,7 +131,8 @@ export function initialize<
         selectFreeEntities,
         updateFreeDict,
         cacheSavedEntities,
-        cacheKeepFreshPeriod
+        cacheKeepFreshPeriod,
+        attrUpdateMatrix
     );
 
 

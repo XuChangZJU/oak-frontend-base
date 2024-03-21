@@ -139,12 +139,10 @@ export class RelationAuth extends Feature {
         return [];
     }
     checkRelation(entity, operation) {
-        const context = this.cache.begin();
         try {
-            this.baseRelationAuth.checkRelationSync(entity, operation, context);
+            this.baseRelationAuth.checkRelationSync(entity, operation, this.cache.getContext());
         }
         catch (err) {
-            this.cache.rollback();
             if (err instanceof OakRowUnexistedException) {
                 // 发现缓存中缺失项的话要协助获取
                 const missedRows = err.getRows();
@@ -156,7 +154,6 @@ export class RelationAuth extends Feature {
             }
             return false;
         }
-        this.cache.rollback();
         return true;
     }
     async getRelationIdByName(entity, name, entityId) {

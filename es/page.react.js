@@ -151,7 +151,11 @@ class OakComponentBase extends React.PureComponent {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        return this.features.runningTree.isCreation(path2);
+        this.features.runningTree.redoBranchOperations(path2);
+        const value = this.features.runningTree.getFreshValue(path2);
+        this.features.runningTree.rollbackRedoBranchOperations();
+        assert(!(value instanceof Array));
+        return value?.$$createAt$$ === 1;
     }
     clean(path) {
         const path2 = path
@@ -172,7 +176,10 @@ class OakComponentBase extends React.PureComponent {
         const path2 = path
             ? `${this.state.oakFullpath}.${path}`
             : this.state.oakFullpath;
-        return this.features.runningTree.getFreshValue(path2);
+        this.features.runningTree.redoBranchOperations(path2);
+        const value = this.features.runningTree.getFreshValue(path2);
+        this.features.runningTree.rollbackRedoBranchOperations();
+        return value;
     }
     checkOperation(entity, operation, checkerTypes) {
         if (checkerTypes?.includes('relation')) {
