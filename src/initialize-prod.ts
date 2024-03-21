@@ -50,7 +50,7 @@ export function initialize<
 
     const wrapper: AspectWrapper<ED, Cxt, AD & CommonAspectDict<ED, Cxt>> = {
         exec: async (name, params, ignoreContext) => {
-            const context = ignoreContext ? undefined : features2.cache.buildContext();
+            const context = ignoreContext ? undefined : features2.cache.getContext();
             const { result, opRecords, message } = await connector.callAspect(name as string, params, context);
             return {
                 result,

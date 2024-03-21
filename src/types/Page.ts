@@ -1,4 +1,4 @@
-import { Aspect, EntityDict, CheckerType, AggregationResult, SubDataDef, OpRecord } from "oak-domain/lib/types";
+import { Aspect, EntityDict, CheckerType, AggregationResult, SubDataDef, OpRecord, OakUserException } from "oak-domain/lib/types";
 import { EntityDict as BaseEntityDict } from 'oak-domain/lib/base-app-domain';
 import { CommonAspectDict } from 'oak-common-aspect';
 import { Feature } from './Feature';
@@ -90,7 +90,7 @@ export type ActionDef<
         filter?: ED[T]['Selection']['filter'];
         data?: Partial<ED[T]['CreateSingle']['data']>;
         label?: string;
-        attrs?: (keyof ED[T]['Update']['data'])[];
+        attrs?: (keyof ED[T]['Update']['data'] | '#all')[];
     } | ED[T]['Action'];
 
 export type RowWithActions<
@@ -397,8 +397,8 @@ export type OakCommonComponentMethods<
                 filter?: ED[T2]['Operation']['filter'],
             },
             checkerTypes?: (CheckerType | 'relation')[]
-        ) => boolean;
-        tryExecute: (path?: string) => boolean | Error;
+        ) => boolean | OakUserException<ED>;
+        tryExecute: (path?: string) => boolean | OakUserException<ED>;
         getOperations: (
             path?: string
         ) => { operation: ED[T]['Operation']; entity: T }[] | undefined;

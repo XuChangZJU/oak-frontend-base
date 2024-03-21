@@ -20,7 +20,7 @@ export function initialize(storageSchema, frontendContextBuilder, connector, che
     const features1 = initBasicFeaturesStep1();
     const wrapper = {
         exec: async (name, params, ignoreContext) => {
-            const context = ignoreContext ? undefined : features2.cache.buildContext();
+            const context = ignoreContext ? undefined : features2.cache.getContext();
             const { result, opRecords, message } = await connector.callAspect(name, params, context);
             return {
                 result,

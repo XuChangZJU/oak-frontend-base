@@ -322,10 +322,13 @@ const oakBehavior = Behavior<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.getFreshValue(path2);
+            this.features.runningTree.redoBranchOperations(path2);
+            const value = this.features.runningTree.getFreshValue(path2);
+            this.features.runningTree.rollbackRedoBranchOperations();
+            return value;
         },
 
-        checkOperation(entity,{ action, data, filter}, checkerTypes) {
+        checkOperation(entity, { action, data, filter }, checkerTypes) {
             if (checkerTypes?.includes('relation')) {
                 return (
                     this.features.relationAuth.checkRelation(entity, {
@@ -363,8 +366,9 @@ const oakBehavior = Behavior<
             if (operations) {
                 for (const oper of operations) {
                     const { entity, operation } = oper;
-                    if (!this.checkOperation(entity, operation)) {
-                        return false;
+                    const result = this.checkOperation(entity, operation);
+                    if (result !== true) {
+                        return result;
                     }
                 }
                 return true;
@@ -671,7 +675,11 @@ const oakBehavior = Behavior<
             const path2 = path
                 ? `${this.state.oakFullpath}.${path}`
                 : this.state.oakFullpath;
-            return this.features.runningTree.isCreation(path2);
+            this.features.runningTree.redoBranchOperations(path2);
+            const value = this.features.runningTree.getFreshValue(path2);
+            this.features.runningTree.rollbackRedoBranchOperations();
+            assert(!(value instanceof Array));
+            return value?.$$createAt$$ === 1;
         },
 
         async aggregate(aggregation) {
