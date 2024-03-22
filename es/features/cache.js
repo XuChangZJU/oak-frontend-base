@@ -357,7 +357,7 @@ export class Cache extends Feature {
         opers.forEach((oper) => {
             const { entity, operation } = oper;
             this.cacheStore.operate(entity, operation, this.context, {
-                checkerTypes: ['logicalData'],
+                checkerTypes: ['logicalData', 'logical'],
                 dontCollect: true,
             });
         });
