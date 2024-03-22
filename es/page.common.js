@@ -161,7 +161,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                 if (action === 'create' || typeof action === 'object' && action.action === 'create') {
                     // 创建对象的判定不落在具体行上，但要考虑list上外键相关属性的限制
                     const data = typeof action === 'object' ? cloneDeep(action.data) : undefined;
-                    if (this.checkOperation(this.state.oakEntity, { action: 'create', data, filter }, checkTypes)) {
+                    if (this.checkOperation(this.state.oakEntity, { action: 'create', data, filter }, checkTypes) === true) {
                         legalActions.push(data ? checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, data.id) : action);
                     }
                 }
@@ -169,7 +169,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                     const a2 = typeof action === 'object' ? action.action : action;
                     // 先尝试整体测试是否通过，再测试每一行
                     // todo，这里似乎还能优化，这些行一次性进行测试比单独测试的性能要高
-                    if (filter && this.checkOperation(this.state.oakEntity, { action: a2, filter }, checkTypes)) {
+                    if (filter && this.checkOperation(this.state.oakEntity, { action: a2, filter }, checkTypes) === true) {
                         rows.forEach((row) => {
                             if (row['#oakLegalActions']) {
                                 row['#oakLegalActions'].push(checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, row.id));
@@ -184,7 +184,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                     else {
                         rows.forEach((row) => {
                             const { id } = row;
-                            if (this.checkOperation(this.state.oakEntity, { action: a2, filter: { id } }, checkTypes)) {
+                            if (this.checkOperation(this.state.oakEntity, { action: a2, filter: { id } }, checkTypes) === true) {
                                 if (row['#oakLegalActions']) {
                                     row['#oakLegalActions'].push(checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, row.id));
                                 }
@@ -207,7 +207,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                         if (this.checkOperation(this.state.oakEntity, {
                             action: 'create',
                             data: operation.data,
-                        }, checkTypes)) {
+                        }, checkTypes) === true) {
                             legalActions.push(checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, rows.id));
                             if (rows['#oakLegalActions']) {
                                 rows['#oakLegalActions'].push(action);
@@ -228,7 +228,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                     const filter = (filter1 || filter2) && combineFilters(this.state.oakEntity, this.features.cache.getSchema(), [
                         filter1, filter2
                     ]);
-                    if (filter && this.checkOperation(this.state.oakEntity, { action: a2, filter }, checkTypes)) {
+                    if (filter && this.checkOperation(this.state.oakEntity, { action: a2, filter }, checkTypes) === true) {
                         const action2 = checkActionAttrsIfNecessary(this.features.cache, this.state.oakEntity, action, rows.id);
                         legalActions.push(action2);
                         if (rows['#oakLegalActions']) {
@@ -283,7 +283,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                                 if (this.checkOperation(rel[0], {
                                     action: 'create',
                                     data: intrinsticData,
-                                }, checkTypes)) {
+                                }, checkTypes) === true) {
                                     addToRow(rel[0], row, e, action);
                                 }
                             });
@@ -302,7 +302,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                             if (this.checkOperation(rel[0], {
                                 action: a2,
                                 filter: filter2,
-                            }, checkTypes)) {
+                            }, checkTypes) === true) {
                                 rows.forEach((row) => addToRow(rel[0], row, e, action));
                             }
                             else {
@@ -317,7 +317,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                                     if (this.checkOperation(rel[0], {
                                         action: a2,
                                         filter: intrinsticFilterRow,
-                                    }, checkTypes)) {
+                                    }, checkTypes) === true) {
                                         addToRow(rel[0], row, e, action);
                                     }
                                 });
@@ -336,7 +336,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                             if (this.checkOperation(rel[0], {
                                 action: 'create',
                                 data: intrinsticData,
-                            }, checkTypes)) {
+                            }, checkTypes) === true) {
                                 addToRow(rel[0], rows, e, action);
                             }
                         }
@@ -352,7 +352,7 @@ function checkActionsAndCascadeEntities(rows, option) {
                             if (this.checkOperation(rel[0], {
                                 action: a2,
                                 filter: filter2,
-                            }, checkTypes)) {
+                            }, checkTypes) === true) {
                                 addToRow(rel[0], rows, e, action);
                             }
                         }
